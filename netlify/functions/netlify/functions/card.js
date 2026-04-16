@@ -12,8 +12,8 @@ exports.handler = async (event) => {
   // 2) Fallback: intentar sacarlo del path por si se llama directo
   const slugFromPath = event.path
     .replace('/.netlify/functions/card', '')
-    .replace(/^\/c\//, '')
-    .replace(/\/$/, '');
+    .replace(/^\\/c\//, '')
+    .replace(/\\/$/, '');
 
   const slug = slugFromQuery || slugFromPath;
 
