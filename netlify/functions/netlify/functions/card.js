@@ -6,10 +6,10 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
-  // 1) Intentar leer slug de query string (redirect /c/:slug)
+  // 1) Intentar leer slug de la query (?slug=...)
   const slugFromQuery = event.queryStringParameters?.slug;
 
-  // 2) Como fallback, intentar parsearlo del path por si llamas con ?slug= vacío
+  // 2) Fallback: intentar sacarlo del path por si se llama directo
   const slugFromPath = event.path
     .replace('/.netlify/functions/card', '')
     .replace(/^\/c\//, '')
@@ -20,8 +20,6 @@ exports.handler = async (event) => {
   if (!slug) {
     return { statusCode: 400, body: 'Missing slug' };
   }
-
-  // a partir de aquí, tu código igual...
 
   const { data, error } = await supabase
     .from('cards')
