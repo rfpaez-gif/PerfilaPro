@@ -1,0 +1,21 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/stripe-webhook"
+  to = "/.netlify/functions/stripe-webhook"
+  status = 200
+
+[[redirects]]
+  from = "/api/save-card"
+  to = "/.netlify/functions/save-card"
+  status = 200
+
+[[redirects]]
+  from = "/c/*"
+  to = "/.netlify/functions/card"
+  status = 200
