@@ -88,8 +88,9 @@ exports.handler = async (event) => {
     .card-zona{font-size:.8rem;color:var(--muted);line-height:1.6}
     .card-wa{display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:.9rem;background:var(--wa);color:#fff;border-radius:.5rem;font-size:1rem;font-weight:700;text-decoration:none;transition:background .2s,transform .2s}
     .card-wa:hover{background:var(--wahover);transform:translateY(-2px)}
-    .card-powered{text-align:center;padding:.625rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--faint)}
+    .card-powered{text-align:center;padding:.75rem 1rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--faint)}
     .card-powered strong{color:var(--primary)}
+    .card-powered a{display:inline-block;margin-top:.45rem;padding:.45rem 1rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
   </style>
@@ -113,7 +114,10 @@ exports.handler = async (event) => {
         Contactar por WhatsApp
       ${waUrl ? '</a>' : '</div>'}
     </div>
-    <div class="card-powered">Creado con <strong>PerfilaPro.com</strong></div>
+    <div class="card-powered">
+      Creado con <strong>PerfilaPro</strong><br>
+      <a href="https://perfilapro.netlify.app">Crea tu propia tarjeta</a>
+    </div>
   </div>
   <div class="footer">
     <a href="https://perfilapro.com" target="_blank">¿Quieres tu propia tarjeta? → PerfilaPro.com</a>

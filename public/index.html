@@ -1114,11 +1114,12 @@
               .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40);
             var cardUrl = 'https://perfilapro.netlify.app/c/'+slug;
             var copyInput = document.getElementById('copyLinkInput');
-            copyInput.value = cardUrl;
-            copyInput.removeAttribute('hidden');
+            if(copyInput){ copyInput.value = cardUrl; copyInput.removeAttribute('hidden'); }
             var waShareBtn = document.getElementById('waShareBtn');
-            var waText = encodeURIComponent('Hola, te comparto mi tarjeta profesional 👇\n'+cardUrl);
-            waShareBtn.href = 'https://wa.me/?text='+waText;
+            if(waShareBtn){
+              var waText = encodeURIComponent('Hola, te comparto mi tarjeta profesional 👇\n'+cardUrl);
+              waShareBtn.href = 'https://wa.me/?text='+waText;
+            }
 
             stageForm.setAttribute('hidden','');
             stageResult.removeAttribute('hidden');
