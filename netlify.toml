@@ -33,3 +33,8 @@
   to     = "/.netlify/functions/card"
   status = 200
   force  = true
+
+[[redirects]]
+  from   = "/api/admin-data"
+  to     = "/.netlify/functions/admin-data"
+  status = 200
