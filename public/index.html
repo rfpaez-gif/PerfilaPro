@@ -237,7 +237,6 @@
       .card-stage{
         background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.62));
         border:1px solid rgba(255,255,255,.72);border-radius:1.9rem;padding:.9rem;box-shadow:var(--shadow-lg);
-        transform:scale(.9);transform-origin:top center;
       }
       .card-top-note{
         display:inline-flex;padding:.42rem .7rem;border-radius:999px;background:var(--primary-soft);color:var(--primary);
@@ -480,11 +479,29 @@
       .upgrade-list{list-style:none;display:grid;gap:.55rem;margin-bottom:.95rem;font-size:.93rem}
       .upgrade-list li::before{content:"✓ ";color:var(--primary);font-weight:800}
       .upgrade-btn{width:100%;min-height:48px}
+      .menu-btn{
+        display:none;flex-direction:column;justify-content:center;gap:5px;
+        width:36px;height:36px;background:none;border:none;cursor:pointer;padding:4px;
+      }
+      .menu-btn span{
+        display:block;width:22px;height:2px;background:var(--text);
+        border-radius:2px;transition:all var(--transition);
+      }
       @media (max-width:768px){
         .hero-inner{grid-template-columns:1fr}
         .hero-visual{order:-1}
-        .header-inner{flex-wrap:wrap}
-        .nav{display:none}
+        .header-inner{flex-wrap:nowrap}
+        .menu-btn{display:flex}
+        .nav{
+          display:flex;flex-direction:column;gap:0;
+          position:fixed;top:57px;left:0;right:0;z-index:39;
+          background:#fff;border-bottom:1px solid var(--line);
+          padding:0;max-height:0;overflow:hidden;
+          transition:max-height .25s ease, padding .25s ease;
+        }
+        .nav.is-open{max-height:200px;padding:.75rem 0}
+        .nav a{padding:.65rem 1.25rem;font-size:1rem}
+        .header-cta{font-size:.85rem;padding:.45rem .9rem}
         .duo{grid-template-columns:1fr}
         .vision{grid-template-columns:1fr}
         .steps{grid-template-columns:1fr}
@@ -492,6 +509,7 @@
         .plans-grid{grid-template-columns:1fr}
         .copy-link-row{flex-direction:column}
         .cookie-actions{flex-direction:column}
+        .card-stage{max-width:340px;margin-inline:auto}
       }
       @media(min-width:900px){
         .hero-inner{
@@ -526,12 +544,15 @@
           <div class="logo-mark">P</div>
           <span>Perfila<em>Pro</em></span>
         </div>
-        <nav class="nav">
+        <nav class="nav" id="mainNav">
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#sectores">Sectores</a>
           <a href="#precios">Precios</a>
         </nav>
         <a class="header-cta" href="#crear">Crear tarjeta</a>
+        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </header>
 
@@ -1012,7 +1033,149 @@
 
     <script>
       (function(){
-      const startBtn = document.getElementById('startFormBtn');
-      const stageForm = document.getElementById('stageForm');
-      const stageResult = document.getElementById('stageResult');
-      const form = document.getElementBy
+        // Menú móvil
+        var menuBtn = document.getElementById('menuBtn');
+        var mainNav = document.getElementById('mainNav');
+        if(menuBtn && mainNav){
+          menuBtn.addEventListener('click', function(){
+            var open = mainNav.classList.toggle('is-open');
+            menuBtn.setAttribute('aria-expanded', open);
+          });
+          mainNav.querySelectorAll('a').forEach(function(a){
+            a.addEventListener('click', function(){
+              mainNav.classList.remove('is-open');
+              menuBtn.setAttribute('aria-expanded','false');
+            });
+          });
+        }
+
+        // Mostrar formulario
+        var startBtn = document.getElementById('startFormBtn');
+        var stageForm = document.getElementById('stageForm');
+        var stageResult = document.getElementById('stageResult');
+        if(startBtn){
+          startBtn.addEventListener('click', function(){
+            stageForm.removeAttribute('hidden');
+            stageForm.scrollIntoView({behavior:'smooth',block:'start'});
+          });
+        }
+
+        // Contador de caracteres
+        var descInput = document.getElementById('fDesc');
+        var descCount = document.getElementById('descCount');
+        if(descInput && descCount){
+          descInput.addEventListener('input', function(){
+            descCount.textContent = descInput.value.length;
+          });
+        }
+
+        // Envío del formulario → previsualización
+        var form = document.getElementById('crearForm');
+        var cardData = {};
+        if(form){
+          form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var nombre   = document.getElementById('fNombre').value.trim();
+            var sector   = document.getElementById('fSector').value;
+            var zona     = document.getElementById('fZona').value.trim();
+            var whatsapp = document.getElementById('fWhatsapp').value.trim();
+            var s1 = form.elements['servicio1'].value.trim();
+            var s2 = form.elements['servicio2'].value.trim();
+            var s3 = form.elements['servicio3'].value.trim();
+            var desc = document.getElementById('fDesc').value.trim();
+
+            // Validación básica
+            [document.getElementById('fNombre'),document.getElementById('fSector'),
+             document.getElementById('fZona'),document.getElementById('fWhatsapp'),
+             form.elements['servicio1']].forEach(function(el){
+               el.classList.toggle('is-error', !el.value.trim());
+             });
+            if(!nombre||!sector||!zona||!whatsapp||!s1) return;
+
+            var servicios = [s1,s2,s3].filter(Boolean);
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc};
+
+            // Rellenar tarjeta de previsualización
+            document.getElementById('rNombre').textContent = nombre;
+            var sectorLabels = {oficios:'Oficios y servicios del hogar',salud:'Salud y bienestar',
+              educacion:'Educación y formación',comercial:'Comercial y ventas',belleza:'Belleza y estética',
+              reforma:'Reforma y construcción',hosteleria:'Hostelería y restauración',
+              tech:'Tecnología y digital',legal:'Legal y asesoría',otro:'Otro'};
+            document.getElementById('rSector').textContent = sectorLabels[sector]||sector;
+            document.getElementById('rZona').textContent = '📍 '+zona;
+
+            var rServicios = document.getElementById('rServicios');
+            rServicios.innerHTML = '';
+            servicios.forEach(function(s,i){
+              var d = document.createElement('div');
+              d.className = 'service '+(i===0?'is-main':'is-soft');
+              d.textContent = s;
+              rServicios.appendChild(d);
+            });
+
+            var rDescBlock = document.getElementById('rDescBlock');
+            var rDesc = document.getElementById('rDesc');
+            if(desc){ rDesc.textContent=desc; rDescBlock.removeAttribute('hidden'); }
+            else { rDescBlock.setAttribute('hidden',''); }
+
+            var waNum = '34'+whatsapp.replace(/\D/g,'');
+            var waMsg = encodeURIComponent('Hola, te contacto desde tu tarjeta PerfilaPro.');
+            document.getElementById('rWaBtn').href = 'https://wa.me/'+waNum+'?text='+waMsg;
+
+            var slug = nombre.toLowerCase()
+              .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+              .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40);
+            var cardUrl = 'https://perfilapro.netlify.app/c/'+slug;
+            var copyInput = document.getElementById('copyLinkInput');
+            copyInput.value = cardUrl;
+            copyInput.removeAttribute('hidden');
+
+            stageForm.setAttribute('hidden','');
+            stageResult.removeAttribute('hidden');
+            stageResult.scrollIntoView({behavior:'smooth',block:'start'});
+          });
+        }
+
+        // Copiar enlace
+        var copyBtn = document.getElementById('copyLinkBtn');
+        if(copyBtn){
+          copyBtn.addEventListener('click', function(){
+            var val = document.getElementById('copyLinkInput').value;
+            if(navigator.clipboard){
+              navigator.clipboard.writeText(val).then(function(){
+                copyBtn.textContent='¡Enlace copiado!';
+                setTimeout(function(){ copyBtn.textContent='Compartir tarjeta'; },2000);
+              });
+            } else {
+              document.getElementById('copyLinkInput').select();
+              document.execCommand('copy');
+              copyBtn.textContent='¡Enlace copiado!';
+              setTimeout(function(){ copyBtn.textContent='Compartir tarjeta'; },2000);
+            }
+          });
+        }
+
+        // Botones de mejora (Stripe — pendiente de implementar create-checkout)
+        function goStripe(plan){
+          alert('Checkout '+plan+' próximamente disponible.');
+        }
+        var ubBtn = document.getElementById('upgradeBaseBtn');
+        var upBtn = document.getElementById('upgradeProBtn');
+        if(ubBtn) ubBtn.addEventListener('click', function(){ goStripe('base'); });
+        if(upBtn) upBtn.addEventListener('click', function(){ goStripe('pro'); });
+
+        // Volver a crear
+        var resetBtn = document.getElementById('resetBtn');
+        if(resetBtn){
+          resetBtn.addEventListener('click', function(){
+            stageResult.setAttribute('hidden','');
+            stageForm.removeAttribute('hidden');
+            form.reset();
+            if(descCount) descCount.textContent='0';
+            stageForm.scrollIntoView({behavior:'smooth',block:'start'});
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
