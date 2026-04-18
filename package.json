@@ -1,8 +1,15 @@
 {
   "name": "perfilapro",
   "version": "1.0.0",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "stripe": "^14.18.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
   }
 }

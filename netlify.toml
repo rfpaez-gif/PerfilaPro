@@ -1,22 +1,35 @@
 [build]
-  publish = "public"
-  functions = "netlify/functions"
+  command    = "npm test"
+  publish    = "public"
+  functions  = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
 
+# Producción: rama main
+[context.production]
+  command = "npm test"
+
+# Vista previa de ramas (develop, feature branches)
+[context.branch-deploy]
+  command = "npm test"
+
+# Vista previa de Pull Requests
+[context.deploy-preview]
+  command = "npm test"
+
 [[redirects]]
-  from = "/api/stripe-webhook"
-  to = "/.netlify/functions/stripe-webhook"
+  from   = "/api/stripe-webhook"
+  to     = "/.netlify/functions/stripe-webhook"
   status = 200
 
 [[redirects]]
-  from = "/api/save-card"
-  to = "/.netlify/functions/save-card"
+  from   = "/api/save-card"
+  to     = "/.netlify/functions/save-card"
   status = 200
 
 [[redirects]]
-  from = "/c/:slug"
-  to = "/.netlify/functions/card"
+  from   = "/c/:slug"
+  to     = "/.netlify/functions/card"
   status = 200
-  force = true
+  force  = true
