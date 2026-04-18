@@ -539,7 +539,7 @@
         .examples{
           grid-template-columns:repeat(2,1fr);
         }
-        .plans-grid{grid-template-columns:repeat(3,1fr)}
+        .plans-grid{grid-template-columns:repeat(2,1fr);max-width:740px;margin-inline:auto}
       }
       @media (prefers-reduced-motion: reduce){
         *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
@@ -583,7 +583,7 @@
               </div>
               <div class="badge">
                 <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Empieza con versión gratuita.
+                Vista previa gratuita, sin registro.
               </div>
             </div>
             <div class="hero-actions">
@@ -682,8 +682,8 @@
             <div class="steps">
               <article class="step">
                 <div class="step-num">1</div>
-                <h3>Empieza en modo gratuito</h3>
-                <p>Compruebas cómo queda tu tarjeta y si te encaja el formato. Si funciona para ti, ya decides si la quieres completa.</p>
+                <h3>Ve cómo queda tu tarjeta</h3>
+                <p>Rellenas el formulario y obtienes una vista previa real. Sin registro, sin compromiso.</p>
               </article>
               <article class="step">
                 <div class="step-num">2</div>
@@ -753,48 +753,31 @@
           </div>
           <div class="plans-grid">
 
-            <article class="plan-card">
-              <div class="plan-header">
-                <span class="plan-badge">Free</span>
-                <div class="plan-price"><span class="plan-amount">0€</span></div>
-                <p class="plan-desc">Para conocer PerfilaPro sin compromiso.</p>
-              </div>
-              <ul class="plan-features">
-                <li class="feat ok">Tarjeta pública compartible</li>
-                <li class="feat ok">Botón directo a WhatsApp</li>
-                <li class="feat ok">Zona y servicios</li>
-                <li class="feat no">Foto de perfil</li>
-                <li class="feat no">Código QR descargable</li>
-                <li class="feat no">Sin marca de agua</li>
-                <li class="feat no">Acceso a plan Pro</li>
-              </ul>
-              <a href="#crear" class="plan-btn plan-btn-soft">Crear gratis</a>
-            </article>
-
             <article class="plan-card plan-card-featured">
               <div class="plan-popular">Más popular</div>
               <div class="plan-header">
                 <span class="plan-badge plan-badge-primary">Base</span>
-                <div class="plan-price"><span class="plan-amount">9€</span><span class="plan-period"> pago único</span></div>
-                <p class="plan-desc">La tarjeta completa para empezar a presentarte bien.</p>
+                <div class="plan-price"><span class="plan-amount">9€</span><span class="plan-period"> · 3 meses</span></div>
+                <p class="plan-desc">Tarjeta activa y lista para compartir durante 3 meses.</p>
               </div>
               <ul class="plan-features">
-                <li class="feat ok">Todo lo del plan Free</li>
+                <li class="feat ok">Tarjeta pública compartible</li>
                 <li class="feat ok">Foto de perfil</li>
+                <li class="feat ok">Botón directo a WhatsApp</li>
+                <li class="feat ok">Zona y servicios</li>
                 <li class="feat ok">Código QR descargable</li>
                 <li class="feat ok">Sin marca de agua</li>
-                <li class="feat ok">Acceso a plan Pro</li>
                 <li class="feat no">Web propia sencilla</li>
                 <li class="feat no">Reservas y citas</li>
               </ul>
-              <a href="#crear" class="plan-btn plan-btn-primary">Empezar por 9€</a>
+              <a href="#crear" class="plan-btn plan-btn-primary">Activar por 9€</a>
             </article>
 
             <article class="plan-card">
               <div class="plan-header">
                 <span class="plan-badge plan-badge-dark">Pro</span>
-                <div class="plan-price"><span class="plan-amount">19€</span><span class="plan-period"> pago único</span></div>
-                <p class="plan-desc">Para quien quiere más presencia y herramientas reales.</p>
+                <div class="plan-price"><span class="plan-amount">19€</span><span class="plan-period"> · 12 meses</span></div>
+                <p class="plan-desc">Presencia completa durante un año entero.</p>
               </div>
               <ul class="plan-features">
                 <li class="feat ok">Todo lo del plan Base</li>
@@ -805,11 +788,11 @@
                 <li class="feat ok">Soporte prioritario</li>
                 <li class="feat soon">Pagos directos (próximamente)</li>
               </ul>
-              <a href="#crear" class="plan-btn plan-btn-soft">Empezar por 19€</a>
+              <a href="#crear" class="plan-btn plan-btn-soft">Activar por 19€</a>
             </article>
 
           </div>
-          <p class="plans-note">¿Tienes dudas? <a href="mailto:hola@perfilapro.com" style="color:var(--primary);font-weight:700">Escríbenos</a> y te ayudamos a elegir.</p>
+          <p class="plans-note">Renovación disponible por <strong style="color:var(--text)">5€/año</strong> al vencer cualquier plan. Sin suscripción automática. · <a href="mailto:hola@perfilapro.com" style="color:var(--primary);font-weight:700">¿Dudas?</a></p>
         </div>
       </section>
 
@@ -817,9 +800,9 @@
       <section class="section" id="crear">
         <div class="container">
           <div class="section-head" style="text-align:center;max-width:52ch;margin-inline:auto">
-            <div class="eyebrow" style="justify-content:center">Empieza gratis</div>
+            <div class="eyebrow" style="justify-content:center">Vista previa gratuita</div>
             <h2 class="title" style="font-size:clamp(2rem,7vw,3.2rem);max-width:none">Tu tarjeta profesional, lista en 2 minutos.</h2>
-            <p class="subtitle" style="margin-inline:auto">Sin cuenta. Sin contraseña. Solo rellena y comparte.</p>
+            <p class="subtitle" style="margin-inline:auto">Sin cuenta. Sin contraseña. Rellena, previsualiza y activa cuando quieras.</p>
             <div class="cta-actions" style="justify-content:center;margin-top:1rem">
               <button class="btn btn-primary" type="button" id="startFormBtn">Crear mi tarjeta</button>
             </div>
@@ -897,15 +880,15 @@
           <div class="result-stage" id="stageResult" hidden>
 
             <div class="result-success-bar">
-              <span>✓</span>
-              <strong>Tu tarjeta está lista.</strong>
-              <span>Compártela ahora mismo o mejórala cuando quieras.</span>
+              <span>👁</span>
+              <strong>Así quedará tu tarjeta.</strong>
+              <span>Actívala para que esté disponible online y puedas compartirla.</span>
             </div>
 
             <!-- Preview tarjeta generada -->
             <div class="result-layout">
               <div class="result-card-wrap">
-                <div class="result-badge-free">Versión gratuita</div>
+                <div class="result-badge-free">Vista previa</div>
                 <article class="profile-card" id="resultCard">
                   <div class="profile-head">
                     <div class="profile-avatar result-avatar-free">
@@ -934,45 +917,35 @@
                     </a>
                   </div>
                   <div class="profile-foot">
-                    Versión gratuita creada con <strong>PerfilaPro</strong> · <a href="#precios" style="color:var(--primary);font-weight:700">Mejorar mi tarjeta</a>
+                    Vista previa · <strong>PerfilaPro</strong>
                   </div>
-                  <div class="free-watermark">PERFILAPRO · VERSIÓN GRATUITA</div>
                 </article>
               </div>
 
-              <!-- Panel upgrade -->
+              <!-- Panel activación -->
               <aside class="upgrade-panel">
                 <div class="upgrade-copy">
-                  <h3>Tu tarjeta está funcionando.</h3>
-                  <p>Compártela ahora o dale el siguiente nivel.</p>
+                  <h3>Activa tu tarjeta.</h3>
+                  <p>Elige el plan y tu tarjeta estará online al instante.</p>
                 </div>
 
-                <div class="copy-link-row">
-                  <a class="btn btn-wa" id="waShareBtn" href="#" target="_blank" rel="noopener">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-                    Compartir por WhatsApp
-                  </a>
-                  <button class="btn btn-secondary copy-btn" id="copyLinkBtn" type="button">Copiar enlace</button>
-                  <input class="form-input copy-input" type="text" id="copyLinkInput" readonly value="" hidden>
-                </div>
-
-                <!-- PLAN BASE (destacado) -->
+                <!-- PLAN BASE -->
                 <article class="upgrade-card upgrade-card-main">
                   <div class="upgrade-best">Más popular</div>
                   <div class="upgrade-header">
                     <div>
-                      <span class="upgrade-plan-name">Tarjeta completa</span>
-                      <span class="upgrade-plan-tag">Base</span>
+                      <span class="upgrade-plan-name">Base</span>
+                      <span class="upgrade-plan-tag">3 meses</span>
                     </div>
                     <div class="upgrade-price">9€ <span>pago único</span></div>
                   </div>
                   <ul class="upgrade-list">
-                    <li>Foto de perfil en tu tarjeta</li>
-                    <li>Código QR descargable</li>
+                    <li>Tarjeta pública compartible</li>
+                    <li>Foto de perfil y código QR</li>
                     <li>Sin marca de agua</li>
                   </ul>
                   <button class="btn btn-primary upgrade-btn" id="upgradeBaseBtn" type="button">
-                    Mejorar mi tarjeta por 9€
+                    Activar por 9€ · 3 meses
                   </button>
                 </article>
 
@@ -980,21 +953,22 @@
                 <article class="upgrade-card">
                   <div class="upgrade-header">
                     <div>
-                      <span class="upgrade-plan-name">Presencia completa</span>
-                      <span class="upgrade-plan-tag upgrade-plan-tag-dark">Pro</span>
+                      <span class="upgrade-plan-name">Pro</span>
+                      <span class="upgrade-plan-tag upgrade-plan-tag-dark">12 meses</span>
                     </div>
                     <div class="upgrade-price">19€ <span>pago único</span></div>
                   </div>
                   <ul class="upgrade-list">
                     <li>Todo lo del plan Base</li>
-                    <li>Web sencilla propia</li>
-                    <li>Botón de reservas y citas</li>
-                    <li>Analítica básica de visitas</li>
+                    <li>Web propia y reservas</li>
+                    <li>Analítica de visitas</li>
                   </ul>
                   <button class="btn btn-soft upgrade-btn" id="upgradeProBtn" type="button">
-                    Quiero el plan Pro
+                    Activar por 19€ · 12 meses
                   </button>
                 </article>
+
+                <p style="font-size:.84rem;color:var(--muted);text-align:center">Renovación por <strong style="color:var(--text)">5€/año</strong> al vencer el plan.</p>
 
               </aside>
             </div>

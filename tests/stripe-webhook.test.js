@@ -102,8 +102,22 @@ describe('stripe-webhook handler', () => {
     expect(upsertData.plan).toBe('base');
   });
 
-  it('establece expires_at aproximadamente 365 días desde ahora', async () => {
+  it('establece expires_at en 90 días para plan base (por defecto)', async () => {
     mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug' } }));
+    const before = Date.now();
+    await handler(buildEvent());
+    const after = Date.now();
+
+    const [upsertData] = mockUpsert.mock.calls[0];
+    const expiresAt = new Date(upsertData.expires_at).getTime();
+    const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+
+    expect(expiresAt).toBeGreaterThanOrEqual(before + ninetyDays);
+    expect(expiresAt).toBeLessThanOrEqual(after + ninetyDays);
+  });
+
+  it('establece expires_at en 365 días para plan pro', async () => {
+    mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug', plan: 'pro' } }));
     const before = Date.now();
     await handler(buildEvent());
     const after = Date.now();

@@ -36,6 +36,9 @@ function makeHandler(stripeClient, db) {
         return { statusCode: 400, body: 'Missing slug in metadata' };
       }
 
+      const planDays = { base: 90, pro: 365, renovacion: 365 };
+      const days = planDays[plan] || 90;
+
       const { error } = await db.from('cards').upsert({
         slug,
         nombre,
@@ -47,7 +50,7 @@ function makeHandler(stripeClient, db) {
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,
-        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
       }, { onConflict: 'slug' });
 
       if (error) {
