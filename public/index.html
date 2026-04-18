@@ -1146,12 +1146,43 @@
           });
         }
 
-        // Botones de mejora (Stripe — pendiente de implementar create-checkout)
-        function goStripe(plan){
-          alert('Checkout '+plan+' próximamente disponible.');
-        }
+        // Botones de mejora → Stripe Checkout
         var ubBtn = document.getElementById('upgradeBaseBtn');
         var upBtn = document.getElementById('upgradeProBtn');
+
+        async function goStripe(plan) {
+          var btn = plan === 'base' ? ubBtn : upBtn;
+          var originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Redirigiendo…';
+          try {
+            var res = await fetch('/api/create-checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                nombre:   cardData.nombre,
+                sector:   cardData.sector,
+                zona:     cardData.zona,
+                whatsapp: cardData.whatsapp,
+                servicios:cardData.servicios,
+                plan:     plan,
+              }),
+            });
+            var json = await res.json();
+            if (json.url) {
+              window.location.href = json.url;
+            } else {
+              alert('Error al iniciar el pago. Inténtalo de nuevo.');
+              btn.disabled = false;
+              btn.textContent = originalText;
+            }
+          } catch(err) {
+            alert('Error de conexión. Inténtalo de nuevo.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        }
+
         if(ubBtn) ubBtn.addEventListener('click', function(){ goStripe('base'); });
         if(upBtn) upBtn.addEventListener('click', function(){ goStripe('pro'); });
 
