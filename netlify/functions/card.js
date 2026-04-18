@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const QRCode = require('qrcode');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -57,6 +58,19 @@ exports.handler = async (event) => {
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu tarjeta en PerfilaPro y me interesa contactarte.')}`
     : null;
 
+  const isPaid = !!data.stripe_session_id;
+  const siteUrl = process.env.SITE_URL || 'https://perfilapro.netlify.app';
+  const cardUrl = `${siteUrl}/c/${data.slug}`;
+
+  let qrDataUrl = null;
+  if (isPaid) {
+    qrDataUrl = await QRCode.toDataURL(cardUrl, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#01696f', light: '#ffffff' },
+    });
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -91,6 +105,12 @@ exports.handler = async (event) => {
     .card-powered{text-align:center;padding:.75rem 1rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--faint)}
     .card-powered strong{color:var(--primary)}
     .card-powered a{display:inline-block;margin-top:.45rem;padding:.45rem 1rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none}
+    .card-qr{display:flex;flex-direction:column}
+    .qr-wrap{display:flex;align-items:center;gap:1rem}
+    .qr-wrap img{border-radius:.5rem;border:1px solid var(--border);flex-shrink:0}
+    .qr-info p{font-size:.8rem;color:var(--muted);margin-bottom:.5rem}
+    .qr-download{display:inline-block;padding:.4rem .9rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none;transition:background .2s}
+    .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
   </style>
@@ -114,6 +134,17 @@ exports.handler = async (event) => {
         Contactar por WhatsApp
       ${waUrl ? '</a>' : '</div>'}
     </div>
+    ${qrDataUrl ? `
+    <div class="card-sec card-qr">
+      <div class="card-sec-label">Código QR</div>
+      <div class="qr-wrap">
+        <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="120" height="120">
+        <div class="qr-info">
+          <p>Escanea para abrir esta tarjeta</p>
+          <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
+        </div>
+      </div>
+    </div>` : ''}
     <div class="card-powered">
       Creado con <strong>PerfilaPro</strong><br>
       <a href="https://perfilapro.netlify.app">Crea tu propia tarjeta</a>

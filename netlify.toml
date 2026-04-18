@@ -29,7 +29,17 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/create-checkout"
+  to     = "/.netlify/functions/create-checkout"
+  status = 200
+
+[[redirects]]
   from   = "/c/:slug"
   to     = "/.netlify/functions/card"
   status = 200
   force  = true
+
+[[redirects]]
+  from   = "/api/admin-data"
+  to     = "/.netlify/functions/admin-data"
+  status = 200
