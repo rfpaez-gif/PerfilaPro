@@ -279,18 +279,30 @@
       }
       .step h3{font-size:1.04rem;margin-bottom:.35rem}
       .step p{font-size:.93rem;color:var(--muted)}
-      .examples{display:grid;gap:.9rem}
+      .cards-carousel-wrapper{position:relative;width:100%}
+      .examples{
+        display:flex;gap:1.5rem;overflow-x:auto;scroll-snap-type:x mandatory;
+        scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1rem;
+      }
+      .examples::-webkit-scrollbar{display:none}
+      .examples .example{scroll-snap-align:start;flex:0 0 calc(100% - 2rem);max-width:360px}
       .example{
         display:grid;grid-template-columns:84px 1fr;gap:.95rem;align-items:center;
-        background:#fff;border:1px solid var(--line);border-radius:1.2rem;padding:.85rem;box-shadow:var(--shadow-sm);
+        background:#fff;border:1px solid oklch(0.2 0.01 80 / 0.08);border-radius:1.25rem;padding:.85rem;
+        box-shadow:0 2px 4px oklch(0.2 0.01 80 / 0.06),0 8px 24px oklch(0.2 0.01 80 / 0.08);
+        transition:transform .2s ease,box-shadow .2s ease;overflow:hidden;
       }
+      .example:hover{transform:translateY(-4px);box-shadow:0 4px 8px oklch(0.2 0.01 80 / 0.08),0 16px 40px oklch(0.2 0.01 80 / 0.12)}
       .example-photo{width:84px;height:84px;border-radius:999px;overflow:hidden;background:#d8ebe9}
       .example-tag{
         display:inline-flex;padding:.2rem .6rem;border-radius:999px;font-size:.7rem;font-weight:700;text-transform:uppercase;
         letter-spacing:.12em;background:var(--surface-2);color:var(--muted);margin-bottom:.2rem;
       }
-      .example h3{font-size:1.02rem;margin-bottom:.2rem}
+      .example h3{font-size:1.02rem;font-weight:700;margin-bottom:.2rem}
       .example p{font-size:.9rem;color:var(--muted)}
+      .carousel-dots{display:flex;justify-content:center;gap:.5rem;margin-top:1.25rem}
+      .dot{width:8px;height:8px;border-radius:9999px;background:#ccc;border:none;cursor:pointer;transition:background .2s,width .2s;padding:0}
+      .dot.active{background:var(--primary);width:24px}
       .duo{display:grid;gap:1.6rem}
       .panel{
         background:#fff;border-radius:1.5rem;padding:1.3rem 1.3rem;border:1px solid var(--line);box-shadow:var(--shadow-sm);
@@ -514,7 +526,7 @@
         .duo{grid-template-columns:1fr}
         .vision{grid-template-columns:1fr}
         .steps{grid-template-columns:1fr}
-        .examples{grid-template-columns:1fr}
+        .examples .example{flex:0 0 calc(100% - 2rem)}
         .plans-grid{grid-template-columns:1fr}
         .copy-link-row{flex-direction:column}
         .cookie-actions{flex-direction:column}
@@ -536,9 +548,8 @@
         .steps{
           grid-template-columns:repeat(3,1fr);
         }
-        .examples{
-          grid-template-columns:repeat(2,1fr);
-        }
+        .examples .example{flex:0 0 calc(25% - 1.125rem);max-width:none}
+        .carousel-dots{display:none}
         .plans-grid{grid-template-columns:repeat(2,1fr);max-width:740px;margin-inline:auto}
       }
       @media (prefers-reduced-motion: reduce){
@@ -707,39 +718,47 @@
             <h2 class="title">Diseñada para oficios, salud, educación y equipos comerciales.</h2>
             <p class="subtitle">Funciona bien en cualquier perfil que necesite combinar presencia profesional y contacto rápido.</p>
           </div>
-          <div class="examples">
-            <article class="example">
-              <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg" alt="Profesional de fontanería" width="600" height="900" loading="lazy"></div>
-              <div>
-                <span class="example-tag">Oficios</span>
-                <h3>Paco Fontanero</h3>
-                <p>Servicio local, urgencia, zona y WhatsApp directo.</p>
-              </div>
-            </article>
-            <article class="example">
-              <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/03fb20141d75b99f204999c6cdc135bbee520da7.jpg" alt="Fisioterapeuta en clínica" width="2121" height="1414" loading="lazy"></div>
-              <div>
-                <span class="example-tag">Salud</span>
-                <h3>Laura Fisio</h3>
-                <p>Imagen cuidada, confianza y contacto sencillo.</p>
-              </div>
-            </article>
-            <article class="example">
-              <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
-              <div>
-                <span class="example-tag">Educación</span>
-                <h3>Ana Profe</h3>
-                <p>Clases, mentoría y formación con foco local.</p>
-              </div>
-            </article>
-            <article class="example">
-              <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/04037067e05d420edd481f7d7f9c902669f12d51.jpg" alt="Comercial profesional" width="667" height="1000" loading="lazy"></div>
-              <div>
-                <span class="example-tag">Comercial</span>
-                <h3>Sergio Área Levante</h3>
-                <p>Perfil personal que también representa a empresa y territorio.</p>
-              </div>
-            </article>
+          <div class="cards-carousel-wrapper">
+            <div class="examples">
+              <article class="example">
+                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg" alt="Profesional de fontanería" width="600" height="900" loading="lazy"></div>
+                <div>
+                  <span class="example-tag">Oficios</span>
+                  <h3>Paco Fontanero</h3>
+                  <p>Servicio local, urgencia, zona y WhatsApp directo.</p>
+                </div>
+              </article>
+              <article class="example">
+                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/03fb20141d75b99f204999c6cdc135bbee520da7.jpg" alt="Fisioterapeuta en clínica" width="2121" height="1414" loading="lazy"></div>
+                <div>
+                  <span class="example-tag">Salud</span>
+                  <h3>Laura Fisio</h3>
+                  <p>Imagen cuidada, confianza y contacto sencillo.</p>
+                </div>
+              </article>
+              <article class="example">
+                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
+                <div>
+                  <span class="example-tag">Educación</span>
+                  <h3>Ana Profe</h3>
+                  <p>Clases, mentoría y formación con foco local.</p>
+                </div>
+              </article>
+              <article class="example">
+                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/04037067e05d420edd481f7d7f9c902669f12d51.jpg" alt="Comercial profesional" width="667" height="1000" loading="lazy"></div>
+                <div>
+                  <span class="example-tag">Comercial</span>
+                  <h3>Sergio Área Levante</h3>
+                  <p>Perfil personal que también representa a empresa y territorio.</p>
+                </div>
+              </article>
+            </div>
+            <div class="carousel-dots" role="tablist" aria-label="Navegación del carrusel">
+              <button class="dot active" aria-label="Tarjeta 1"></button>
+              <button class="dot" aria-label="Tarjeta 2"></button>
+              <button class="dot" aria-label="Tarjeta 3"></button>
+              <button class="dot" aria-label="Tarjeta 4"></button>
+            </div>
           </div>
         </div>
       </section>
@@ -1197,6 +1216,22 @@
             stageForm.scrollIntoView({behavior:'smooth',block:'start'});
           });
         }
+      })();
+
+      // Carrusel de ejemplos
+      (function(){
+        var carousel = document.querySelector('.examples');
+        var dots = document.querySelectorAll('.dot');
+        if(!carousel || !dots.length) return;
+        carousel.addEventListener('scroll', function(){
+          var index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+          dots.forEach(function(dot, i){ dot.classList.toggle('active', i === index); });
+        });
+        dots.forEach(function(dot, i){
+          dot.addEventListener('click', function(){
+            carousel.scrollTo({ left: carousel.offsetWidth * i, behavior: 'smooth' });
+          });
+        });
       })();
     </script>
   </body>
