@@ -50,8 +50,6 @@ exports.handler = async (event) => {
   const waNumber = '34' + whatsapp.replace(/\D/g, '');
   const siteUrl  = process.env.SITE_URL || 'https://perfilapro.netlify.app';
 
-  console.log('ENV CHECK - KEY:', (process.env.STRIPE_SECRET_KEY||'').substring(0,12), '| PRICE_BASE:', process.env.STRIPE_PRICE_BASE, '| PRICE_PRO:', process.env.STRIPE_PRICE_PRO);
-
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
