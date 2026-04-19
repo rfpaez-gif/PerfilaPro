@@ -281,25 +281,28 @@
       .step p{font-size:.93rem;color:var(--muted)}
       .cards-carousel-wrapper{position:relative;width:100%}
       .examples{
-        display:flex;gap:1.5rem;overflow-x:auto;scroll-snap-type:x mandatory;
-        scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1rem;
+        display:flex;gap:1.25rem;overflow-x:auto;scroll-snap-type:x mandatory;
+        scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+        padding-bottom:1rem;padding-inline:.25rem;
       }
       .examples::-webkit-scrollbar{display:none}
-      .examples .example{scroll-snap-align:start;flex:0 0 calc(100% - 2rem);max-width:360px}
+      .examples .example{scroll-snap-align:start;flex:0 0 80%;max-width:320px}
       .example{
-        display:grid;grid-template-columns:84px 1fr;gap:.95rem;align-items:center;
-        background:#fff;border:1px solid oklch(0.2 0.01 80 / 0.08);border-radius:1.25rem;padding:.85rem;
-        box-shadow:0 2px 4px oklch(0.2 0.01 80 / 0.06),0 8px 24px oklch(0.2 0.01 80 / 0.08);
-        transition:transform .2s ease,box-shadow .2s ease;overflow:hidden;
+        display:flex;flex-direction:column;
+        background:#fff;border:1px solid oklch(0.2 0.01 80 / 0.08);border-radius:1.5rem;overflow:hidden;
+        box-shadow:0 2px 8px oklch(0.2 0.01 80 / 0.06),0 12px 32px oklch(0.2 0.01 80 / 0.1);
+        transition:transform .25s ease,box-shadow .25s ease;
       }
-      .example:hover{transform:translateY(-4px);box-shadow:0 4px 8px oklch(0.2 0.01 80 / 0.08),0 16px 40px oklch(0.2 0.01 80 / 0.12)}
-      .example-photo{width:84px;height:84px;border-radius:999px;overflow:hidden;background:#d8ebe9}
+      .example:hover{transform:translateY(-6px);box-shadow:0 4px 12px oklch(0.2 0.01 80 / 0.08),0 20px 48px oklch(0.2 0.01 80 / 0.14)}
+      .example-photo{width:100%;height:190px;overflow:hidden;background:#d8ebe9;flex-shrink:0}
+      .example-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+      .example-body{padding:1.1rem 1.2rem 1.3rem;display:flex;flex-direction:column;gap:.35rem}
       .example-tag{
-        display:inline-flex;padding:.2rem .6rem;border-radius:999px;font-size:.7rem;font-weight:700;text-transform:uppercase;
-        letter-spacing:.12em;background:var(--surface-2);color:var(--muted);margin-bottom:.2rem;
+        display:inline-flex;padding:.2rem .6rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;
+        letter-spacing:.12em;background:var(--surface-2);color:var(--muted);align-self:flex-start;
       }
-      .example h3{font-size:1.02rem;font-weight:700;margin-bottom:.2rem}
-      .example p{font-size:.9rem;color:var(--muted)}
+      .example h3{font-size:1.05rem;font-weight:700;margin:0}
+      .example p{font-size:.88rem;color:var(--muted);margin:0;line-height:1.45}
       .carousel-dots{display:flex;justify-content:center;gap:.5rem;margin-top:1.25rem}
       .dot{width:8px;height:8px;border-radius:9999px;background:#ccc;border:none;cursor:pointer;transition:background .2s,width .2s;padding:0}
       .dot.active{background:var(--primary);width:24px}
@@ -526,11 +529,14 @@
         .duo{grid-template-columns:1fr}
         .vision{grid-template-columns:1fr}
         .steps{grid-template-columns:1fr}
-        .examples .example{flex:0 0 calc(100% - 2rem)}
+        .examples .example{flex:0 0 80%;max-width:320px}
         .plans-grid{grid-template-columns:1fr}
         .copy-link-row{flex-direction:column}
         .cookie-actions{flex-direction:column}
         .card-stage{max-width:340px;margin-inline:auto}
+      }
+      @media(min-width:600px) and (max-width:899px){
+        .examples .example{flex:0 0 calc(50% - .625rem);max-width:none}
       }
       @media(min-width:900px){
         .hero-inner{
@@ -548,8 +554,8 @@
         .steps{
           grid-template-columns:repeat(3,1fr);
         }
-        .examples .example{flex:0 0 calc(25% - 1.125rem);max-width:none}
-        .carousel-dots{display:none}
+        .examples .example{flex:0 0 calc(33.333% - .84rem);max-width:none}
+        .example-photo{height:210px}
         .plans-grid{grid-template-columns:repeat(2,1fr);max-width:740px;margin-inline:auto}
       }
       @media (prefers-reduced-motion: reduce){
@@ -721,32 +727,32 @@
           <div class="cards-carousel-wrapper">
             <div class="examples">
               <article class="example">
-                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg" alt="Profesional de fontanería" width="600" height="900" loading="lazy"></div>
-                <div>
+                <div class="example-photo"><img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg" alt="Profesional de fontanería" width="600" height="900" loading="lazy"></div>
+                <div class="example-body">
                   <span class="example-tag">Oficios</span>
                   <h3>Paco Fontanero</h3>
                   <p>Servicio local, urgencia, zona y WhatsApp directo.</p>
                 </div>
               </article>
               <article class="example">
-                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/03fb20141d75b99f204999c6cdc135bbee520da7.jpg" alt="Fisioterapeuta en clínica" width="2121" height="1414" loading="lazy"></div>
-                <div>
+                <div class="example-photo"><img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/03fb20141d75b99f204999c6cdc135bbee520da7.jpg" alt="Fisioterapeuta en clínica" width="2121" height="1414" loading="lazy"></div>
+                <div class="example-body">
                   <span class="example-tag">Salud</span>
                   <h3>Laura Fisio</h3>
                   <p>Imagen cuidada, confianza y contacto sencillo.</p>
                 </div>
               </article>
               <article class="example">
-                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
-                <div>
+                <div class="example-photo"><img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
+                <div class="example-body">
                   <span class="example-tag">Educación</span>
                   <h3>Ana Profe</h3>
                   <p>Clases, mentoría y formación con foco local.</p>
                 </div>
               </article>
               <article class="example">
-                <div class="example-photo"><img style="width:100%;height:100%;object-fit:cover;object-position:top center" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/04037067e05d420edd481f7d7f9c902669f12d51.jpg" alt="Comercial profesional" width="667" height="1000" loading="lazy"></div>
-                <div>
+                <div class="example-photo"><img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/04037067e05d420edd481f7d7f9c902669f12d51.jpg" alt="Comercial profesional" width="667" height="1000" loading="lazy"></div>
+                <div class="example-body">
                   <span class="example-tag">Comercial</span>
                   <h3>Sergio Área Levante</h3>
                   <p>Perfil personal que también representa a empresa y territorio.</p>
@@ -1223,13 +1229,17 @@
         var carousel = document.querySelector('.examples');
         var dots = document.querySelectorAll('.dot');
         if(!carousel || !dots.length) return;
+        function cardStep(){
+          var card = carousel.querySelector('.example');
+          return card ? card.offsetWidth + 20 : carousel.offsetWidth; // 20 ≈ gap 1.25rem
+        }
         carousel.addEventListener('scroll', function(){
-          var index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+          var index = Math.round(carousel.scrollLeft / cardStep());
           dots.forEach(function(dot, i){ dot.classList.toggle('active', i === index); });
         });
         dots.forEach(function(dot, i){
           dot.addEventListener('click', function(){
-            carousel.scrollTo({ left: carousel.offsetWidth * i, behavior: 'smooth' });
+            carousel.scrollTo({ left: cardStep() * i, behavior: 'smooth' });
           });
         });
       })();
