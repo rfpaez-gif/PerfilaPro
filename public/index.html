@@ -1197,12 +1197,12 @@
             if (json.url) {
               window.location.href = json.url;
             } else {
-              alert('Error al iniciar el pago. Inténtalo de nuevo.');
+              alert('Error al iniciar el pago:\n' + (json.error || res.status + ' ' + res.statusText));
               btn.disabled = false;
               btn.textContent = originalText;
             }
           } catch(err) {
-            alert('Error de conexión. Inténtalo de nuevo.');
+            alert('Error de conexión:\n' + err.message);
             btn.disabled = false;
             btn.textContent = originalText;
           }
