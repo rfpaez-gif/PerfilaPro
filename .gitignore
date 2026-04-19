@@ -1,3 +1,4 @@
 node_modules/
 .env
 .env.local
+fix-netlify-env.sh
