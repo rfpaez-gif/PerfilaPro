@@ -15,6 +15,12 @@ const SECTOR_LABELS = {
   hosteleria: 'Hostelería y restauración',
   tech:       'Tecnología y digital',
   legal:      'Legal y asesoría',
+  jardineria: 'Jardinería y paisajismo',
+  transporte: 'Transporte y mudanzas',
+  fotografia: 'Fotografía y vídeo',
+  eventos:    'Eventos y celebraciones',
+  automocion: 'Automoción y mecánica',
+  seguridad:  'Seguridad y vigilancia',
   otro:       'Otro',
 };
 

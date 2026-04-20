@@ -433,6 +433,21 @@
       .photo-status{font-size:.82rem;margin-top:.35rem}
       .foto-declaration{display:flex;align-items:flex-start;gap:.6rem;background:#fffbeb;border:1px solid #fbbf24;border-radius:.75rem;padding:.85rem 1rem;font-size:.84rem;color:var(--text);cursor:pointer;margin-bottom:.5rem}
       .foto-declaration input{margin-top:.15rem;flex-shrink:0;accent-color:var(--primary)}
+      .sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-top:.35rem}
+      .sector-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.8rem .4rem;border:1.5px solid var(--line);border-radius:.85rem;background:var(--surface-2);cursor:pointer;transition:border-color .15s,background .15s;text-align:center;width:100%}
+      .sector-card:hover{border-color:var(--primary);background:var(--plight)}
+      .sector-card.is-selected{border-color:var(--primary);background:var(--plight);box-shadow:0 0 0 3px rgba(1,105,111,.12)}
+      .sector-card.is-error{border-color:#dc2626;background:#fff5f5}
+      .sc-icon{font-size:1.5rem;line-height:1}
+      .sc-label{font-size:.68rem;font-weight:600;color:var(--text);line-height:1.25}
+      .sector-hint-error{color:#dc2626;font-size:.84rem;margin-top:.35rem}
+      .chips-section{margin-bottom:.75rem;animation:fadeIn .2s ease}
+      .chips-label{font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:.45rem}
+      .chips-wrap{display:flex;flex-wrap:wrap;gap:.4rem}
+      .chip{padding:.32rem .85rem;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:.82rem;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
+      .chip:hover:not(:disabled){border-color:var(--primary);color:var(--primary);background:var(--plight)}
+      .chip.is-used{background:var(--plight);border-color:var(--primary);color:var(--primary);opacity:.6;cursor:default}
+      @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
       .photo-status.loading{color:var(--muted)}
       .photo-status.ok{color:#16a34a;font-weight:600}
       .photo-status.err{color:#dc2626}
@@ -462,6 +477,7 @@
         display:grid;place-items:center;font-size:.85rem;flex:0 0 auto;
       }
       .result-layout{display:grid;gap:1.25rem}
+      @media(min-width:480px){.sector-grid{grid-template-columns:repeat(4,1fr)}}
       @media(min-width:720px){.result-layout{grid-template-columns:340px 1fr}}
       .result-card-wrap{position:relative}
       .result-badge-free{
@@ -882,20 +898,27 @@
               </div>
 
               <div class="form-row">
-                <label class="form-label" for="fSector">Sector o especialidad <span class="req">*</span></label>
-                <select class="form-input" id="fSector" name="sector" required>
-                  <option value="" disabled selected>Selecciona tu sector…</option>
-                  <option value="oficios">Oficios y servicios del hogar</option>
-                  <option value="salud">Salud y bienestar</option>
-                  <option value="educacion">Educación y formación</option>
-                  <option value="comercial">Comercial y ventas</option>
-                  <option value="belleza">Belleza y estética</option>
-                  <option value="reforma">Reforma y construcción</option>
-                  <option value="hosteleria">Hostelería y restauración</option>
-                  <option value="tech">Tecnología y digital</option>
-                  <option value="legal">Legal y asesoría</option>
-                  <option value="otro">Otro</option>
-                </select>
+                <label class="form-label">Sector o especialidad <span class="req">*</span></label>
+                <input type="hidden" id="fSector" name="sector">
+                <div class="sector-grid" id="sectorGrid">
+                  <button type="button" class="sector-card" data-value="oficios"><span class="sc-icon">🔧</span><span class="sc-label">Oficios del hogar</span></button>
+                  <button type="button" class="sector-card" data-value="belleza"><span class="sc-icon">✂️</span><span class="sc-label">Belleza y estética</span></button>
+                  <button type="button" class="sector-card" data-value="reforma"><span class="sc-icon">🏗️</span><span class="sc-label">Reforma y construcción</span></button>
+                  <button type="button" class="sector-card" data-value="salud"><span class="sc-icon">🩺</span><span class="sc-label">Salud y bienestar</span></button>
+                  <button type="button" class="sector-card" data-value="educacion"><span class="sc-icon">📚</span><span class="sc-label">Educación y formación</span></button>
+                  <button type="button" class="sector-card" data-value="hosteleria"><span class="sc-icon">🍽️</span><span class="sc-label">Hostelería</span></button>
+                  <button type="button" class="sector-card" data-value="comercial"><span class="sc-icon">💼</span><span class="sc-label">Comercial y ventas</span></button>
+                  <button type="button" class="sector-card" data-value="tech"><span class="sc-icon">💻</span><span class="sc-label">Tecnología y digital</span></button>
+                  <button type="button" class="sector-card" data-value="legal"><span class="sc-icon">⚖️</span><span class="sc-label">Legal y asesoría</span></button>
+                  <button type="button" class="sector-card" data-value="jardineria"><span class="sc-icon">🌿</span><span class="sc-label">Jardinería</span></button>
+                  <button type="button" class="sector-card" data-value="transporte"><span class="sc-icon">🚚</span><span class="sc-label">Transporte y mudanzas</span></button>
+                  <button type="button" class="sector-card" data-value="fotografia"><span class="sc-icon">📸</span><span class="sc-label">Fotografía y vídeo</span></button>
+                  <button type="button" class="sector-card" data-value="eventos"><span class="sc-icon">🎉</span><span class="sc-label">Eventos y celebraciones</span></button>
+                  <button type="button" class="sector-card" data-value="automocion"><span class="sc-icon">🔩</span><span class="sc-label">Automoción y mecánica</span></button>
+                  <button type="button" class="sector-card" data-value="seguridad"><span class="sc-icon">🔒</span><span class="sc-label">Seguridad y vigilancia</span></button>
+                  <button type="button" class="sector-card" data-value="otro"><span class="sc-icon">✨</span><span class="sc-label">Otro</span></button>
+                </div>
+                <p class="sector-hint-error" id="sectorError" hidden>Selecciona un sector para continuar.</p>
               </div>
 
               <div class="form-row">
@@ -913,6 +936,10 @@
 
               <div class="form-row">
                 <label class="form-label">Tus servicios principales <span class="req">*</span></label>
+                <div class="chips-section" id="chipsSection" hidden>
+                  <p class="chips-label">Toca para añadir a tus servicios:</p>
+                  <div class="chips-wrap" id="chipsWrap"></div>
+                </div>
                 <div class="services-inputs" id="servicesInputs">
                   <input class="form-input" type="text" name="servicio1" placeholder="Ej: Instalación de tuberías" maxlength="50">
                   <input class="form-input" type="text" name="servicio2" placeholder="Ej: Urgencias 24h" maxlength="50">
@@ -1105,6 +1132,73 @@
 
     <script>
       (function(){
+        // Datos de sectores y sugerencias
+        var SECTOR_DATA = {
+          oficios:   {label:'Oficios y servicios del hogar', sugerencias:['Fontanería','Electricidad','Cerrajería','Pintura interior','Carpintería','Urgencias 24h']},
+          belleza:   {label:'Belleza y estética', sugerencias:['Corte y peinado','Coloración','Manicura','Depilación','Tratamientos faciales','Maquillaje']},
+          reforma:   {label:'Reforma y construcción', sugerencias:['Reforma integral','Alicatado y solado','Pintura','Obras menores','Interiorismo','Presupuesto sin compromiso']},
+          salud:     {label:'Salud y bienestar', sugerencias:['Fisioterapia','Masaje terapéutico','Nutrición y dietética','Psicología','Podología','Osteopatía']},
+          educacion: {label:'Educación y formación', sugerencias:['Clases particulares','Inglés','Matemáticas','Apoyo escolar','Preparación de exámenes','Formación online']},
+          hosteleria:{label:'Hostelería y restauración', sugerencias:['Catering','Cocina a domicilio','Eventos y banquetes','Menú diario','Comida para llevar','Barra de bar']},
+          comercial: {label:'Comercial y ventas', sugerencias:['Asesoría comercial','Marketing digital','Captación de clientes','Gestión de ventas','Consultoría de negocio']},
+          tech:      {label:'Tecnología y digital', sugerencias:['Diseño web','Reparación de ordenadores','Soporte IT','Apps móviles','Ciberseguridad','Redes y servidores']},
+          legal:     {label:'Legal y asesoría', sugerencias:['Asesoría fiscal','Gestoría','Abogacía','Contratos','Herencias y testamentos','Derecho laboral']},
+          jardineria:{label:'Jardinería y paisajismo', sugerencias:['Diseño de jardines','Mantenimiento de jardín','Poda y tala','Césped artificial','Riego automático','Terrazas']},
+          transporte:{label:'Transporte y mudanzas', sugerencias:['Mudanzas locales','Transporte de muebles','Portes económicos','Guardamuebles','Mudanzas de oficina']},
+          fotografia:{label:'Fotografía y vídeo', sugerencias:['Fotografía de bodas','Retrato profesional','Fotografía de producto','Vídeo corporativo','Fotografía de eventos','Edición y retoque']},
+          eventos:   {label:'Eventos y celebraciones', sugerencias:['Organización de bodas','Eventos corporativos','Comuniones y bautizos','DJ y música','Animación infantil','Decoración de eventos']},
+          automocion:{label:'Automoción y mecánica', sugerencias:['Mecánica general','Diagnosis electrónica','Chapa y pintura','Cambio de neumáticos','Aire acondicionado','ITV y trámites']},
+          seguridad: {label:'Seguridad y vigilancia', sugerencias:['Instalación de alarmas','Videovigilancia','Control de accesos','Cerrajería de seguridad','Seguridad para empresas']},
+          otro:      {label:'Otro', sugerencias:[]},
+        };
+
+        // Sector grid
+        var sectorGrid  = document.getElementById('sectorGrid');
+        var fSectorInput = document.getElementById('fSector');
+        var chipsSection = document.getElementById('chipsSection');
+        var chipsWrap    = document.getElementById('chipsWrap');
+        var sectorError  = document.getElementById('sectorError');
+
+        function addSuggestion(text, chip) {
+          var inputs = ['servicio1','servicio2','servicio3'].map(function(n){ return document.querySelector('[name="'+n+'"]'); });
+          for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i] && !inputs[i].value.trim()) {
+              inputs[i].value = text;
+              inputs[i].classList.remove('is-error');
+              chip.classList.add('is-used');
+              chip.disabled = true;
+              return;
+            }
+          }
+        }
+
+        if (sectorGrid) {
+          sectorGrid.querySelectorAll('.sector-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+              sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.remove('is-selected','is-error'); });
+              card.classList.add('is-selected');
+              var val = card.dataset.value;
+              fSectorInput.value = val;
+              if (sectorError) sectorError.setAttribute('hidden','');
+              var data = SECTOR_DATA[val];
+              if (data && data.sugerencias.length) {
+                chipsWrap.innerHTML = '';
+                data.sugerencias.forEach(function(sug) {
+                  var chip = document.createElement('button');
+                  chip.type = 'button';
+                  chip.className = 'chip';
+                  chip.textContent = sug;
+                  chip.addEventListener('click', function(){ addSuggestion(sug, chip); });
+                  chipsWrap.appendChild(chip);
+                });
+                chipsSection.removeAttribute('hidden');
+              } else {
+                chipsSection.setAttribute('hidden','');
+              }
+            });
+          });
+        }
+
         // Menú móvil
         var menuBtn = document.getElementById('menuBtn');
         var mainNav = document.getElementById('mainNav');
@@ -1210,11 +1304,15 @@
             var desc = document.getElementById('fDesc').value.trim();
 
             // Validación básica
-            [document.getElementById('fNombre'),document.getElementById('fSector'),
+            [document.getElementById('fNombre'),
              document.getElementById('fZona'),document.getElementById('fWhatsapp'),
              form.elements['servicio1']].forEach(function(el){
                el.classList.toggle('is-error', !el.value.trim());
              });
+            if (!sector) {
+              sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.add('is-error'); });
+              if (sectorError) sectorError.removeAttribute('hidden');
+            }
             if(!nombre||!sector||!zona||!whatsapp||!s1) return;
 
             var servicios = [s1,s2,s3].filter(Boolean);
@@ -1222,11 +1320,7 @@
 
             // Rellenar tarjeta de previsualización
             document.getElementById('rNombre').textContent = nombre;
-            var sectorLabels = {oficios:'Oficios y servicios del hogar',salud:'Salud y bienestar',
-              educacion:'Educación y formación',comercial:'Comercial y ventas',belleza:'Belleza y estética',
-              reforma:'Reforma y construcción',hosteleria:'Hostelería y restauración',
-              tech:'Tecnología y digital',legal:'Legal y asesoría',otro:'Otro'};
-            document.getElementById('rSector').textContent = sectorLabels[sector]||sector;
+            document.getElementById('rSector').textContent = (SECTOR_DATA[sector] && SECTOR_DATA[sector].label) || sector;
             document.getElementById('rZona').textContent = '📍 '+zona;
 
             var rServicios = document.getElementById('rServicios');
@@ -1367,6 +1461,11 @@
             localFotoDataUrl = null;
             if(photoThumb) photoThumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
             if(photoStatus){ photoStatus.textContent=''; photoStatus.className='photo-status'; }
+            if(fSectorInput) fSectorInput.value='';
+            if(sectorGrid) sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.remove('is-selected','is-error'); });
+            if(chipsSection) chipsSection.setAttribute('hidden','');
+            if(chipsWrap) chipsWrap.innerHTML='';
+            if(sectorError) sectorError.setAttribute('hidden','');
             var decl2 = document.getElementById('fotoDeclaration');
             if(decl2){ decl2.setAttribute('hidden',''); decl2.style.border=''; }
             var cb = document.getElementById('fotoConsent');
