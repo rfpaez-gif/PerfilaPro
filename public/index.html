@@ -425,6 +425,15 @@
       select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2301696f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.5rem}
       textarea.form-input{resize:vertical;min-height:90px;line-height:1.55}
       .form-hint{font-size:.84rem;color:var(--muted);margin-top:.25rem}
+      .photo-upload{display:flex;align-items:center;gap:1rem;padding:1rem;border:1.5px dashed var(--line);border-radius:.85rem;background:var(--surface-2)}
+      .photo-thumb{width:72px;height:72px;border-radius:50%;border:2px solid var(--line);background:var(--surface);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--faint)}
+      .photo-thumb img{width:100%;height:100%;object-fit:cover}
+      .photo-select-btn{cursor:pointer;display:inline-block;padding:.5rem 1rem;border-radius:.65rem;font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);color:var(--text)}
+      .photo-select-btn:hover{border-color:var(--primary);color:var(--primary)}
+      .photo-status{font-size:.82rem;margin-top:.35rem}
+      .photo-status.loading{color:var(--muted)}
+      .photo-status.ok{color:#16a34a;font-weight:600}
+      .photo-status.err{color:#dc2626}
       .services-inputs{display:grid;gap:.6rem}
       .input-prefix-wrap{display:flex;gap:0}
       .input-prefix{
@@ -916,9 +925,24 @@
                 <p class="form-hint"><span id="descCount">0</span>/200 caracteres</p>
               </div>
 
+              <div class="form-row">
+                <label class="form-label">Foto de perfil o logo <span class="opt">(opcional)</span></label>
+                <div class="photo-upload" id="photoUpload">
+                  <div class="photo-thumb" id="photoThumb">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <div>
+                    <label for="fFoto" class="photo-select-btn">Subir foto</label>
+                    <input type="file" id="fFoto" name="foto" accept="image/*" hidden>
+                    <p class="form-hint" style="margin-top:.4rem">JPG o PNG · Máx 2 MB · Se sube al activar</p>
+                    <p class="photo-status" id="photoStatus"></p>
+                  </div>
+                </div>
+              </div>
+
               <div class="form-free-notice">
                 <span class="notice-icon">ℹ️</span>
-                <span>Empezarás con la versión <strong>gratuita</strong> (con marca de agua, sin foto ni QR). Podrás mejorar tu tarjeta en cualquier momento por 9€ o 19€.</span>
+                <span>Empezarás con la versión <strong>gratuita</strong> (con marca de agua, sin QR). Podrás mejorar tu tarjeta en cualquier momento por 9€ o 19€.</span>
               </div>
 
               <button class="btn btn-primary form-submit" type="submit" id="submitBtn">
@@ -944,8 +968,8 @@
                 <div class="result-badge-free">Vista previa</div>
                 <article class="profile-card" id="resultCard">
                   <div class="profile-head">
-                    <div class="profile-avatar result-avatar-free">
-                      <div class="avatar-placeholder">
+                    <div class="profile-avatar result-avatar-free" id="rAvatarWrap">
+                      <div class="avatar-placeholder" id="rAvatarPlaceholder">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                       </div>
                     </div>
@@ -1109,6 +1133,57 @@
           });
         }
 
+        // Preview de foto al seleccionar archivo
+        var fotoInput   = document.getElementById('fFoto');
+        var photoThumb  = document.getElementById('photoThumb');
+        var photoStatus = document.getElementById('photoStatus');
+        var localFotoDataUrl = null;
+
+        function compressImage(file) {
+          return new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+              var img = new Image();
+              img.onload = function() {
+                var maxDim = 400, w = img.width, h = img.height;
+                if (w > maxDim || h > maxDim) {
+                  if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                  else { w = Math.round(w * maxDim / h); h = maxDim; }
+                }
+                var canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
+              };
+              img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        if (fotoInput) {
+          fotoInput.addEventListener('change', async function() {
+            var file = fotoInput.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+              photoStatus.textContent = 'La imagen supera los 2 MB.';
+              photoStatus.className = 'photo-status err';
+              return;
+            }
+            photoStatus.textContent = 'Cargando preview…';
+            photoStatus.className = 'photo-status loading';
+            localFotoDataUrl = await compressImage(file);
+            // Mostrar thumbnail y actualizar avatar del preview
+            photoThumb.innerHTML = '<img src="' + localFotoDataUrl + '" alt="preview">';
+            var rPlaceholder = document.getElementById('rAvatarPlaceholder');
+            if (rPlaceholder) {
+              rPlaceholder.innerHTML = '<img src="' + localFotoDataUrl + '" alt="foto" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            }
+            photoStatus.textContent = 'Foto lista. Se subirá al activar.';
+            photoStatus.className = 'photo-status ok';
+          });
+        }
+
         // Envío del formulario → previsualización
         var form = document.getElementById('crearForm');
         var cardData = {};
@@ -1207,6 +1282,26 @@
           var btn = plan === 'base' ? ubBtn : upBtn;
           var originalText = btn.textContent;
           btn.disabled = true;
+
+          // Subir foto si hay una seleccionada
+          var fotoUrl = '';
+          if (localFotoDataUrl) {
+            btn.textContent = 'Subiendo foto…';
+            try {
+              var base64 = localFotoDataUrl.split(',')[1];
+              var slug = cardData.nombre.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40);
+              var upRes = await fetch('/api/upload-avatar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ base64: base64, contentType: 'image/jpeg', slug: slug }),
+              });
+              var upJson = await upRes.json();
+              if (upJson.url) { fotoUrl = upJson.url; }
+            } catch(e) { /* foto opcional, continuamos sin ella */ }
+          }
+
           btn.textContent = 'Redirigiendo…';
           try {
             var res = await fetch('/api/create-checkout', {
@@ -1219,6 +1314,7 @@
                 whatsapp: cardData.whatsapp,
                 servicios:cardData.servicios,
                 plan:     plan,
+                foto:     fotoUrl,
               }),
             });
             var json = await res.json();
@@ -1247,6 +1343,9 @@
             stageForm.removeAttribute('hidden');
             form.reset();
             if(descCount) descCount.textContent='0';
+            localFotoDataUrl = null;
+            if(photoThumb) photoThumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+            if(photoStatus){ photoStatus.textContent=''; photoStatus.className='photo-status'; }
             stageForm.scrollIntoView({behavior:'smooth',block:'start'});
           });
         }

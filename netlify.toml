@@ -59,3 +59,8 @@
   from   = "/api/legal-settings"
   to     = "/.netlify/functions/legal-settings"
   status = 200
+
+[[redirects]]
+  from   = "/api/upload-avatar"
+  to     = "/.netlify/functions/upload-avatar"
+  status = 200
