@@ -431,6 +431,8 @@
       .photo-select-btn{cursor:pointer;display:inline-block;padding:.5rem 1rem;border-radius:.65rem;font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);color:var(--text)}
       .photo-select-btn:hover{border-color:var(--primary);color:var(--primary)}
       .photo-status{font-size:.82rem;margin-top:.35rem}
+      .foto-declaration{display:flex;align-items:flex-start;gap:.6rem;background:#fffbeb;border:1px solid #fbbf24;border-radius:.75rem;padding:.85rem 1rem;font-size:.84rem;color:var(--text);cursor:pointer;margin-bottom:.5rem}
+      .foto-declaration input{margin-top:.15rem;flex-shrink:0;accent-color:var(--primary)}
       .photo-status.loading{color:var(--muted)}
       .photo-status.ok{color:#16a34a;font-weight:600}
       .photo-status.err{color:#dc2626}
@@ -1046,6 +1048,12 @@
                   </button>
                 </article>
 
+                <!-- Declaración de imagen (aparece solo si hay foto) -->
+                <label class="foto-declaration" id="fotoDeclaration" hidden>
+                  <input type="checkbox" id="fotoConsent">
+                  <span>Confirmo que tengo derecho a usar esta imagen y que no contiene contenido inapropiado.</span>
+                </label>
+
                 <p style="font-size:.84rem;color:var(--muted);text-align:center">Renovación por <strong style="color:var(--text)">5€/año</strong> al vencer el plan.</p>
 
               </aside>
@@ -1181,6 +1189,8 @@
             }
             photoStatus.textContent = 'Foto lista. Se subirá al activar.';
             photoStatus.className = 'photo-status ok';
+            var decl = document.getElementById('fotoDeclaration');
+            if (decl) decl.removeAttribute('hidden');
           });
         }
 
@@ -1283,6 +1293,17 @@
           var originalText = btn.textContent;
           btn.disabled = true;
 
+          // Bloquear si hay foto y no se aceptó la declaración
+          var consentBox = document.getElementById('fotoConsent');
+          if (localFotoDataUrl && consentBox && !consentBox.checked) {
+            var decl = document.getElementById('fotoDeclaration');
+            if (decl) decl.style.border = '1.5px solid #dc2626';
+            decl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            btn.disabled = false;
+            btn.textContent = originalText;
+            return;
+          }
+
           // Subir foto si hay una seleccionada
           var fotoUrl = '';
           if (localFotoDataUrl) {
@@ -1346,6 +1367,10 @@
             localFotoDataUrl = null;
             if(photoThumb) photoThumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
             if(photoStatus){ photoStatus.textContent=''; photoStatus.className='photo-status'; }
+            var decl2 = document.getElementById('fotoDeclaration');
+            if(decl2){ decl2.setAttribute('hidden',''); decl2.style.border=''; }
+            var cb = document.getElementById('fotoConsent');
+            if(cb) cb.checked = false;
             stageForm.scrollIntoView({behavior:'smooth',block:'start'});
           });
         }
