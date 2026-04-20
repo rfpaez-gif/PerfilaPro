@@ -26,7 +26,7 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 400, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { action, slug } = body;
+    const { action, slug, reason } = body;
 
     if (!slug) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Falta el slug' }) };
@@ -82,10 +82,14 @@ function makeHandler(stripeClient, db) {
         return { statusCode: 502, body: JSON.stringify({ error: err.message }) };
       }
 
-      const { error } = await db.from('cards').update({ status: 'inactive' }).eq('slug', slug);
+      const { error } = await db.from('cards').update({
+        status: 'inactive',
+        refund_reason: reason || null,
+        refunded_at: new Date().toISOString(),
+      }).eq('slug', slug);
       if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
 
-      console.log(`Tarjeta reembolsada y desactivada: ${slug}`);
+      console.log(`Tarjeta reembolsada y desactivada: ${slug} — motivo: ${reason || 'sin especificar'}`);
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 

@@ -153,7 +153,7 @@ describe('admin-actions handler', () => {
     });
 
     it('crea el reembolso en Stripe y desactiva la tarjeta', async () => {
-      const res = await handler(buildEvent({ body: { action: 'refund', slug: 'ana-electricista' } }));
+      const res = await handler(buildEvent({ body: { action: 'refund', slug: 'ana-electricista', reason: 'Doble pago' } }));
       expect(res.statusCode).toBe(200);
 
       expect(mockRetrieve).toHaveBeenCalledWith('cs_test_abc');
@@ -161,6 +161,8 @@ describe('admin-actions handler', () => {
 
       const updated = mockUpdate.mock.calls[0][0];
       expect(updated.status).toBe('inactive');
+      expect(updated.refund_reason).toBe('Doble pago');
+      expect(updated.refunded_at).toBeDefined();
     });
 
     it('devuelve 400 si la tarjeta no tiene sesión de Stripe', async () => {

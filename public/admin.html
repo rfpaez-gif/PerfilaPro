@@ -347,9 +347,9 @@
         <td><a href="/c/${card.slug}" target="_blank" class="card-link">Ver →</a></td>
         <td>
           <div class="actions-cell">
-            <button class="action-btn btn-reactivate" onclick="openModal('reactivate','${card.slug}','${card.nombre || card.slug}')">Reactivar</button>
-            <button class="action-btn btn-extend"     onclick="openModal('extend','${card.slug}','${card.nombre || card.slug}')">+30 días</button>
-            ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openModal('refund','${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
+            <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
+            <button class="action-btn btn-extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
+            ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -365,68 +365,45 @@
 
   // ── Acciones de admin ──
 
-  const MODAL_CONFIG = {
-    reactivate: {
-      title: 'Reactivar tarjeta',
-      body: (nombre) => `¿Reactivar la tarjeta de <strong>${nombre}</strong>? Se calculará una nueva fecha de expiración desde hoy según su plan.`,
-      btnClass: 'c-green',
-      btnText: 'Sí, reactivar',
-    },
-    extend: {
-      title: 'Extender 30 días',
-      body: (nombre) => `¿Añadir 30 días a la tarjeta de <strong>${nombre}</strong>? Si ya está expirada, los días se contarán desde hoy.`,
-      btnClass: 'c-yellow',
-      btnText: 'Sí, extender',
-    },
-    refund: {
-      title: 'Reembolsar y desactivar',
-      body: (nombre) => `¿Seguro que quieres reembolsar el pago de <strong>${nombre}</strong> y desactivar su tarjeta? Esta acción no se puede deshacer.`,
-      btnClass: 'c-red',
-      btnText: 'Sí, reembolsar',
-    },
-  };
+  async function runAction(action, slug, extra = {}) {
+    try {
+      const res = await fetch('/.netlify/functions/admin-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        body: JSON.stringify({ action, slug, ...extra }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      await loadData();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
 
-  let pendingAction = null;
+  // ── Modal de reembolso ──
 
-  function openModal(action, slug, nombre) {
-    const cfg = MODAL_CONFIG[action];
-    if (!cfg) return;
-    pendingAction = { action, slug };
-    document.getElementById('modalTitle').textContent = cfg.title;
-    document.getElementById('modalBody').innerHTML = cfg.body(nombre);
-    const btn = document.getElementById('modalConfirm');
-    btn.textContent = cfg.btnText;
-    btn.className = `modal-confirm ${cfg.btnClass}`;
+  let refundSlug = null;
+
+  function openRefundModal(slug, nombre) {
+    refundSlug = slug;
+    document.getElementById('refundNombre').textContent = nombre;
+    document.getElementById('refundReason').value = '';
     document.getElementById('modalOverlay').classList.add('open');
   }
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('open');
-    pendingAction = null;
+    refundSlug = null;
   }
 
-  async function confirmAction() {
-    if (!pendingAction) return;
-    const { action, slug } = pendingAction;
-    closeModal();
-
-    try {
-      const res = await fetch('/.netlify/functions/admin-actions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': getPassword(),
-        },
-        body: JSON.stringify({ action, slug }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error desconocido');
-
-      await loadData();
-    } catch (err) {
-      alert(`Error: ${err.message}`);
+  async function confirmRefund() {
+    const reason = document.getElementById('refundReason').value.trim();
+    if (!reason) {
+      document.getElementById('refundReason').focus();
+      return;
     }
+    closeModal();
+    await runAction('refund', refundSlug, { reason });
   }
 
   document.getElementById('modalOverlay').addEventListener('click', (e) => {
@@ -434,14 +411,18 @@
   });
 </script>
 
-<!-- Modal de confirmación -->
+<!-- Modal de reembolso -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h2 id="modalTitle"></h2>
-    <p id="modalBody"></p>
+    <h2>Reembolsar y desactivar</h2>
+    <p>Vas a reembolsar el pago de <strong id="refundNombre"></strong> y desactivar su tarjeta. Esta acción no se puede deshacer.</p>
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:.8rem;font-weight:700;margin-bottom:.4rem;color:var(--muted)">MOTIVO DEL REEMBOLSO <span style="color:var(--red)">*</span></label>
+      <textarea id="refundReason" rows="3" placeholder="Ej: Doble pago, desistimiento en 48h, error técnico…" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);resize:vertical;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="modal-confirm" id="modalConfirm" onclick="confirmAction()"></button>
+      <button class="modal-confirm c-red" onclick="confirmRefund()">Sí, reembolsar</button>
     </div>
   </div>
 </div>
