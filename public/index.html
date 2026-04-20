@@ -1165,8 +1165,8 @@
           fotoInput.addEventListener('change', async function() {
             var file = fotoInput.files[0];
             if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-              photoStatus.textContent = 'La imagen supera los 2 MB.';
+            if (file.size > 10 * 1024 * 1024) {
+              photoStatus.textContent = 'La imagen supera los 10 MB.';
               photoStatus.className = 'photo-status err';
               return;
             }
