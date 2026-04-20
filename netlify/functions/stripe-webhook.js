@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
   const cardUrl = `${siteUrl}/c/${slug}`;
@@ -113,7 +113,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
 }
 
 async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, emailClient }) {
-  if (!email) return;
+  if (!email || !emailClient) return;
 
   const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.com';
   const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl });
