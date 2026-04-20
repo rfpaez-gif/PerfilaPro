@@ -177,7 +177,7 @@
         <thead>
           <tr>
             <th>Nombre</th>
-            <th class="col-md">Slug</th>
+            <th class="col-md">Email</th>
             <th>Plan</th>
             <th>Estado</th>
             <th class="col-md">Expira</th>
@@ -315,7 +315,7 @@
           <strong>${card.nombre || '—'}</strong>
           <small>${card.tagline || ''}</small>
         </td>
-        <td class="col-md"><small style="color:var(--muted);font-family:monospace">${card.slug || '—'}</small></td>
+        <td class="col-md"><small style="color:var(--muted)">${card.email ? `<a href="mailto:${card.email}" style="color:var(--primary);text-decoration:none">${card.email}</a>` : '—'}</small></td>
         <td><span class="plan-badge plan-${plan}">${planLabel}</span></td>
         <td>${BADGE[status]}</td>
         <td class="col-md"><small style="color:var(--muted)">${expira}</small></td>

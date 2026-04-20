@@ -51,6 +51,8 @@ function makeHandler(stripeClient, db) {
         status: 'active',
         stripe_session_id: session.id,
         expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
+        email: session.customer_details?.email || null,
+        phone: session.customer_details?.phone || null,
       }, { onConflict: 'slug' });
 
       if (error) {

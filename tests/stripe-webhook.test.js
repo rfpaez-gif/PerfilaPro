@@ -18,8 +18,8 @@ function buildEvent({ method = 'POST', body = '{}', sig = 'valid-sig' } = {}) {
   return { httpMethod: method, headers: { 'stripe-signature': sig }, body };
 }
 
-function buildStripeEvent({ type = 'checkout.session.completed', metadata = {} } = {}) {
-  return { type, data: { object: { id: 'cs_test_123', metadata } } };
+function buildStripeEvent({ type = 'checkout.session.completed', metadata = {}, customerDetails = {} } = {}) {
+  return { type, data: { object: { id: 'cs_test_123', metadata, customer_details: customerDetails } } };
 }
 
 // --- Tests ---
@@ -86,6 +86,8 @@ describe('stripe-webhook handler', () => {
     expect(upsertData.status).toBe('active');
     expect(upsertData.plan).toBe('pro');
     expect(upsertData.servicios).toEqual(['Instalación · 80€', 'Reparación · 50€']);
+    expect(upsertData.email).toBeNull();
+    expect(upsertData.phone).toBeNull();
   });
 
   it('usa [] como valor por defecto de servicios cuando no está en los metadatos', async () => {
@@ -137,6 +139,19 @@ describe('stripe-webhook handler', () => {
     const res = await handler(buildEvent());
     expect(res.statusCode).toBe(500);
     expect(res.body).toBe('Database error');
+  });
+
+  it('guarda email y phone de customer_details en Supabase', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'test-slug' },
+        customerDetails: { email: 'cliente@email.com', phone: '+34666123456' },
+      })
+    );
+    await handler(buildEvent());
+    const [upsertData] = mockUpsert.mock.calls[0];
+    expect(upsertData.email).toBe('cliente@email.com');
+    expect(upsertData.phone).toBe('+34666123456');
   });
 
   it('lanza un error cuando servicios contiene JSON inválido (caso no controlado)', async () => {
