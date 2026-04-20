@@ -384,6 +384,13 @@
       .plan-btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 24px rgba(1,105,111,.20)}
       .plan-btn-soft{background:var(--surface-2);color:var(--text);border:1px solid var(--line-strong)}
       .plans-note{text-align:center;margin-top:1.4rem;font-size:.92rem;color:var(--muted)}
+      .plans-extra-cards{margin-top:2rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1.5rem}
+      .plans-extra-header{margin-bottom:1rem}
+      .plans-extra-grid{display:grid;gap:.5rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+      .plans-extra-item{display:flex;flex-direction:column;align-items:center;background:#fff;border:1px solid var(--line);border-radius:.75rem;padding:1rem;text-align:center;gap:.25rem}
+      .plans-extra-qty{font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+      .plans-extra-price{font-size:1.4rem;font-weight:800;color:var(--primary)}
+      .plans-extra-price span{font-size:.75rem;font-weight:500;color:var(--muted)}
       .legal-bar{border-top:1px solid var(--line);padding:.9rem 0;background:var(--surface)}
       .legal-inner{display:flex;flex-wrap:wrap;gap:.65rem;justify-content:space-between;align-items:center;font-size:.84rem;color:var(--muted)}
       .legal-links{display:flex;flex-wrap:wrap;gap:1rem}
@@ -786,14 +793,13 @@
                 <p class="plan-desc">Tarjeta activa y lista para compartir durante 3 meses.</p>
               </div>
               <ul class="plan-features">
-                <li class="feat ok">Tarjeta pública compartible</li>
-                <li class="feat ok">Foto de perfil</li>
+                <li class="feat ok">1 tarjeta profesional</li>
+                <li class="feat ok">Foto de perfil y servicios</li>
                 <li class="feat ok">Botón directo a WhatsApp</li>
-                <li class="feat ok">Zona y servicios</li>
                 <li class="feat ok">Código QR descargable</li>
                 <li class="feat ok">Sin marca de agua</li>
-                <li class="feat no">Web propia sencilla</li>
-                <li class="feat no">Reservas y citas</li>
+                <li class="feat no">Analítica de visitas</li>
+                <li class="feat no">Resumen semanal por email</li>
               </ul>
               <a href="#crear" class="plan-btn plan-btn-primary">Activar por 9€</a>
             </article>
@@ -802,21 +808,43 @@
               <div class="plan-header">
                 <span class="plan-badge plan-badge-dark">Pro</span>
                 <div class="plan-price"><span class="plan-amount">19€</span><span class="plan-period"> · 12 meses</span></div>
-                <p class="plan-desc">Presencia completa durante un año entero.</p>
+                <p class="plan-desc">Un año completo y visibilidad total de tu actividad.</p>
               </div>
               <ul class="plan-features">
+                <li class="feat ok">1 tarjeta profesional</li>
                 <li class="feat ok">Todo lo del plan Base</li>
-                <li class="feat ok">Web sencilla propia</li>
-                <li class="feat ok">Botón de reservas y citas</li>
-                <li class="feat ok">Analítica básica de visitas</li>
-                <li class="feat ok">Posición destacada en directorio</li>
-                <li class="feat ok">Soporte prioritario</li>
-                <li class="feat soon">Pagos directos (próximamente)</li>
+                <li class="feat ok">Analítica de visitas (30 días)</li>
+                <li class="feat ok">Resumen semanal por email</li>
+                <li class="feat ok">Tarjetas adicionales con descuento</li>
               </ul>
               <a href="#crear" class="plan-btn plan-btn-soft">Activar por 19€</a>
             </article>
 
           </div>
+
+          <!-- Tarjetas adicionales -->
+          <div class="plans-extra-cards">
+            <div class="plans-extra-header">
+              <span class="eyebrow" style="justify-content:center;margin-bottom:.5rem">Plan Pro · Tarjetas adicionales</span>
+              <p style="font-size:.9rem;color:var(--muted);text-align:center">¿Tienes trabajadores o varios negocios? Añade tarjetas con descuento.</p>
+            </div>
+            <div class="plans-extra-grid">
+              <div class="plans-extra-item">
+                <span class="plans-extra-qty">2ª tarjeta</span>
+                <span class="plans-extra-price">+14€<span>/año</span></span>
+              </div>
+              <div class="plans-extra-item">
+                <span class="plans-extra-qty">3ª–5ª tarjeta</span>
+                <span class="plans-extra-price">+9€<span>/año cada una</span></span>
+              </div>
+              <div class="plans-extra-item">
+                <span class="plans-extra-qty">6ª tarjeta en adelante</span>
+                <span class="plans-extra-price">+7€<span>/año cada una</span></span>
+              </div>
+            </div>
+            <p style="font-size:.8rem;color:var(--faint);text-align:center;margin-top:.75rem"><a href="mailto:hola@perfilapro.com" style="color:var(--primary);font-weight:700">Escríbenos</a> para gestionar tarjetas adicionales.</p>
+          </div>
+
           <p class="plans-note">Renovación disponible por <strong style="color:var(--text)">5€/año</strong> al vencer cualquier plan. Sin suscripción automática. · <a href="mailto:hola@perfilapro.com" style="color:var(--primary);font-weight:700">¿Dudas?</a></p>
         </div>
       </section>
@@ -985,8 +1013,9 @@
                   </div>
                   <ul class="upgrade-list">
                     <li>Todo lo del plan Base</li>
-                    <li>Web propia y reservas</li>
-                    <li>Analítica de visitas</li>
+                    <li>Analítica de visitas (30 días)</li>
+                    <li>Resumen semanal por email</li>
+                    <li>Tarjetas adicionales con descuento</li>
                   </ul>
                   <button class="btn btn-soft upgrade-btn" id="upgradeProBtn" type="button">
                     Activar por 19€ · 12 meses
