@@ -64,3 +64,8 @@
   from   = "/api/upload-avatar"
   to     = "/.netlify/functions/upload-avatar"
   status = 200
+
+[[redirects]]
+  from   = "/api/card-status"
+  to     = "/.netlify/functions/card-status"
+  status = 200

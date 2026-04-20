@@ -70,7 +70,7 @@ exports.handler = async (event) => {
         foto: foto || '',
         plan,
       },
-      success_url: `${siteUrl}/c/${slug}`,
+      success_url: `${siteUrl}/success.html?slug=${slug}`,
       cancel_url:  `${siteUrl}/#crear`,
     });
 
