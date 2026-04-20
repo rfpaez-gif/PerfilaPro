@@ -96,11 +96,16 @@
 
       <!-- ERROR -->
       <div id="stateError">
-        <p class="error-title">Algo no ha ido bien</p>
-        <p class="error-sub">
-          Tu pago se ha procesado correctamente pero la tarjeta está tardando en activarse.<br><br>
-          <a href="mailto:hola@perfilapro.com">Escríbenos a hola@perfilapro.com</a> con tu nombre y te lo resolvemos en minutos.
+        <div style="font-size:2.5rem;text-align:center;margin-bottom:1rem">😔</div>
+        <p class="error-title">La tarjeta está tardando en activarse</p>
+        <p class="error-sub" style="margin-bottom:1.5rem">
+          Tu pago se ha procesado correctamente. Escríbenos y lo resolvemos en minutos.
         </p>
+        <a href="mailto:hola@perfilapro.com?subject=Mi%20tarjeta%20no%20se%20ha%20activado&body=Hola%2C%20he%20completado%20el%20pago%20pero%20mi%20tarjeta%20no%20aparece.%20Mi%20slug%20es%3A%20SLUG"
+           id="errorMailBtn"
+           style="display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;padding:1rem;background:var(--primary);color:#fff;border-radius:.75rem;font-weight:700;font-size:.95rem;text-decoration:none;text-align:center">
+          ✉️ Contactar con soporte
+        </a>
       </div>
 
     </div>
@@ -116,7 +121,7 @@
     var siteUrl = location.origin;
     var cardUrl = siteUrl + '/c/' + slug;
     var attempts = 0;
-    var maxAttempts = 15;
+    var maxAttempts = 20;
 
     function showSuccess(nombre) {
       document.getElementById('stateLoading').style.display = 'none';
@@ -135,6 +140,10 @@
     function showError() {
       document.getElementById('stateLoading').style.display = 'none';
       document.getElementById('stateError').style.display = 'block';
+      var mailBtn = document.getElementById('errorMailBtn');
+      if (mailBtn && slug) {
+        mailBtn.href = mailBtn.href.replace('SLUG', encodeURIComponent(slug));
+      }
     }
 
     function copyLink() {
