@@ -17,8 +17,10 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 
+  const firstName = (nombre || '').split(' ')[0];
+
   return {
-    subject: `Tu tarjeta digital ya está activa, ${(nombre || '').split(' ')[0]} 🎉`,
+    subject: `${firstName}, tu tarjeta ya está en el mundo 🚀`,
     html: `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,9 +43,12 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
         <!-- Body -->
         <tr>
           <td style="padding:40px">
-            <p style="margin:0 0 8px;font-size:22px;font-weight:700">¡Hola, ${nombre}!</p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.6">
-              Tu tarjeta digital está activa y lista para compartir. A partir de ahora, cada vez que alguien acceda a tu perfil verá toda tu información profesional.
+            <p style="margin:0 0 16px;font-size:24px;font-weight:700">¡Ya eres todo un profesional, ${firstName}! 💪</p>
+            <p style="margin:0 0 12px;font-size:15px;color:#6b6458;line-height:1.7">
+              Tu tarjeta digital está activa y lista para conquistar clientes. A partir de ahora, cuando alguien te pida el contacto, en vez de deletrear tu número o buscar el papel ese que siempre se pierde… les mandas el enlace y listo.
+            </p>
+            <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.7">
+              Guárdalo en favoritos, ponlo en tu bio de Instagram, compártelo en grupos de WhatsApp. Cuanto más lo uses, más trabaja por ti.
             </p>
 
             <!-- CTA -->
@@ -59,14 +64,14 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#deeeed;border-radius:8px;margin-bottom:28px">
               <tr>
                 <td style="padding:20px 24px">
-                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Detalles de tu plan</p>
+                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Lo que has contratado</p>
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Plan</td>
                       <td style="font-size:13px;font-weight:700;color:#01696f;text-align:right">${planLabel} · ${planDuration}</td>
                     </tr>
                     <tr>
-                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Tu tarjeta</td>
+                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Tu enlace</td>
                       <td style="font-size:13px;font-weight:700;text-align:right"><a href="${cardUrl}" style="color:#01696f;text-decoration:none">${cardUrl}</a></td>
                     </tr>
                     <tr>
@@ -78,8 +83,11 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
               </tr>
             </table>
 
+            <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
+              ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
+            </p>
             <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
-              ¿Tienes alguna duda o necesitas hacer algún cambio? Responde a este email y te ayudamos enseguida.
+              ¡Mucho éxito, ${firstName}! 🙌
             </p>
           </td>
         </tr>
