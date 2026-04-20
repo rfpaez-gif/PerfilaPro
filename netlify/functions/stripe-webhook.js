@@ -95,8 +95,11 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
         <!-- Footer -->
         <tr>
           <td style="padding:20px 40px;border-top:1px solid rgba(30,27,20,.08);text-align:center">
-            <p style="margin:0;font-size:12px;color:#a89f90">
-              PerfilaPro · Tu perfil profesional siempre a mano
+            <p style="margin:0 0 6px;font-size:12px;color:#a89f90">PerfilaPro · Tu perfil profesional siempre a mano</p>
+            <p style="margin:0;font-size:11px;color:#c4bdb2">
+              <a href="${siteUrl}/terminos.html" style="color:#a89f90;text-decoration:none">Términos</a> ·
+              <a href="${siteUrl}/privacidad.html" style="color:#a89f90;text-decoration:none">Privacidad</a> ·
+              <a href="${siteUrl}/legal.html" style="color:#a89f90;text-decoration:none">Aviso legal</a>
             </p>
           </td>
         </tr>
