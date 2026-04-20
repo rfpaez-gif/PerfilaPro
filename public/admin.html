@@ -101,6 +101,30 @@
       table { font-size: .8rem; }
       th, td { padding: .6rem .75rem; }
     }
+
+    /* ── Acciones ── */
+    .action-btn { padding: .28rem .65rem; border-radius: .35rem; border: 1px solid var(--border); background: #fff; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: var(--ff-b); transition: all .15s; }
+    .action-btn:hover { opacity: .8; }
+    .btn-reactivate { color: var(--green); border-color: #bbf7d0; }
+    .btn-reactivate:hover { background: #dcfce7; }
+    .btn-extend { color: var(--yellow); border-color: #fde68a; }
+    .btn-extend:hover { background: #fef9c3; }
+    .btn-refund { color: var(--red); border-color: #fecaca; }
+    .btn-refund:hover { background: #fee2e2; }
+    .actions-cell { display: flex; gap: .35rem; flex-wrap: wrap; }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 8px 40px rgba(0,0,0,.18); padding: 2rem; width: 100%; max-width: 400px; }
+    .modal h2 { font-family: var(--ff-d); font-size: 1.25rem; margin: 0 0 .5rem; }
+    .modal p { font-size: .9rem; color: var(--muted); margin: 0 0 1.5rem; line-height: 1.5; }
+    .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; }
+    .modal-cancel { padding: .6rem 1.2rem; border: 1px solid var(--border); border-radius: .5rem; background: #fff; font-family: var(--ff-b); font-size: .875rem; cursor: pointer; }
+    .modal-confirm { padding: .6rem 1.2rem; border: none; border-radius: .5rem; font-family: var(--ff-b); font-size: .875rem; font-weight: 700; color: #fff; cursor: pointer; }
+    .modal-confirm.c-green  { background: var(--green); }
+    .modal-confirm.c-yellow { background: var(--yellow); }
+    .modal-confirm.c-red    { background: var(--red); }
   </style>
 </head>
 <body>
@@ -182,6 +206,7 @@
             <th>Estado</th>
             <th class="col-md">Expira</th>
             <th>Ver</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="cardsTable">
@@ -320,6 +345,13 @@
         <td>${BADGE[status]}</td>
         <td class="col-md"><small style="color:var(--muted)">${expira}</small></td>
         <td><a href="/c/${card.slug}" target="_blank" class="card-link">Ver →</a></td>
+        <td>
+          <div class="actions-cell">
+            <button class="action-btn btn-reactivate" onclick="openModal('reactivate','${card.slug}','${card.nombre || card.slug}')">Reactivar</button>
+            <button class="action-btn btn-extend"     onclick="openModal('extend','${card.slug}','${card.nombre || card.slug}')">+30 días</button>
+            ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openModal('refund','${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
+          </div>
+        </td>
       </tr>`;
     }).join('');
   }
@@ -330,6 +362,89 @@
   }
   // Auto-refresh cada 60 segundos
   refreshTimer = setInterval(loadData, 60000);
+
+  // ── Acciones de admin ──
+
+  const MODAL_CONFIG = {
+    reactivate: {
+      title: 'Reactivar tarjeta',
+      body: (nombre) => `¿Reactivar la tarjeta de <strong>${nombre}</strong>? Se calculará una nueva fecha de expiración desde hoy según su plan.`,
+      btnClass: 'c-green',
+      btnText: 'Sí, reactivar',
+    },
+    extend: {
+      title: 'Extender 30 días',
+      body: (nombre) => `¿Añadir 30 días a la tarjeta de <strong>${nombre}</strong>? Si ya está expirada, los días se contarán desde hoy.`,
+      btnClass: 'c-yellow',
+      btnText: 'Sí, extender',
+    },
+    refund: {
+      title: 'Reembolsar y desactivar',
+      body: (nombre) => `¿Seguro que quieres reembolsar el pago de <strong>${nombre}</strong> y desactivar su tarjeta? Esta acción no se puede deshacer.`,
+      btnClass: 'c-red',
+      btnText: 'Sí, reembolsar',
+    },
+  };
+
+  let pendingAction = null;
+
+  function openModal(action, slug, nombre) {
+    const cfg = MODAL_CONFIG[action];
+    if (!cfg) return;
+    pendingAction = { action, slug };
+    document.getElementById('modalTitle').textContent = cfg.title;
+    document.getElementById('modalBody').innerHTML = cfg.body(nombre);
+    const btn = document.getElementById('modalConfirm');
+    btn.textContent = cfg.btnText;
+    btn.className = `modal-confirm ${cfg.btnClass}`;
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    pendingAction = null;
+  }
+
+  async function confirmAction() {
+    if (!pendingAction) return;
+    const { action, slug } = pendingAction;
+    closeModal();
+
+    try {
+      const res = await fetch('/.netlify/functions/admin-actions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': getPassword(),
+        },
+        body: JSON.stringify({ action, slug }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+      await loadData();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
+
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  });
 </script>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle"></h2>
+    <p id="modalBody"></p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-confirm" id="modalConfirm" onclick="confirmAction()"></button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
