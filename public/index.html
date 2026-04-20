@@ -1145,7 +1145,7 @@
             reader.onload = function(e) {
               var img = new Image();
               img.onload = function() {
-                var maxDim = 400, w = img.width, h = img.height;
+                var maxDim = 600, w = img.width, h = img.height;
                 if (w > maxDim || h > maxDim) {
                   if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
                   else { w = Math.round(w * maxDim / h); h = maxDim; }
