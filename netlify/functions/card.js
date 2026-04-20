@@ -54,6 +54,13 @@ exports.handler = async (event) => {
   const DEMO_SLUGS = ['paco-fontanero-alicante'];
   const isDemo = DEMO_SLUGS.includes(data.slug);
 
+  // Registrar visita de forma no bloqueante
+  if (!isDemo) {
+    supabase.from('visits').insert({ slug: data.slug }).then(({ error: ve }) => {
+      if (ve) console.error('Error registrando visita:', ve.message);
+    });
+  }
+
   const waUrl = !isDemo && data.whatsapp
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu tarjeta en PerfilaPro y me interesa contactarte.')}`
     : null;
@@ -69,6 +76,18 @@ exports.handler = async (event) => {
       margin: 2,
       color: { dark: '#01696f', light: '#ffffff' },
     });
+  }
+
+  const isPro = data.plan === 'pro';
+  let visitCount = null;
+  if (isPro) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .eq('slug', data.slug)
+      .gte('visited_at', thirtyDaysAgo);
+    visitCount = count ?? 0;
   }
 
   const html = `<!DOCTYPE html>
@@ -144,6 +163,12 @@ exports.handler = async (event) => {
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
         </div>
       </div>
+    </div>` : ''}
+    ${isPro && visitCount !== null ? `
+    <div class="card-sec" style="text-align:center">
+      <div class="card-sec-label">Visitas este mes</div>
+      <div style="font-size:2rem;font-weight:800;color:var(--primary);line-height:1">${visitCount}</div>
+      <div style="font-size:.75rem;color:var(--faint);margin-top:.25rem">últimos 30 días</div>
     </div>` : ''}
     <div class="card-powered">
       Creado con <strong>PerfilaPro</strong><br>
