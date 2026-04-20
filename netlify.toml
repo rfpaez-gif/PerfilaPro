@@ -43,3 +43,13 @@
   from   = "/api/admin-data"
   to     = "/.netlify/functions/admin-data"
   status = 200
+
+[[redirects]]
+  from   = "/api/admin-actions"
+  to     = "/.netlify/functions/admin-actions"
+  status = 200
+
+[[redirects]]
+  from   = "/api/legal-settings"
+  to     = "/.netlify/functions/legal-settings"
+  status = 200
