@@ -8,6 +8,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "qrcode": "^1.5.4",
+    "resend": "^6.12.0",
     "stripe": "^14.18.0"
   },
   "devDependencies": {

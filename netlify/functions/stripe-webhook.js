@@ -1,12 +1,126 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-function makeHandler(stripeClient, db) {
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
+  const cardUrl = `${siteUrl}/c/${slug}`;
+  const planLabel = plan === 'pro' ? 'Premium' : 'Base';
+  const planDuration = plan === 'pro' ? '365 días' : '90 días';
+  const expiraFecha = new Date(expiresAt).toLocaleDateString('es-ES', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  return {
+    subject: `Tu tarjeta digital ya está activa, ${(nombre || '').split(' ')[0]} 🎉`,
+    html: `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#f5f2ec;font-family:'Helvetica Neue',Arial,sans-serif;color:#1e1b14">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid rgba(30,27,20,.10);overflow:hidden">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#01696f;padding:32px 40px;text-align:center">
+            <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px">PerfilaPro</p>
+            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional en WhatsApp</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px">
+            <p style="margin:0 0 8px;font-size:22px;font-weight:700">¡Hola, ${nombre}!</p>
+            <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.6">
+              Tu tarjeta digital está activa y lista para compartir. A partir de ahora, cada vez que alguien acceda a tu perfil verá toda tu información profesional.
+            </p>
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+              <tr><td align="center">
+                <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px">
+                  Ver mi tarjeta →
+                </a>
+              </td></tr>
+            </table>
+
+            <!-- Plan info -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#deeeed;border-radius:8px;margin-bottom:28px">
+              <tr>
+                <td style="padding:20px 24px">
+                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Detalles de tu plan</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Plan</td>
+                      <td style="font-size:13px;font-weight:700;color:#01696f;text-align:right">${planLabel} · ${planDuration}</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Tu tarjeta</td>
+                      <td style="font-size:13px;font-weight:700;text-align:right"><a href="${cardUrl}" style="color:#01696f;text-decoration:none">${cardUrl}</a></td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:13px;color:#1e1b14">Activa hasta</td>
+                      <td style="font-size:13px;font-weight:700;color:#1e1b14;text-align:right">${expiraFecha}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
+              ¿Tienes alguna duda o necesitas hacer algún cambio? Responde a este email y te ayudamos enseguida.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(30,27,20,.08);text-align:center">
+            <p style="margin:0;font-size:12px;color:#a89f90">
+              PerfilaPro · Tu perfil profesional siempre a mano
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  };
+}
+
+async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, emailClient }) {
+  if (!email) return;
+
+  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.com';
+  const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl });
+
+  try {
+    await emailClient.emails.send({
+      from: 'PerfilaPro <hola@perfilapro.com>',
+      to: email,
+      subject,
+      html,
+    });
+    console.log(`Email enviado a: ${email}`);
+  } catch (err) {
+    console.error('Error enviando email:', err.message);
+  }
+}
+
+function makeHandler(stripeClient, db, emailClient = resend) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };
@@ -38,6 +152,8 @@ function makeHandler(stripeClient, db) {
 
       const planDays = { base: 90, pro: 365, renovacion: 365 };
       const days = planDays[plan] || 90;
+      const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      const email = session.customer_details?.email || null;
 
       const { error } = await db.from('cards').upsert({
         slug,
@@ -50,8 +166,8 @@ function makeHandler(stripeClient, db) {
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,
-        expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
-        email: session.customer_details?.email || null,
+        expires_at: expiresAt,
+        email,
         phone: session.customer_details?.phone || null,
       }, { onConflict: 'slug' });
 
@@ -61,6 +177,15 @@ function makeHandler(stripeClient, db) {
       }
 
       console.log(`Tarjeta activada: ${slug}`);
+
+      await sendConfirmationEmail({
+        email,
+        nombre,
+        slug,
+        plan: plan || 'base',
+        expiresAt,
+        emailClient,
+      });
     }
 
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
@@ -69,3 +194,4 @@ function makeHandler(stripeClient, db) {
 
 exports.handler = makeHandler(stripe, supabase);
 exports.makeHandler = makeHandler;
+exports.buildEmail = buildEmail;

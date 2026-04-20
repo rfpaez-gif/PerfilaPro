@@ -1,16 +1,18 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { makeHandler } from '../netlify/functions/stripe-webhook.js';
+import { makeHandler, buildEmail } from '../netlify/functions/stripe-webhook.js';
 
 // --- Mocks de dependencias ---
 
 const mockConstructEvent = vi.fn();
 const mockUpsert = vi.fn();
 const mockFrom = vi.fn(() => ({ upsert: mockUpsert }));
+const mockEmailSend = vi.fn();
 
 const mockStripe = { webhooks: { constructEvent: mockConstructEvent } };
 const mockDb = { from: mockFrom };
+const mockEmail = { emails: { send: mockEmailSend } };
 
-const handler = makeHandler(mockStripe, mockDb);
+const handler = makeHandler(mockStripe, mockDb, mockEmail);
 
 // --- Helpers ---
 
@@ -29,6 +31,7 @@ describe('stripe-webhook handler', () => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
     mockFrom.mockImplementation(() => ({ upsert: mockUpsert }));
+    mockEmailSend.mockResolvedValue({ id: 'email-123' });
   });
 
   it('devuelve 405 para peticiones que no sean POST', async () => {
@@ -154,6 +157,46 @@ describe('stripe-webhook handler', () => {
     expect(upsertData.phone).toBe('+34666123456');
   });
 
+  it('envía email de confirmación tras activar la tarjeta', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'ana-abogada', nombre: 'Ana López', plan: 'base' },
+        customerDetails: { email: 'ana@email.com' },
+      })
+    );
+    await handler(buildEvent());
+
+    expect(mockEmailSend).toHaveBeenCalledOnce();
+    const [emailArgs] = mockEmailSend.mock.calls[0];
+    expect(emailArgs.to).toBe('ana@email.com');
+    expect(emailArgs.subject).toContain('Ana');
+    expect(emailArgs.html).toContain('ana-abogada');
+  });
+
+  it('no envía email si el comprador no tiene email', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'test-slug', nombre: 'Sin Email' },
+        customerDetails: {},
+      })
+    );
+    await handler(buildEvent());
+    expect(mockEmailSend).not.toHaveBeenCalled();
+  });
+
+  it('sigue devolviendo 200 aunque el envío de email falle', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'test-slug', nombre: 'Test' },
+        customerDetails: { email: 'test@email.com' },
+      })
+    );
+    mockEmailSend.mockRejectedValue(new Error('SMTP error'));
+
+    const res = await handler(buildEvent());
+    expect(res.statusCode).toBe(200);
+  });
+
   it('lanza un error cuando servicios contiene JSON inválido (caso no controlado)', async () => {
     // BUG: el handler no tiene try/catch alrededor de JSON.parse(servicios),
     // por lo que lanza una excepción en lugar de devolver una respuesta HTTP adecuada.
@@ -161,5 +204,35 @@ describe('stripe-webhook handler', () => {
       buildStripeEvent({ metadata: { slug: 'test-slug', servicios: '{json-invalido' } })
     );
     await expect(handler(buildEvent())).rejects.toThrow();
+  });
+});
+
+// --- Tests de buildEmail ---
+
+describe('buildEmail', () => {
+  const base = {
+    nombre: 'María Pérez',
+    slug: 'maria-electricista',
+    plan: 'base',
+    expiresAt: new Date('2026-07-20').toISOString(),
+    siteUrl: 'https://perfilapro.com',
+  };
+
+  it('incluye el enlace a la tarjeta', () => {
+    const { html } = buildEmail(base);
+    expect(html).toContain('https://perfilapro.com/c/maria-electricista');
+  });
+
+  it('muestra "Base" para plan base y "Premium" para plan pro', () => {
+    const { html: htmlBase } = buildEmail({ ...base, plan: 'base' });
+    expect(htmlBase).toContain('Base');
+
+    const { html: htmlPro } = buildEmail({ ...base, plan: 'pro' });
+    expect(htmlPro).toContain('Premium');
+  });
+
+  it('el subject incluye el nombre del usuario', () => {
+    const { subject } = buildEmail(base);
+    expect(subject).toContain('María');
   });
 });
