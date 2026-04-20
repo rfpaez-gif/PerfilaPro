@@ -873,6 +873,12 @@
               </div>
 
               <div class="form-row">
+                <label class="form-label" for="fEmail">Email <span class="req">*</span></label>
+                <input class="form-input" type="email" id="fEmail" name="email" placeholder="tu@email.com" autocomplete="email" required>
+                <p class="form-hint">Te enviaremos tu tarjeta y te avisaremos antes de que caduque.</p>
+              </div>
+
+              <div class="form-row">
                 <label class="form-label">Tus servicios principales <span class="req">*</span></label>
                 <div class="services-inputs" id="servicesInputs">
                   <input class="form-input" type="text" name="servicio1" placeholder="Ej: Instalación de tuberías" maxlength="50">
@@ -1091,6 +1097,7 @@
             var sector   = document.getElementById('fSector').value;
             var zona     = document.getElementById('fZona').value.trim();
             var whatsapp = document.getElementById('fWhatsapp').value.trim();
+            var email    = document.getElementById('fEmail').value.trim();
             var s1 = form.elements['servicio1'].value.trim();
             var s2 = form.elements['servicio2'].value.trim();
             var s3 = form.elements['servicio3'].value.trim();
@@ -1099,13 +1106,14 @@
             // Validación básica
             [document.getElementById('fNombre'),document.getElementById('fSector'),
              document.getElementById('fZona'),document.getElementById('fWhatsapp'),
+             document.getElementById('fEmail'),
              form.elements['servicio1']].forEach(function(el){
                el.classList.toggle('is-error', !el.value.trim());
              });
-            if(!nombre||!sector||!zona||!whatsapp||!s1) return;
+            if(!nombre||!sector||!zona||!whatsapp||!email||!s1) return;
 
             var servicios = [s1,s2,s3].filter(Boolean);
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc};
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,email:email,servicios:servicios,desc:desc};
 
             // Rellenar tarjeta de previsualización
             document.getElementById('rNombre').textContent = nombre;
@@ -1189,6 +1197,7 @@
                 sector:   cardData.sector,
                 zona:     cardData.zona,
                 whatsapp: cardData.whatsapp,
+                email:    cardData.email,
                 servicios:cardData.servicios,
                 plan:     plan,
               }),

@@ -1,5 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const { send, welcomeEmail } = require('./utils/email');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -28,7 +29,7 @@ function makeHandler(stripeClient, db) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, plan } =
+      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, plan, email } =
         session.metadata || {};
 
       if (!slug) {
@@ -47,6 +48,7 @@ function makeHandler(stripeClient, db) {
         zona,
         servicios: servicios ? JSON.parse(servicios) : [],
         foto,
+        email: email || null,
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,
@@ -59,6 +61,11 @@ function makeHandler(stripeClient, db) {
       }
 
       console.log(`Tarjeta activada: ${slug}`);
+
+      if (email) {
+        const { subject, html, text } = welcomeEmail({ nombre, slug, plan: plan || 'base' });
+        await send({ to: email, subject, html, text });
+      }
     }
 
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
