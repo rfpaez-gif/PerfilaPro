@@ -183,6 +183,41 @@
       </div>
     </div>
 
+    <!-- Datos legales -->
+    <div class="legal-section">
+      <div class="controls" style="margin-bottom:.75rem">
+        <div class="section-title">Datos legales</div>
+        <button class="filter-btn" id="legalToggle" onclick="toggleLegal()">Editar</button>
+      </div>
+      <div id="legalPanel" style="display:none">
+        <div class="table-wrap" style="padding:1.5rem;margin-bottom:1.5rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Nombre completo</label>
+              <input id="legalName" type="text" placeholder="Tu nombre y apellidos" class="search-input" style="width:100%">
+            </div>
+            <div>
+              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">NIF</label>
+              <input id="legalNif" type="text" placeholder="12345678A" class="search-input" style="width:100%">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Dirección</label>
+              <input id="legalAddress" type="text" placeholder="Calle, número, CP, ciudad" class="search-input" style="width:100%">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Email de contacto</label>
+              <input id="legalEmail" type="email" placeholder="hola@perfilapro.com" class="search-input" style="width:100%">
+            </div>
+          </div>
+          <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem">
+            <button class="modal-cancel" onclick="toggleLegal()">Cancelar</button>
+            <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveLegal()">Guardar</button>
+          </div>
+          <p id="legalMsg" style="text-align:right;font-size:.8rem;margin-top:.5rem;min-height:1rem"></p>
+        </div>
+      </div>
+    </div>
+
     <!-- Tabla -->
     <div class="controls">
       <div class="section-title">Tarjetas</div>
@@ -362,6 +397,55 @@
   }
   // Auto-refresh cada 60 segundos
   refreshTimer = setInterval(loadData, 60000);
+
+  // ── Datos legales ──
+
+  async function loadLegalSettings() {
+    try {
+      const res = await fetch('/.netlify/functions/legal-settings');
+      if (!res.ok) return;
+      const d = await res.json();
+      document.getElementById('legalName').value    = d.legal_name    || '';
+      document.getElementById('legalNif').value     = d.legal_nif     || '';
+      document.getElementById('legalAddress').value = d.legal_address || '';
+      document.getElementById('legalEmail').value   = d.legal_email   || '';
+    } catch (_) {}
+  }
+
+  function toggleLegal() {
+    const panel = document.getElementById('legalPanel');
+    const btn   = document.getElementById('legalToggle');
+    const open  = panel.style.display === 'none';
+    panel.style.display = open ? 'block' : 'none';
+    btn.textContent = open ? 'Cerrar' : 'Editar';
+    if (open) loadLegalSettings();
+  }
+
+  async function saveLegal() {
+    const msg = document.getElementById('legalMsg');
+    msg.style.color = 'var(--muted)';
+    msg.textContent = 'Guardando…';
+
+    try {
+      const res = await fetch('/.netlify/functions/legal-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        body: JSON.stringify({
+          legal_name:    document.getElementById('legalName').value.trim(),
+          legal_nif:     document.getElementById('legalNif').value.trim(),
+          legal_address: document.getElementById('legalAddress').value.trim(),
+          legal_email:   document.getElementById('legalEmail').value.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      msg.style.color = 'var(--green)';
+      msg.textContent = '✓ Guardado correctamente';
+    } catch (err) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = `Error: ${err.message}`;
+    }
+  }
 
   // ── Acciones de admin ──
 
