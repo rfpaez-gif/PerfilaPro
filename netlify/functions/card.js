@@ -132,6 +132,10 @@ exports.handler = async (event) => {
     .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
+    .share-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    .share-btn{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.75rem .5rem;border:1.5px solid var(--border);border-radius:.5rem;font-size:.82rem;font-weight:700;cursor:pointer;background:#fff;color:var(--text);transition:all .15s;font-family:var(--ff-b)}
+    .share-btn:hover{border-color:var(--primary);color:var(--primary)}
+    .share-btn:disabled{opacity:.6;cursor:default}
   </style>
 </head>
 <body>
@@ -174,6 +178,19 @@ exports.handler = async (event) => {
       <div style="font-size:2rem;font-weight:800;color:var(--primary);line-height:1">${visitCount}</div>
       <div style="font-size:.75rem;color:var(--faint);margin-top:.25rem">últimos 30 días</div>
     </div>` : ''}
+    <div class="card-sec">
+      <div class="card-sec-label">Comparte</div>
+      <div class="share-btns">
+        <button class="share-btn" onclick="downloadVCard()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Añadir contacto
+        </button>
+        <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar tarjeta
+        </button>
+      </div>
+    </div>
     <div class="card-powered">
       Creado con <strong>PerfilaPro</strong><br>
       <a href="https://perfilapro.netlify.app">Crea tu propia tarjeta</a>
@@ -182,6 +199,113 @@ exports.handler = async (event) => {
   <div class="footer">
     <a href="https://perfilapro.com" target="_blank">¿Quieres tu propia tarjeta? → PerfilaPro.com</a>
   </div>
+  <script>
+    var CARD = ${JSON.stringify({
+      nombre:   data.nombre   || '',
+      tagline:  data.tagline  || '',
+      whatsapp: data.whatsapp || '',
+      telefono: data.telefono || '',
+      zona:     data.zona     || '',
+      servicios: data.servicios || [],
+      foto_url: data.foto_url || '',
+      slug:     data.slug,
+      cardUrl:  cardUrl,
+    })};
+
+    function downloadVCard() {
+      var lines = ['BEGIN:VCARD','VERSION:3.0','FN:' + CARD.nombre];
+      if (CARD.whatsapp) lines.push('TEL;TYPE=CELL:+' + CARD.whatsapp);
+      if (CARD.telefono) lines.push('TEL;TYPE=WORK:+34' + CARD.telefono.replace(/\\D/g,''));
+      if (CARD.tagline)  lines.push('TITLE:' + CARD.tagline);
+      if (CARD.zona)     lines.push('NOTE:' + CARD.zona);
+      lines.push('URL:' + CARD.cardUrl);
+      if (CARD.foto_url) lines.push('PHOTO;VALUE=URI:' + CARD.foto_url);
+      lines.push('END:VCARD');
+      var blob = new Blob([lines.join('\\r\\n')], { type: 'text/vcard' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = CARD.slug + '.vcf';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    async function downloadCard(btn) {
+      var orig = btn.innerHTML; btn.textContent = 'Generando…'; btn.disabled = true;
+      var svcs = (CARD.servicios || []).slice(0,5);
+      var W = 800, H = 280 + svcs.length*58 + (CARD.zona ? 50 : 0) + 120;
+      var canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext('2d');
+      var P = '#01696f', PL = '#deeeed', BG = '#f5f2ec', TX = '#1e1b14', MU = '#6b6458';
+
+      ctx.fillStyle = BG; ctx.fillRect(0,0,W,H);
+      ctx.shadowColor = 'rgba(0,0,0,.10)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+      ctx.fillStyle = '#fff'; rrect(ctx,40,40,W-80,H-80,18); ctx.fill();
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+      ctx.fillStyle = P; rrectTop(ctx,40,40,W-80,160,18); ctx.fill();
+
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 38px Georgia,serif'; ctx.textBaseline = 'top';
+      ctx.fillText(CARD.nombre, 80, 68);
+      if (CARD.tagline) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = '20px Arial,sans-serif'; ctx.fillText(CARD.tagline,80,120); }
+
+      if (CARD.foto_url) {
+        await new Promise(function(res) {
+          var img = new Image(); img.crossOrigin = 'anonymous';
+          img.onload = function() {
+            ctx.save(); ctx.beginPath(); ctx.arc(W-100,110,52,0,Math.PI*2); ctx.clip();
+            ctx.drawImage(img,W-152,58,104,104); ctx.restore();
+            ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(W-100,110,52,0,Math.PI*2); ctx.stroke(); res();
+          };
+          img.onerror = res; img.src = CARD.foto_url;
+        });
+      }
+
+      var y = 220;
+      if (svcs.length) {
+        ctx.fillStyle = P; ctx.font = 'bold 11px Arial,sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('SERVICIOS', 80, y); y += 30;
+        svcs.forEach(function(s,i) {
+          var m = s.match(/^(.+?)[\\s·\\-–]+(\\d[\\d.,€\\s\\/h]*)$/);
+          var nom = m ? m[1].trim() : s, pr = m ? m[2].trim() : '';
+          ctx.fillStyle = i===0 ? PL : BG; rrect(ctx,60,y,W-120,46,7); ctx.fill();
+          ctx.fillStyle = TX; ctx.font = 'bold 18px Arial,sans-serif'; ctx.textAlign = 'left';
+          ctx.fillText(nom,85,y+14);
+          if (pr) { ctx.fillStyle = P; ctx.textAlign = 'right'; ctx.fillText(pr,W-85,y+14); }
+          y += 56;
+        });
+      }
+      if (CARD.zona) { y+=8; ctx.fillStyle = MU; ctx.font = '17px Arial,sans-serif'; ctx.textAlign='left'; ctx.fillText('\\uD83D\\uDCCD '+CARD.zona,80,y); y+=48; }
+
+      y += 10;
+      ctx.strokeStyle = 'rgba(30,27,20,.10)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke(); y+=24;
+      ctx.fillStyle = P; ctx.font = 'bold 17px Arial,sans-serif'; ctx.textAlign='left';
+      ctx.fillText(CARD.cardUrl,80,y);
+      ctx.fillStyle = 'rgba(30,27,20,.25)'; ctx.font = '13px Arial,sans-serif';
+      ctx.textAlign = 'center'; ctx.fillText('Creado con PerfilaPro',W/2,H-52);
+
+      canvas.toBlob(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a'); a.href=url;
+        a.download = 'perfilapro-'+CARD.slug+'.png';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+        btn.innerHTML = orig; btn.disabled = false;
+      },'image/png');
+    }
+
+    function rrect(ctx,x,y,w,h,r) {
+      ctx.beginPath(); ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+    }
+    function rrectTop(ctx,x,y,w,h,r) {
+      ctx.beginPath(); ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h);
+      ctx.lineTo(x,y+h); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+    }
+  </script>
 </body>
 </html>`;
 
