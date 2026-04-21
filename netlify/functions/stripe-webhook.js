@@ -120,7 +120,7 @@ async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, ema
 
   try {
     await emailClient.emails.send({
-      from: 'PerfilaPro <hola@perfilapro.com>',
+      from: 'PerfilaPro <hola@perfilapro.es>',
       to: email,
       subject,
       html,
