@@ -37,7 +37,7 @@ exports.handler = async (event) => {
   console.log(`upload-avatar: uploading ${fileName} (${buffer.length} bytes)`);
 
   const { error } = await supabase.storage
-    .from('avatars')
+    .from('Avatars')
     .upload(fileName, buffer, { contentType, upsert: true });
 
   if (error) {
@@ -49,7 +49,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+  const { data: { publicUrl } } = supabase.storage.from('Avatars').getPublicUrl(fileName);
 
   console.log(`upload-avatar: ok → ${publicUrl}`);
 
