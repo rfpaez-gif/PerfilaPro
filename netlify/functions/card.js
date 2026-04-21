@@ -54,6 +54,10 @@ exports.handler = async (event) => {
   const DEMO_SLUGS = ['paco-fontanero-alicante'];
   const isDemo = DEMO_SLUGS.includes(data.slug);
 
+  if (isDemo && !data.foto_url) {
+    data.foto_url = 'https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg';
+  }
+
   // Registrar visita de forma no bloqueante
   if (!isDemo) {
     supabase.from('visits').insert({ slug: data.slug }).then(({ error: ve }) => {
