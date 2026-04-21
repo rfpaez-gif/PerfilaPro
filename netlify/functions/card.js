@@ -65,7 +65,7 @@ exports.handler = async (event) => {
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
     : null;
 
-  const isPaid = !!data.stripe_session_id;
+  const isPaid = isDemo || !!data.stripe_session_id;
   const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';
   const cardUrl = `${siteUrl}/c/${data.slug}`;
 
@@ -78,7 +78,7 @@ exports.handler = async (event) => {
     });
   }
 
-  const isPro = data.plan === 'pro';
+  const isPro = isDemo || data.plan === 'pro';
   let visitCount = null;
   if (isPro) {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
