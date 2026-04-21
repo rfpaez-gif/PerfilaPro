@@ -62,11 +62,11 @@ exports.handler = async (event) => {
   }
 
   const waUrl = !isDemo && data.whatsapp
-    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu tarjeta en PerfilaPro y me interesa contactarte.')}`
+    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
     : null;
 
   const isPaid = !!data.stripe_session_id;
-  const siteUrl = process.env.SITE_URL || 'https://perfilapro.netlify.app';
+  const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';
   const cardUrl = `${siteUrl}/c/${data.slug}`;
 
   let qrDataUrl = null;
@@ -167,7 +167,7 @@ exports.handler = async (event) => {
       <div class="qr-wrap">
         <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="120" height="120">
         <div class="qr-info">
-          <p>Escanea para abrir esta tarjeta</p>
+          <p>Escanea para abrir este perfil</p>
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
         </div>
       </div>
@@ -187,17 +187,17 @@ exports.handler = async (event) => {
         </button>
         <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar tarjeta
+          Descargar perfil
         </button>
       </div>
     </div>
     <div class="card-powered">
       Creado con <strong>PerfilaPro</strong><br>
-      <a href="https://perfilapro.netlify.app">Crea tu propia tarjeta</a>
+      <a href="https://perfilapro.es">Crea tu propio perfil</a>
     </div>
   </div>
   <div class="footer">
-    <a href="https://perfilapro.com" target="_blank">¿Quieres tu propia tarjeta? → PerfilaPro.com</a>
+    <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? → PerfilaPro.es</a>
   </div>
   <script>
     var CARD = ${JSON.stringify({
