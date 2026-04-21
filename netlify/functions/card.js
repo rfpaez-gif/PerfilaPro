@@ -138,7 +138,7 @@ exports.handler = async (event) => {
   <div class="card">
     <div class="card-hd">
       <div class="card-av">
-        ${data.foto ? `<img src="${data.foto}" alt="${data.nombre}" loading="lazy">` : '👤'}
+        ${data.foto_url ? `<img src="${data.foto_url}" alt="${data.nombre}" loading="lazy">` : '👤'}
       </div>
       <div>
         <div class="card-name">${data.nombre || ''}</div>

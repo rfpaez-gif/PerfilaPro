@@ -1431,8 +1431,20 @@
                 body: JSON.stringify({ base64: base64, contentType: 'image/jpeg', slug: slug }),
               });
               var upJson = await upRes.json();
-              if (upJson.url) { fotoUrl = upJson.url; }
-            } catch(e) { /* foto opcional, continuamos sin ella */ }
+              if (upJson.url) {
+                fotoUrl = upJson.url;
+              } else {
+                console.warn('upload-avatar falló:', upJson.error);
+                if (!confirm('No se pudo subir la foto (' + (upJson.error || 'error') + ').\n¿Continuar sin foto?')) {
+                  btn.disabled = false; btn.textContent = originalText; return;
+                }
+              }
+            } catch(e) {
+              console.warn('upload-avatar excepción:', e);
+              if (!confirm('Error al subir la foto.\n¿Continuar sin foto?')) {
+                btn.disabled = false; btn.textContent = originalText; return;
+              }
+            }
           }
 
           btn.textContent = 'Redirigiendo…';

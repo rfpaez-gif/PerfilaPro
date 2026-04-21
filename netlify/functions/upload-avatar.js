@@ -34,12 +34,14 @@ exports.handler = async (event) => {
   const ext = contentType === 'image/png' ? 'png' : 'jpg';
   const fileName = `${slug}-${Date.now()}.${ext}`;
 
+  console.log(`upload-avatar: uploading ${fileName} (${buffer.length} bytes)`);
+
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(fileName, buffer, { contentType, upsert: false });
+    .upload(fileName, buffer, { contentType, upsert: true });
 
   if (error) {
-    console.error('upload-avatar error:', error.message);
+    console.error('upload-avatar error:', error.message, error);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -48,6 +50,8 @@ exports.handler = async (event) => {
   }
 
   const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+
+  console.log(`upload-avatar: ok → ${publicUrl}`);
 
   return {
     statusCode: 200,

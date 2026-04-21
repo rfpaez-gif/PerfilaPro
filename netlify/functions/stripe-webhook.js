@@ -173,7 +173,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         whatsapp,
         zona,
         servicios: servicios ? JSON.parse(servicios) : [],
-        foto,
+        foto_url: foto || null,
         telefono: telefono || null,
         plan: plan || 'base',
         status: 'active',
