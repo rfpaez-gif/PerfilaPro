@@ -114,10 +114,10 @@ exports.handler = async (event) => {
     .card-sec{padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
     .card-sec:last-child{border-bottom:none}
     .card-sec-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:.625rem}
-    .svc-line{display:flex;justify-content:space-between;align-items:center;padding:.45rem .75rem;border-radius:.5rem;margin-bottom:.325rem;background:var(--bg);font-size:.875rem}
+    .svc-line{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:.5rem;padding:.45rem .75rem;border-radius:.5rem;margin-bottom:.325rem;background:var(--bg);font-size:.875rem}
     .svc-line.first{background:var(--plight);border:1px solid rgba(1,105,111,.18)}
-    .svc-name{font-weight:600}
-    .svc-price{font-weight:700;color:var(--primary)}
+    .svc-name{font-weight:600;min-width:0}
+    .svc-price{font-weight:700;color:var(--primary);white-space:nowrap;text-align:right}
     .card-zona{font-size:.8rem;color:var(--muted);line-height:1.6}
     .card-wa{display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:.9rem;background:var(--wa);color:#fff;border-radius:.5rem;font-size:1rem;font-weight:700;text-decoration:none;transition:background .2s,transform .2s}
     .card-wa:hover{background:var(--wahover);transform:translateY(-2px)}
