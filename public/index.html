@@ -431,6 +431,7 @@
       .photo-select-btn{cursor:pointer;display:inline-block;padding:.5rem 1rem;border-radius:.65rem;font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);color:var(--text)}
       .photo-select-btn:hover{border-color:var(--primary);color:var(--primary)}
       .photo-status{font-size:.82rem;margin-top:.35rem}
+      .upgrade-btns{display:grid;gap:.5rem;margin-top:.25rem}
       .foto-declaration{display:flex;align-items:flex-start;gap:.6rem;background:#fffbeb;border:1px solid #fbbf24;border-radius:.75rem;padding:.85rem 1rem;font-size:.84rem;color:var(--text);cursor:pointer;margin-bottom:.5rem}
       .foto-declaration input{margin-top:.15rem;flex-shrink:0;accent-color:var(--primary)}
       .sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-top:.35rem}
@@ -935,6 +936,15 @@
               </div>
 
               <div class="form-row">
+                <label class="form-label" for="fTelefono">Teléfono de contacto <span class="opt">(opcional)</span></label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">+34</span>
+                  <input class="form-input input-prefixed" type="tel" id="fTelefono" name="telefono" placeholder="600 000 000" maxlength="12">
+                </div>
+                <p class="form-hint">Aparecerá en tu tarjeta como botón de llamada directa.</p>
+              </div>
+
+              <div class="form-row">
                 <label class="form-label">Tus servicios principales <span class="req">*</span></label>
                 <div class="chips-section" id="chipsSection" hidden>
                   <p class="chips-label">Toca para añadir a tus servicios:</p>
@@ -1050,9 +1060,6 @@
                     <li>Foto de perfil y código QR</li>
                     <li>Sin marca de agua</li>
                   </ul>
-                  <button class="btn btn-primary upgrade-btn" id="upgradeBaseBtn" type="button">
-                    Activar por 9€ · 3 meses
-                  </button>
                 </article>
 
                 <!-- PLAN PRO -->
@@ -1070,9 +1077,6 @@
                     <li>Resumen semanal por email</li>
                     <li>Tarjetas adicionales con descuento</li>
                   </ul>
-                  <button class="btn btn-soft upgrade-btn" id="upgradeProBtn" type="button">
-                    Activar por 19€ · 12 meses
-                  </button>
                 </article>
 
                 <!-- Declaración de imagen (aparece solo si hay foto) -->
@@ -1080,6 +1084,16 @@
                   <input type="checkbox" id="fotoConsent">
                   <span>Confirmo que tengo derecho a usar esta imagen y que no contiene contenido inapropiado.</span>
                 </label>
+
+                <!-- Botones de activación -->
+                <div class="upgrade-btns">
+                  <button class="btn btn-primary upgrade-btn" id="upgradeBaseBtn" type="button">
+                    Activar por 9€ · 3 meses
+                  </button>
+                  <button class="btn btn-soft upgrade-btn" id="upgradeProBtn" type="button">
+                    Activar por 19€ · 12 meses
+                  </button>
+                </div>
 
                 <p style="font-size:.84rem;color:var(--muted);text-align:center">Renovación por <strong style="color:var(--text)">5€/año</strong> al vencer el plan.</p>
 
@@ -1222,7 +1236,10 @@
         if(startBtn){
           startBtn.addEventListener('click', function(){
             stageForm.removeAttribute('hidden');
-            stageForm.scrollIntoView({behavior:'smooth',block:'start'});
+            setTimeout(function(){
+              document.getElementById('fNombre').scrollIntoView({behavior:'smooth',block:'center'});
+              document.getElementById('fNombre').focus();
+            }, 100);
           });
         }
 
@@ -1302,6 +1319,7 @@
             var s2 = form.elements['servicio2'].value.trim();
             var s3 = form.elements['servicio3'].value.trim();
             var desc = document.getElementById('fDesc').value.trim();
+            var telefono = document.getElementById('fTelefono').value.trim();
 
             // Validación básica
             [document.getElementById('fNombre'),
@@ -1316,7 +1334,7 @@
             if(!nombre||!sector||!zona||!whatsapp||!s1) return;
 
             var servicios = [s1,s2,s3].filter(Boolean);
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc};
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,telefono:telefono};
 
             // Rellenar tarjeta de previsualización
             document.getElementById('rNombre').textContent = nombre;
@@ -1430,6 +1448,7 @@
                 servicios:cardData.servicios,
                 plan:     plan,
                 foto:     fotoUrl,
+                telefono: cardData.telefono || '',
               }),
             });
             var json = await res.json();
