@@ -1142,15 +1142,15 @@
     </div>
 
     <div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Aviso de cookies">
-      <p>Usamos cookies propias para el funcionamiento del servicio. No utilizamos cookies de seguimiento de terceros. <a href="/privacidad.html">Más info</a></p>
+      <p>Usamos cookies propias y de terceros para mejorar tu experiencia. Puedes aceptarlas o rechazarlas. <a href="/privacidad.html">Más info</a></p>
       <div class="cookie-actions">
         <button class="cookie-btn cookie-btn-primary" onclick="document.getElementById('cookieBanner').style.display='none';localStorage.setItem('pp_cookies','ok')">Aceptar</button>
-        <button class="cookie-btn cookie-btn-soft" onclick="document.getElementById('cookieBanner').style.display='none'">Cerrar</button>
+        <button class="cookie-btn cookie-btn-soft" onclick="document.getElementById('cookieBanner').style.display='none';localStorage.setItem('pp_cookies','no')">Rechazar</button>
       </div>
     </div>
 
     <script>
-      if(localStorage.getItem('pp_cookies')==='ok'){
+      if(localStorage.getItem('pp_cookies')){
         var b=document.getElementById('cookieBanner');if(b)b.style.display='none';
       }
     </script>

@@ -6,10 +6,10 @@ const supabase = createClient(
 );
 
 const DEFAULTS = {
-  legal_name: '',
-  legal_nif: '',
-  legal_address: '',
-  legal_email: 'hola@perfilapro.com',
+  legal_name: 'Rafael Páez Manso',
+  legal_nif: '72573077G',
+  legal_address: 'Orihuela, Alicante, España',
+  legal_email: 'hola@perfilapro.es',
 };
 
 function makeHandler(db) {

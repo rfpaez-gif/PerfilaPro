@@ -35,8 +35,6 @@
     li { font-size: .9375rem; color: var(--muted); line-height: 1.75; margin-bottom: .3rem; }
     strong { color: var(--text); }
 
-    .placeholder { background: #fef9c3; border: 1px dashed #ca8a04; border-radius: .3rem; padding: .1rem .4rem; font-size: .875rem; color: #92400e; font-weight: 700; }
-
     table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: .875rem; }
     th { text-align: left; padding: .6rem .9rem; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: #fff; border-bottom: 2px solid var(--border); }
     td { padding: .65rem .9rem; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; line-height: 1.5; background: #fff; }
@@ -61,13 +59,16 @@
 
   <h2>1. Responsable del tratamiento</h2>
   <p>
-    <strong>Responsable:</strong> <span class="placeholder" data-legal="name">[Nombre pendiente]</span><br>
-    <strong>NIF:</strong> <span class="placeholder" data-legal="nif">[NIF pendiente]</span><br>
-    <strong>Dirección:</strong> <span class="placeholder" data-legal="address">[Dirección pendiente]</span><br>
-    <strong>Email:</strong> <a href="mailto:hola@perfilapro.com" style="color:var(--primary)" data-legal="email" data-legal-href="email">hola@perfilapro.com</a>
+    <strong>Responsable:</strong> <span data-legal="name">Rafael Páez Manso</span><br>
+    <strong>NIF:</strong> <span data-legal="nif">72573077G</span><br>
+    <strong>Dirección:</strong> <span data-legal="address">Orihuela, Alicante, España</span><br>
+    <strong>Email:</strong> <a href="mailto:hola@perfilapro.es" style="color:var(--primary)" data-legal="email" data-legal-href="email">hola@perfilapro.es</a>
   </p>
 
-  <h2>2. Qué datos recogemos y para qué</h2>
+  <h2>2. Finalidad del tratamiento</h2>
+  <p>Los datos se recogen exclusivamente para la prestación del servicio de perfiles digitales profesionales: crear, publicar y mantener el perfil del usuario durante el período contratado, así como para gestionar el pago y enviar comunicaciones relacionadas con el servicio.</p>
+
+  <h2>3. Qué datos recogemos y para qué</h2>
   <table>
     <thead>
       <tr>
@@ -81,19 +82,19 @@
       <tr>
         <td><strong>Nombre profesional</strong></td>
         <td>Formulario de alta</td>
-        <td>Mostrar en tu tarjeta digital</td>
+        <td>Mostrar en tu perfil digital</td>
         <td>Ejecución de contrato</td>
       </tr>
       <tr>
         <td><strong>Especialidad y servicios</strong></td>
         <td>Formulario de alta</td>
-        <td>Mostrar en tu tarjeta digital</td>
+        <td>Mostrar en tu perfil digital</td>
         <td>Ejecución de contrato</td>
       </tr>
       <tr>
         <td><strong>Número de WhatsApp</strong></td>
         <td>Formulario de alta</td>
-        <td>Botón de contacto directo en tu tarjeta</td>
+        <td>Botón de contacto directo en tu perfil</td>
         <td>Ejecución de contrato</td>
       </tr>
       <tr>
@@ -116,45 +117,44 @@
       </tr>
       <tr>
         <td><strong>Foto de perfil</strong></td>
-        <td>URL facilitada por el usuario</td>
-        <td>Mostrar en tu tarjeta digital</td>
-        <td>Ejecución de contrato</td>
+        <td>Subida por el usuario (opcional)</td>
+        <td>Mostrar en tu perfil digital</td>
+        <td>Consentimiento</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>3. ¿Con quién compartimos tus datos?</h2>
-  <p>Trabajamos con los siguientes proveedores que actúan como encargados del tratamiento:</p>
+  <h2>4. Proveedores y encargados del tratamiento</h2>
+  <p>No vendemos tus datos ni los cedemos a terceros con fines comerciales. Trabajamos con los siguientes proveedores que actúan como encargados del tratamiento, únicamente para prestar el servicio:</p>
   <ul>
-    <li><strong>Stripe</strong> — Procesamiento de pagos. Política de privacidad: stripe.com/es/privacy</li>
-    <li><strong>Supabase</strong> — Almacenamiento de datos en servidores dentro de la UE. Política: supabase.com/privacy</li>
-    <li><strong>Netlify</strong> — Hosting de la aplicación. Política: netlify.com/privacy</li>
-    <li><strong>Resend</strong> — Envío de emails transaccionales. Política: resend.com/privacy</li>
+    <li><strong>Stripe</strong> — Procesador de pagos. Los datos de tarjeta bancaria son gestionados íntegramente por Stripe y nunca llegan a nuestros servidores. Política: stripe.com/es/privacy</li>
+    <li><strong>Supabase</strong> — Base de datos y almacenamiento de archivos (fotos de perfil). Servidores dentro de la UE. Política: supabase.com/privacy</li>
+    <li><strong>Netlify</strong> — Hosting de la aplicación web. Política: netlify.com/privacy</li>
+    <li><strong>Resend</strong> — Envío de emails transaccionales (confirmación de compra). Política: resend.com/privacy</li>
   </ul>
-  <p>No vendemos tus datos ni los cedemos a terceros con fines comerciales.</p>
 
-  <h2>4. ¿Cuánto tiempo conservamos tus datos?</h2>
-  <p>Conservamos tus datos durante la vigencia de tu plan y, una vez expirado, durante <strong>12 meses adicionales</strong> por motivos de soporte y cumplimiento legal (obligaciones fiscales y contables). Transcurrido ese período, los datos se eliminan o anonimzan.</p>
+  <h2>5. Plazo de conservación de datos</h2>
+  <p>Conservamos tus datos durante la vigencia de tu plan y, una vez expirado, durante <strong>12 meses adicionales</strong> por motivos de soporte y cumplimiento legal (obligaciones fiscales y contables). Transcurrido ese período, los datos se eliminan o anonimizan.</p>
 
-  <h2>5. Tus derechos</h2>
-  <p>Puedes ejercer en cualquier momento los siguientes derechos escribiéndonos a <a href="mailto:hola@perfilapro.com" style="color:var(--primary)">hola@perfilapro.com</a>:</p>
+  <h2>6. Tus derechos (ARCO)</h2>
+  <p>Puedes ejercer en cualquier momento los siguientes derechos escribiéndonos a <a href="mailto:hola@perfilapro.es" style="color:var(--primary)">hola@perfilapro.es</a>:</p>
   <ul>
     <li><strong>Acceso:</strong> saber qué datos tenemos sobre ti.</li>
     <li><strong>Rectificación:</strong> corregir datos incorrectos.</li>
-    <li><strong>Supresión:</strong> eliminar tus datos ("derecho al olvido").</li>
+    <li><strong>Cancelación / Supresión:</strong> eliminar tus datos ("derecho al olvido").</li>
     <li><strong>Oposición:</strong> oponerte a ciertos tratamientos.</li>
     <li><strong>Portabilidad:</strong> recibir tus datos en formato estructurado.</li>
     <li><strong>Limitación:</strong> restringir el tratamiento en determinadas circunstancias.</li>
   </ul>
   <p>Si consideras que el tratamiento no es conforme al RGPD, puedes presentar una reclamación ante la <strong>Agencia Española de Protección de Datos</strong> (aepd.es).</p>
 
-  <h2>6. Cookies</h2>
-  <p>PerfilaPro no utiliza cookies de seguimiento ni publicidad. Únicamente usamos el almacenamiento de sesión del navegador (<code>sessionStorage</code>) para mantener la sesión del panel de administración, que se elimina al cerrar el navegador.</p>
+  <h2>7. Cookies</h2>
+  <p>PerfilaPro utiliza cookies propias para el funcionamiento del servicio (mantener preferencias del usuario) y puede utilizar cookies de terceros asociadas a los proveedores de recursos externos cargados en la página (fuentes tipográficas, imágenes). Puedes gestionar tus preferencias de cookies a través del banner que aparece en tu primera visita. Si rechazas las cookies, el servicio seguirá funcionando con normalidad.</p>
 
-  <h2>7. Seguridad</h2>
+  <h2>8. Seguridad</h2>
   <p>Aplicamos medidas técnicas y organizativas para proteger tus datos: conexiones cifradas (HTTPS), acceso restringido a la base de datos y separación de credenciales mediante variables de entorno. Ningún sistema es 100% infalible, pero trabajamos para minimizar riesgos.</p>
 
-  <h2>8. Cambios en esta política</h2>
+  <h2>9. Cambios en esta política</h2>
   <p>Si realizamos cambios relevantes en esta política, te informaremos por email. La versión vigente siempre estará disponible en esta página.</p>
 </div>
 
