@@ -69,3 +69,8 @@
   from   = "/api/card-status"
   to     = "/.netlify/functions/card-status"
   status = 200
+
+[[redirects]]
+  from   = "/api/admin-invoices"
+  to     = "/.netlify/functions/admin-invoices"
+  status = 200

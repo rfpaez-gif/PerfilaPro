@@ -218,9 +218,41 @@
       </div>
     </div>
 
+    <!-- Facturas -->
+    <div style="margin-bottom:2rem">
+      <div class="controls" style="margin-bottom:.75rem">
+        <div class="section-title">Facturas</div>
+        <div class="filters">
+          <input type="date" id="invoiceFrom" class="search-input" style="min-width:auto" title="Desde">
+          <input type="date" id="invoiceTo"   class="search-input" style="min-width:auto" title="Hasta">
+          <button class="filter-btn" onclick="loadInvoices()">Filtrar</button>
+          <button class="filter-btn" onclick="exportInvoicesCSV()">Exportar CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha</th>
+              <th class="col-md">Cliente</th>
+              <th>Plan</th>
+              <th>Base</th>
+              <th>IVA</th>
+              <th>Total</th>
+              <th>PDF</th>
+            </tr>
+          </thead>
+          <tbody id="invoicesTable">
+            <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Tabla -->
     <div class="controls">
-      <div class="section-title">Tarjetas</div>
+      <div class="section-title">Perfiles</div>
       <div class="filters">
         <input type="text" class="search-input" id="searchInput" placeholder="Buscar nombre o slug…" oninput="renderTable()">
         <button class="filter-btn active" data-filter="all"    onclick="setFilter(this)">Todas</button>
@@ -267,6 +299,7 @@
     sessionStorage.setItem('adminPwd', pwd);
     document.getElementById('loginError').style.display = 'none';
     loadData();
+    loadInvoices();
   }
 
   function logout() {
@@ -394,6 +427,7 @@
   // Arrancar
   if (getPassword()) {
     loadData();
+    loadInvoices();
   }
   // Auto-refresh cada 60 segundos
   refreshTimer = setInterval(loadData, 60000);
@@ -493,6 +527,88 @@
   document.getElementById('modalOverlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
   });
+
+  // ── Facturas ──
+
+  let allInvoices = [];
+
+  async function loadInvoices() {
+    const from = document.getElementById('invoiceFrom').value;
+    const to   = document.getElementById('invoiceTo').value;
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to)   params.set('to', to);
+
+    try {
+      const res = await fetch(`/.netlify/functions/admin-invoices?${params}`, {
+        headers: { 'x-admin-password': getPassword() }
+      });
+      if (!res.ok) { renderInvoicesTable([]); return; }
+      const { facturas } = await res.json();
+      allInvoices = facturas || [];
+      renderInvoicesTable(allInvoices);
+    } catch (err) {
+      console.error('Error cargando facturas:', err);
+      renderInvoicesTable([]);
+    }
+  }
+
+  function renderInvoicesTable(rows) {
+    const tbody = document.getElementById('invoicesTable');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No hay facturas.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(f => {
+      const fecha = new Date(f.fecha).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'2-digit' });
+      const plan  = f.plan ? f.plan.charAt(0).toUpperCase() + f.plan.slice(1) : '—';
+      return `<tr>
+        <td><strong style="font-size:.82rem;font-family:monospace">${f.numero_factura}</strong></td>
+        <td><small style="color:var(--muted)">${fecha}</small></td>
+        <td class="col-md"><small style="color:var(--muted)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--faint)">${f.email_cliente}</span>` : ''}</small></td>
+        <td><span class="plan-badge plan-${f.plan || 'none'}">${plan}</span></td>
+        <td><small>${(+f.base_imponible).toFixed(2)} €</small></td>
+        <td><small>${(+f.iva).toFixed(2)} €</small></td>
+        <td><strong>${(+f.total).toFixed(2)} €</strong></td>
+        <td><button class="action-btn btn-reactivate" onclick="downloadInvoicePDF('${f.numero_factura}')">PDF ↓</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function downloadInvoicePDF(numero) {
+    const url = `/.netlify/functions/admin-invoices?numero=${encodeURIComponent(numero)}`;
+    const res = await fetch(url, { headers: { 'x-admin-password': getPassword() } });
+    if (!res.ok) { alert('Error descargando la factura'); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `factura-${numero}.pdf`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function exportInvoicesCSV() {
+    if (!allInvoices.length) { alert('No hay facturas para exportar'); return; }
+    const headers = ['Número','Fecha','Cliente','Email','Plan','Base imponible','IVA','Total','Stripe Session'];
+    const rows = allInvoices.map(f => [
+      f.numero_factura,
+      new Date(f.fecha).toLocaleDateString('es-ES'),
+      f.nombre_cliente || '',
+      f.email_cliente || '',
+      f.plan || '',
+      (+f.base_imponible).toFixed(2),
+      (+f.iva).toFixed(2),
+      (+f.total).toFixed(2),
+      f.stripe_session_id || '',
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `facturas-perfilapro-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 </script>
 
 <!-- Modal de reembolso -->

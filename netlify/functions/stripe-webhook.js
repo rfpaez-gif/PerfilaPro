@@ -1,6 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -20,7 +21,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
   const firstName = (nombre || '').split(' ')[0];
 
   return {
-    subject: `${firstName}, tu tarjeta ya está en el mundo 🚀`,
+    subject: `${firstName}, tu perfil ya está en el mundo 🚀`,
     html: `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -36,7 +37,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
         <tr>
           <td style="background:#01696f;padding:32px 40px;text-align:center">
             <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px">PerfilaPro</p>
-            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional en WhatsApp</p>
+            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional siempre a mano</p>
           </td>
         </tr>
 
@@ -45,7 +46,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
           <td style="padding:40px">
             <p style="margin:0 0 16px;font-size:24px;font-weight:700">¡Ya eres todo un profesional, ${firstName}! 💪</p>
             <p style="margin:0 0 12px;font-size:15px;color:#6b6458;line-height:1.7">
-              Tu tarjeta digital está activa y lista para conquistar clientes. A partir de ahora, cuando alguien te pida el contacto, en vez de deletrear tu número o buscar el papel ese que siempre se pierde… les mandas el enlace y listo.
+              Tu perfil profesional está activo y listo para conquistar clientes. A partir de ahora, cuando alguien te pida el contacto, en vez de deletrear tu número o buscar el papel ese que siempre se pierde… les mandas el enlace y listo.
             </p>
             <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.7">
               Guárdalo en favoritos, ponlo en tu bio de Instagram, compártelo en grupos de WhatsApp. Cuanto más lo uses, más trabaja por ti.
@@ -55,7 +56,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
               <tr><td align="center">
                 <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px">
-                  Ver mi tarjeta →
+                  Ver mi perfil →
                 </a>
               </td></tr>
             </table>
@@ -84,7 +85,7 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
             </table>
 
             <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
-              ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
+              Adjuntamos la factura de tu compra para tus registros. ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
             <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
               ¡Mucho éxito, ${firstName}! 🙌
@@ -112,19 +113,28 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
   };
 }
 
-async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, emailClient }) {
+async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, emailClient, pdfAttachment }) {
   if (!email || !emailClient) return;
 
-  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.com';
+  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl });
 
+  const payload = {
+    from: 'PerfilaPro <hola@perfilapro.es>',
+    to: email,
+    subject,
+    html,
+  };
+
+  if (pdfAttachment) {
+    payload.attachments = [{
+      filename: `factura-${pdfAttachment.numero}.pdf`,
+      content: pdfAttachment.buffer,
+    }];
+  }
+
   try {
-    await emailClient.emails.send({
-      from: 'PerfilaPro <hola@perfilapro.es>',
-      to: email,
-      subject,
-      html,
-    });
+    await emailClient.emails.send(payload);
     console.log(`Email enviado a: ${email}`);
   } catch (err) {
     console.error('Error enviando email:', err.message);
@@ -188,15 +198,50 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         return { statusCode: 500, body: 'Database error' };
       }
 
-      console.log(`Tarjeta activada: ${slug}`);
+      console.log(`Perfil activado: ${slug}`);
+
+      // Generación de factura (no bloquea el webhook si falla)
+      let pdfAttachment = null;
+      try {
+        const planKey = plan || 'base';
+        const planInfo = PLAN_INFO[planKey] || PLAN_INFO.base;
+        const { base, iva } = calcIva(planInfo.total);
+        const numero = await getNextInvoiceNumber(db);
+        const fecha = new Date().toISOString();
+
+        const { error: factError } = await db.from('facturas').insert({
+          numero_factura: numero,
+          fecha,
+          email_cliente: email,
+          nombre_cliente: nombre || null,
+          plan: planKey,
+          base_imponible: base,
+          iva,
+          total: planInfo.total,
+          stripe_session_id: session.id,
+          stripe_payment_id: session.payment_intent || null,
+        });
+
+        if (factError) throw new Error(factError.message);
+
+        const pdfBuffer = await buildPDF({
+          numero, fecha,
+          emailCliente: email,
+          nombreCliente: nombre,
+          plan: planKey, base, iva,
+          total: planInfo.total,
+        });
+
+        pdfAttachment = { numero, buffer: pdfBuffer };
+        console.log(`Factura generada: ${numero}`);
+      } catch (err) {
+        console.error('Error generando factura (no fatal):', err.message);
+      }
 
       await sendConfirmationEmail({
-        email,
-        nombre,
-        slug,
+        email, nombre, slug,
         plan: plan || 'base',
-        expiresAt,
-        emailClient,
+        expiresAt, emailClient, pdfAttachment,
       });
     }
 

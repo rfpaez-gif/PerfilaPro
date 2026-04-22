@@ -30,8 +30,8 @@ describe('legal-settings handler', () => {
       const res = await handler(buildEvent());
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body);
-      expect(body.legal_name).toBe('');
-      expect(body.legal_email).toBe('hola@perfilapro.com');
+      expect(body.legal_name).toBe('Rafael Páez Manso');
+      expect(body.legal_email).toBe('hola@perfilapro.es');
     });
 
     it('mezcla los datos de Supabase con los defaults', async () => {
@@ -46,7 +46,7 @@ describe('legal-settings handler', () => {
       const body = JSON.parse(res.body);
       expect(body.legal_name).toBe('Juan García');
       expect(body.legal_nif).toBe('12345678A');
-      expect(body.legal_address).toBe('');
+      expect(body.legal_address).toBe('Orihuela, Alicante, España');
     });
   });
 
