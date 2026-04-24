@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar mi perfil — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #01696f;
+      --phover: #0c4e54;
+      --plight: #deeeed;
+      --bg: #f5f2ec;
+      --text: #1e1b14;
+      --muted: #6b6458;
+      --faint: #a89f90;
+      --border: rgba(30,27,20,.10);
+      --ff-d: "Instrument Serif", Georgia, serif;
+      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--ff-b);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    .logo {
+      font-family: var(--ff-d);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 2rem;
+      text-decoration: none;
+    }
+    .card {
+      background: #fff;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      width: 100%;
+      max-width: 480px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: var(--primary);
+      padding: 2rem;
+      text-align: center;
+      color: #fff;
+    }
+    .card-header h1 {
+      font-family: var(--ff-d);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .card-header p {
+      font-size: .875rem;
+      opacity: .8;
+      margin-top: .4rem;
+    }
+    .card-body { padding: 2rem; }
+    .field { margin-bottom: 1.25rem; }
+    label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: .4rem;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: .75rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: .5rem;
+      font-family: var(--ff-b);
+      font-size: 1rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .15s;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus { border-color: var(--primary); }
+    .hint {
+      font-size: .78rem;
+      color: var(--faint);
+      margin-top: .35rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: .9rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: .5rem;
+      font-family: var(--ff-b);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+      margin-top: 1.5rem;
+    }
+    .btn:hover { background: var(--phover); }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .msg {
+      padding: .875rem 1rem;
+      border-radius: .5rem;
+      font-size: .875rem;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .msg-ok { background: var(--plight); color: var(--primary); }
+    .msg-err { background: #fee2e2; color: #991b1b; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .services-list { display: flex; flex-direction: column; gap: .5rem; }
+    .svc-item { display: flex; gap: .5rem; align-items: center; }
+    .svc-item input { flex: 1; }
+    .svc-remove {
+      width: 2.25rem;
+      height: 2.25rem;
+      border: 1.5px solid var(--border);
+      border-radius: .4rem;
+      background: #fff;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color .15s, color .15s;
+      line-height: 1;
+    }
+    .svc-remove:hover { border-color: #991b1b; color: #991b1b; }
+    .svc-add {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .5rem;
+      padding: .45rem .875rem;
+      border: 1.5px dashed var(--border);
+      border-radius: .4rem;
+      background: none;
+      font-family: var(--ff-b);
+      font-size: .875rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .svc-add:hover { border-color: var(--primary); color: var(--primary); }
+  </style>
+</head>
+<body>
+  <a class="logo" href="/">PerfilaPro</a>
+
+  <!-- Phase 1: Email form -->
+  <div class="card" id="emailPhase">
+    <div class="card-header">
+      <h1>Editar mi perfil</h1>
+      <p>Introduce tu email y te enviamos un enlace de acceso</p>
+    </div>
+    <div class="card-body">
+      <div id="emailMsg" style="display:none" class="msg"></div>
+      <div class="field">
+        <label for="emailInput">Email</label>
+        <input type="email" id="emailInput" placeholder="tu@email.com" autocomplete="email">
+        <p class="hint">El email que usaste al crear tu perfil</p>
+      </div>
+      <button class="btn" id="sendBtn" onclick="sendLink()">Enviar enlace de edición</button>
+    </div>
+  </div>
+
+  <!-- Phase 2: Edit form -->
+  <div class="card" id="editPhase" style="display:none">
+    <div class="card-header">
+      <h1>Editar mi perfil</h1>
+      <p id="editSubtitle">Actualiza tus datos profesionales</p>
+    </div>
+    <div class="card-body">
+      <div id="editMsg" style="display:none" class="msg"></div>
+
+      <div class="field">
+        <label for="nombre">Nombre completo</label>
+        <input type="text" id="nombre" placeholder="Ej: Juan García López">
+      </div>
+
+      <div class="field">
+        <label for="tagline">Especialidad</label>
+        <input type="text" id="tagline" placeholder="Ej: Fontanero en Alicante">
+      </div>
+
+      <div class="field">
+        <label for="zona">Zona de cobertura</label>
+        <input type="text" id="zona" placeholder="Ej: Alicante y alrededores">
+      </div>
+
+      <div class="field">
+        <label for="whatsapp">WhatsApp</label>
+        <input type="text" id="whatsapp" placeholder="Ej: 34612345678">
+        <p class="hint">Con prefijo de país — 34 para España</p>
+      </div>
+
+      <div class="field">
+        <label for="telefono">Teléfono fijo <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="telefono" placeholder="Ej: 965123456">
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>Servicios</label>
+        <div class="services-list" id="servicesList"></div>
+        <button class="svc-add" type="button" onclick="addService()">+ Añadir servicio</button>
+        <p class="hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€"</p>
+      </div>
+
+      <button class="btn" id="saveBtn" onclick="saveProfile()">Guardar cambios</button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('slug');
+    const token = params.get('token');
+
+    if (slug && token) loadEditForm();
+
+    async function sendLink() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) return;
+      const btn = document.getElementById('sendBtn');
+      const msg = document.getElementById('emailMsg');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      msg.style.display = 'none';
+      try {
+        await fetch('/api/send-edit-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        showMsg(msg, 'ok', '¡Listo! Si tu email está registrado recibirás el enlace en breve. Revisa también la carpeta de spam.');
+        btn.textContent = 'Enlace enviado';
+      } catch {
+        showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Enviar enlace de edición';
+      }
+    }
+
+    async function loadEditForm() {
+      try {
+        const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
+        if (!res.ok) {
+          const emailMsg = document.getElementById('emailMsg');
+          showMsg(emailMsg, 'err', 'El enlace de edición no es válido o ha expirado. Solicita uno nuevo introduciendo tu email.');
+          return;
+        }
+        const card = await res.json();
+        document.getElementById('emailPhase').style.display = 'none';
+        document.getElementById('editPhase').style.display = '';
+        document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
+        document.getElementById('nombre').value = card.nombre || '';
+        document.getElementById('tagline').value = card.tagline || '';
+        document.getElementById('zona').value = card.zona || '';
+        document.getElementById('whatsapp').value = card.whatsapp || '';
+        document.getElementById('telefono').value = card.telefono || '';
+        const list = document.getElementById('servicesList');
+        list.innerHTML = '';
+        const services = card.servicios || [];
+        if (services.length === 0) {
+          addService();
+        } else {
+          services.forEach(s => addService(s));
+        }
+      } catch {
+        const emailMsg = document.getElementById('emailMsg');
+        showMsg(emailMsg, 'err', 'Error al cargar el formulario. Inténtalo de nuevo.');
+      }
+    }
+
+    function addService(value) {
+      const list = document.getElementById('servicesList');
+      if (list.children.length >= 8) return;
+      const item = document.createElement('div');
+      item.className = 'svc-item';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Ej: Fontanería · 50€';
+      if (value) input.value = value;
+      const btn = document.createElement('button');
+      btn.className = 'svc-remove';
+      btn.type = 'button';
+      btn.title = 'Eliminar';
+      btn.textContent = '×';
+      btn.onclick = function() { removeService(this); };
+      item.appendChild(input);
+      item.appendChild(btn);
+      list.appendChild(item);
+    }
+
+    function removeService(btn) {
+      const list = document.getElementById('servicesList');
+      if (list.children.length <= 1) return;
+      btn.closest('.svc-item').remove();
+    }
+
+    async function saveProfile() {
+      const nombre = document.getElementById('nombre').value.trim();
+      const tagline = document.getElementById('tagline').value.trim();
+      const zona = document.getElementById('zona').value.trim();
+      const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+      const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+      const servicios = Array.from(document.querySelectorAll('#servicesList input'))
+        .map(i => i.value.trim()).filter(Boolean);
+
+      const msg = document.getElementById('editMsg');
+      msg.style.display = 'none';
+
+      if (!nombre || !zona || !whatsapp || !servicios.length) {
+        showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, zona, WhatsApp y al menos un servicio.');
+        return;
+      }
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Guardando…';
+
+      try {
+        const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          showMsg(msg, 'err', data.error || 'Error al guardar. Inténtalo de nuevo.');
+          btn.disabled = false;
+          btn.textContent = 'Guardar cambios';
+          return;
+        }
+        showMsg(msg, 'ok', '¡Perfil actualizado correctamente! Los cambios ya son visibles en tu tarjeta.');
+        btn.textContent = 'Cambios guardados ✓';
+      } catch {
+        showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Guardar cambios';
+      }
+    }
+
+    function showMsg(el, type, text) {
+      el.className = 'msg msg-' + type;
+      el.textContent = text;
+      el.style.display = '';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  </script>
+</body>
+</html>
