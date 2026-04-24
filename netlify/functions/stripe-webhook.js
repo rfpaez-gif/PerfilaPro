@@ -87,6 +87,9 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
             <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
               Adjuntamos la factura de tu compra para tus registros. ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
+            <p style="margin:0 0 20px;font-size:14px;color:#6b6458;line-height:1.6">
+              ¿Necesitas actualizar tus datos o servicios? Puedes editar tu perfil cuando quieras en <a href="${siteUrl}/editar.html" style="color:#01696f;text-decoration:none;font-weight:600">${siteUrl}/editar.html</a>
+            </p>
             <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
               ¡Mucho éxito, ${firstName}! 🙌
             </p>

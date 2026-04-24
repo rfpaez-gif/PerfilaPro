@@ -74,3 +74,13 @@
   from   = "/api/admin-invoices"
   to     = "/.netlify/functions/admin-invoices"
   status = 200
+
+[[redirects]]
+  from   = "/api/send-edit-link"
+  to     = "/.netlify/functions/send-edit-link"
+  status = 200
+
+[[redirects]]
+  from   = "/api/edit-card"
+  to     = "/.netlify/functions/edit-card"
+  status = 200
