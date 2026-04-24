@@ -101,11 +101,7 @@ describe('send-edit-link handler', () => {
     expect(updateArgs.edit_token).toBeDefined();
     expect(typeof updateArgs.edit_token).toBe('string');
     expect(updateArgs.edit_token.length).toBe(64); // 32 bytes hex
-
-    const expiresAt = new Date(updateArgs.edit_token_expires_at).getTime();
-    const in15min = Date.now() + 15 * 60 * 1000;
-    expect(expiresAt).toBeGreaterThan(in15min - 5000);
-    expect(expiresAt).toBeLessThanOrEqual(in15min + 5000);
+    expect(updateArgs.edit_token_expires_at).toBeUndefined();
   });
 
   it('devuelve 200 aunque el email no exista (previene enumeración)', async () => {

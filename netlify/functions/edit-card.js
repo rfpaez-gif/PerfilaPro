@@ -19,13 +19,13 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, edit_token, edit_token_expires_at')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url')
       .eq('slug', slug)
       .eq('edit_token', token)
       .eq('status', 'active')
       .single();
 
-    if (error || !card || new Date(card.edit_token_expires_at) < new Date()) {
+    if (error || !card) {
       return {
         statusCode: 401,
         headers: { 'Content-Type': 'application/json' },
@@ -34,11 +34,10 @@ function makeHandler(db) {
     }
 
     if (event.httpMethod === 'GET') {
-      const { edit_token, edit_token_expires_at, ...cardData } = card;
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cardData),
+        body: JSON.stringify(card),
       };
     }
 
@@ -73,8 +72,6 @@ function makeHandler(db) {
           servicios,
           whatsapp: whatsapp.replace(/\D/g, ''),
           telefono: telefono ? telefono.replace(/\D/g, '') : null,
-          edit_token: null,
-          edit_token_expires_at: null,
         })
         .eq('slug', slug);
 

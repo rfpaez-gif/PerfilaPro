@@ -101,11 +101,10 @@ function makeHandler(db, emailClient) {
 
     if (card) {
       const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
       await db
         .from('cards')
-        .update({ edit_token: token, edit_token_expires_at: expiresAt })
+        .update({ edit_token: token })
         .eq('slug', card.slug);
 
       const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';

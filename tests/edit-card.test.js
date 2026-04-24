@@ -26,8 +26,6 @@ let currentBuilder;
 // --- Helpers ---
 
 const VALID_TOKEN = 'a'.repeat(64);
-const FUTURE = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-const PAST = new Date(Date.now() - 60 * 1000).toISOString();
 
 const baseCard = {
   slug: 'ana-electricista',
@@ -38,8 +36,6 @@ const baseCard = {
   whatsapp: '34612345678',
   telefono: '915001234',
   foto_url: null,
-  edit_token: VALID_TOKEN,
-  edit_token_expires_at: FUTURE,
 };
 
 function buildEvent({ method = 'GET', slug = 'ana-electricista', token = VALID_TOKEN, body = null } = {}) {
@@ -86,16 +82,10 @@ describe('edit-card handler', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  // ── Token inválido / expirado ──
+  // ── Token inválido ──
 
   it('devuelve 401 si el token no coincide en la BD', async () => {
     mockSingle.mockResolvedValue({ data: null, error: { message: 'not found' } });
-    const res = await handler(buildEvent());
-    expect(res.statusCode).toBe(401);
-  });
-
-  it('devuelve 401 si el token ha expirado', async () => {
-    mockSingle.mockResolvedValue({ data: { ...baseCard, edit_token_expires_at: PAST }, error: null });
     const res = await handler(buildEvent());
     expect(res.statusCode).toBe(401);
   });
@@ -133,11 +123,10 @@ describe('edit-card handler', () => {
       expect(currentBuilder.update).toHaveBeenCalled();
     });
 
-    it('invalida el token tras guardar', async () => {
+    it('no borra el token tras guardar (permite editar varias veces)', async () => {
       await handler(buildEvent({ method: 'POST', body: validBody }));
       const updateArgs = currentBuilder.update.mock.calls[0][0];
-      expect(updateArgs.edit_token).toBeNull();
-      expect(updateArgs.edit_token_expires_at).toBeNull();
+      expect(updateArgs.edit_token).toBeUndefined();
     });
 
     it('limpia caracteres no numéricos del whatsapp', async () => {
