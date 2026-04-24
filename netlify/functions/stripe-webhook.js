@@ -1,6 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const crypto = require('crypto');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
 
 const supabase = createClient(
@@ -10,8 +11,9 @@ const supabase = createClient(
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
+function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   const cardUrl = `${siteUrl}/c/${slug}`;
+  const editUrl = editToken ? `${siteUrl}/editar.html?slug=${slug}&token=${editToken}` : null;
   const planLabel = plan === 'pro' ? 'Premium' : 'Base';
   const planDuration = plan === 'pro' ? '365 días' : '90 días';
   const expiraFecha = new Date(expiresAt).toLocaleDateString('es-ES', {
@@ -52,13 +54,18 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
               Guárdalo en favoritos, ponlo en tu bio de Instagram, compártelo en grupos de WhatsApp. Cuanto más lo uses, más trabaja por ti.
             </p>
 
-            <!-- CTA -->
+            <!-- CTAs -->
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
-              <tr><td align="center">
+              <tr><td align="center" style="padding-bottom:12px">
                 <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px">
                   Ver mi perfil →
                 </a>
               </td></tr>
+              ${editUrl ? `<tr><td align="center">
+                <a href="${editUrl}" style="display:inline-block;background:#fff;color:#01696f;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:8px;border:2px solid #01696f">
+                  Editar mi perfil
+                </a>
+              </td></tr>` : ''}
             </table>
 
             <!-- Plan info -->
@@ -87,12 +94,12 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
             <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
               Adjuntamos la factura de tu compra para tus registros. ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
-            <p style="margin:0 0 20px;font-size:14px;color:#6b6458;line-height:1.6">
-              ¿Necesitas actualizar tus datos o servicios? Puedes editar tu perfil cuando quieras en <a href="${siteUrl}/editar.html" style="color:#01696f;text-decoration:none;font-weight:600">${siteUrl}/editar.html</a>
-            </p>
-            <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
+            <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
               ¡Mucho éxito, ${firstName}! 🙌
             </p>
+            ${editUrl ? `<p style="margin:0;font-size:12px;color:#a89f90;line-height:1.6">
+              🔒 El botón "Editar mi perfil" es personal — no compartas este email con nadie.
+            </p>` : ''}
           </td>
         </tr>
 
@@ -116,11 +123,11 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl }) {
   };
 }
 
-async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, emailClient, pdfAttachment }) {
+async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, editToken, emailClient, pdfAttachment }) {
   if (!email || !emailClient) return;
 
   const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
-  const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl });
+  const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken });
 
   const payload = {
     from: 'PerfilaPro <hola@perfilapro.es>',
@@ -178,6 +185,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const days = planDays[plan] || 90;
       const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
       const email = session.customer_details?.email || null;
+      const editToken = crypto.randomBytes(32).toString('hex');
 
       const { error } = await db.from('cards').upsert({
         slug,
@@ -194,6 +202,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         expires_at: expiresAt,
         email,
         phone: session.customer_details?.phone || null,
+        edit_token: editToken,
       }, { onConflict: 'slug' });
 
       if (error) {
@@ -244,7 +253,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       await sendConfirmationEmail({
         email, nombre, slug,
         plan: plan || 'base',
-        expiresAt, emailClient, pdfAttachment,
+        expiresAt, editToken, emailClient, pdfAttachment,
       });
     }
 
