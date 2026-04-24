@@ -226,6 +226,12 @@
       </div>
 
       <button class="btn" id="saveBtn" onclick="saveProfile()">Guardar cambios</button>
+
+      <div style="margin-top:1rem;text-align:center">
+        <a id="viewCardLink" href="#" target="_blank" style="font-size:.875rem;color:var(--primary);font-weight:700;text-decoration:none">
+          Ver mi tarjeta →
+        </a>
+      </div>
     </div>
   </div>
 
@@ -276,6 +282,12 @@
         document.getElementById('zona').value = card.zona || '';
         document.getElementById('whatsapp').value = card.whatsapp || '';
         document.getElementById('telefono').value = card.telefono || '';
+
+        // Enlace a la tarjeta
+        const cardLink = document.getElementById('viewCardLink');
+        if (cardLink) {
+          cardLink.href = '/c/' + slug;
+        }
         const list = document.getElementById('servicesList');
         list.innerHTML = '';
         const services = card.servicios || [];
