@@ -23,13 +23,17 @@ function makeHandler(db) {
         .select('id, code, name, email, commission_rate, parent_agent_id, status, nif, address, business_name, created_at')
         .order('created_at', { ascending: false });
 
-      if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      if (error) {
+        console.error('Error agents query:', JSON.stringify(error));
+        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      }
 
       // Count cards per agent
-      const { data: cards } = await db
+      const { data: cards, error: cardsErr } = await db
         .from('cards')
         .select('agent_code')
         .not('agent_code', 'is', null);
+      if (cardsErr) console.error('Error cards query:', JSON.stringify(cardsErr));
 
       const salesByCode = {};
       for (const c of cards || []) {
