@@ -139,7 +139,7 @@ async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, edi
   if (pdfAttachment) {
     payload.attachments = [{
       filename: `factura-${pdfAttachment.numero}.pdf`,
-      content: pdfAttachment.buffer,
+      content: pdfAttachment.buffer.toString('base64'),
     }];
   }
 
@@ -225,6 +225,16 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         const numero = await getNextInvoiceNumber(db);
         const fecha = new Date().toISOString();
 
+        // Generar PDF primero — independiente del INSERT en BD
+        const pdfBuffer = await buildPDF({
+          numero, fecha,
+          emailCliente: email,
+          nombreCliente: nombre,
+          plan: planKey, base, iva,
+          total: planInfo.total,
+        });
+
+        // Guardar en BD (no fatal si falla)
         const { error: factError } = await db.from('facturas').insert({
           numero_factura: numero,
           fecha,
@@ -237,16 +247,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
           stripe_session_id: session.id,
           stripe_payment_id: session.payment_intent || null,
         });
-
-        if (factError) throw new Error(factError.message);
-
-        const pdfBuffer = await buildPDF({
-          numero, fecha,
-          emailCliente: email,
-          nombreCliente: nombre,
-          plan: planKey, base, iva,
-          total: planInfo.total,
-        });
+        if (factError) console.error('Error guardando factura en BD (no fatal):', factError.message);
 
         pdfAttachment = { numero, buffer: pdfBuffer };
         console.log(`Factura generada: ${numero}`);
