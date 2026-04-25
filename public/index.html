@@ -947,15 +947,6 @@
               </div>
 
               <div class="form-row">
-                <label class="form-label" for="fTelefono">Teléfono de contacto <span class="opt">(opcional)</span></label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">+34</span>
-                  <input class="form-input input-prefixed" type="tel" id="fTelefono" name="telefono" placeholder="600 000 000" maxlength="12">
-                </div>
-                <p class="form-hint">Aparecerá en tu perfil como botón de llamada directa.</p>
-              </div>
-
-              <div class="form-row">
                 <label class="form-label">Tus servicios principales <span class="req">*</span></label>
                 <div class="chips-section" id="chipsSection" hidden>
                   <p class="chips-label">Toca para añadir a tus servicios:</p>
@@ -1337,7 +1328,7 @@
             var s2 = form.elements['servicio2'].value.trim();
             var s3 = form.elements['servicio3'].value.trim();
             var desc = document.getElementById('fDesc').value.trim();
-            var telefono = document.getElementById('fTelefono').value.trim();
+            var telefono = '';
 
             // Validación básica
             [document.getElementById('fNombre'),
