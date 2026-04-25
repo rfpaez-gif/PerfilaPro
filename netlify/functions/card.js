@@ -198,6 +198,7 @@ exports.handler = async (event) => {
     <div class="card-powered">
       Creado con <strong>PerfilaPro</strong><br>
       <a href="https://perfilapro.es">Crea tu propio perfil</a>
+      <br><a href="/editar.html" style="font-size:.72rem;color:var(--faint);text-decoration:none;margin-top:.4rem;display:inline-block">¿Eres el propietario? Editar perfil</a>
     </div>
   </div>
   <div class="footer">
