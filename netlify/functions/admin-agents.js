@@ -28,16 +28,18 @@ function makeHandler(db) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
       }
 
-      // Count cards per agent
-      const { data: cards, error: cardsErr } = await db
-        .from('cards')
-        .select('agent_code')
-        .not('agent_code', 'is', null);
-      if (cardsErr) console.error('Error cards query:', JSON.stringify(cardsErr));
-
+      // Count cards per agent — ignora errores si la columna agent_code aún no existe
       const salesByCode = {};
-      for (const c of cards || []) {
-        salesByCode[c.agent_code] = (salesByCode[c.agent_code] || 0) + 1;
+      try {
+        const { data: cards } = await db
+          .from('cards')
+          .select('agent_code')
+          .not('agent_code', 'is', null);
+        for (const c of cards || []) {
+          salesByCode[c.agent_code] = (salesByCode[c.agent_code] || 0) + 1;
+        }
+      } catch (e) {
+        console.warn('Cards agent_code query skipped:', e.message);
       }
 
       const agents = (data || []).map(a => ({ ...a, sales_count: salesByCode[a.code] || 0 }));
