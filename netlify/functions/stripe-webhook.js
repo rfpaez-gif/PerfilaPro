@@ -222,10 +222,20 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         const planKey = plan || 'base';
         const planInfo = PLAN_INFO[planKey] || PLAN_INFO.base;
         const { base, iva } = calcIva(planInfo.total);
-        const numero = await getNextInvoiceNumber(db);
         const fecha = new Date().toISOString();
 
-        // Generar PDF primero — independiente del INSERT en BD
+        // Número de factura — fallback timestamp si la tabla no existe aún
+        let numero;
+        try {
+          numero = await getNextInvoiceNumber(db);
+        } catch (numErr) {
+          const year = new Date().getFullYear();
+          numero = `FAC-${year}-${Date.now().toString().slice(-6)}`;
+          console.warn('getNextInvoiceNumber falló, usando fallback:', numErr.message);
+        }
+
+        // Generar PDF (siempre, independiente de la BD)
+        console.log(`Generando PDF factura ${numero}…`);
         const pdfBuffer = await buildPDF({
           numero, fecha,
           emailCliente: email,
@@ -233,8 +243,9 @@ function makeHandler(stripeClient, db, emailClient = resend) {
           plan: planKey, base, iva,
           total: planInfo.total,
         });
+        console.log(`PDF generado: ${pdfBuffer.length} bytes`);
 
-        // Guardar en BD (no fatal si falla)
+        // Guardar registro en BD (no fatal)
         const { error: factError } = await db.from('facturas').insert({
           numero_factura: numero,
           fecha,
@@ -247,12 +258,12 @@ function makeHandler(stripeClient, db, emailClient = resend) {
           stripe_session_id: session.id,
           stripe_payment_id: session.payment_intent || null,
         });
-        if (factError) console.error('Error guardando factura en BD (no fatal):', factError.message);
+        if (factError) console.warn('Error guardando factura en BD (no fatal):', factError.message);
 
         pdfAttachment = { numero, buffer: pdfBuffer };
-        console.log(`Factura generada: ${numero}`);
+        console.log(`Factura lista para adjuntar: ${numero}`);
       } catch (err) {
-        console.error('Error generando factura (no fatal):', err.message);
+        console.error('Error generando factura (no fatal):', err.message, err.stack);
       }
 
       await sendConfirmationEmail({
