@@ -111,11 +111,11 @@ exports.handler = async (event) => {
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--ff-b);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:2rem 1rem;-webkit-font-smoothing:antialiased}
     .card{background:#fff;border-radius:1rem;overflow:hidden;border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.10);width:100%;max-width:420px}
-    .card-hd{padding:1.25rem 1.25rem 1rem;display:flex;align-items:center;gap:1rem;border-bottom:1px solid var(--border)}
-    .card-av{width:72px;height:72px;border-radius:50%;border:2.5px solid var(--primary);flex-shrink:0;overflow:hidden;background:var(--plight);display:flex;align-items:center;justify-content:center;font-size:2rem}
+    .card-hd{padding:1.5rem 1.25rem;display:flex;align-items:center;gap:1rem;background:var(--text);border-bottom:1px solid rgba(255,255,255,.08)}
+    .card-av{width:88px;height:88px;border-radius:50%;border:2.5px solid rgba(255,255,255,.2);flex-shrink:0;overflow:hidden;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
     .card-av img{width:100%;height:100%;object-fit:cover}
-    .card-name{font-family:var(--ff-d);font-size:1.25rem;line-height:1.2;font-weight:700}
-    .card-tag{font-size:.8rem;color:var(--muted);margin-top:.2rem}
+    .card-name{font-family:var(--ff-d);font-size:1.45rem;line-height:1.2;font-weight:700;color:#fff}
+    .card-tag{font-size:.8rem;color:rgba(255,255,255,.55);margin-top:.25rem}
     .card-sec{padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
     .card-sec:last-child{border-bottom:none}
     .card-sec-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:.625rem}
@@ -123,7 +123,10 @@ exports.handler = async (event) => {
     .svc-line.first{background:var(--plight);border:1px solid rgba(1,105,111,.18)}
     .svc-name{font-weight:600;min-width:0}
     .svc-price{font-weight:700;color:var(--primary);white-space:nowrap;text-align:right}
-    .card-zona{font-size:.8rem;color:var(--muted);line-height:1.6}
+    .card-zona{font-size:.73rem;color:var(--muted);line-height:1.6}
+    .card-sec--sm{padding:.55rem 1.25rem}
+    .card-sec--cta{background:var(--plight)}
+    .card-sec--share{padding:.6rem 1rem}
     .card-cta{display:flex;align-items:center;gap:1rem}
     .card-cta-desc{flex:1;font-size:.84rem;color:var(--muted);line-height:1.65;margin:0}
     .card-cta-btns{display:flex;flex-direction:column;gap:.4rem;flex-shrink:0}
@@ -134,16 +137,16 @@ exports.handler = async (event) => {
     .card-powered{text-align:center;padding:.75rem 1rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--faint)}
     .card-powered strong{color:var(--primary)}
     .card-powered a{display:inline-block;margin-top:.45rem;padding:.45rem 1rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none}
-    .card-qr{display:flex;flex-direction:column}
-    .qr-wrap{display:flex;align-items:center;gap:1rem}
+    .card-qr{display:flex;flex-direction:column;padding:.75rem 1.25rem}
+    .qr-wrap{display:flex;align-items:center;gap:.75rem}
     .qr-wrap img{border-radius:.5rem;border:1px solid var(--border);flex-shrink:0}
-    .qr-info p{font-size:.8rem;color:var(--muted);margin-bottom:.5rem}
-    .qr-download{display:inline-block;padding:.4rem .9rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none;transition:background .2s}
+    .qr-info p{font-size:.72rem;color:var(--muted);margin-bottom:.35rem}
+    .qr-download{display:inline-block;padding:.28rem .7rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.7rem;font-weight:700;text-decoration:none;transition:background .2s}
     .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
-    .share-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-    .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.55rem .75rem;border:1px solid var(--border);border-radius:999px;font-size:.78rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b);text-decoration:none;box-sizing:border-box;width:100%}
+    .share-btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}
+    .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;padding:.42rem .6rem;border:1px solid var(--border);border-radius:999px;font-size:.7rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b);text-decoration:none;box-sizing:border-box;width:100%}
     .share-btn:hover{border-color:var(--primary);color:var(--primary)}
     .share-btn:disabled{opacity:.6;cursor:default}
   </style>
@@ -160,9 +163,9 @@ exports.handler = async (event) => {
       </div>
     </div>
     ${serviciosHTML ? `<div class="card-sec"><div class="card-sec-label">Servicios</div>${serviciosHTML}</div>` : ''}
-    ${data.zona ? `<div class="card-sec"><div class="card-sec-label">Cobertura</div><div class="card-zona">${data.zona}</div></div>` : ''}
+    ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">${data.zona}</div></div>` : ''}
     ${(waUrl || data.telefono || data.descripcion) ? `
-    <div class="card-sec">
+    <div class="card-sec card-sec--cta">
       <div class="card-cta">
         ${data.descripcion ? `<p class="card-cta-desc">${data.descripcion}</p>` : ''}
         <div class="card-cta-btns${data.descripcion ? '' : ' card-cta-btns--row'}">
@@ -181,7 +184,7 @@ exports.handler = async (event) => {
     <div class="card-sec card-qr">
       <div class="card-sec-label">Código QR</div>
       <div class="qr-wrap">
-        <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="120" height="120">
+        <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="90" height="90">
         <div class="qr-info">
           <p>Escanea para abrir este perfil</p>
           ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${data.whatsapp}</p>` : ''}
@@ -196,7 +199,7 @@ exports.handler = async (event) => {
       <div style="font-size:2rem;font-weight:800;color:var(--primary);line-height:1">${visitCount}</div>
       <div style="font-size:.75rem;color:var(--faint);margin-top:.25rem">últimos 30 días</div>
     </div>` : ''}
-    <div class="card-sec">
+    <div class="card-sec card-sec--share">
       <div class="card-sec-label">Comparte este perfil</div>
       <div class="share-btns">
         <button class="share-btn" id="shareBtn" onclick="shareProfile()">
