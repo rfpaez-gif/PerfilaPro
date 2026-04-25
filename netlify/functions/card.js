@@ -145,10 +145,15 @@ exports.handler = async (event) => {
     .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
-    .share-btns{display:grid;grid-template-columns:1fr 1fr;gap:.28rem}
-    .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:.25rem;padding:.28rem .45rem;border:1px solid var(--border);border-radius:999px;font-size:.64rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b);text-decoration:none;box-sizing:border-box;width:100%}
-    .share-btn:hover{border-color:var(--primary);color:var(--primary)}
-    .share-btn:disabled{opacity:.6;cursor:default}
+    .share-icons{display:flex;justify-content:center;gap:.75rem;padding:.1rem 0}
+    .si{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s;flex-shrink:0}
+    .si:hover{opacity:.82;transform:scale(1.1)}
+    .si:active{transform:scale(.95)}
+    .si--share{background:var(--primary)}
+    .si--wa{background:#25D366}
+    .si--contact{background:#3b82f6}
+    .si--dl{background:#1e1b14}
+    .si:disabled{opacity:.5;cursor:default}
   </style>
 </head>
 <body>
@@ -200,23 +205,18 @@ exports.handler = async (event) => {
       <div style="font-size:.75rem;color:var(--faint);margin-top:.25rem">últimos 30 días</div>
     </div>` : ''}
     <div class="card-sec card-sec--share">
-      <div class="card-sec-label">Comparte este perfil</div>
-      <div class="share-btns">
-        <button class="share-btn" id="shareBtn" onclick="shareProfile()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Compartir
+      <div class="share-icons">
+        <button class="si si--share" id="shareBtn" onclick="shareProfile()" title="Compartir">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 11.999 2z"/></svg>
-          WhatsApp
+        <a class="si si--wa" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="WhatsApp">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
         </a>
-        <button class="share-btn" onclick="downloadVCard()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Añadir contacto
+        <button class="si si--contact" onclick="downloadVCard()" title="Añadir contacto">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
-        <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar
+        <button class="si si--dl" id="dlCardBtn" onclick="downloadCard(this)" title="Descargar tarjeta">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
     </div>
