@@ -173,7 +173,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, telefono, plan, agent_code } =
+      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, plan, agent_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -185,6 +185,8 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const days = planDays[plan] || 90;
       const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
       const email = session.customer_details?.email || null;
+      // Teléfono capturado por Stripe en el checkout (phone_number_collection)
+      const telefono = session.customer_details?.phone || null;
       const editToken = crypto.randomBytes(32).toString('hex');
 
       const { error } = await db.from('cards').upsert({
@@ -195,7 +197,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         zona,
         servicios: servicios ? JSON.parse(servicios) : [],
         foto_url: foto || null,
-        telefono: telefono || null,
+        telefono,
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,
