@@ -222,6 +222,12 @@
         <p class="hint">Enlace directo a una imagen tuya (JPG, PNG). Déjalo vacío para usar el avatar predeterminado.</p>
       </div>
 
+      <div class="field">
+        <label for="descripcion">Descripción breve <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <textarea id="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso." style="width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.5rem;font-family:var(--ff-b);font-size:.95rem;color:var(--text);background:#fff;resize:vertical;outline:none;transition:border-color .15s"></textarea>
+        <p class="hint"><span id="editDescCount">0</span>/200 caracteres</p>
+      </div>
+
       <hr class="divider">
 
       <div class="field">
@@ -305,6 +311,12 @@
         document.getElementById('whatsapp').value = card.whatsapp || '';
         document.getElementById('telefono').value = card.telefono || '';
         document.getElementById('foto_url').value = card.foto_url || '';
+        const descEl = document.getElementById('descripcion');
+        descEl.value = card.descripcion || '';
+        document.getElementById('editDescCount').textContent = descEl.value.length;
+        descEl.addEventListener('input', function() {
+          document.getElementById('editDescCount').textContent = this.value.length;
+        });
 
         // Enlace a la tarjeta
         const cardLink = document.getElementById('viewCardLink');
@@ -356,6 +368,7 @@
       const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
       const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
       const foto_url = document.getElementById('foto_url').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
       const servicios = Array.from(document.querySelectorAll('#servicesList input'))
         .map(i => i.value.trim()).filter(Boolean);
 
@@ -375,7 +388,7 @@
         const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url }),
+          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion }),
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));

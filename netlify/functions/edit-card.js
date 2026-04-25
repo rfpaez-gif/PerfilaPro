@@ -19,7 +19,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion')
       .eq('slug', slug)
       .eq('edit_token', token)
       .eq('status', 'active')
@@ -53,7 +53,7 @@ function makeHandler(db) {
         };
       }
 
-      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url } = body;
+      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion } = body;
 
       if (!nombre || !zona || !whatsapp || !Array.isArray(servicios) || servicios.length === 0) {
         return {
@@ -73,6 +73,7 @@ function makeHandler(db) {
           whatsapp: whatsapp.replace(/\D/g, ''),
           telefono: telefono ? telefono.replace(/\D/g, '') : null,
           foto_url: foto_url || null,
+          descripcion: descripcion ? descripcion.substring(0, 200) : null,
         })
         .eq('slug', slug);
 

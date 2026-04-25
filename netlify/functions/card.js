@@ -124,8 +124,13 @@ exports.handler = async (event) => {
     .svc-name{font-weight:600;min-width:0}
     .svc-price{font-weight:700;color:var(--primary);white-space:nowrap;text-align:right}
     .card-zona{font-size:.8rem;color:var(--muted);line-height:1.6}
-    .card-wa{display:flex;align-items:center;justify-content:center;gap:.625rem;width:100%;padding:.9rem;background:var(--wa);color:#fff;border-radius:.5rem;font-size:1rem;font-weight:700;text-decoration:none;transition:background .2s,transform .2s}
-    .card-wa:hover{background:var(--wahover);transform:translateY(-2px)}
+    .card-cta{display:flex;align-items:center;gap:1rem}
+    .card-cta-desc{flex:1;font-size:.84rem;color:var(--muted);line-height:1.65;margin:0}
+    .card-cta-btns{display:flex;flex-direction:column;gap:.4rem;flex-shrink:0}
+    .card-cta-btns--row{flex-direction:row;justify-content:center;width:100%}
+    .card-cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.5rem .95rem;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:var(--ff-b);white-space:nowrap;min-width:5.5rem}
+    .card-cta-wa{background:#25D366;color:#fff}
+    .card-cta-ph{background:#1e1b14;color:#fff}
     .card-powered{text-align:center;padding:.75rem 1rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--faint)}
     .card-powered strong{color:var(--primary)}
     .card-powered a{display:inline-block;margin-top:.45rem;padding:.45rem 1rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none}
@@ -156,16 +161,22 @@ exports.handler = async (event) => {
     </div>
     ${serviciosHTML ? `<div class="card-sec"><div class="card-sec-label">Servicios</div>${serviciosHTML}</div>` : ''}
     ${data.zona ? `<div class="card-sec"><div class="card-sec-label">Cobertura</div><div class="card-zona">${data.zona}</div></div>` : ''}
-    <div class="card-sec" style="display:flex;flex-direction:column;gap:.5rem">
-      ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="card-wa">` : '<div class="card-wa" style="cursor:default">'}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-        Contactar por WhatsApp
-      ${waUrl ? '</a>' : '</div>'}
-      ${data.telefono ? `<a href="tel:+34${data.telefono.replace(/\D/g,'')}" class="card-wa" style="background:#1e1b14">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-        Llamar ahora
-      </a>` : ''}
-    </div>
+    ${(waUrl || data.telefono || data.descripcion) ? `
+    <div class="card-sec">
+      <div class="card-cta">
+        ${data.descripcion ? `<p class="card-cta-desc">${data.descripcion}</p>` : ''}
+        <div class="card-cta-btns${data.descripcion ? '' : ' card-cta-btns--row'}">
+          ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="card-cta-btn card-cta-wa">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+            WhatsApp
+          </a>` : ''}
+          ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="card-cta-btn card-cta-ph">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+            Llamar
+          </a>` : ''}
+        </div>
+      </div>
+    </div>` : ''}
     ${qrDataUrl ? `
     <div class="card-sec card-qr">
       <div class="card-sec-label">Código QR</div>
@@ -217,15 +228,16 @@ exports.handler = async (event) => {
   </div>
   <script>
     var CARD = ${JSON.stringify({
-      nombre:   data.nombre   || '',
-      tagline:  data.tagline  || '',
-      whatsapp: data.whatsapp || '',
-      telefono: data.telefono || '',
-      zona:     data.zona     || '',
-      servicios: data.servicios || [],
-      foto_url: data.foto_url || '',
-      slug:     data.slug,
-      cardUrl:  cardUrl,
+      nombre:      data.nombre      || '',
+      tagline:     data.tagline     || '',
+      whatsapp:    data.whatsapp    || '',
+      telefono:    data.telefono    || '',
+      zona:        data.zona        || '',
+      descripcion: data.descripcion || '',
+      servicios:   data.servicios   || [],
+      foto_url:    data.foto_url    || '',
+      slug:        data.slug,
+      cardUrl:     cardUrl,
     })};
 
     function shareProfile() {
