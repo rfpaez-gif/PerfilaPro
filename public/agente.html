@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel colaborador — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #01696f; --phover: #0c4e54; --plight: #deeeed;
+      --bg: #f5f2ec; --text: #1e1b14; --muted: #6b6458; --faint: #a89f90;
+      --border: rgba(30,27,20,.10); --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
+      --ff-d: "Instrument Serif", Georgia, serif;
+      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+
+    .topbar { background: var(--primary); color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-family: var(--ff-d); font-size: 1.4rem; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; font-size: .85rem; opacity: .85; }
+    .logout-btn { background: rgba(255,255,255,.2); border: none; color: #fff; padding: .35rem .85rem; border-radius: 999px; cursor: pointer; font-size: .78rem; font-family: var(--ff-b); font-weight: 600; }
+    .logout-btn:hover { background: rgba(255,255,255,.35); }
+
+    .main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: .75rem; padding: 1.25rem 1.5rem; }
+    .stat-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .stat-sub { font-size: .75rem; color: var(--faint); margin-top: .2rem; }
+
+    /* Link de referido */
+    .ref-box { background: var(--plight); border-radius: .75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .ref-label { font-size: .78rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
+    .ref-url { font-size: .875rem; color: var(--text); font-weight: 600; flex: 1; word-break: break-all; }
+    .copy-btn { background: var(--primary); color: #fff; border: none; border-radius: .4rem; padding: .45rem .9rem; font-size: .8rem; font-weight: 700; font-family: var(--ff-b); cursor: pointer; white-space: nowrap; }
+    .copy-btn:hover { background: var(--phover); }
+
+    /* Sections */
+    .section-title { font-family: var(--ff-d); font-size: 1.2rem; margin-bottom: 1rem; }
+    .section { margin-bottom: 2.5rem; }
+    .table-wrap { background: #fff; border-radius: .75rem; border: 1px solid var(--border); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    th { background: var(--bg); padding: .75rem 1rem; text-align: left; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+    .badge-green { background: #dcfce7; color: var(--green); }
+    .badge-yellow { background: #fef9c3; color: var(--yellow); }
+    .badge-gray { background: #f3f4f6; color: var(--muted); }
+    .empty { padding: 2rem; text-align: center; color: var(--faint); font-size: .875rem; }
+
+    @media (max-width: 600px) {
+      .main { padding: 1rem; }
+      .topbar { padding: .875rem 1rem; }
+      .ref-box { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <h1>PerfilaPro · Colaboradores</h1>
+    <div class="topbar-right">
+      <span id="agentName"></span>
+      <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="main" id="mainContent" style="display:none">
+
+    <!-- Enlace de referido -->
+    <div class="ref-box">
+      <span class="ref-label">Tu enlace de referido</span>
+      <span class="ref-url" id="refUrl"></span>
+      <button class="copy-btn" onclick="copyRef()">Copiar</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Tarjetas vendidas</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">ventas directas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ventas red</div>
+        <div class="stat-value" id="statSub">—</div>
+        <div class="stat-sub">por tu red</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Comisión pendiente</div>
+        <div class="stat-value" id="statPending">—</div>
+        <div class="stat-sub">por liquidar</div>
+      </div>
+    </div>
+
+    <!-- Resumen mensual -->
+    <div class="section">
+      <div class="section-title">Resumen mensual</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Ventas propias</th>
+              <th>Ventas red</th>
+              <th>Facturado</th>
+              <th>Comisión</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="monthsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Últimas ventas -->
+    <div class="section">
+      <div class="section-title">Últimas tarjetas</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Profesional</th>
+              <th>Plan</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Liquidaciones -->
+    <div class="section">
+      <div class="section-title">Historial de liquidaciones</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Ventas</th>
+              <th>Importe</th>
+              <th>Comisión</th>
+              <th>Pagado</th>
+            </tr>
+          </thead>
+          <tbody id="liquidBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const token = localStorage.getItem('pp_agent_token');
+    if (!token) location.href = '/agente-login.html';
+
+    const PLAN_LABELS = { base: 'Base', pro: 'Pro', renovacion: 'Renovación' };
+
+    document.getElementById('agentName').textContent = localStorage.getItem('pp_agent_name') || '';
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/agent-data', {
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        render(data);
+        document.getElementById('mainContent').style.display = '';
+      } catch {
+        document.getElementById('mainContent').innerHTML = '<p style="padding:2rem;color:#dc2626">Error al cargar los datos.</p>';
+        document.getElementById('mainContent').style.display = '';
+      }
+    }
+
+    function render(data) {
+      const { agent, summary, months, recent_sales, liquidations } = data;
+
+      // Ref URL
+      const refUrl = `${location.origin}/?ref=${agent.code}`;
+      document.getElementById('refUrl').textContent = refUrl;
+
+      // Stats
+      document.getElementById('statTotal').textContent = summary.total_sales;
+      document.getElementById('statSub').textContent = summary.sub_sales;
+      document.getElementById('statPending').textContent = fmt(summary.pending_commission) + '€';
+
+      // Monthly
+      const mb = document.getElementById('monthsBody');
+      if (!months.length) {
+        mb.innerHTML = '<tr><td colspan="6" class="empty">Sin ventas aún</td></tr>';
+      } else {
+        mb.innerHTML = months.map(m => `
+          <tr>
+            <td>${fmtPeriod(m.period)}</td>
+            <td>${m.own_sales}</td>
+            <td>${m.sub_sales}</td>
+            <td>${fmt(m.gross)}€</td>
+            <td><strong>${fmt(m.commission)}€</strong></td>
+            <td>${m.liquidated
+              ? '<span class="badge badge-green">Liquidado</span>'
+              : '<span class="badge badge-yellow">Pendiente</span>'}</td>
+          </tr>`).join('');
+      }
+
+      // Recent sales
+      const sb = document.getElementById('salesBody');
+      if (!recent_sales.length) {
+        sb.innerHTML = '<tr><td colspan="4" class="empty">Sin ventas aún</td></tr>';
+      } else {
+        sb.innerHTML = recent_sales.map(c => `
+          <tr>
+            <td><a href="/c/${c.slug}" target="_blank" style="color:var(--primary);font-weight:600">${c.nombre || c.slug}</a></td>
+            <td>${PLAN_LABELS[c.plan] || c.plan}</td>
+            <td><span class="badge ${c.status === 'active' ? 'badge-green' : 'badge-gray'}">${c.status === 'active' ? 'Activa' : c.status}</span></td>
+            <td>${fmtDate(c.created_at)}</td>
+          </tr>`).join('');
+      }
+
+      // Liquidations
+      const lb = document.getElementById('liquidBody');
+      if (!liquidations.length) {
+        lb.innerHTML = '<tr><td colspan="5" class="empty">Sin liquidaciones aún</td></tr>';
+      } else {
+        lb.innerHTML = liquidations.map(l => `
+          <tr>
+            <td>${fmtPeriod(l.period)}</td>
+            <td>${l.sales_count}</td>
+            <td>${fmt(l.gross_amount)}€</td>
+            <td><strong>${fmt(l.commission_amount)}€</strong></td>
+            <td>${fmtDate(l.paid_at)}</td>
+          </tr>`).join('');
+      }
+    }
+
+    function copyRef() {
+      const url = document.getElementById('refUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => btn.textContent = 'Copiar', 1500);
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('pp_agent_token');
+      localStorage.removeItem('pp_agent_name');
+      location.href = '/agente-login.html';
+    }
+
+    function fmt(n) { return Number(n || 0).toFixed(2); }
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('es-ES') : '—'; }
+    function fmtPeriod(p) {
+      if (!p) return '—';
+      const [y, m] = p.split('-');
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      return `${months[parseInt(m,10)-1]} ${y}`;
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso colaboradores — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #01696f; --phover: #0c4e54;
+      --bg: #f5f2ec; --text: #1e1b14; --muted: #6b6458; --border: rgba(30,27,20,.10);
+      --ff-d: "Instrument Serif", Georgia, serif;
+      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+      --red: #dc2626;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1rem; -webkit-font-smoothing: antialiased; }
+    .box { background: #fff; border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,.10); padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center; }
+    .logo { font-family: var(--ff-d); font-size: 1.5rem; color: var(--primary); margin-bottom: .25rem; }
+    .sub { color: var(--muted); font-size: .875rem; margin-bottom: 2rem; }
+    label { display: block; text-align: left; font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--primary); margin-bottom: .35rem; margin-top: 1rem; }
+    input { width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-family: var(--ff-b); font-size: 1rem; color: var(--text); background: #fff; outline: none; transition: border-color .15s; }
+    input:focus { border-color: var(--primary); }
+    .btn { display: block; width: 100%; padding: .9rem; background: var(--primary); color: #fff; border: none; border-radius: .5rem; font-family: var(--ff-b); font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1.5rem; transition: background .2s; }
+    .btn:hover { background: var(--phover); }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .err { color: var(--red); font-size: .8rem; margin-top: .75rem; display: none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">PerfilaPro</div>
+    <div class="sub">Portal de colaboradores</div>
+
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="tu@email.com" autocomplete="email">
+
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+
+    <button class="btn" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div class="err" id="errMsg"></div>
+  </div>
+
+  <script>
+    // If already logged in, redirect
+    if (localStorage.getItem('pp_agent_token')) {
+      location.href = '/agente.html';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    async function doLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('errMsg');
+      err.style.display = 'none';
+
+      if (!email || !password) {
+        showErr('Introduce tu email y contraseña.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando…';
+
+      try {
+        const res = await fetch('/api/agent-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showErr(data.error || 'Error al iniciar sesión.');
+          btn.disabled = false;
+          btn.textContent = 'Entrar';
+          return;
+        }
+        localStorage.setItem('pp_agent_token', data.token);
+        localStorage.setItem('pp_agent_name', data.agent.name);
+        location.href = '/agente.html';
+      } catch {
+        showErr('Error de conexión. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+
+    function showErr(msg) {
+      const el = document.getElementById('errMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

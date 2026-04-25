@@ -173,7 +173,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, telefono, plan } =
+      const { slug, nombre, tagline, whatsapp, zona, servicios, foto, telefono, plan, agent_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -203,6 +203,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         email,
         phone: session.customer_details?.phone || null,
         edit_token: editToken,
+        agent_code: agent_code || null,
       }, { onConflict: 'slug' });
 
       if (error) {

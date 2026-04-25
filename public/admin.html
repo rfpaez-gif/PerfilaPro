@@ -250,6 +250,83 @@
       </div>
     </div>
 
+    <!-- Agentes -->
+    <div style="margin-bottom:2rem">
+      <div class="controls" style="margin-bottom:.75rem">
+        <div class="section-title">Agentes colaboradores</div>
+        <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="openAgentModal()">+ Nuevo agente</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Código</th>
+              <th>Email</th>
+              <th>Comisión</th>
+              <th>Rama</th>
+              <th>Ventas</th>
+              <th>Estado</th>
+              <th>Editar</th>
+            </tr>
+          </thead>
+          <tbody id="agentsTable">
+            <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal agente -->
+    <div id="agentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem">
+      <div style="background:#fff;border-radius:1rem;padding:2rem;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+        <h2 style="font-family:var(--ff-d);font-size:1.25rem;margin-bottom:1.25rem" id="agentModalTitle">Nuevo agente</h2>
+        <input type="hidden" id="agentId">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+          <div style="grid-column:1/-1">
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Nombre</label>
+            <input id="agentName" type="text" class="search-input" style="width:100%" placeholder="Nombre del colaborador">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Email</label>
+            <input id="agentEmail" type="email" class="search-input" style="width:100%" placeholder="email@ejemplo.com">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Código</label>
+            <input id="agentCode" type="text" class="search-input" style="width:100%;text-transform:uppercase" placeholder="CODIGO" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Contraseña</label>
+            <input id="agentPwd" type="text" class="search-input" style="width:100%" placeholder="Dejar vacío para no cambiar">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Comisión %</label>
+            <input id="agentRate" type="number" min="0" max="100" class="search-input" style="width:100%" value="15">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Agente padre (código)</label>
+            <input id="agentParent" type="text" class="search-input" style="width:100%;text-transform:uppercase" placeholder="Vacío = nivel 1" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div>
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">NIF (opcional)</label>
+            <input id="agentNif" type="text" class="search-input" style="width:100%" placeholder="12345678A">
+          </div>
+          <div id="agentStatusRow" style="display:none">
+            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Estado</label>
+            <select id="agentStatus" class="search-input" style="width:100%">
+              <option value="active">Activo</option>
+              <option value="inactive">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <p id="agentModalErr" style="color:var(--red,#dc2626);font-size:.8rem;margin-top:.75rem;min-height:1rem"></p>
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem">
+          <button class="modal-cancel" onclick="closeAgentModal()">Cancelar</button>
+          <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveAgent()">Guardar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Tabla -->
     <div class="controls">
       <div class="section-title">Perfiles</div>
@@ -300,6 +377,7 @@
     document.getElementById('loginError').style.display = 'none';
     loadData();
     loadInvoices();
+    loadAgents();
   }
 
   function logout() {
@@ -428,6 +506,7 @@
   if (getPassword()) {
     loadData();
     loadInvoices();
+    loadAgents();
   }
   // Auto-refresh cada 60 segundos
   refreshTimer = setInterval(loadData, 60000);
@@ -608,6 +687,112 @@
     a.download = `facturas-perfilapro-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  // ── Agentes ──
+
+  let allAgents = [];
+
+  async function loadAgents() {
+    const res = await fetch('/.netlify/functions/admin-agents', {
+      headers: { 'x-admin-password': getPassword() },
+    });
+    if (!res.ok) return;
+    const { agents } = await res.json();
+    allAgents = agents || [];
+    renderAgents();
+  }
+
+  function renderAgents() {
+    const tbody = document.getElementById('agentsTable');
+    if (!allAgents.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Sin agentes todavía</td></tr>';
+      return;
+    }
+    const codeToName = {};
+    allAgents.forEach(a => codeToName[a.code] = a.name);
+    tbody.innerHTML = allAgents.map(a => `
+      <tr>
+        <td><strong>${a.name}</strong></td>
+        <td><code style="background:#f3f4f6;padding:.15rem .4rem;border-radius:.25rem;font-size:.8rem">${a.code}</code></td>
+        <td style="font-size:.8rem;color:var(--muted)">${a.email}</td>
+        <td>${a.commission_rate}%</td>
+        <td style="font-size:.8rem;color:var(--muted)">${a.parent_agent_id ? (codeToName[a.parent_agent_id] || a.parent_agent_id) : '—'}</td>
+        <td>${a.sales_count}</td>
+        <td><span class="badge ${a.status === 'active' ? 'badge-green' : 'badge-muted'}">${a.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
+        <td><button class="filter-btn" onclick="openAgentModal('${a.id}')">Editar</button></td>
+      </tr>`).join('');
+  }
+
+  function openAgentModal(id) {
+    document.getElementById('agentModalErr').textContent = '';
+    document.getElementById('agentPwd').value = '';
+    if (id) {
+      const a = allAgents.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('agentModalTitle').textContent = 'Editar agente';
+      document.getElementById('agentId').value = a.id;
+      document.getElementById('agentName').value = a.name;
+      document.getElementById('agentEmail').value = a.email;
+      document.getElementById('agentCode').value = a.code;
+      document.getElementById('agentRate').value = a.commission_rate;
+      document.getElementById('agentNif').value = a.nif || '';
+      document.getElementById('agentStatus').value = a.status;
+      document.getElementById('agentStatusRow').style.display = '';
+      // Parent: find by id
+      const parent = allAgents.find(x => x.id === a.parent_agent_id);
+      document.getElementById('agentParent').value = parent ? parent.code : '';
+    } else {
+      document.getElementById('agentModalTitle').textContent = 'Nuevo agente';
+      document.getElementById('agentId').value = '';
+      document.getElementById('agentName').value = '';
+      document.getElementById('agentEmail').value = '';
+      document.getElementById('agentCode').value = '';
+      document.getElementById('agentRate').value = '15';
+      document.getElementById('agentNif').value = '';
+      document.getElementById('agentParent').value = '';
+      document.getElementById('agentStatus').value = 'active';
+      document.getElementById('agentStatusRow').style.display = 'none';
+    }
+    document.getElementById('agentModal').style.display = 'flex';
+  }
+
+  function closeAgentModal() {
+    document.getElementById('agentModal').style.display = 'none';
+  }
+
+  async function saveAgent() {
+    const id = document.getElementById('agentId').value;
+    const name = document.getElementById('agentName').value.trim();
+    const email = document.getElementById('agentEmail').value.trim();
+    const code = document.getElementById('agentCode').value.trim().toUpperCase();
+    const password = document.getElementById('agentPwd').value;
+    const commission_rate = parseFloat(document.getElementById('agentRate').value) || 15;
+    const nif = document.getElementById('agentNif').value.trim();
+    const status = document.getElementById('agentStatus').value;
+    const parentCode = document.getElementById('agentParent').value.trim().toUpperCase();
+    const parentAgent = parentCode ? allAgents.find(a => a.code === parentCode) : null;
+    const parent_agent_id = parentAgent ? parentAgent.id : null;
+
+    const errEl = document.getElementById('agentModalErr');
+    if (!name || !email || !code || (!id && !password)) {
+      errEl.textContent = 'Nombre, email, código y contraseña son obligatorios.';
+      return;
+    }
+
+    const body = id
+      ? { action: 'update', id, name, commission_rate, status, parent_agent_id, nif, password: password || undefined }
+      : { action: 'create', name, email, code, password, commission_rate, parent_agent_id, nif };
+
+    const res = await fetch('/.netlify/functions/admin-agents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Error'; return; }
+    closeAgentModal();
+    loadAgents();
   }
 </script>
 

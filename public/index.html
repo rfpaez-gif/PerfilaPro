@@ -1153,6 +1153,11 @@
       if(localStorage.getItem('pp_cookies')){
         var b=document.getElementById('cookieBanner');if(b)b.style.display='none';
       }
+      // Captura código de agente desde ?ref=CODIGO
+      (function(){
+        var ref = new URLSearchParams(location.search).get('ref');
+        if (ref) sessionStorage.setItem('pp_ref', ref.toUpperCase());
+      })();
     </script>
 
     <script>
@@ -1466,14 +1471,15 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                nombre:   cardData.nombre,
-                sector:   cardData.sector,
-                zona:     cardData.zona,
-                whatsapp: cardData.whatsapp,
-                servicios:cardData.servicios,
-                plan:     plan,
-                foto:     fotoUrl,
-                telefono: cardData.telefono || '',
+                nombre:     cardData.nombre,
+                sector:     cardData.sector,
+                zona:       cardData.zona,
+                whatsapp:   cardData.whatsapp,
+                servicios:  cardData.servicios,
+                plan:       plan,
+                foto:       fotoUrl,
+                telefono:   cardData.telefono || '',
+                agent_code: sessionStorage.getItem('pp_ref') || '',
               }),
             });
             var json = await res.json();

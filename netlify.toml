@@ -84,3 +84,18 @@
   from   = "/api/edit-card"
   to     = "/.netlify/functions/edit-card"
   status = 200
+
+[[redirects]]
+  from   = "/api/agent-auth"
+  to     = "/.netlify/functions/agent-auth"
+  status = 200
+
+[[redirects]]
+  from   = "/api/agent-data"
+  to     = "/.netlify/functions/agent-data"
+  status = 200
+
+[[redirects]]
+  from   = "/api/admin-agents"
+  to     = "/.netlify/functions/admin-agents"
+  status = 200
