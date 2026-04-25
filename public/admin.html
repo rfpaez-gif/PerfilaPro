@@ -603,7 +603,8 @@
     await runAction('refund', refundSlug, { reason });
   }
 
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  const _modalOverlay = document.getElementById('modalOverlay');
+  if (_modalOverlay) _modalOverlay.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
   });
 
