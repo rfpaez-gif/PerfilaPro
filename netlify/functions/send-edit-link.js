@@ -83,23 +83,26 @@ function makeHandler(db, emailClient) {
       };
     }
 
-    const email = (body.email || '').toLowerCase().trim();
-    if (!email) {
+    const email    = (body.email || '').toLowerCase().trim();
+    const slugParam = (body.slug  || '').toLowerCase().trim();
+
+    if (!email && !slugParam) {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Email requerido' }),
+        body: JSON.stringify({ error: 'Email o slug requerido' }),
       };
     }
 
-    const { data: card } = await db
-      .from('cards')
-      .select('slug, nombre')
-      .eq('email', email)
-      .eq('status', 'active')
-      .single();
+    // Look up card by slug (from card footer link) or by email (manual form)
+    const query = db.from('cards').select('slug, nombre, email').eq('status', 'active');
+    const { data: card } = slugParam
+      ? await query.eq('slug', slugParam).single()
+      : await query.eq('email', email).single();
 
-    if (card) {
+    const sendTo = slugParam ? card?.email : email;
+
+    if (card && sendTo) {
       const token = crypto.randomBytes(32).toString('hex');
 
       await db
@@ -114,7 +117,7 @@ function makeHandler(db, emailClient) {
         try {
           await emailClient.emails.send({
             from: 'PerfilaPro <hola@perfilapro.es>',
-            to: email,
+            to: sendTo,
             subject: `${card.nombre ? card.nombre.split(' ')[0] + ', tu' : 'Tu'} enlace para editar tu perfil`,
             html: buildEditLinkEmail({ nombre: card.nombre, editUrl }),
           });

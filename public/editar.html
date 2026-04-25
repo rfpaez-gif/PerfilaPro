@@ -159,10 +159,33 @@
       transition: border-color .15s, color .15s;
     }
     .svc-add:hover { border-color: var(--primary); color: var(--primary); }
+    .foto-wrap { display: flex; align-items: center; gap: 1rem; }
+    .foto-preview { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border); background: var(--plight); display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
+    .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .btn-foto { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-size: .875rem; font-weight: 600; color: var(--text); cursor: pointer; background: #fff; transition: border-color .15s, color .15s; }
+    .btn-foto:hover { border-color: var(--primary); color: var(--primary); }
   </style>
 </head>
 <body>
   <a class="logo" href="/">PerfilaPro</a>
+
+  <!-- Phase 0: Slug-based send (desde el footer de la tarjeta) -->
+  <div class="card" id="slugPhase" style="display:none">
+    <div class="card-header">
+      <h1>Editar mi perfil</h1>
+      <p>Te enviamos el enlace de acceso</p>
+    </div>
+    <div class="card-body">
+      <div id="slugMsg" style="display:none" class="msg"></div>
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">
+        Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
+      </p>
+      <button class="btn" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
+      <p style="margin-top:1rem;text-align:center;font-size:.8rem;color:var(--faint)">
+        ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--primary)">Accede con tu email</a>
+      </p>
+    </div>
+  </div>
 
   <!-- Phase 1: Email form -->
   <div class="card" id="emailPhase">
@@ -217,9 +240,17 @@
       </div>
 
       <div class="field">
-        <label for="foto_url">Foto de perfil <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <input type="text" id="foto_url" placeholder="https://... URL de tu foto">
-        <p class="hint">Enlace directo a una imagen tuya (JPG, PNG). Déjalo vacío para usar el avatar predeterminado.</p>
+        <label>Foto de perfil <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <div class="foto-wrap">
+          <div class="foto-preview" id="fotoPreview">👤</div>
+          <div>
+            <label for="fotoFileInput" class="btn-foto">📷 Cámara o galería</label>
+            <input type="file" id="fotoFileInput" accept="image/*" hidden>
+            <p class="hint" style="margin-top:.4rem">En móvil puedes sacar foto o elegir de la galería.</p>
+            <p class="hint" id="fotoFileName"></p>
+          </div>
+        </div>
+        <input type="hidden" id="foto_url">
       </div>
 
       <div class="field">
@@ -268,7 +299,48 @@
     const slug = params.get('slug');
     const token = params.get('token');
 
-    if (slug && token) loadEditForm();
+    if (slug && token) {
+      loadEditForm();
+    } else if (slug && !token) {
+      document.getElementById('emailPhase').style.display = 'none';
+      document.getElementById('slugPhase').style.display = '';
+    }
+
+    // Foto preview
+    var pendingFotoDataUrl = null;
+    document.getElementById('fotoFileInput').addEventListener('change', function() {
+      var file = this.files[0];
+      if (!file) return;
+      document.getElementById('fotoFileName').textContent = file.name;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        pendingFotoDataUrl = e.target.result;
+        var preview = document.getElementById('fotoPreview');
+        preview.innerHTML = '<img src="' + pendingFotoDataUrl + '" alt="preview">';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    async function sendLinkBySlug() {
+      const btn = document.getElementById('slugSendBtn');
+      const msg = document.getElementById('slugMsg');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      msg.style.display = 'none';
+      try {
+        await fetch('/api/send-edit-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug }),
+        });
+        showMsg(msg, 'ok', '¡Listo! Recibirás el enlace en tu email en breve. Revisa también la carpeta de spam.');
+        btn.textContent = 'Enlace enviado ✓';
+      } catch {
+        showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Enviar enlace de edición';
+      }
+    }
 
     async function sendLink() {
       const email = document.getElementById('emailInput').value.trim();
@@ -311,6 +383,9 @@
         document.getElementById('whatsapp').value = card.whatsapp || '';
         document.getElementById('telefono').value = card.telefono || '';
         document.getElementById('foto_url').value = card.foto_url || '';
+        if (card.foto_url) {
+          document.getElementById('fotoPreview').innerHTML = '<img src="' + card.foto_url + '" alt="foto actual">';
+        }
         const descEl = document.getElementById('descripcion');
         descEl.value = card.descripcion || '';
         document.getElementById('editDescCount').textContent = descEl.value.length;
@@ -367,7 +442,7 @@
       const zona = document.getElementById('zona').value.trim();
       const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
       const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
-      const foto_url = document.getElementById('foto_url').value.trim();
+      let foto_url = document.getElementById('foto_url').value.trim();
       const descripcion = document.getElementById('descripcion').value.trim();
       const servicios = Array.from(document.querySelectorAll('#servicesList input'))
         .map(i => i.value.trim()).filter(Boolean);
@@ -383,6 +458,27 @@
       const btn = document.getElementById('saveBtn');
       btn.disabled = true;
       btn.textContent = 'Guardando…';
+
+      // Subir foto nueva si hay una seleccionada
+      if (pendingFotoDataUrl) {
+        btn.textContent = 'Subiendo foto…';
+        try {
+          const base64 = pendingFotoDataUrl.split(',')[1];
+          const upRes = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64, contentType: 'image/jpeg', slug }),
+          });
+          const upJson = await upRes.json();
+          if (upJson.url) {
+            foto_url = upJson.url;
+            document.getElementById('foto_url').value = upJson.url;
+          }
+        } catch (e) {
+          console.warn('upload-avatar error:', e);
+        }
+        btn.textContent = 'Guardando…';
+      }
 
       try {
         const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
