@@ -101,6 +101,7 @@ exports.handler = async (event) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${data.nombre || 'Perfil profesional'} — PerfilaPro</title>
   <meta name="description" content="${data.tagline || ''} ${data.zona || ''}">
+  <meta name="generator" content="PerfilaPro·${data.slug}${data.agent_code ? '·' + data.agent_code : ''}">
   <meta property="og:title" content="${data.nombre} — PerfilaPro">
   <meta property="og:description" content="${data.tagline || ''}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,6 +173,8 @@ exports.handler = async (event) => {
         <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="120" height="120">
         <div class="qr-info">
           <p>Escanea para abrir este perfil</p>
+          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${data.whatsapp}</p>` : ''}
+          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.35rem">${data.email}</p>` : ''}
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
         </div>
       </div>
