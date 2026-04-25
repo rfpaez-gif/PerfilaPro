@@ -450,6 +450,7 @@
       .chip{padding:.32rem .85rem;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:.82rem;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
       .chip:hover:not(:disabled){border-color:var(--primary);color:var(--primary);background:var(--plight)}
       .chip.is-used{background:var(--plight);border-color:var(--primary);color:var(--primary);opacity:.6;cursor:default}
+      .chip.cob-active{background:var(--plight);border-color:var(--primary);color:var(--primary);font-weight:700}
       @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
       .photo-status.loading{color:var(--muted)}
       .photo-status.ok{color:#16a34a;font-weight:600}
@@ -934,8 +935,15 @@
               </div>
 
               <div class="form-row">
-                <label class="form-label" for="fZona">Ciudad o zona de trabajo <span class="req">*</span></label>
+                <label class="form-label" for="fZona">Localidad <span class="req">*</span></label>
                 <input class="form-input" type="text" id="fZona" name="zona" placeholder="Ej: Alicante, Valencia, Madrid…" required>
+                <p class="chips-label" style="margin-top:.6rem;margin-bottom:.4rem">Atiendo a…</p>
+                <div class="chips-wrap" id="coberturaChips">
+                  <button type="button" class="chip cob-chip cob-active" data-label="Sin límite" onclick="selectCob(this)">Sin límite</button>
+                  <button type="button" class="chip cob-chip" data-label="Máx 100km" onclick="selectCob(this)">Máx 100km</button>
+                  <button type="button" class="chip cob-chip" data-label="Máx 50km" onclick="selectCob(this)">Máx 50km</button>
+                  <button type="button" class="chip cob-chip" data-label="Máx 25km" onclick="selectCob(this)">Máx 25km</button>
+                </div>
               </div>
 
               <div class="form-row">
@@ -1182,6 +1190,11 @@
         var chipsWrap    = document.getElementById('chipsWrap');
         var sectorError  = document.getElementById('sectorError');
 
+        function selectCob(btn) {
+          document.querySelectorAll('.cob-chip').forEach(function(b){ b.classList.remove('cob-active'); });
+          btn.classList.add('cob-active');
+        }
+
         function addSuggestion(text, chip) {
           var inputs = ['servicio1','servicio2','servicio3'].map(function(n){ return document.querySelector('[name="'+n+'"]'); });
           for (var i = 0; i < inputs.length; i++) {
@@ -1322,7 +1335,10 @@
             e.preventDefault();
             var nombre   = document.getElementById('fNombre').value.trim();
             var sector   = document.getElementById('fSector').value;
-            var zona     = document.getElementById('fZona').value.trim();
+            var localidad = document.getElementById('fZona').value.trim();
+            var cobBtn   = document.querySelector('.cob-chip.cob-active');
+            var cobLabel = cobBtn ? cobBtn.dataset.label : 'Sin límite';
+            var zona     = cobLabel === 'Sin límite' ? localidad : localidad + ' · ' + cobLabel;
             var whatsapp = document.getElementById('fWhatsapp').value.trim();
             var s1 = form.elements['servicio1'].value.trim();
             var s2 = form.elements['servicio2'].value.trim();
