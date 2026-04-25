@@ -53,7 +53,7 @@ function makeHandler(db) {
         };
       }
 
-      const { nombre, tagline, zona, servicios, whatsapp, telefono } = body;
+      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url } = body;
 
       if (!nombre || !zona || !whatsapp || !Array.isArray(servicios) || servicios.length === 0) {
         return {
@@ -72,6 +72,7 @@ function makeHandler(db) {
           servicios,
           whatsapp: whatsapp.replace(/\D/g, ''),
           telefono: telefono ? telefono.replace(/\D/g, '') : null,
+          foto_url: foto_url || null,
         })
         .eq('slug', slug);
 

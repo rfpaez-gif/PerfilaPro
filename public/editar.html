@@ -216,6 +216,12 @@
         <input type="text" id="telefono" placeholder="Ej: 965123456">
       </div>
 
+      <div class="field">
+        <label for="foto_url">Foto de perfil <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="foto_url" placeholder="https://... URL de tu foto">
+        <p class="hint">Enlace directo a una imagen tuya (JPG, PNG). Déjalo vacío para usar el avatar predeterminado.</p>
+      </div>
+
       <hr class="divider">
 
       <div class="field">
@@ -241,23 +247,7 @@
         <p style="font-size:1.25rem;font-weight:700;margin-bottom:.4rem">¡Cambios guardados!</p>
         <p style="font-size:.875rem;color:var(--muted);margin-bottom:2rem;line-height:1.6">Ya son visibles en tu tarjeta.</p>
 
-        <a id="viewCardLink" href="#" target="_blank" class="btn" style="display:block;text-decoration:none;margin-bottom:.75rem">
-          Ver mi tarjeta →
-        </a>
-        <button class="btn" onclick="keepEditing()" style="background:#fff;color:var(--primary);border:2px solid var(--primary)">
-          Seguir editando
-        </button>
-      </div>
-    </div>
-
-    <!-- Phase 3: Confirmación -->
-    <div id="confirmPhase" style="display:none">
-      <div style="padding:2.5rem 2rem;text-align:center">
-        <div style="font-size:2.5rem;margin-bottom:1rem">✅</div>
-        <p style="font-size:1.25rem;font-weight:700;margin-bottom:.4rem">¡Cambios guardados!</p>
-        <p style="font-size:.875rem;color:var(--muted);margin-bottom:2rem;line-height:1.6">Ya son visibles en tu tarjeta.</p>
-
-        <a id="viewCardLink" href="#" target="_blank" class="btn" style="display:block;text-decoration:none;margin-bottom:.75rem">
+        <a id="confirmCardLink" href="#" target="_blank" class="btn" style="display:block;text-decoration:none;margin-bottom:.75rem">
           Ver mi tarjeta →
         </a>
         <button class="btn" onclick="keepEditing()" style="background:#fff;color:var(--primary);border:2px solid var(--primary)">
@@ -314,12 +304,11 @@
         document.getElementById('zona').value = card.zona || '';
         document.getElementById('whatsapp').value = card.whatsapp || '';
         document.getElementById('telefono').value = card.telefono || '';
+        document.getElementById('foto_url').value = card.foto_url || '';
 
         // Enlace a la tarjeta
         const cardLink = document.getElementById('viewCardLink');
-        if (cardLink) {
-          cardLink.href = '/c/' + slug;
-        }
+        if (cardLink) cardLink.href = '/c/' + slug;
         const list = document.getElementById('servicesList');
         list.innerHTML = '';
         const services = card.servicios || [];
@@ -366,6 +355,7 @@
       const zona = document.getElementById('zona').value.trim();
       const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
       const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+      const foto_url = document.getElementById('foto_url').value.trim();
       const servicios = Array.from(document.querySelectorAll('#servicesList input'))
         .map(i => i.value.trim()).filter(Boolean);
 
@@ -385,7 +375,7 @@
         const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono }),
+          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url }),
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -395,9 +385,9 @@
           return;
         }
         document.getElementById('editPhase').querySelector('.card-body').style.display = 'none';
-        document.getElementById('confirmPhase').style.display = '';
-        const cardLink = document.getElementById('viewCardLink');
-        if (cardLink) cardLink.href = '/c/' + slug;
+        document.getElementById('confirmPhase').style.display = 'block';
+        const confirmLink = document.getElementById('confirmCardLink');
+        if (confirmLink) confirmLink.href = '/c/' + slug;
       } catch {
         showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
         btn.disabled = false;
@@ -407,7 +397,9 @@
 
     function keepEditing() {
       document.getElementById('confirmPhase').style.display = 'none';
-      document.getElementById('editPhase').querySelector('.card-body').style.display = '';
+      document.getElementById('editPhase').querySelector('.card-body').style.display = 'block';
+      const msg = document.getElementById('editMsg');
+      msg.style.display = 'none';
       const btn = document.getElementById('saveBtn');
       btn.disabled = false;
       btn.textContent = 'Guardar cambios';
