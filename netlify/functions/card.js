@@ -137,14 +137,8 @@ exports.handler = async (event) => {
     .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
-    .share-btns{display:flex;flex-direction:column;gap:.5rem}
-    .share-btn-primary{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.85rem 1rem;border:none;border-radius:.5rem;font-size:.95rem;font-weight:700;cursor:pointer;font-family:var(--ff-b);transition:background .15s;width:100%}
-    .share-btn-wa{background:#25D366;color:#fff}
-    .share-btn-wa:hover{background:#1db953}
-    .share-btn-copy{background:var(--primary);color:#fff}
-    .share-btn-copy:hover{background:var(--phover)}
-    .share-btns-row{display:flex;justify-content:center;gap:.625rem;margin-top:.25rem}
-    .share-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .9rem;border:1px solid var(--border);border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b)}
+    .share-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    .share-btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.55rem .75rem;border:1px solid var(--border);border-radius:999px;font-size:.78rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b);text-decoration:none;box-sizing:border-box;width:100%}
     .share-btn:hover{border-color:var(--primary);color:var(--primary)}
     .share-btn:disabled{opacity:.6;cursor:default}
   </style>
@@ -194,24 +188,22 @@ exports.handler = async (event) => {
     <div class="card-sec">
       <div class="card-sec-label">Comparte este perfil</div>
       <div class="share-btns">
-        <button class="share-btn-primary share-btn-copy" id="copyLinkBtn" onclick="copyLink()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copiar enlace
+        <button class="share-btn" id="shareBtn" onclick="shareProfile()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Compartir
         </button>
-        <a class="share-btn-primary share-btn-wa" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" style="text-decoration:none">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 11.999 2z"/></svg>
-          Compartir por WhatsApp
+        <a class="share-btn" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 11.999 2z"/></svg>
+          WhatsApp
         </a>
-        <div class="share-btns-row">
-          <button class="share-btn" onclick="downloadVCard()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Añadir contacto
-          </button>
-          <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Descargar
-          </button>
-        </div>
+        <button class="share-btn" onclick="downloadVCard()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Añadir contacto
+        </button>
+        <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar
+        </button>
       </div>
     </div>
     <div class="card-powered">
@@ -236,14 +228,17 @@ exports.handler = async (event) => {
       cardUrl:  cardUrl,
     })};
 
-    function copyLink() {
-      var btn = document.getElementById('copyLinkBtn');
-      navigator.clipboard.writeText(CARD.cardUrl).then(function() {
-        btn.textContent = '¡Enlace copiado!';
-        setTimeout(function() {
-          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar enlace';
-        }, 2000);
-      });
+    function shareProfile() {
+      var btn = document.getElementById('shareBtn');
+      if (navigator.share) {
+        navigator.share({ title: CARD.nombre, url: CARD.cardUrl }).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(CARD.cardUrl).then(function() {
+          var orig = btn.innerHTML;
+          btn.textContent = '¡Copiado!';
+          setTimeout(function() { btn.innerHTML = orig; }, 2000);
+        });
+      }
     }
 
     function downloadVCard() {
