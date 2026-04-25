@@ -143,8 +143,8 @@ exports.handler = async (event) => {
     .share-btn-wa:hover{background:#1db953}
     .share-btn-copy{background:var(--primary);color:#fff}
     .share-btn-copy:hover{background:var(--phover)}
-    .share-btns-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-    .share-btn{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.65rem .5rem;border:1.5px solid var(--border);border-radius:.5rem;font-size:.8rem;font-weight:700;cursor:pointer;background:#fff;color:var(--text);transition:all .15s;font-family:var(--ff-b)}
+    .share-btns-row{display:flex;justify-content:center;gap:.625rem;margin-top:.25rem}
+    .share-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .9rem;border:1px solid var(--border);border-radius:999px;font-size:.75rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:var(--ff-b)}
     .share-btn:hover{border-color:var(--primary);color:var(--primary)}
     .share-btn:disabled{opacity:.6;cursor:default}
   </style>
@@ -204,12 +204,12 @@ exports.handler = async (event) => {
         </a>
         <div class="share-btns-row">
           <button class="share-btn" onclick="downloadVCard()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Añadir contacto
           </button>
           <button class="share-btn" id="dlCardBtn" onclick="downloadCard(this)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Descargar perfil
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar
           </button>
         </div>
       </div>
