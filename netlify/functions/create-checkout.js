@@ -21,6 +21,8 @@ const SECTOR_LABELS = {
   eventos:    'Eventos y celebraciones',
   automocion: 'Automoción y mecánica',
   seguridad:  'Seguridad y vigilancia',
+  cuidados:   'Cuidados y asistencia',
+  fitness:    'Fitness y deporte',
   otro:       'Otro',
 };
 
