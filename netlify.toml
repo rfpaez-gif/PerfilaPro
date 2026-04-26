@@ -99,3 +99,8 @@
   from   = "/api/admin-agents"
   to     = "/.netlify/functions/admin-agents"
   status = 200
+
+[[redirects]]
+  from   = "/api/resend-invoice"
+  to     = "/.netlify/functions/resend-invoice"
+  status = 200

@@ -111,6 +111,8 @@
     .btn-extend:hover { background: #fef9c3; }
     .btn-refund { color: var(--red); border-color: #fecaca; }
     .btn-refund:hover { background: #fee2e2; }
+    .btn-invoice { color: #2563eb; border-color: #bfdbfe; }
+    .btn-invoice:hover { background: #eff6ff; }
     .actions-cell { display: flex; gap: .35rem; flex-wrap: wrap; }
 
     /* ── Modal ── */
@@ -495,6 +497,7 @@
           <div class="actions-cell">
             <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
             <button class="action-btn btn-extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
+            ${card.stripe_session_id ? `<button class="action-btn btn-invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
             ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
           </div>
         </td>
@@ -794,6 +797,36 @@
     if (!res.ok) { errEl.textContent = data.error || 'Error'; return; }
     closeAgentModal();
     loadAgents();
+  }
+
+  // ── Reenviar factura ──
+
+  async function resendInvoice(slug, btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    try {
+      const res = await fetch('/.netlify/functions/resend-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      btn.textContent = '✓ Enviada';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = '#bbf7d0';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+      }, 3000);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
   }
 </script>
 
