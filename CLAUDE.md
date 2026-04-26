@@ -42,8 +42,8 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 ### Supabase schema
 
 **`cards` table** — one row per professional card:
-- `slug` (PK), `nombre`, `tagline`, `whatsapp`, `zona`, `servicios` (jsonb), `foto`, `plan`, `status`, `stripe_session_id`, `expires_at`, `email`, `phone`, `refund_reason`, `refunded_at`
-- Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
+- `slug` (PK), `nombre`, `tagline`, `whatsapp`, `zona`, `servicios` (jsonb), `foto_url`, `plan`, `status`, `stripe_session_id`, `expires_at`, `email`, `phone`, `refund_reason`, `refunded_at`
+- Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `edit_link_sent_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
 
 **`settings` table** — key/value store for site config:
 - `key` (PK), `value`
@@ -160,3 +160,4 @@ AGENT_JWT_SECRET      # signs agent JWT tokens
 - **Email enumeration prevention** — `send-edit-link` always returns 200.
 - **Field allowlisting** — `legal-settings` and `edit-card` ignore unknown fields; `edit-card` additionally strips HTML tags and validates phone/email format.
 - **Avatar URL whitelist** — `edit-card` only accepts `foto_url` values that start with the configured Supabase storage URL.
+- **XSS prevention** — `card.js` escapes all user content via `esc()` before rendering HTML; `stripTags()` sanitises inputs on write.
