@@ -187,7 +187,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, zona, servicios, desc, foto, plan, agent_code } =
+      const { slug, nombre, tagline, whatsapp, zona, servicios, desc, direccion, foto, plan, agent_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -212,6 +212,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         servicios: servicios ? JSON.parse(servicios) : [],
         foto_url: foto || null,
         descripcion: desc || null,
+        direccion: direccion || null,
         telefono,
         plan: plan || 'base',
         status: 'active',

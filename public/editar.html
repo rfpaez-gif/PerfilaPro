@@ -259,6 +259,12 @@
         <p class="hint"><span id="editDescCount">0</span>/200 caracteres</p>
       </div>
 
+      <div class="field">
+        <label for="direccion">Dirección <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
+        <p class="hint">Aparecerá con enlace a Google Maps. Ideal para comercios y locales.</p>
+      </div>
+
       <hr class="divider">
 
       <div class="field">
@@ -389,6 +395,7 @@
         const descEl = document.getElementById('descripcion');
         descEl.value = card.descripcion || '';
         document.getElementById('editDescCount').textContent = descEl.value.length;
+        document.getElementById('direccion').value = card.direccion || '';
         descEl.addEventListener('input', function() {
           document.getElementById('editDescCount').textContent = this.value.length;
         });
@@ -444,6 +451,7 @@
       const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
       let foto_url = document.getElementById('foto_url').value.trim();
       const descripcion = document.getElementById('descripcion').value.trim();
+      const direccion = document.getElementById('direccion').value.trim();
       const servicios = Array.from(document.querySelectorAll('#servicesList input'))
         .map(i => i.value.trim()).filter(Boolean);
 
@@ -484,7 +492,7 @@
         const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion }),
+          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));

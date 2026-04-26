@@ -36,7 +36,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'JSON inválido' };
   }
 
-  const { nombre, sector, zona, whatsapp, servicios, desc, plan, foto, telefono, agent_code } = body;
+  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code } = body;
 
   if (!nombre || !zona || !whatsapp || !servicios?.length || !plan) {
     return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -69,6 +69,7 @@ exports.handler = async (event) => {
         zona,
         servicios: JSON.stringify(servicios),
         desc: (desc || '').substring(0, 200),
+        direccion: (direccion || '').substring(0, 200),
         foto: foto || '',
         plan,
         agent_code: agent_code || '',

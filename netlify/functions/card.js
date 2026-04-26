@@ -198,7 +198,8 @@ exports.handler = async (event) => {
         <div class="qr-info">
           <p>Escanea para abrir este perfil</p>
           ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${data.whatsapp}</p>` : ''}
-          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.35rem">${data.email}</p>` : ''}
+          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">${data.email}</p>` : ''}
+          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener" style="display:block;font-size:.72rem;color:var(--primary);text-decoration:none;margin-bottom:.35rem;font-weight:600;line-height:1.4">📍 ${data.direccion} →</a>` : ''}
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
         </div>
       </div>

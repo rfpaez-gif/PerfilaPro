@@ -947,6 +947,11 @@
               </div>
 
               <div class="form-row">
+                <label class="form-label" for="fDireccion">Dirección <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional — solo si tienes local)</span></label>
+                <input class="form-input" type="text" id="fDireccion" name="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
+              </div>
+
+              <div class="form-row">
                 <label class="form-label" for="fWhatsapp">Número de WhatsApp <span class="req">*</span></label>
                 <div class="input-prefix-wrap">
                   <span class="input-prefix">+34</span>
@@ -1359,7 +1364,8 @@
             if(!nombre||!sector||!zona||!whatsapp||!s1) return;
 
             var servicios = [s1,s2,s3].filter(Boolean);
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,telefono:telefono};
+            var direccion = document.getElementById('fDireccion').value.trim();
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,telefono:telefono,direccion:direccion};
 
             // Rellenar tarjeta de previsualización
             document.getElementById('rNombre').textContent = nombre;
@@ -1484,6 +1490,7 @@
                 whatsapp:   cardData.whatsapp,
                 servicios:  cardData.servicios,
                 desc:       cardData.desc || '',
+                direccion:  cardData.direccion || '',
                 plan:       plan,
                 foto:       fotoUrl,
                 telefono:   cardData.telefono || '',
