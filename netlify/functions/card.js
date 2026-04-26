@@ -134,8 +134,11 @@ exports.handler = async (event) => {
     .card-zona{font-size:.73rem;color:var(--muted);line-height:1.6;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
     .zona-badge{background:var(--plight);color:var(--primary);border-radius:999px;font-size:.62rem;font-weight:700;padding:.15rem .55rem;white-space:nowrap}
     .card-sec--sm{padding:.55rem 1.25rem}
-    .card-sec--cta{background:var(--plight);padding:1.35rem 1.5rem}
-    .card-desc{font-size:1.05rem;color:var(--muted);line-height:1.9;margin:0}
+    .card-sec--cta{background:var(--surface);padding:1.25rem 1.5rem}
+    .card-desc-box{background:#fff;border:1px solid var(--border);border-radius:.75rem;padding:1.1rem 1.25rem;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+    .card-desc{font-size:1.05rem;color:var(--muted);line-height:1.9;margin:0;font-style:italic}
+    .card-desc::before{content:'\201C';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-right:.2rem}
+    .card-desc::after{content:'\201D';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-left:.2rem}
     .card-sec--share{padding:.4rem .7rem}
     .card-sec--stats{padding:.45rem .9rem}
     .stats-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
@@ -185,7 +188,9 @@ exports.handler = async (event) => {
     ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">📍 ${zonaLocal}${zonaRange ? `<span class="zona-badge">${zonaRange}</span>` : ''}</div></div>` : ''}
     ${data.descripcion ? `
     <div class="card-sec card-sec--cta">
-      <p class="card-desc">${esc(data.descripcion)}</p>
+      <div class="card-desc-box">
+        <p class="card-desc">${esc(data.descripcion)}</p>
+      </div>
     </div>` : ''}
     ${!isPro && (waUrl || data.telefono) ? `
     <div class="card-sec card-sec--actions">
