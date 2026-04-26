@@ -46,6 +46,7 @@ describe('admin-actions handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_PASSWORD = 'admin123';
+    delete process.env.ADMIN_TOTP_SECRET;
 
     mockUpdate.mockReturnValue({ eq: mockEqUpdate });
     mockEqUpdate.mockResolvedValue({ error: null });

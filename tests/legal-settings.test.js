@@ -21,6 +21,7 @@ describe('legal-settings handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_PASSWORD = 'admin123';
+    delete process.env.ADMIN_TOTP_SECRET;
     mockIn.mockResolvedValue({ data: [], error: null });
     mockUpsert.mockResolvedValue({ error: null });
   });
