@@ -246,7 +246,9 @@
       }
       .profile-card{
         background:#fff;border:1px solid var(--line);border-radius:1.5rem;overflow:hidden;box-shadow:var(--shadow-md);
+        transition:opacity .4s ease;
       }
+      .profile-card.fading{opacity:0}
       .profile-head{display:flex;gap:.9rem;align-items:center;padding:1.15rem;border-bottom:1px solid var(--line)}
       .profile-avatar{width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px solid var(--primary);flex:0 0 auto;background:#d8ebe9}
       .profile-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
@@ -653,36 +655,25 @@
 
           <div class="hero-visual">
             <div class="card-stage">
-              <div class="card-top-note">Ejemplo activo</div>
-              <article class="profile-card" aria-label="Ejemplo de perfil PerfilaPro">
+              <div class="card-top-note" id="heroSectorLabel">Ejemplo activo</div>
+              <article class="profile-card" id="heroCard" aria-label="Ejemplo de perfil PerfilaPro">
                 <div class="profile-head">
                   <div class="profile-avatar">
-                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg" alt="Profesional del sector fontanería" width="600" height="900" loading="lazy">
+                    <img id="heroAvatar" src="" alt="" width="600" height="800">
                   </div>
                   <div>
-                    <div class="profile-name">Paco Fontanero</div>
-                    <div class="profile-sub">Fontanería y urgencias 24h</div>
-                    <div class="profile-sub" style="font-size:.85rem;color:var(--faint)">📍 Alicante y alrededores</div>
+                    <div class="profile-name" id="heroName"></div>
+                    <div class="profile-sub" id="heroSub"></div>
+                    <div class="profile-sub" style="font-size:.85rem;color:var(--faint)" id="heroZona"></div>
                   </div>
                 </div>
                 <div class="profile-block">
                   <div class="profile-label">Servicios</div>
-                  <div class="service is-main">
-                    <span>Reparaciones y fugas</span>
-                    <span class="price">Desde 40€</span>
-                  </div>
-                  <div class="service is-soft">
-                    <span>Instalaciones completas baño y cocina</span>
-                  </div>
-                  <div class="service is-soft">
-                    <span>Atención de urgencias 24/7</span>
-                  </div>
+                  <div id="heroServices"></div>
                 </div>
                 <div class="profile-block">
                   <div class="profile-label">Sobre mí</div>
-                  <p class="profile-text">
-                    15 años de experiencia en la zona de Alicante. Trabajo limpio, precios claros y atención rápida.
-                  </p>
+                  <p class="profile-text" id="heroDesc"></p>
                 </div>
                 <div class="profile-block">
                   <div class="wa-btn" style="cursor:default">
@@ -1578,6 +1569,108 @@
             stageForm.scrollIntoView({behavior:'smooth',block:'start'});
           });
         }
+      })();
+
+      // Rotación de perfiles en el hero
+      (function(){
+        var HERO_PROFILES = [
+          {
+            sector: 'Oficios · Fontanería',
+            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg',
+            nombre: 'Mohamed Fontanero',
+            sub: 'Fontanería y urgencias 24h',
+            zona: '📍 Alicante y alrededores',
+            servicios: [
+              {txt:'Reparaciones y fugas', precio:'Desde 40€', main:true},
+              {txt:'Instalaciones baño y cocina', precio:'', main:false},
+              {txt:'Urgencias 24/7', precio:'', main:false},
+            ],
+            desc: '15 años de experiencia en Alicante. Trabajo limpio, precios claros y atención rápida.',
+          },
+          {
+            sector: 'Hogar · Servicio doméstico',
+            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg',
+            nombre: 'Isabel Servicio Hogar',
+            sub: 'Limpieza y organización del hogar',
+            zona: '📍 Valencia y zona metropolitana',
+            servicios: [
+              {txt:'Limpieza semanal', precio:'Desde 15€/h', main:true},
+              {txt:'Plancha y ropa', precio:'', main:false},
+              {txt:'Organización y orden', precio:'', main:false},
+            ],
+            desc: 'Profesional de confianza con referencias contrastadas. Puntual, discreta y detallista.',
+          },
+          {
+            sector: 'Cuidados · Asistencia a domicilio',
+            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg',
+            nombre: 'Antonio Cuidador',
+            sub: 'Cuidado de personas mayores',
+            zona: '📍 Madrid norte',
+            servicios: [
+              {txt:'Acompañamiento diario', precio:'Desde 12€/h', main:true},
+              {txt:'Gestiones y citas médicas', precio:'', main:false},
+              {txt:'Cuidados nocturnos', precio:'', main:false},
+            ],
+            desc: 'Cercano, paciente y comprometido. Formación en geriatría y primeros auxilios.',
+          },
+          {
+            sector: 'Belleza · Estética',
+            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg',
+            nombre: 'Sonia Estética',
+            sub: 'Centro de estética y tratamientos',
+            zona: '📍 Murcia centro',
+            servicios: [
+              {txt:'Tratamiento facial completo', precio:'Desde 45€', main:true},
+              {txt:'Depilación y manicura', precio:'', main:false},
+              {txt:'Extensiones de pestañas', precio:'', main:false},
+            ],
+            desc: 'Resultados visibles desde la primera sesión. Productos de calidad y trato personalizado.',
+          },
+          {
+            sector: 'Educación · Clases particulares',
+            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg',
+            nombre: 'Ana Profe',
+            sub: 'Clases particulares y apoyo escolar',
+            zona: '📍 Sevilla y online',
+            servicios: [
+              {txt:'Matemáticas y ciencias', precio:'Desde 20€/h', main:true},
+              {txt:'Inglés todos los niveles', precio:'', main:false},
+              {txt:'Preparación selectividad', precio:'', main:false},
+            ],
+            desc: 'Graduada en Matemáticas con 8 años de experiencia. Resultados garantizados o te devuelvo la clase.',
+          },
+        ];
+
+        var idx = 0;
+        var card = document.getElementById('heroCard');
+        var sectorLabel = document.getElementById('heroSectorLabel');
+
+        function renderHero(p) {
+          document.getElementById('heroAvatar').src = p.foto;
+          document.getElementById('heroAvatar').alt = p.nombre;
+          document.getElementById('heroName').textContent = p.nombre;
+          document.getElementById('heroSub').textContent = p.sub;
+          document.getElementById('heroZona').textContent = p.zona;
+          document.getElementById('heroDesc').textContent = p.desc;
+          sectorLabel.textContent = p.sector;
+          document.getElementById('heroServices').innerHTML = p.servicios.map(function(s){
+            return '<div class="service ' + (s.main ? 'is-main' : 'is-soft') + '">' +
+              '<span>' + s.txt + '</span>' +
+              (s.precio ? '<span class="price">' + s.precio + '</span>' : '') +
+            '</div>';
+          }).join('');
+        }
+
+        renderHero(HERO_PROFILES[0]);
+
+        setInterval(function(){
+          card.classList.add('fading');
+          setTimeout(function(){
+            idx = (idx + 1) % HERO_PROFILES.length;
+            renderHero(HERO_PROFILES[idx]);
+            card.classList.remove('fading');
+          }, 400);
+        }, 4000);
       })();
 
       // Carrusel de ejemplos
