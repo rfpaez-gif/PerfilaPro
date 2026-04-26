@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -31,10 +32,8 @@ function makeHandler(db) {
     }
 
     if (event.httpMethod === 'POST') {
-      const password = event.headers['x-admin-password'];
-      if (!password || password !== process.env.ADMIN_PASSWORD) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
-      }
+      const auth = checkAdminAuth(event);
+      if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
       let body;
       try { body = JSON.parse(event.body || '{}'); } catch {

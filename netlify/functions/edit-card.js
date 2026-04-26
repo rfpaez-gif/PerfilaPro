@@ -23,7 +23,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at')
       .eq('slug', slug)
       .eq('edit_token', token)
       .eq('status', 'active')
@@ -34,6 +34,14 @@ function makeHandler(db) {
         statusCode: 401,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ error: 'Enlace inválido o expirado' }),
+      };
+    }
+
+    if (card.edit_token_expires_at && new Date(card.edit_token_expires_at) < new Date()) {
+      return {
+        statusCode: 401,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'El enlace de edición ha expirado. Solicita uno nuevo.' }),
       };
     }
 
@@ -59,6 +67,12 @@ function makeHandler(db) {
 
       const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion } = body;
 
+      const ALLOWED_FOTO_HOSTS = [
+        'supabase.co/storage',
+        'supabase.in/storage',
+      ];
+      const fotoUrlClean = foto_url && ALLOWED_FOTO_HOSTS.some(h => foto_url.includes(h)) ? foto_url : null;
+
       if (!nombre || !zona || !whatsapp || !Array.isArray(servicios) || servicios.length === 0) {
         return {
           statusCode: 400,
@@ -76,7 +90,7 @@ function makeHandler(db) {
           servicios:   servicios.map(s => stripTags(s).substring(0, 100)),
           whatsapp:    whatsapp.replace(/\D/g, ''),
           telefono:    telefono ? telefono.replace(/\D/g, '') : null,
-          foto_url:    foto_url || null,
+          foto_url:    fotoUrlClean,
           descripcion: descripcion ? stripTags(descripcion).substring(0, 200) : null,
           direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
         })

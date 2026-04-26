@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { buildPDF } = require('./invoice-utils');
+const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -11,14 +12,8 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const password = event.headers['x-admin-password'];
-  if (!password || password !== process.env.ADMIN_PASSWORD) {
-    return {
-      statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'No autorizado' }),
-    };
-  }
+  const auth = checkAdminAuth(event);
+  if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
   const { numero, from, to } = event.queryStringParameters || {};
 

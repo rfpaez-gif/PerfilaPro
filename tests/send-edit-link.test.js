@@ -89,7 +89,7 @@ describe('send-edit-link handler', () => {
     expect(emailArgs.html).toContain('ana-electricista');
   });
 
-  it('guarda el token con expiración de 15 minutos', async () => {
+  it('guarda el token con expiración de 7 días', async () => {
     let capturedBuilder;
     mockFrom.mockImplementation(() => {
       capturedBuilder = makeBuilder();
@@ -101,7 +101,11 @@ describe('send-edit-link handler', () => {
     expect(updateArgs.edit_token).toBeDefined();
     expect(typeof updateArgs.edit_token).toBe('string');
     expect(updateArgs.edit_token.length).toBe(64); // 32 bytes hex
-    expect(updateArgs.edit_token_expires_at).toBeUndefined();
+    expect(updateArgs.edit_token_expires_at).toBeDefined();
+    const expiry = new Date(updateArgs.edit_token_expires_at);
+    const diffDays = (expiry - Date.now()) / (1000 * 60 * 60 * 24);
+    expect(diffDays).toBeGreaterThan(6.9);
+    expect(diffDays).toBeLessThan(7.1);
   });
 
   it('devuelve 200 aunque el email no exista (previene enumeración)', async () => {

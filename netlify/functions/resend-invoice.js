@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
 const { buildEmail } = require('./stripe-webhook');
+const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -16,14 +17,8 @@ function makeHandler(db, emailClient) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const pwd = event.headers['x-admin-password'];
-    if (!pwd || pwd !== process.env.ADMIN_PASSWORD) {
-      return {
-        statusCode: 401,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'No autorizado' }),
-      };
-    }
+    const auth = checkAdminAuth(event);
+    if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     let body;
     try {

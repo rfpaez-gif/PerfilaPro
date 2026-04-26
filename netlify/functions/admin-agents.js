@@ -1,20 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
+const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-function auth(event) {
-  return (event.headers['x-admin-password'] || '') === (process.env.ADMIN_PASSWORD || '');
-}
-
 function makeHandler(db) {
   return async (event) => {
-    if (!auth(event)) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'No autorizado' }) };
-    }
+    const auth = checkAdminAuth(event);
+    if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     // GET — list all agents
     if (event.httpMethod === 'GET') {

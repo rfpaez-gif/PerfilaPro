@@ -95,7 +95,7 @@ function makeHandler(db, emailClient) {
     }
 
     // Look up card by slug (from card footer link) or by email (manual form)
-    const query = db.from('cards').select('slug, nombre, email').eq('status', 'active');
+    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active');
     const { data: card } = slugParam
       ? await query.eq('slug', slugParam).single()
       : await query.eq('email', email).single();
@@ -103,11 +103,19 @@ function makeHandler(db, emailClient) {
     const sendTo = slugParam ? card?.email : email;
 
     if (card && sendTo) {
+      // Rate limit: máx 1 envío cada 10 minutos por tarjeta
+      const lastSent = card.edit_link_sent_at ? new Date(card.edit_link_sent_at) : null;
+      if (lastSent && Date.now() - lastSent.getTime() < 10 * 60 * 1000) {
+        // Devolvemos 200 para no revelar si existe — el usuario espera y ya
+        return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
+      }
+
       const token = crypto.randomBytes(32).toString('hex');
+      const tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       await db
         .from('cards')
-        .update({ edit_token: token })
+        .update({ edit_token: token, edit_token_expires_at: tokenExpiry, edit_link_sent_at: new Date().toISOString() })
         .eq('slug', card.slug);
 
       const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';

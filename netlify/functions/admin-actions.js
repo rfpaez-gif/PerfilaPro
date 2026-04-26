@@ -1,5 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -14,10 +15,8 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const password = event.headers['x-admin-password'];
-    if (!password || password !== process.env.ADMIN_PASSWORD) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'No autorizado' }) };
-    }
+    const auth = checkAdminAuth(event);
+    if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     let body;
     try {
