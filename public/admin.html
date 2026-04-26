@@ -137,8 +137,9 @@
     <h1>PerfilaPro</h1>
     <p>Panel de administración</p>
     <input type="password" id="passwordInput" placeholder="Contraseña" autocomplete="current-password">
+    <input type="text" id="totpInput" placeholder="Código autenticador (6 dígitos)" autocomplete="one-time-code" inputmode="numeric" maxlength="6" style="letter-spacing:.2em;font-size:1.25rem;text-align:center">
     <button onclick="login()">Entrar</button>
-    <div class="login-error" id="loginError">Contraseña incorrecta. Inténtalo de nuevo.</div>
+    <div class="login-error" id="loginError">Contraseña o código incorrectos.</div>
   </div>
 </div>
 
@@ -369,13 +370,18 @@
   let refreshTimer = null;
 
   document.getElementById('passwordInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('totpInput').focus();
+  });
+  document.getElementById('totpInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') login();
   });
 
   function login() {
-    const pwd = document.getElementById('passwordInput').value.trim();
+    const pwd  = document.getElementById('passwordInput').value.trim();
+    const totp = document.getElementById('totpInput').value.trim();
     if (!pwd) return;
     sessionStorage.setItem('adminPwd', pwd);
+    sessionStorage.setItem('adminTotp', totp);
     document.getElementById('loginError').style.display = 'none';
     loadData();
     loadInvoices();
@@ -384,14 +390,20 @@
 
   function logout() {
     sessionStorage.removeItem('adminPwd');
+    sessionStorage.removeItem('adminTotp');
     clearInterval(refreshTimer);
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginWrap').style.display = 'flex';
     document.getElementById('passwordInput').value = '';
+    document.getElementById('totpInput').value = '';
   }
 
   function getPassword() {
     return sessionStorage.getItem('adminPwd') || '';
+  }
+
+  function getTotp() {
+    return sessionStorage.getItem('adminTotp') || '';
   }
 
   async function loadData() {
@@ -400,7 +412,7 @@
 
     try {
       const res = await fetch('/.netlify/functions/admin-data', {
-        headers: { 'x-admin-password': pwd }
+        headers: { 'x-admin-password': pwd, 'x-admin-totp': getTotp() }
       });
 
       if (res.status === 401) {
@@ -545,7 +557,7 @@
     try {
       const res = await fetch('/.netlify/functions/legal-settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
         body: JSON.stringify({
           legal_name:    document.getElementById('legalName').value.trim(),
           legal_nif:     document.getElementById('legalNif').value.trim(),
@@ -569,7 +581,7 @@
     try {
       const res = await fetch('/.netlify/functions/admin-actions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
         body: JSON.stringify({ action, slug, ...extra }),
       });
       const data = await res.json();
@@ -624,7 +636,7 @@
 
     try {
       const res = await fetch(`/.netlify/functions/admin-invoices?${params}`, {
-        headers: { 'x-admin-password': getPassword() }
+        headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() }
       });
       if (!res.ok) { renderInvoicesTable([]); return; }
       const { facturas } = await res.json();
@@ -660,7 +672,7 @@
 
   async function downloadInvoicePDF(numero) {
     const url = `/.netlify/functions/admin-invoices?numero=${encodeURIComponent(numero)}`;
-    const res = await fetch(url, { headers: { 'x-admin-password': getPassword() } });
+    const res = await fetch(url, { headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() } });
     if (!res.ok) { alert('Error descargando la factura'); return; }
     const blob = await res.blob();
     const a = document.createElement('a');
@@ -699,7 +711,7 @@
 
   async function loadAgents() {
     const res = await fetch('/.netlify/functions/admin-agents', {
-      headers: { 'x-admin-password': getPassword() },
+      headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
     });
     if (!res.ok) return;
     const { agents } = await res.json();
@@ -790,7 +802,7 @@
 
     const res = await fetch('/.netlify/functions/admin-agents', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -808,7 +820,7 @@
     try {
       const res = await fetch('/.netlify/functions/resend-invoice', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
         body: JSON.stringify({ slug }),
       });
       const data = await res.json();
