@@ -119,11 +119,11 @@ exports.handler = async (event) => {
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--ff-b);background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:2rem 1rem;-webkit-font-smoothing:antialiased}
     .card{background:#fff;border-radius:1rem;overflow:hidden;border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.10);width:100%;max-width:420px}
-    .card-hd{padding:1.5rem 1.25rem;display:flex;align-items:center;gap:1rem;background:var(--text);border-bottom:1px solid rgba(255,255,255,.08)}
-    .card-av{width:88px;height:88px;border-radius:50%;border:2.5px solid rgba(255,255,255,.2);flex-shrink:0;overflow:hidden;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+    .card-hd{padding:1.9rem 1.5rem;display:flex;align-items:center;gap:1.25rem;background:var(--text);border-bottom:1px solid rgba(255,255,255,.08)}
+    .card-av{width:114px;height:114px;border-radius:50%;border:3px solid rgba(255,255,255,.2);flex-shrink:0;overflow:hidden;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:3rem}
     .card-av img{width:100%;height:100%;object-fit:cover}
-    .card-name{font-family:var(--ff-d);font-size:1.45rem;line-height:1.2;font-weight:700;color:#fff}
-    .card-tag{font-size:.8rem;color:rgba(255,255,255,.55);margin-top:.25rem}
+    .card-name{font-family:var(--ff-d);font-size:1.75rem;line-height:1.2;font-weight:700;color:#fff}
+    .card-tag{font-size:.83rem;color:rgba(255,255,255,.6);margin-top:.3rem}
     .card-sec{padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
     .card-sec:last-child{border-bottom:none}
     .card-sec-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:.625rem}
@@ -134,15 +134,20 @@ exports.handler = async (event) => {
     .card-zona{font-size:.73rem;color:var(--muted);line-height:1.6;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
     .zona-badge{background:var(--plight);color:var(--primary);border-radius:999px;font-size:.62rem;font-weight:700;padding:.15rem .55rem;white-space:nowrap}
     .card-sec--sm{padding:.55rem 1.25rem}
-    .card-sec--cta{background:var(--plight)}
+    .card-sec--cta{background:var(--plight);padding:1.35rem 1.5rem}
+    .card-desc{font-size:1.05rem;color:var(--muted);line-height:1.9;margin:0}
     .card-sec--share{padding:.4rem .7rem}
-    .card-cta{display:flex;align-items:center;gap:1rem}
-    .card-cta-desc{flex:1;font-size:.84rem;color:var(--muted);line-height:1.65;margin:0}
-    .card-cta-btns{display:flex;flex-direction:column;gap:.4rem;flex-shrink:0}
-    .card-cta-btns--row{flex-direction:row;justify-content:center;width:100%}
-    .card-cta-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.5rem .95rem;border-radius:999px;font-size:.78rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:var(--ff-b);white-space:nowrap;min-width:5.5rem}
-    .card-cta-wa{background:#25D366;color:#fff}
-    .card-cta-ph{background:#1e1b14;color:#fff}
+    .card-sec--stats{padding:.45rem .9rem}
+    .stats-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
+    .stats-center{text-align:center;padding:.15rem 0}
+    .stats-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary)}
+    .stats-count{font-size:1.7rem;font-weight:800;color:var(--primary);line-height:1;margin:.1rem 0}
+    .stats-sub{font-size:.6rem;color:var(--faint)}
+    .act-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:.22rem;padding:.5rem .8rem;border-radius:.6rem;font-size:.67rem;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:var(--ff-b);line-height:1.2;min-width:4.5rem}
+    .act-btn--wa{background:#25D366;color:#fff}
+    .act-btn--ph{background:#1e1b14;color:#fff;justify-self:end}
+    .card-sec--actions{padding:.65rem 1.25rem}
+    .actions-row{display:flex;justify-content:center;gap:.75rem}
     .card-powered{text-align:center;padding:.5rem .7rem;border-top:1px solid var(--border);font-size:.65rem;color:var(--faint)}
     .card-powered strong{color:var(--primary)}
     .card-powered a{display:inline-block;margin-top:.3rem;padding:.3rem .7rem;background:var(--primary);color:#fff;border-radius:999px;font-size:.65rem;font-weight:700;text-decoration:none}
@@ -154,15 +159,15 @@ exports.handler = async (event) => {
     .qr-download:hover{background:var(--phover)}
     .footer{margin-top:1.5rem;font-size:.75rem;color:var(--faint);text-align:center}
     .footer a{color:var(--primary);text-decoration:none}
-    .share-icons{display:flex;justify-content:center;gap:.75rem;padding:.1rem 0}
-    .si{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;text-decoration:none;transition:opacity .15s,transform .15s;flex-shrink:0}
-    .si:hover{opacity:.82;transform:scale(1.1)}
-    .si:active{transform:scale(.95)}
-    .si--share{background:var(--primary)}
-    .si--wa{background:#25D366}
-    .si--contact{background:#3b82f6}
-    .si--dl{background:#1e1b14}
-    .si:disabled{opacity:.5;cursor:default}
+    .share-icons{display:flex;justify-content:center;gap:.55rem;padding:.1rem 0}
+    .si{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;text-decoration:none;transition:opacity .18s,transform .18s;flex-shrink:0}
+    .si:hover{opacity:.72;transform:scale(1.08)}
+    .si:active{transform:scale(.93)}
+    .si--share{background:rgba(1,105,111,.12)}
+    .si--wa{background:rgba(37,211,102,.14)}
+    .si--contact{background:rgba(59,130,246,.12)}
+    .si--dl{background:rgba(30,27,20,.08)}
+    .si:disabled{opacity:.4;cursor:default}
   </style>
 </head>
 <body>
@@ -178,20 +183,21 @@ exports.handler = async (event) => {
     </div>
     ${serviciosHTML ? `<div class="card-sec"><div class="card-sec-label">Servicios</div>${serviciosHTML}</div>` : ''}
     ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">📍 ${zonaLocal}${zonaRange ? `<span class="zona-badge">${zonaRange}</span>` : ''}</div></div>` : ''}
-    ${(waUrl || data.telefono || data.descripcion) ? `
+    ${data.descripcion ? `
     <div class="card-sec card-sec--cta">
-      <div class="card-cta">
-        ${data.descripcion ? `<p class="card-cta-desc">${esc(data.descripcion)}</p>` : ''}
-        <div class="card-cta-btns${data.descripcion ? '' : ' card-cta-btns--row'}">
-          ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="card-cta-btn card-cta-wa">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-            WhatsApp
-          </a>` : ''}
-          ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="card-cta-btn card-cta-ph">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-            Llamar
-          </a>` : ''}
-        </div>
+      <p class="card-desc">${esc(data.descripcion)}</p>
+    </div>` : ''}
+    ${!isPro && (waUrl || data.telefono) ? `
+    <div class="card-sec card-sec--actions">
+      <div class="actions-row">
+        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="act-btn act-btn--wa">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+          WhatsApp
+        </a>` : ''}
+        ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="act-btn act-btn--ph">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+          Llamar
+        </a>` : ''}
       </div>
     </div>` : ''}
     ${qrDataUrl ? `
@@ -209,24 +215,36 @@ exports.handler = async (event) => {
       </div>
     </div>` : ''}
     ${isPro && visitCount !== null ? `
-    <div class="card-sec" style="text-align:center">
-      <div class="card-sec-label">Visitas este mes</div>
-      <div style="font-size:2rem;font-weight:800;color:var(--primary);line-height:1">${visitCount}</div>
-      <div style="font-size:.75rem;color:var(--faint);margin-top:.25rem">últimos 30 días</div>
+    <div class="card-sec card-sec--stats">
+      <div class="stats-row">
+        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="act-btn act-btn--wa">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+          WhatsApp
+        </a>` : '<div></div>'}
+        <div class="stats-center">
+          <div class="stats-label">Visitas</div>
+          <div class="stats-count">${visitCount}</div>
+          <div class="stats-sub">últimos 30 días</div>
+        </div>
+        ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="act-btn act-btn--ph">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+          Llamar
+        </a>` : '<div></div>'}
+      </div>
     </div>` : ''}
     <div class="card-sec card-sec--share">
       <div class="share-icons">
         <button class="si si--share" id="shareBtn" onclick="shareProfile()" title="Compartir">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#01696f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <a class="si si--wa" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="WhatsApp">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+        <a class="si si--wa" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="Compartir por WhatsApp">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
         </a>
         <button class="si si--contact" onclick="downloadVCard()" title="Añadir contacto">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
         <button class="si si--dl" id="dlCardBtn" onclick="downloadCard(this)" title="Descargar tarjeta">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e1b14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
     </div>
