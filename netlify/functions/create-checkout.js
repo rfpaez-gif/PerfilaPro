@@ -24,6 +24,7 @@ const SECTOR_LABELS = {
   cuidados:   'Cuidados y asistencia',
   fitness:    'Fitness y deporte',
   turismo:    'Turismo y viajes',
+  comercio:   'Comercio y tiendas',
   otro:       'Otro',
 };
 
