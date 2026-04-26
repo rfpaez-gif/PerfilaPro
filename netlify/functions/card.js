@@ -94,6 +94,10 @@ exports.handler = async (event) => {
     visitCount = count ?? 0;
   }
 
+  const zonaParts = (data.zona || '').split(' · ');
+  const zonaLocal = zonaParts[0] || '';
+  const zonaRange = zonaParts[1] || null;
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -123,7 +127,8 @@ exports.handler = async (event) => {
     .svc-line.first{background:var(--plight);border:1px solid rgba(1,105,111,.18)}
     .svc-name{font-weight:600;min-width:0}
     .svc-price{font-weight:700;color:var(--primary);white-space:nowrap;text-align:right}
-    .card-zona{font-size:.73rem;color:var(--muted);line-height:1.6}
+    .card-zona{font-size:.73rem;color:var(--muted);line-height:1.6;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+    .zona-badge{background:var(--plight);color:var(--primary);border-radius:999px;font-size:.62rem;font-weight:700;padding:.15rem .55rem;white-space:nowrap}
     .card-sec--sm{padding:.55rem 1.25rem}
     .card-sec--cta{background:var(--plight)}
     .card-sec--share{padding:.4rem .7rem}
@@ -168,7 +173,7 @@ exports.handler = async (event) => {
       </div>
     </div>
     ${serviciosHTML ? `<div class="card-sec"><div class="card-sec-label">Servicios</div>${serviciosHTML}</div>` : ''}
-    ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">${data.zona}</div></div>` : ''}
+    ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">📍 ${zonaLocal}${zonaRange ? `<span class="zona-badge">${zonaRange}</span>` : ''}</div></div>` : ''}
     ${(waUrl || data.telefono || data.descripcion) ? `
     <div class="card-sec card-sec--cta">
       <div class="card-cta">

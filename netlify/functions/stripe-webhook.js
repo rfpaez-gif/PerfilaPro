@@ -91,8 +91,22 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
               </tr>
             </table>
 
+            <!-- Factura adjunta -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;border:1.5px solid rgba(1,105,111,.2);border-radius:8px;margin-bottom:20px">
+              <tr>
+                <td style="padding:14px 18px">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="font-size:22px;padding-right:12px;vertical-align:middle">📎</td>
+                    <td style="vertical-align:middle">
+                      <p style="margin:0;font-size:13px;font-weight:700;color:#1e1b14">Factura en PDF adjunta</p>
+                      <p style="margin:2px 0 0;font-size:12px;color:#6b6458">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
+                    </td>
+                  </tr></table>
+                </td>
+              </tr>
+            </table>
             <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
-              Adjuntamos la factura de tu compra para tus registros. ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
+              ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
             <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
               ¡Mucho éxito, ${firstName}! 🙌
