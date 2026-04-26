@@ -233,7 +233,6 @@ exports.handler = async (event) => {
   </div>
   <div class="footer">
     <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? → PerfilaPro.es</a>
-    <br><a href="/editar.html?slug=${data.slug}" style="color:var(--faint);text-decoration:none;margin-top:.5rem;display:inline-block;font-size:.7rem">Editar este perfil</a>
   </div>
   <script>
     var CARD = ${JSON.stringify({
