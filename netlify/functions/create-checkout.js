@@ -23,6 +23,7 @@ const SECTOR_LABELS = {
   seguridad:  'Seguridad y vigilancia',
   cuidados:   'Cuidados y asistencia',
   fitness:    'Fitness y deporte',
+  turismo:    'Turismo y viajes',
   otro:       'Otro',
 };
 
