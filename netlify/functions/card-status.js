@@ -6,6 +6,8 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+  if (event.httpMethod !== 'GET') return { statusCode: 405, body: 'Method Not Allowed' };
+
   const slug = event.queryStringParameters?.slug;
   if (!slug) return { statusCode: 400, body: 'Missing slug' };
 
