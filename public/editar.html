@@ -282,22 +282,6 @@
         </a>
       </div>
     </div>
-
-    <!-- Phase 3: Confirmación -->
-    <div id="confirmPhase" style="display:none">
-      <div style="padding:2.5rem 2rem;text-align:center">
-        <div style="font-size:2.5rem;margin-bottom:1rem">✅</div>
-        <p style="font-size:1.25rem;font-weight:700;margin-bottom:.4rem">¡Cambios guardados!</p>
-        <p style="font-size:.875rem;color:var(--muted);margin-bottom:2rem;line-height:1.6">Ya son visibles en tu tarjeta.</p>
-
-        <a id="confirmCardLink" href="#" target="_blank" class="btn" style="display:block;text-decoration:none;margin-bottom:.75rem">
-          Ver mi tarjeta →
-        </a>
-        <button class="btn" onclick="keepEditing()" style="background:#fff;color:var(--primary);border:2px solid var(--primary)">
-          Seguir editando
-        </button>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -501,25 +485,18 @@
           btn.textContent = 'Guardar cambios';
           return;
         }
-        document.getElementById('editPhase').querySelector('.card-body').style.display = 'none';
-        document.getElementById('confirmPhase').style.display = 'block';
-        const confirmLink = document.getElementById('confirmCardLink');
-        if (confirmLink) confirmLink.href = '/c/' + slug;
+        pendingFotoDataUrl = null;
+        btn.disabled = false;
+        btn.textContent = 'Guardar cambios';
+        msg.className = 'msg msg-ok';
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver mi tarjeta →</a>';
+        msg.style.display = '';
+        msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } catch {
         showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
         btn.disabled = false;
         btn.textContent = 'Guardar cambios';
       }
-    }
-
-    function keepEditing() {
-      document.getElementById('confirmPhase').style.display = 'none';
-      document.getElementById('editPhase').querySelector('.card-body').style.display = 'block';
-      const msg = document.getElementById('editMsg');
-      msg.style.display = 'none';
-      const btn = document.getElementById('saveBtn');
-      btn.disabled = false;
-      btn.textContent = 'Guardar cambios';
     }
 
     function showMsg(el, type, text) {

@@ -34,7 +34,7 @@ function buildEditLinkEmail({ nombre, editUrl }) {
           <td style="padding:40px">
             <p style="margin:0 0 16px;font-size:24px;font-weight:700">Edita tu perfil, ${firstName}</p>
             <p style="margin:0 0 24px;font-size:15px;color:#6b6458;line-height:1.7">
-              Has solicitado editar tu perfil profesional. Haz clic en el botón de abajo para acceder al formulario de edición. El enlace es válido durante <strong>15 minutos</strong>.
+              Has solicitado editar tu perfil profesional. Haz clic en el botón de abajo para acceder al formulario de edición. El enlace es válido durante <strong>7 días</strong>.
             </p>
 
             <!-- CTA -->

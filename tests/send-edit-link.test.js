@@ -142,7 +142,7 @@ describe('buildEditLinkEmail', () => {
     const html = buildEditLinkEmail({ nombre: 'Juan García', editUrl: 'https://perfilapro.es/editar.html?slug=juan&token=abc' });
     expect(html).toContain('Juan');
     expect(html).toContain('https://perfilapro.es/editar.html?slug=juan&token=abc');
-    expect(html).toContain('15 minutos');
+    expect(html).toContain('7 días');
   });
 
   it('funciona sin nombre', () => {
