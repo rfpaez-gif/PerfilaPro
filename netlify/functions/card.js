@@ -6,6 +6,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 exports.handler = async (event) => {
   // 1) Intentar leer slug de la query (?slug=...)
   const slugFromQuery = event.queryStringParameters?.slug;
@@ -43,8 +47,8 @@ exports.handler = async (event) => {
 
   const serviciosHTML = (data.servicios || []).map((s, i) => {
     const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
-    const nombre = m ? m[1].trim() : s;
-    const precio = m ? m[2].trim() : '';
+    const nombre = esc(m ? m[1].trim() : s);
+    const precio = esc(m ? m[2].trim() : '');
     return `<div class="svc-line${i === 0 ? ' first' : ''}">
       <span class="svc-name">${nombre}</span>
       ${precio ? `<span class="svc-price">${precio}</span>` : ''}
@@ -95,19 +99,19 @@ exports.handler = async (event) => {
   }
 
   const zonaParts = (data.zona || '').split(' · ');
-  const zonaLocal = zonaParts[0] || '';
-  const zonaRange = zonaParts[1] || null;
+  const zonaLocal = esc(zonaParts[0] || '');
+  const zonaRange = zonaParts[1] ? esc(zonaParts[1]) : null;
 
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${data.nombre || 'Perfil profesional'} — PerfilaPro</title>
-  <meta name="description" content="${data.tagline || ''} ${data.zona || ''}">
-  <meta name="generator" content="PerfilaPro·${data.slug}${data.agent_code ? '·' + data.agent_code : ''}">
-  <meta property="og:title" content="${data.nombre} — PerfilaPro">
-  <meta property="og:description" content="${data.tagline || ''}">
+  <title>${esc(data.nombre) || 'Perfil profesional'} — PerfilaPro</title>
+  <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
+  <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
+  <meta property="og:title" content="${esc(data.nombre)} — PerfilaPro">
+  <meta property="og:description" content="${esc(data.tagline)}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -165,11 +169,11 @@ exports.handler = async (event) => {
   <div class="card">
     <div class="card-hd">
       <div class="card-av">
-        ${data.foto_url ? `<img src="${data.foto_url}" alt="${data.nombre}" loading="lazy">` : '👤'}
+        ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : '👤'}
       </div>
       <div>
-        <div class="card-name">${data.nombre || ''}</div>
-        ${data.tagline ? `<div class="card-tag">${data.tagline}</div>` : ''}
+        <div class="card-name">${esc(data.nombre)}</div>
+        ${data.tagline ? `<div class="card-tag">${esc(data.tagline)}</div>` : ''}
       </div>
     </div>
     ${serviciosHTML ? `<div class="card-sec"><div class="card-sec-label">Servicios</div>${serviciosHTML}</div>` : ''}
@@ -177,7 +181,7 @@ exports.handler = async (event) => {
     ${(waUrl || data.telefono || data.descripcion) ? `
     <div class="card-sec card-sec--cta">
       <div class="card-cta">
-        ${data.descripcion ? `<p class="card-cta-desc">${data.descripcion}</p>` : ''}
+        ${data.descripcion ? `<p class="card-cta-desc">${esc(data.descripcion)}</p>` : ''}
         <div class="card-cta-btns${data.descripcion ? '' : ' card-cta-btns--row'}">
           ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="card-cta-btn card-cta-wa">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
@@ -194,12 +198,12 @@ exports.handler = async (event) => {
     <div class="card-sec card-qr">
       <div class="card-sec-label">Código QR</div>
       <div class="qr-wrap">
-        <img src="${qrDataUrl}" alt="QR ${data.nombre}" width="90" height="90">
+        <img src="${qrDataUrl}" alt="QR ${esc(data.nombre)}" width="90" height="90">
         <div class="qr-info">
           <p>Escanea para abrir este perfil</p>
-          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${data.whatsapp}</p>` : ''}
-          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">${data.email}</p>` : ''}
-          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener" style="display:block;font-size:.72rem;color:var(--primary);text-decoration:none;margin-bottom:.35rem;font-weight:600;line-height:1.4">📍 ${data.direccion} →</a>` : ''}
+          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${esc(data.whatsapp)}</p>` : ''}
+          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">${esc(data.email)}</p>` : ''}
+          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener" style="display:block;font-size:.72rem;color:var(--primary);text-decoration:none;margin-bottom:.35rem;font-weight:600;line-height:1.4">📍 ${esc(data.direccion)} →</a>` : ''}
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
         </div>
       </div>
