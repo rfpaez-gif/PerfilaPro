@@ -5,6 +5,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+function stripTags(str) {
+  return String(str || '').replace(/<[^>]*>/g, '').trim();
+}
+
 function makeHandler(db) {
   return async (event) => {
     const { slug, token } = event.queryStringParameters || {};
@@ -66,15 +70,15 @@ function makeHandler(db) {
       const { error: updateError } = await db
         .from('cards')
         .update({
-          nombre,
-          tagline: tagline || null,
-          zona,
-          servicios,
-          whatsapp: whatsapp.replace(/\D/g, ''),
-          telefono: telefono ? telefono.replace(/\D/g, '') : null,
-          foto_url: foto_url || null,
-          descripcion: descripcion ? descripcion.substring(0, 200) : null,
-          direccion: direccion ? direccion.substring(0, 200) : null,
+          nombre:      stripTags(nombre).substring(0, 100),
+          tagline:     tagline ? stripTags(tagline).substring(0, 100) : null,
+          zona:        stripTags(zona).substring(0, 100),
+          servicios:   servicios.map(s => stripTags(s).substring(0, 100)),
+          whatsapp:    whatsapp.replace(/\D/g, ''),
+          telefono:    telefono ? telefono.replace(/\D/g, '') : null,
+          foto_url:    foto_url || null,
+          descripcion: descripcion ? stripTags(descripcion).substring(0, 200) : null,
+          direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
         })
         .eq('slug', slug);
 

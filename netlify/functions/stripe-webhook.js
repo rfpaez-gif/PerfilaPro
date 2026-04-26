@@ -11,6 +11,10 @@ const supabase = createClient(
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+function stripTags(str) {
+  return String(str || '').replace(/<[^>]*>/g, '').trim();
+}
+
 function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   const cardUrl = `${siteUrl}/c/${slug}`;
   const editUrl = editToken ? `${siteUrl}/editar.html?slug=${slug}&token=${editToken}` : null;
@@ -203,16 +207,18 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const telefono = session.customer_details?.phone || null;
       const editToken = crypto.randomBytes(32).toString('hex');
 
+      const serviciosParsed = servicios ? JSON.parse(servicios).map(s => stripTags(s).substring(0, 100)) : [];
+
       const { error } = await db.from('cards').upsert({
         slug,
-        nombre,
-        tagline,
+        nombre:      stripTags(nombre).substring(0, 100),
+        tagline:     stripTags(tagline).substring(0, 100),
         whatsapp,
-        zona,
-        servicios: servicios ? JSON.parse(servicios) : [],
-        foto_url: foto || null,
-        descripcion: desc || null,
-        direccion: direccion || null,
+        zona:        stripTags(zona).substring(0, 100),
+        servicios:   serviciosParsed,
+        foto_url:    foto || null,
+        descripcion: desc ? stripTags(desc).substring(0, 200) : null,
+        direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
         telefono,
         plan: plan || 'base',
         status: 'active',
