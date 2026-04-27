@@ -105,7 +105,7 @@ function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl }) {
 }
 
 async function processReminders(db, emailClient) {
-  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.com';
+  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const now = new Date();
   let totalSent = 0;
 
@@ -140,7 +140,7 @@ async function processReminders(db, emailClient) {
 
       try {
         await emailClient.emails.send({
-          from: 'PerfilaPro <hola@perfilapro.com>',
+          from: 'PerfilaPro <hola@perfilapro.es>',
           to: card.email,
           subject,
           html,

@@ -118,7 +118,7 @@ function makeHandler(db, emailClient) {
         .update({ edit_token: token, edit_token_expires_at: tokenExpiry, edit_link_sent_at: new Date().toISOString() })
         .eq('slug', card.slug);
 
-      const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
       const editUrl = `${siteUrl}/editar.html?slug=${card.slug}&token=${token}`;
 
       if (emailClient) {
