@@ -84,7 +84,9 @@ exports.handler = async (event) => {
     : null;
 
   const isPaid = isDemo || !!data.stripe_session_id;
-  const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';
+  const proto   = (event.headers && event.headers['x-forwarded-proto']) || 'https';
+  const host    = (event.headers && event.headers.host) || 'perfilapro.es';
+  const siteUrl = `${proto}://${host}`;
   const cardUrl = `${siteUrl}/c/${data.slug}`;
 
   let qrDataUrl = null;
