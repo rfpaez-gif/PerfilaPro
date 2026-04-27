@@ -23,7 +23,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at, category_id, city_slug, directory_visible')
       .eq('slug', slug)
       .eq('edit_token', token)
       .eq('status', 'active')
@@ -46,10 +46,20 @@ function makeHandler(db) {
     }
 
     if (event.httpMethod === 'GET') {
+      let category_sector = null;
+      let category_specialty = null;
+      if (card.category_id) {
+        const { data: cat } = await db
+          .from('categories')
+          .select('sector, specialty')
+          .eq('id', card.category_id)
+          .maybeSingle();
+        if (cat) { category_sector = cat.sector; category_specialty = cat.specialty; }
+      }
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(card),
+        body: JSON.stringify({ ...card, category_sector, category_specialty }),
       };
     }
 
@@ -65,7 +75,8 @@ function makeHandler(db) {
         };
       }
 
-      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion } = body;
+      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion,
+              sector, specialty, city_slug, directory_visible } = body;
 
       const ALLOWED_FOTO_HOSTS = [
         'supabase.co/storage',
@@ -81,18 +92,35 @@ function makeHandler(db) {
         };
       }
 
+      // Resolve category_id from sector + specialty slugs
+      let category_id = null;
+      if (sector && specialty) {
+        const { data: cat } = await db
+          .from('categories')
+          .select('id')
+          .eq('sector', sector)
+          .eq('specialty', specialty)
+          .maybeSingle();
+        category_id = cat?.id || null;
+      }
+
+      const dirVisible = category_id && city_slug ? !!directory_visible : false;
+
       const { error: updateError } = await db
         .from('cards')
         .update({
-          nombre:      stripTags(nombre).substring(0, 100),
-          tagline:     tagline ? stripTags(tagline).substring(0, 100) : null,
-          zona:        stripTags(zona).substring(0, 100),
-          servicios:   servicios.map(s => stripTags(s).substring(0, 100)),
-          whatsapp:    whatsapp.replace(/\D/g, ''),
-          telefono:    telefono ? telefono.replace(/\D/g, '') : null,
-          foto_url:    fotoUrlClean,
-          descripcion: descripcion ? stripTags(descripcion).substring(0, 200) : null,
-          direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
+          nombre:             stripTags(nombre).substring(0, 100),
+          tagline:            tagline ? stripTags(tagline).substring(0, 100) : null,
+          zona:               stripTags(zona).substring(0, 100),
+          servicios:          servicios.map(s => stripTags(s).substring(0, 100)),
+          whatsapp:           whatsapp.replace(/\D/g, ''),
+          telefono:           telefono ? telefono.replace(/\D/g, '') : null,
+          foto_url:           fotoUrlClean,
+          descripcion:        descripcion ? stripTags(descripcion).substring(0, 200) : null,
+          direccion:          direccion ? stripTags(direccion).substring(0, 200) : null,
+          category_id:        category_id,
+          city_slug:          city_slug ? stripTags(city_slug).substring(0, 80) : null,
+          directory_visible:  dirVisible,
         })
         .eq('slug', slug);
 

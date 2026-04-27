@@ -164,6 +164,20 @@
     .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
     .btn-foto { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-size: .875rem; font-weight: 600; color: var(--text); cursor: pointer; background: #fff; transition: border-color .15s, color .15s; }
     .btn-foto:hover { border-color: var(--primary); color: var(--primary); }
+    select { width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-family: var(--ff-b); font-size: 1rem; color: var(--text); background: #fff; outline: none; transition: border-color .15s; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    select:focus { border-color: var(--primary); }
+    .dir-box { border: 1.5px solid var(--border); border-radius: .75rem; padding: 1rem; }
+    .dir-box .field:last-of-type { margin-bottom: 0; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .875rem 1rem; background: var(--bg); border-radius: .5rem; border: 1.5px solid var(--border); margin-top: .875rem; }
+    .toggle-info { flex: 1; }
+    .toggle-label { font-size: .9375rem; font-weight: 600; color: var(--text); }
+    .toggle-hint { font-size: .75rem; color: var(--faint); margin-top: .2rem; }
+    .toggle-sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; display: inline-block; }
+    .toggle-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 12px; transition: background .2s; }
+    .toggle-track::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .toggle-sw input:checked ~ .toggle-track { background: var(--primary); }
+    .toggle-sw input:checked ~ .toggle-track::before { transform: translateX(20px); }
   </style>
 </head>
 <body>
@@ -274,11 +288,54 @@
         <p class="hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€"</p>
       </div>
 
+      <hr class="divider">
+
+      <div class="field">
+        <label>Directorio profesional</label>
+        <p class="hint" style="margin-bottom:.75rem">Elige tu especialidad y ciudad para aparecer cuando los clientes te busquen en Google</p>
+        <div class="dir-box">
+          <div class="field">
+            <label for="sectorSel">Sector</label>
+            <select id="sectorSel" onchange="onSectorChange()">
+              <option value="">Selecciona sector…</option>
+            </select>
+          </div>
+          <div class="field" id="specialtyField" style="display:none">
+            <label for="specialtySel">Especialidad</label>
+            <select id="specialtySel" onchange="onSpecialtyChange()">
+              <option value="">Selecciona especialidad…</option>
+            </select>
+          </div>
+          <div class="field" id="cityField" style="display:none">
+            <label for="citySel">Ciudad</label>
+            <select id="citySel">
+              <option value="">Selecciona ciudad…</option>
+            </select>
+          </div>
+          <div class="toggle-row" id="visibleRow" style="display:none">
+            <div class="toggle-info">
+              <p class="toggle-label">Visible en el directorio</p>
+              <p class="toggle-hint">Tu perfil aparecerá en Google y en perfilapro.es/directorio</p>
+            </div>
+            <label class="toggle-sw">
+              <input type="checkbox" id="dirVisible">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <a id="pubProfileLink" href="#" target="_blank" style="display:none;margin-top:.875rem;font-size:.8125rem;color:var(--primary);font-weight:600;text-decoration:none">
+            Ver mi perfil público →
+          </a>
+        </div>
+      </div>
+
       <button class="btn" id="saveBtn" onclick="saveProfile()">Guardar cambios</button>
 
-      <div style="margin-top:1rem;text-align:center">
+      <div style="margin-top:1rem;text-align:center;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
         <a id="viewCardLink" href="#" target="_blank" style="font-size:.875rem;color:var(--primary);font-weight:700;text-decoration:none">
           Ver mi tarjeta →
+        </a>
+        <a id="viewProfileLink" href="#" target="_blank" style="display:none;font-size:.875rem;color:var(--primary);font-weight:700;text-decoration:none">
+          Ver perfil público →
         </a>
       </div>
     </div>
@@ -298,6 +355,7 @@
 
     // Foto preview
     var pendingFotoDataUrl = null;
+    var directoryData = null;
     document.getElementById('fotoFileInput').addEventListener('change', function() {
       var file = this.files[0];
       if (!file) return;
@@ -384,9 +442,14 @@
           document.getElementById('editDescCount').textContent = this.value.length;
         });
 
-        // Enlace a la tarjeta
+        // Enlace a la tarjeta y al perfil público
         const cardLink = document.getElementById('viewCardLink');
         if (cardLink) cardLink.href = '/c/' + slug;
+        const profileLink = document.getElementById('viewProfileLink');
+        if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
+
+        // Cargar opciones del directorio y pre-seleccionar valores actuales
+        loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible);
         const list = document.getElementById('servicesList');
         list.innerHTML = '';
         const services = card.servicios || [];
@@ -427,6 +490,77 @@
       btn.closest('.svc-item').remove();
     }
 
+    async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible) {
+      try {
+        const res = await fetch('/api/directory-options');
+        if (!res.ok) return;
+        directoryData = await res.json();
+
+        // Poblar sectores (únicos, preservando label)
+        const sectorMap = {};
+        directoryData.categories.forEach(c => { if (!sectorMap[c.sector]) sectorMap[c.sector] = c.sector_label; });
+        const sectorSel = document.getElementById('sectorSel');
+        Object.entries(sectorMap).forEach(([val, label]) => {
+          const o = document.createElement('option'); o.value = val; o.textContent = label;
+          sectorSel.appendChild(o);
+        });
+
+        // Poblar ciudades
+        const citySel = document.getElementById('citySel');
+        directoryData.cities.forEach(c => {
+          const o = document.createElement('option'); o.value = c.slug;
+          o.textContent = c.province && c.province !== c.name ? c.name + ' (' + c.province + ')' : c.name;
+          citySel.appendChild(o);
+        });
+
+        // Pre-seleccionar si hay valores guardados
+        if (currentSector) {
+          sectorSel.value = currentSector;
+          onSectorChange();
+          if (currentSpecialty) {
+            document.getElementById('specialtySel').value = currentSpecialty;
+            onSpecialtyChange();
+          }
+          if (currentCity) document.getElementById('citySel').value = currentCity;
+          if (currentVisible) document.getElementById('dirVisible').checked = true;
+        }
+        // Mostrar enlace perfil público si tiene sector+ciudad configurado
+        if (currentSector && currentCity) {
+          const lnk = document.getElementById('pubProfileLink');
+          lnk.href = '/p/' + slug; lnk.style.display = '';
+        }
+      } catch (e) {
+        console.warn('loadDirectoryOptions error:', e);
+      }
+    }
+
+    function onSectorChange() {
+      if (!directoryData) return;
+      const sector = document.getElementById('sectorSel').value;
+      const specialtySel = document.getElementById('specialtySel');
+      const specialtyField = document.getElementById('specialtyField');
+
+      // Limpiar especialidades
+      specialtySel.innerHTML = '<option value="">Selecciona especialidad…</option>';
+      document.getElementById('cityField').style.display = 'none';
+      document.getElementById('visibleRow').style.display = 'none';
+
+      if (!sector) { specialtyField.style.display = 'none'; return; }
+
+      const specs = directoryData.categories.filter(c => c.sector === sector);
+      specs.forEach(c => {
+        const o = document.createElement('option'); o.value = c.specialty; o.textContent = c.specialty_label;
+        specialtySel.appendChild(o);
+      });
+      specialtyField.style.display = '';
+    }
+
+    function onSpecialtyChange() {
+      const specialty = document.getElementById('specialtySel').value;
+      document.getElementById('cityField').style.display = specialty ? '' : 'none';
+      document.getElementById('visibleRow').style.display = specialty ? '' : 'none';
+    }
+
     async function saveProfile() {
       const nombre = document.getElementById('nombre').value.trim();
       const tagline = document.getElementById('tagline').value.trim();
@@ -438,6 +572,10 @@
       const direccion = document.getElementById('direccion').value.trim();
       const servicios = Array.from(document.querySelectorAll('#servicesList input'))
         .map(i => i.value.trim()).filter(Boolean);
+      const sector = document.getElementById('sectorSel').value;
+      const specialty = document.getElementById('specialtySel').value;
+      const city_slug = document.getElementById('citySel').value;
+      const directory_visible = document.getElementById('dirVisible').checked;
 
       const msg = document.getElementById('editMsg');
       msg.style.display = 'none';
@@ -476,7 +614,7 @@
         const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
+          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, sector, specialty, city_slug, directory_visible }),
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -489,7 +627,7 @@
         btn.disabled = false;
         btn.textContent = 'Guardar cambios';
         msg.className = 'msg msg-ok';
-        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver mi tarjeta →</a>';
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver mi tarjeta →</a>' + (directory_visible ? ' · <a href="/p/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver perfil público →</a>' : '');
         msg.style.display = '';
         msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } catch {
