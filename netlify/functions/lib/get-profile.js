@@ -102,12 +102,13 @@ async function getVisibleProfileSlugs(db, { page = 1, pageSize = 1000 } = {}) {
   const from = (page - 1) * pageSize;
   const { data, count, error } = await db
     .from('cards')
-    .select('slug, updated_at', { count: 'exact' })
+    .select('slug, created_at', { count: 'exact' })
     .eq('status', 'active')
     .eq('directory_visible', true)
     .order('created_at', { ascending: false })
     .range(from, from + pageSize - 1);
-  return { slugs: data || [], total: count || 0, error };
+  const slugs = (data || []).map(r => ({ slug: r.slug, lastmod: (r.created_at || '').split('T')[0] }));
+  return { slugs, total: count || 0, error };
 }
 
 module.exports = {

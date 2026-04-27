@@ -20,10 +20,10 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: 'Internal error' };
   }
 
-  const entries = slugs.map(({ slug, updated_at }) => {
-    const lastmod = updated_at ? updated_at.split('T')[0] : new Date().toISOString().split('T')[0];
-    return `  <url>\n    <loc>${siteUrl}/p/${slug}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`;
-  }).join('\n');
+  const today = new Date().toISOString().split('T')[0];
+  const entries = slugs.map(({ slug, lastmod }) =>
+    `  <url>\n    <loc>${siteUrl}/p/${slug}</loc>\n    <lastmod>${lastmod || today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`
+  ).join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

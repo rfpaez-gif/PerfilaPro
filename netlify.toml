@@ -147,3 +147,8 @@
   from   = "/sitemap-perfiles.xml"
   to     = "/.netlify/functions/sitemap-perfiles"
   status = 200
+
+[[redirects]]
+  from   = "/sitemap-categorias.xml"
+  to     = "/.netlify/functions/sitemap-categorias"
+  status = 200

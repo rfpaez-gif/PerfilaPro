@@ -40,6 +40,12 @@ exports.handler = async (event) => {
     };
   }
 
+  // Incrementar contador de visitas (no bloqueante)
+  db.from('cards')
+    .update({ profile_views: (data.profile_views || 0) + 1 })
+    .eq('slug', data.slug)
+    .then(({ error: ve }) => { if (ve) console.error('profile_views error:', ve.message); });
+
   const [cat, city] = await Promise.all([
     getCategoryByCard(db, data.category_id),
     getCityBySlug(db, data.city_slug),
