@@ -137,8 +137,8 @@ exports.handler = async (event) => {
     .card-sec--cta{background:var(--surface);padding:1.25rem 1.5rem}
     .card-desc-box{background:#fff;border:1px solid var(--border);border-radius:.75rem;padding:1.1rem 1.25rem;box-shadow:0 3px 12px rgba(0,0,0,.08)}
     .card-desc{font-size:1.05rem;color:var(--muted);line-height:1.9;margin:0;font-style:italic}
-    .card-desc::before{content:'\201C';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-right:.2rem}
-    .card-desc::after{content:'\201D';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-left:.2rem}
+    .card-desc::before{content:'“';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-right:.2rem}
+    .card-desc::after{content:'”';font-family:var(--ff-d);font-size:1.6rem;color:var(--primary);line-height:0;vertical-align:-.35em;margin-left:.2rem}
     .card-sec--share{padding:.4rem .7rem}
     .card-sec--stats{padding:.45rem .9rem}
     .stats-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem}
