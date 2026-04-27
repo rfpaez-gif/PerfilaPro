@@ -10,6 +10,16 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+function normalizePhone(tel) {
+  if (!tel) return null;
+  const digits = String(tel).replace(/\D/g, '');
+  return tel.trim().startsWith('+') ? '+' + digits : '+34' + digits;
+}
+
+function safeJson(obj) {
+  return JSON.stringify(obj).replace(/<\//g, '<\\/');
+}
+
 exports.handler = async (event) => {
   // 1) Intentar leer slug de la query (?slug=...)
   const slugFromQuery = event.queryStringParameters?.slug;
@@ -79,11 +89,15 @@ exports.handler = async (event) => {
 
   let qrDataUrl = null;
   if (isPaid) {
-    qrDataUrl = await QRCode.toDataURL(cardUrl, {
-      width: 200,
-      margin: 2,
-      color: { dark: '#01696f', light: '#ffffff' },
-    });
+    try {
+      qrDataUrl = await QRCode.toDataURL(cardUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#01696f', light: '#ffffff' },
+      });
+    } catch (qrErr) {
+      console.error('Error generando QR:', qrErr.message);
+    }
   }
 
   const isPro = isDemo || data.plan === 'pro';
@@ -199,7 +213,7 @@ exports.handler = async (event) => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
           WhatsApp
         </a>` : ''}
-        ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="act-btn act-btn--ph">
+        ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="act-btn act-btn--ph">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           Llamar
         </a>` : ''}
@@ -212,7 +226,7 @@ exports.handler = async (event) => {
         <img src="${qrDataUrl}" alt="QR ${esc(data.nombre)}" width="90" height="90">
         <div class="qr-info">
           <p>Escanea para abrir este perfil</p>
-          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 +${esc(data.whatsapp)}</p>` : ''}
+          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 ${esc(normalizePhone(data.whatsapp))}</p>` : ''}
           ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">${esc(data.email)}</p>` : ''}
           ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener" style="display:block;font-size:.72rem;color:var(--primary);text-decoration:none;margin-bottom:.35rem;font-weight:600;line-height:1.4">📍 ${esc(data.direccion)} →</a>` : ''}
           <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
@@ -231,7 +245,7 @@ exports.handler = async (event) => {
           <div class="stats-count">${visitCount}</div>
           <div class="stats-sub">últimos 30 días</div>
         </div>
-        ${data.telefono ? `<a href="tel:${data.telefono.startsWith('+') ? data.telefono : '+34' + data.telefono.replace(/\\D/g,'')}" class="act-btn act-btn--ph">
+        ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="act-btn act-btn--ph">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           Llamar
         </a>` : '<div></div>'}
@@ -262,7 +276,7 @@ exports.handler = async (event) => {
     <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? → PerfilaPro.es</a>
   </div>
   <script>
-    var CARD = ${JSON.stringify({
+    var CARD = ${safeJson({
       nombre:      data.nombre      || '',
       tagline:     data.tagline     || '',
       whatsapp:    data.whatsapp    || '',
