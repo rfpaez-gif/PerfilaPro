@@ -269,6 +269,26 @@
       .wa-btn svg{width:22px;height:22px}
       .profile-foot{padding:.95rem 1.15rem;text-align:center;color:var(--faint);font-size:.84rem}
       .profile-foot strong{color:var(--primary)}
+      /* ── Preview card – Modern App skin ── */
+      #resultCard{background:#fcfbf8}
+      #resultCard .card-hd{display:grid;grid-template-columns:68px 1fr;gap:.85rem;align-items:center;padding:1rem 1.1rem .9rem;border-bottom:1px solid var(--line)}
+      #resultCard .card-av{width:68px;height:68px;border-radius:50%;overflow:hidden;background:#d8ebe9;border:2.5px solid var(--primary);flex:0 0 auto}
+      #resultCard .card-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
+      #resultCard .card-av-init{width:100%;height:100%;display:grid;place-items:center;color:var(--primary)}
+      #resultCard .card-name{font-family:var(--font-display);font-size:1.28rem;line-height:1.1;color:var(--text);font-weight:500;margin:0 0 .1rem}
+      #resultCard .card-role{font-size:.85rem;color:var(--muted);margin:0}
+      #resultCard .card-body{padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.8rem}
+      #resultCard .chips-row{display:flex;flex-wrap:wrap;gap:.4rem}
+      #resultCard .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .65rem;border-radius:999px;font-size:.73rem;font-weight:600;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+      #resultCard .chip--loc{background:rgba(1,105,111,.08);color:var(--primary);border-color:rgba(1,105,111,.18)}
+      #resultCard .svc-list{display:flex;flex-direction:column;gap:.4rem}
+      #resultCard .svc-item{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.7rem .85rem;border-radius:.75rem;background:#ece8e2;font-size:.88rem;font-weight:600;color:var(--text)}
+      #resultCard .svc-item--lead{background:#d9e8e7;border:1px solid rgba(1,105,111,.15)}
+      #resultCard .card-desc{font-size:.88rem;color:var(--muted);line-height:1.6;margin:0}
+      #resultCard .btn--wa{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;min-height:48px;background:var(--wa);color:#fff;border-radius:.9rem;font-weight:700;font-size:.92rem;cursor:default;opacity:.6}
+      #resultCard .btn--wa svg{width:19px;height:19px}
+      #resultCard .card-pw{padding:.7rem 1.1rem;text-align:center;color:var(--faint);font-size:.77rem;border-top:1px solid var(--line)}
+      #resultCard .card-pw strong{color:var(--primary)}
       .section{padding:2.4rem 0}
       .section-head{margin-bottom:1.25rem}
       .section-head .title{font-size:clamp(1.9rem, 6vw, 3rem)}
@@ -1058,35 +1078,29 @@
               <div class="result-card-wrap">
                 <div class="result-badge-free">Vista previa</div>
                 <article class="profile-card" id="resultCard">
-                  <div class="profile-head">
-                    <div class="profile-avatar result-avatar-free" id="rAvatarWrap">
-                      <div class="avatar-placeholder" id="rAvatarPlaceholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  <div class="card-hd">
+                    <div class="card-av" id="rAvatarWrap">
+                      <div class="card-av-init" id="rAvatarPlaceholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
                       </div>
                     </div>
                     <div>
-                      <div class="profile-name" id="rNombre">—</div>
-                      <div class="profile-sub" id="rSector">—</div>
-                      <div class="profile-sub" id="rZona" style="font-size:.85rem;color:var(--faint)">—</div>
+                      <div class="card-name" id="rNombre">—</div>
+                      <div class="card-role" id="rSector">—</div>
                     </div>
                   </div>
-                  <div class="profile-block">
-                    <div class="profile-label">Servicios</div>
-                    <div id="rServicios"></div>
-                  </div>
-                  <div class="profile-block" id="rDescBlock" hidden>
-                    <div class="profile-label">Sobre mí</div>
-                    <p class="profile-text" id="rDesc"></p>
-                  </div>
-                  <div class="profile-block">
-                    <div class="wa-btn" id="rWaBtn" style="cursor:default;opacity:.6">
+                  <div class="card-body">
+                    <div class="chips-row">
+                      <span class="chip chip--loc" id="rZona">📍 —</span>
+                    </div>
+                    <div class="svc-list" id="rServicios"></div>
+                    <p class="card-desc" id="rDesc" hidden></p>
+                    <div class="btn--wa" id="rWaBtn">
                       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
                       Contactar por WhatsApp
                     </div>
                   </div>
-                  <div class="profile-foot">
-                    Vista previa · <strong>PerfilaPro</strong>
-                  </div>
+                  <div class="card-pw">Vista previa · <strong>PerfilaPro</strong></div>
                 </article>
               </div>
 
@@ -1416,15 +1430,14 @@
             rServicios.innerHTML = '';
             servicios.forEach(function(s,i){
               var d = document.createElement('div');
-              d.className = 'service '+(i===0?'is-main':'is-soft');
+              d.className = 'svc-item'+(i===0?' svc-item--lead':'');
               d.textContent = s;
               rServicios.appendChild(d);
             });
 
-            var rDescBlock = document.getElementById('rDescBlock');
             var rDesc = document.getElementById('rDesc');
-            if(desc){ rDesc.textContent=desc; rDescBlock.removeAttribute('hidden'); }
-            else { rDescBlock.setAttribute('hidden',''); }
+            if(desc){ rDesc.textContent=desc; rDesc.removeAttribute('hidden'); }
+            else { rDesc.setAttribute('hidden',''); }
 
             var waNum = '34'+whatsapp.replace(/\D/g,'');
             var waMsg = encodeURIComponent('Hola, te contacto desde tu perfil PerfilaPro.');
