@@ -115,6 +115,12 @@
     .btn-invoice:hover { background: #eff6ff; }
     .actions-cell { display: flex; gap: .35rem; flex-wrap: wrap; }
 
+    /* ── Directory toggles ── */
+    .dir-toggle { display: inline-flex; align-items: center; gap: .2rem; padding: .2rem .55rem; border-radius: 999px; font-size: .68rem; font-weight: 700; cursor: pointer; border: none; font-family: var(--ff-b); transition: all .15s; white-space: nowrap; }
+    .dir-toggle--on  { background: #dcfce7; color: #15803d; }
+    .dir-toggle--off { background: #f3f4f6; color: #9ca3af; }
+    .dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
+
     /* ── Modal ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
     .modal-overlay.open { display: flex; }
@@ -353,11 +359,12 @@
             <th>Estado</th>
             <th class="col-md">Expira</th>
             <th>Ver</th>
+            <th class="col-md">Directorio</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="cardsTable">
-          <tr class="empty-row"><td colspan="6">Cargando...</td></tr>
+          <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -476,7 +483,7 @@
     });
 
     if (!filtered.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No hay tarjetas con estos filtros.</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No hay tarjetas con estos filtros.</td></tr>';
       return;
     }
 
@@ -494,6 +501,10 @@
       const expira = card.expires_at
         ? new Date(card.expires_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
         : '—';
+      const visibleOn  = !!card.directory_visible;
+      const featuredOn = !!card.directory_featured;
+      const incomplete = !card.category_id || !card.city_slug;
+      const visTitle   = incomplete ? ' title="Sin categoría/ciudad — no aparecerá en listados"' : '';
 
       return `<tr>
         <td class="name-cell">
@@ -505,6 +516,12 @@
         <td>${BADGE[status]}</td>
         <td class="col-md"><small style="color:var(--muted)">${expira}</small></td>
         <td><a href="/c/${card.slug}" target="_blank" class="card-link">Ver →</a></td>
+        <td class="col-md">
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+            <button class="dir-toggle dir-toggle--${visibleOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_visible',${!visibleOn},this)"${visTitle}>${visibleOn ? '● Visible' : '◌ Oculto'}</button>
+            <button class="dir-toggle dir-toggle--${featuredOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_featured',${!featuredOn},this)">${featuredOn ? '★ Dest.' : '☆ Dest.'}</button>
+          </div>
+        </td>
         <td>
           <div class="actions-cell">
             <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
@@ -809,6 +826,32 @@
     if (!res.ok) { errEl.textContent = data.error || 'Error'; return; }
     closeAgentModal();
     loadAgents();
+  }
+
+  // ── Toggles de directorio ──
+
+  async function toggleDir(slug, field, val, btn) {
+    const origText  = btn.textContent;
+    const origClass = btn.className;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch('/.netlify/functions/admin-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        body: JSON.stringify({ action: 'toggle_directory', slug, field, value: val }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      const card = allCards.find(c => c.slug === slug);
+      if (card) card[field] = val;
+      renderTable();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = origText;
+      btn.className = origClass;
+      alert(`Error: ${err.message}`);
+    }
   }
 
   // ── Reenviar factura ──

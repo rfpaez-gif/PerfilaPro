@@ -92,6 +92,18 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
+    if (action === 'toggle_directory') {
+      const { field, value } = body;
+      const allowed = ['directory_visible', 'directory_featured'];
+      if (!allowed.includes(field)) {
+        return { statusCode: 400, body: JSON.stringify({ error: `Campo no permitido: ${field}` }) };
+      }
+      const { error } = await db.from('cards').update({ [field]: !!value }).eq('slug', slug);
+      if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      console.log(`toggle_directory: ${slug} → ${field} = ${!!value}`);
+      return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    }
+
     return { statusCode: 400, body: JSON.stringify({ error: `Acción desconocida: ${action}` }) };
   };
 }
