@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Directorio de profesionales en España | PerfilaPro</title>
+  <meta name="description" content="Encuentra fontaneros, electricistas, abogados, médicos y otros profesionales cerca de ti. Directorio actualizado de profesionales en España.">
+  <link rel="canonical" href="https://perfilapro.es/directorio">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Directorio de profesionales en España",
+    "description": "Encuentra fontaneros, electricistas, abogados, médicos y otros profesionales cerca de ti.",
+    "url": "https://perfilapro.es/directorio",
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://perfilapro.es" },
+        { "@type": "ListItem", "position": 2, "name": "Directorio" }
+      ]
+    }
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f6f3ee;--surface:#fcfbf8;--surface-2:#f2eee8;
+      --text:#1f1a14;--muted:#6f675c;--faint:#aaa193;
+      --primary:#01696f;--primary-h:#0c4e54;--primary-bg:rgba(1,105,111,.08);
+      --line:rgba(31,26,20,.10);
+      --ff-d:"Instrument Serif",Georgia,serif;
+      --ff-b:"Plus Jakarta Sans",system-ui,sans-serif;
+      --r-full:999px;--shadow:0 4px 16px rgba(20,20,20,.07)
+    }
+    body{font-family:var(--ff-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+    a{color:inherit;text-decoration:none}
+    .site-hd{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:10}
+    .site-logo{font-family:var(--ff-d);font-size:1.25rem;color:var(--primary)}
+    .hd-cta{padding:.5rem 1rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.8125rem;font-weight:700;transition:background .15s}
+    .hd-cta:hover{background:var(--primary-h)}
+    .hero{max-width:800px;margin:0 auto;padding:3rem 1.25rem 2rem;text-align:center}
+    .hero h1{font-family:var(--ff-d);font-size:clamp(1.875rem,5vw,2.875rem);line-height:1.15;font-weight:400;color:var(--text)}
+    .hero p{font-size:1.0625rem;color:var(--muted);margin-top:.875rem;line-height:1.7;max-width:52ch;margin-left:auto;margin-right:auto}
+    .breadcrumb{max-width:960px;margin:0 auto;padding:.625rem 1.25rem;font-size:.8125rem;color:var(--muted)}
+    .breadcrumb ol{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem}
+    .breadcrumb a{color:var(--primary)}
+    .bc-sep{color:var(--faint)}
+    main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:0 1.25rem 3rem}
+    .sectors-title{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:1rem}
+    .sectors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem}
+    .sector-card{display:flex;align-items:center;gap:.875rem;padding:1rem 1.125rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;transition:box-shadow .18s,border-color .18s}
+    .sector-card:hover{box-shadow:var(--shadow);border-color:rgba(1,105,111,.22)}
+    .sector-icon{width:40px;height:40px;border-radius:.625rem;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:1.375rem;flex-shrink:0}
+    .sector-name{font-size:.9375rem;font-weight:700;line-height:1.25;color:var(--text)}
+    .sector-desc{font-size:.75rem;color:var(--muted);margin-top:.125rem;line-height:1.4}
+    .cta-banner{background:var(--primary-bg);border:1.5px solid rgba(1,105,111,.2);border-radius:1.25rem;padding:2rem 1.5rem;text-align:center;margin-top:2.5rem}
+    .cta-banner h2{font-family:var(--ff-d);font-size:1.5rem;font-weight:400;margin-bottom:.625rem}
+    .cta-banner p{font-size:.9375rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6}
+    .cta-btn{display:inline-flex;padding:.75rem 1.75rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.9375rem;font-weight:700;transition:background .15s}
+    .cta-btn:hover{background:var(--primary-h)}
+    .site-ft{border-top:1px solid var(--line);padding:1.5rem 1.25rem;text-align:center;font-size:.75rem;color:var(--faint)}
+    .site-ft a{color:var(--primary)}
+    :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+    @media(max-width:480px){
+      .sectors-grid{grid-template-columns:1fr 1fr}
+      .sector-card{flex-direction:column;text-align:center;padding:.875rem .75rem;gap:.5rem}
+      .sector-icon{width:36px;height:36px}
+    }
+  </style>
+</head>
+<body>
+  <header class="site-hd">
+    <a href="/" class="site-logo">PerfilaPro</a>
+    <a href="/#crear" class="hd-cta">Crea tu perfil →</a>
+  </header>
+
+  <nav class="breadcrumb" aria-label="Ruta de navegación">
+    <ol>
+      <li><a href="/">Inicio</a></li>
+      <li class="bc-sep" aria-hidden="true">›</li>
+      <li><span aria-current="page">Directorio</span></li>
+    </ol>
+  </nav>
+
+  <section class="hero">
+    <h1>Directorio de profesionales<br>en España</h1>
+    <p>Encuentra fontaneros, electricistas, médicos, abogados y otros profesionales cerca de ti. Perfiles verificados, con contacto directo.</p>
+  </section>
+
+  <main>
+    <p class="sectors-title">Sectores profesionales</p>
+    <div class="sectors-grid">
+      <a href="/directorio/oficios" class="sector-card">
+        <div class="sector-icon">🔧</div>
+        <div>
+          <p class="sector-name">Oficios</p>
+          <p class="sector-desc">Fontaneros, electricistas…</p>
+        </div>
+      </a>
+      <a href="/directorio/salud" class="sector-card">
+        <div class="sector-icon">🩺</div>
+        <div>
+          <p class="sector-name">Salud</p>
+          <p class="sector-desc">Médicos, fisioterapeutas…</p>
+        </div>
+      </a>
+      <a href="/directorio/reforma" class="sector-card">
+        <div class="sector-icon">🏗️</div>
+        <div>
+          <p class="sector-name">Reforma</p>
+          <p class="sector-desc">Albañiles, carpinteros…</p>
+        </div>
+      </a>
+      <a href="/directorio/legal" class="sector-card">
+        <div class="sector-icon">⚖️</div>
+        <div>
+          <p class="sector-name">Legal</p>
+          <p class="sector-desc">Abogados, asesores…</p>
+        </div>
+      </a>
+      <a href="/directorio/educacion" class="sector-card">
+        <div class="sector-icon">📚</div>
+        <div>
+          <p class="sector-name">Educación</p>
+          <p class="sector-desc">Profesores, tutores…</p>
+        </div>
+      </a>
+      <a href="/directorio/tech" class="sector-card">
+        <div class="sector-icon">💻</div>
+        <div>
+          <p class="sector-name">Tecnología</p>
+          <p class="sector-desc">Programadores, diseñadores…</p>
+        </div>
+      </a>
+      <a href="/directorio/belleza" class="sector-card">
+        <div class="sector-icon">💇</div>
+        <div>
+          <p class="sector-name">Belleza</p>
+          <p class="sector-desc">Peluqueros, esteticistas…</p>
+        </div>
+      </a>
+      <a href="/directorio/fitness" class="sector-card">
+        <div class="sector-icon">🏋️</div>
+        <div>
+          <p class="sector-name">Fitness</p>
+          <p class="sector-desc">Entrenadores personales…</p>
+        </div>
+      </a>
+      <a href="/directorio/hosteleria" class="sector-card">
+        <div class="sector-icon">🍽️</div>
+        <div>
+          <p class="sector-name">Hostelería</p>
+          <p class="sector-desc">Camareros, cocineros…</p>
+        </div>
+      </a>
+      <a href="/directorio/fotografia" class="sector-card">
+        <div class="sector-icon">📷</div>
+        <div>
+          <p class="sector-name">Fotografía</p>
+          <p class="sector-desc">Fotógrafos, videógrafos…</p>
+        </div>
+      </a>
+      <a href="/directorio/eventos" class="sector-card">
+        <div class="sector-icon">🎉</div>
+        <div>
+          <p class="sector-name">Eventos</p>
+          <p class="sector-desc">Animadores, DJ, catering…</p>
+        </div>
+      </a>
+      <a href="/directorio/automocion" class="sector-card">
+        <div class="sector-icon">🚗</div>
+        <div>
+          <p class="sector-name">Automoción</p>
+          <p class="sector-desc">Mecánicos, pintores…</p>
+        </div>
+      </a>
+      <a href="/directorio/jardineria" class="sector-card">
+        <div class="sector-icon">🌿</div>
+        <div>
+          <p class="sector-name">Jardinería</p>
+          <p class="sector-desc">Jardineros, paisajistas…</p>
+        </div>
+      </a>
+      <a href="/directorio/transporte" class="sector-card">
+        <div class="sector-icon">🚚</div>
+        <div>
+          <p class="sector-name">Transporte</p>
+          <p class="sector-desc">Mudanzas, mensajería…</p>
+        </div>
+      </a>
+      <a href="/directorio/cuidados" class="sector-card">
+        <div class="sector-icon">🤝</div>
+        <div>
+          <p class="sector-name">Cuidados</p>
+          <p class="sector-desc">Cuidadores, auxiliares…</p>
+        </div>
+      </a>
+      <a href="/directorio/seguridad" class="sector-card">
+        <div class="sector-icon">🔒</div>
+        <div>
+          <p class="sector-name">Seguridad</p>
+          <p class="sector-desc">Vigilantes, instaladores…</p>
+        </div>
+      </a>
+      <a href="/directorio/comercial" class="sector-card">
+        <div class="sector-icon">💼</div>
+        <div>
+          <p class="sector-name">Comercial</p>
+          <p class="sector-desc">Agentes, representantes…</p>
+        </div>
+      </a>
+      <a href="/directorio/turismo" class="sector-card">
+        <div class="sector-icon">✈️</div>
+        <div>
+          <p class="sector-name">Turismo</p>
+          <p class="sector-desc">Guías, agencias…</p>
+        </div>
+      </a>
+      <a href="/directorio/comercio" class="sector-card">
+        <div class="sector-icon">🏪</div>
+        <div>
+          <p class="sector-name">Comercio</p>
+          <p class="sector-desc">Tiendas, distribuidores…</p>
+        </div>
+      </a>
+      <a href="/directorio/otro" class="sector-card">
+        <div class="sector-icon">⭐</div>
+        <div>
+          <p class="sector-name">Otros</p>
+          <p class="sector-desc">Más profesionales…</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="cta-banner">
+      <h2>¿Eres profesional?</h2>
+      <p>Aparece en el directorio cuando tus clientes te busquen en Google. Crea tu perfil en 2 minutos.</p>
+      <a href="/#crear" class="cta-btn">Crear mi perfil gratis →</a>
+    </div>
+  </main>
+
+  <footer class="site-ft">
+    <p>© PerfilaPro &nbsp;·&nbsp; <a href="/terminos.html">Términos</a> &nbsp;·&nbsp; <a href="/privacidad.html">Privacidad</a> &nbsp;·&nbsp; <a href="/">Inicio</a></p>
+  </footer>
+</body>
+</html>

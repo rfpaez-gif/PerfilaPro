@@ -129,6 +129,7 @@ exports.handler = async (event) => {
   <title>${esc(data.nombre) || 'Perfil profesional'} — PerfilaPro</title>
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
+  <link rel="canonical" href="${siteUrl}/p/${data.slug}">
   <meta property="og:title" content="${esc(data.nombre)} — PerfilaPro">
   <meta property="og:description" content="${esc(data.tagline)}">
   <link rel="preconnect" href="https://fonts.googleapis.com">

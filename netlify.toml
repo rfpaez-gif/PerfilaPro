@@ -105,3 +105,40 @@
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
   status = 200
+
+# Directorio profesional — más específico primero
+[[redirects]]
+  from   = "/directorio/:sector/:especialidad/:ciudad"
+  to     = "/.netlify/functions/dir-ciudad"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/directorio/:sector/:especialidad"
+  to     = "/.netlify/functions/dir-especialidad"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/directorio/:sector"
+  to     = "/.netlify/functions/dir-sector"
+  status = 200
+  force  = true
+
+# Perfil público SEO
+[[redirects]]
+  from   = "/p/:slug"
+  to     = "/.netlify/functions/perfil-publico"
+  status = 200
+  force  = true
+
+# Sitemaps
+[[redirects]]
+  from   = "/sitemap.xml"
+  to     = "/.netlify/functions/sitemap"
+  status = 200
+
+[[redirects]]
+  from   = "/sitemap-perfiles.xml"
+  to     = "/.netlify/functions/sitemap-perfiles"
+  status = 200
