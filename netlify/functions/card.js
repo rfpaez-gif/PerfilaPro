@@ -118,6 +118,9 @@ exports.handler = async (event) => {
   const zonaLocal = esc(zonaParts[0] || '');
   const zonaRange = zonaParts[1] ? esc(zonaParts[1]) : null;
 
+  const avatarInitial = (nombre || '').trim().charAt(0).toUpperCase() || '?';
+  const hasBothCtas = !!(waUrl && qrUrl);
+
   const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
