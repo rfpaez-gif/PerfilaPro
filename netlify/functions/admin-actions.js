@@ -1,3 +1,5 @@
+'use strict';
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
 const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
@@ -9,6 +11,19 @@ const supabase = createClient(
 
 const PLAN_DAYS = { base: 90, pro: 365, renovacion: 365 };
 
+function auditLog(db, ip, action, slug, field, oldValue, newValue) {
+  db.from('admin_audit_log').insert({
+    action,
+    entity_slug: slug,
+    field: field || null,
+    old_value: oldValue != null ? String(oldValue) : null,
+    new_value: newValue != null ? String(newValue) : null,
+    ip,
+  }).then(({ error }) => {
+    if (error) console.error('audit_log error:', error.message);
+  });
+}
+
 function makeHandler(stripeClient, db) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -17,6 +32,8 @@ function makeHandler(stripeClient, db) {
 
     const auth = checkAdminAuth(event);
     if (!auth.authorized) return unauthorizedResponse(auth.blocked);
+
+    const ip = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
 
     let body;
     try {
@@ -48,6 +65,7 @@ function makeHandler(stripeClient, db) {
       const { error } = await db.from('cards').update({ status: 'active', expires_at }).eq('slug', slug);
       if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
 
+      auditLog(db, ip, 'reactivate', slug, 'status', card.status, 'active');
       console.log(`Tarjeta reactivada: ${slug}`);
       return { statusCode: 200, body: JSON.stringify({ ok: true, expires_at }) };
     }
@@ -61,6 +79,7 @@ function makeHandler(stripeClient, db) {
       const { error } = await db.from('cards').update({ expires_at }).eq('slug', slug);
       if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
 
+      auditLog(db, ip, 'extend', slug, 'expires_at', card.expires_at, expires_at);
       console.log(`Tarjeta extendida 30 días: ${slug}`);
       return { statusCode: 200, body: JSON.stringify({ ok: true, expires_at }) };
     }
@@ -88,6 +107,7 @@ function makeHandler(stripeClient, db) {
       }).eq('slug', slug);
       if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
 
+      auditLog(db, ip, 'refund', slug, 'status', card.status, 'inactive');
       console.log(`Tarjeta reembolsada y desactivada: ${slug} — motivo: ${reason || 'sin especificar'}`);
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
@@ -98,8 +118,13 @@ function makeHandler(stripeClient, db) {
       if (!allowed.includes(field)) {
         return { statusCode: 400, body: JSON.stringify({ error: `Campo no permitido: ${field}` }) };
       }
+      if (field === 'directory_visible' && !!value && (!card.category_id || !card.city_slug)) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Perfil incompleto: falta categoría o ciudad' }) };
+      }
       const { error } = await db.from('cards').update({ [field]: !!value }).eq('slug', slug);
       if (error) return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+
+      auditLog(db, ip, 'toggle_directory', slug, field, card[field], !!value);
       console.log(`toggle_directory: ${slug} → ${field} = ${!!value}`);
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }

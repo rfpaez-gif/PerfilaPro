@@ -9,6 +9,7 @@ const mockSelect = vi.fn(() => ({ eq: mockEqSelect }));
 const mockEqSelect = vi.fn(() => ({ single: mockSingle }));
 const mockEqUpdate = vi.fn();
 const mockFrom = vi.fn();
+const mockInsert = vi.fn(() => Promise.resolve({ error: null }));
 
 const mockRetrieve = vi.fn();
 const mockRefundCreate = vi.fn();
@@ -53,6 +54,7 @@ describe('admin-actions handler', () => {
     mockSingle.mockResolvedValue({ data: baseCard, error: null });
     mockFrom.mockImplementation((table) => {
       if (table === 'cards') return { select: mockSelect, update: mockUpdate };
+      if (table === 'admin_audit_log') return { insert: mockInsert };
       return {};
     });
   });
