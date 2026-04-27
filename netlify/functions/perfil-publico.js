@@ -1,5 +1,13 @@
 'use strict';
 
+// Consulta `cards` directamente (no `directory_public`) — decisión intencional:
+// - /p/:slug es accesible para cualquier tarjeta activa, con o sin categoría asignada.
+//   Tener URL propia es un derecho del plan gratuito.
+// - Los listados en /directorio/* sí usan `directory_public`, que exige JOIN con
+//   `categories` y `directory_visible = true`. Aparecer en listados requiere completar
+//   el perfil (especialidad + ciudad + activar visibilidad).
+// Esta asimetría es intencional: no es un bug.
+
 const { getDb } = require('./lib/supabase-client');
 const { getPublicProfile, getCategoryByCard, getCityBySlug } = require('./lib/get-profile');
 const { esc, safeJson, labelOf, PROFILE_CSS, htmlPage, breadcrumb } = require('./lib/dir-utils');
