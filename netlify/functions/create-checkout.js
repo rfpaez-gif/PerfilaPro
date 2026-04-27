@@ -57,7 +57,10 @@ exports.handler = async (event) => {
     .substring(0, 40);
 
   const tagline  = SECTOR_LABELS[sector] || sector || '';
-  const waNumber = '34' + whatsapp.replace(/\D/g, '');
+  const rawDigits = whatsapp.replace(/\D/g, '');
+  const waNumber  = rawDigits.startsWith('34') && rawDigits.length > 9
+    ? rawDigits
+    : '34' + rawDigits;
   const siteUrl  = process.env.SITE_URL || 'https://perfilapro.netlify.app';
 
   try {
