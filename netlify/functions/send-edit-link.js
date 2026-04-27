@@ -40,7 +40,7 @@ function buildEditLinkEmail({ nombre, editUrl }) {
             <!-- CTA -->
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
               <tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px">
+                <a href="${editUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">
                   Editar mi perfil →
                 </a>
               </td></tr>

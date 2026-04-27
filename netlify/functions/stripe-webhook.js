@@ -61,51 +61,40 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
             <!-- CTAs -->
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
               <tr><td align="center" style="padding-bottom:12px">
-                <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:8px">
+                <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">
                   Ver mi perfil →
                 </a>
               </td></tr>
               ${editUrl ? `<tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:#fff;color:#01696f;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:8px;border:2px solid #01696f">
+                <a href="${editUrl}" style="display:inline-block;background:#fff;color:#01696f;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid #01696f">
                   Editar mi perfil
                 </a>
               </td></tr>` : ''}
             </table>
 
             <!-- Plan info -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#deeeed;border-radius:8px;margin-bottom:28px">
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
               <tr>
-                <td style="padding:20px 24px">
-                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Lo que has contratado</p>
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Plan</td>
-                      <td style="font-size:13px;font-weight:700;color:#01696f;text-align:right">${planLabel} · ${planDuration}</td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:13px;color:#1e1b14;padding-bottom:6px">Tu enlace</td>
-                      <td style="font-size:13px;font-weight:700;text-align:right"><a href="${cardUrl}" style="color:#01696f;text-decoration:none">${cardUrl}</a></td>
-                    </tr>
-                    <tr>
-                      <td style="font-size:13px;color:#1e1b14">Activa hasta</td>
-                      <td style="font-size:13px;font-weight:700;color:#1e1b14;text-align:right">${expiraFecha}</td>
-                    </tr>
-                  </table>
+                <td style="background:#d9e8e7;border-radius:10px 10px 0 0;padding:12px 20px;border-left:3px solid #01696f">
+                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Plan activo · ${planLabel}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:#1e1b14;font-weight:600">${planDuration} · hasta el ${expiraFecha}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#ece8e2;border-radius:0 0 10px 10px;padding:12px 20px;margin-bottom:28px">
+                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6458">Tu enlace</p>
+                  <a href="${cardUrl}" style="font-size:14px;font-weight:700;color:#01696f;text-decoration:none">${cardUrl}</a>
                 </td>
               </tr>
             </table>
+            <p style="margin:0 0 28px"></p>
 
             <!-- Factura adjunta -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;border:1.5px solid rgba(1,105,111,.2);border-radius:8px;margin-bottom:20px">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;border-left:3px solid rgba(1,105,111,.35);border-radius:0 8px 8px 0;margin-bottom:20px">
               <tr>
                 <td style="padding:14px 18px">
-                  <table cellpadding="0" cellspacing="0"><tr>
-                    <td style="font-size:22px;padding-right:12px;vertical-align:middle">📎</td>
-                    <td style="vertical-align:middle">
-                      <p style="margin:0;font-size:13px;font-weight:700;color:#1e1b14">Factura en PDF adjunta</p>
-                      <p style="margin:2px 0 0;font-size:12px;color:#6b6458">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
-                    </td>
-                  </tr></table>
+                  <p style="margin:0;font-size:13px;font-weight:700;color:#1e1b14">📎 Factura en PDF adjunta</p>
+                  <p style="margin:4px 0 0;font-size:12px;color:#6b6458">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
                 </td>
               </tr>
             </table>
