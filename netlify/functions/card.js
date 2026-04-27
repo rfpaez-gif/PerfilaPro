@@ -59,7 +59,7 @@ exports.handler = async (event) => {
     const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
     const nombre = esc(m ? m[1].trim() : s);
     const precio = esc(m ? m[2].trim() : '');
-    return `<div class="svc-line${i === 0 ? ' first' : ''}">
+    return `<div class="svc-item${i === 0 ? ' svc-item--lead' : ''}">
       <span class="svc-name">${nombre}</span>
       ${precio ? `<span class="svc-price">${precio}</span>` : ''}
     </div>`;
@@ -118,8 +118,8 @@ exports.handler = async (event) => {
   const zonaLocal = esc(zonaParts[0] || '');
   const zonaRange = zonaParts[1] ? esc(zonaParts[1]) : null;
 
-  const avatarInitial = (nombre || '').trim().charAt(0).toUpperCase() || '?';
-  const hasBothCtas = !!(waUrl && qrUrl);
+  const avatarInitial = esc((data.nombre || '').trim().charAt(0).toUpperCase() || '?');
+  const hasBothCtas = !!(waUrl && data.telefono);
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -198,89 +198,65 @@ exports.handler = async (event) => {
   <div class="card">
     <div class="card-hd">
       <div class="card-av">
-        ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : '👤'}
+        ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="card-av-init">${avatarInitial}</span>`}
       </div>
       <div>
-        <div class="card-name">${esc(data.nombre)}</div>
-        ${data.tagline ? `<div class="card-tag">${esc(data.tagline)}</div>` : ''}
+        <h1 class="card-name">${esc(data.nombre)}</h1>
+        ${data.tagline ? `<p class="card-role">${esc(data.tagline)}</p>` : ''}
       </div>
     </div>
-    ${serviciosHTML ? `<div class="svc-list">${serviciosHTML}</div>` : ''}
-    ${data.zona ? `<div class="card-sec card-sec--sm"><div class="card-sec-label">Cobertura</div><div class="card-zona">📍 ${zonaLocal}${zonaRange ? `<span class="zona-badge">${zonaRange}</span>` : ''}</div></div>` : ''}
-    ${data.descripcion ? `
-    <div class="card-sec card-sec--cta">
-      <div class="card-desc-box">
-        <p class="card-desc">${esc(data.descripcion)}</p>
-      </div>
-    </div>` : ''}
-    ${!isPro && (waUrl || data.telefono) ? `
-    <div class="card-sec card-sec--actions">
-      <div class="actions-row">
-        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="act-btn act-btn--wa">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+    <div class="card-body">
+      ${(data.zona || (isPro && visitCount !== null)) ? `<div class="chips-row">
+        ${data.zona ? `<span class="chip chip--loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${zonaLocal}${zonaRange ? ` &middot; ${zonaRange}` : ''}</span>` : ''}
+        ${isPro && visitCount !== null ? `<span class="chip chip--stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${visitCount} visitas &middot; 30 d&iacute;as</span>` : ''}
+      </div>` : ''}
+      ${data.descripcion ? `<p class="card-desc">${esc(data.descripcion)}</p>` : ''}
+      ${serviciosHTML ? `<div class="svc-list">${serviciosHTML}</div>` : ''}
+      ${(waUrl || data.telefono) ? `<div class="cta-group${hasBothCtas ? ' cta-group--dual' : ''}">
+        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="btn btn--wa">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
           WhatsApp
         </a>` : ''}
-        ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="act-btn act-btn--ph">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="btn btn--call">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           Llamar
         </a>` : ''}
-      </div>
-    </div>` : ''}
-    ${qrDataUrl ? `
-    <div class="card-sec card-qr">
-      <div class="card-sec-label">Código QR</div>
-      <div class="qr-wrap">
-        <img src="${qrDataUrl}" alt="QR ${esc(data.nombre)}" width="90" height="90">
-        <div class="qr-info">
-          <p>Escanea para abrir este perfil</p>
-          ${data.whatsapp ? `<p style="font-size:.78rem;color:var(--text);font-weight:600;margin-bottom:.25rem">📱 ${esc(normalizePhone(data.whatsapp))}</p>` : ''}
-          ${data.email ? `<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem">${esc(data.email)}</p>` : ''}
-          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener" style="display:block;font-size:.72rem;color:var(--primary);text-decoration:none;margin-bottom:.35rem;font-weight:600;line-height:1.4">📍 ${esc(data.direccion)} →</a>` : ''}
-          <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-download">Descargar QR</a>
-        </div>
-      </div>
-    </div>` : ''}
-    ${isPro && visitCount !== null ? `
-    <div class="card-sec card-sec--stats">
-      <div class="stats-row">
-        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="act-btn act-btn--wa">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-          WhatsApp
-        </a>` : '<div></div>'}
-        <div class="stats-center">
-          <div class="stats-label">Visitas</div>
-          <div class="stats-count">${visitCount}</div>
-          <div class="stats-sub">últimos 30 días</div>
-        </div>
-        ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="act-btn act-btn--ph">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Llamar
-        </a>` : '<div></div>'}
-      </div>
-    </div>` : ''}
-    <div class="card-sec card-sec--share">
-      <div class="share-icons">
-        <button class="si si--share" id="shareBtn" onclick="shareProfile()" title="Compartir">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#01696f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </div>` : ''}
+      <div class="util-row">
+        <button class="si" id="shareBtn" onclick="shareProfile()" title="Compartir" aria-label="Compartir perfil">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <a class="si si--wa" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="Compartir por WhatsApp">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+        <a class="si" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="Compartir por WhatsApp" aria-label="Compartir por WhatsApp">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
         </a>
-        <button class="si si--contact" onclick="downloadVCard()" title="Añadir contacto">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <button class="si" onclick="downloadVCard()" title="Añadir contacto" aria-label="Añadir a contactos">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
-        <button class="si si--dl" id="dlCardBtn" onclick="downloadCard(this)" title="Descargar tarjeta">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e1b14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <button class="si" id="dlCardBtn" onclick="downloadCard(this)" title="Descargar tarjeta" aria-label="Descargar tarjeta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
-    </div>
-    <div class="card-powered">
-      Creado con <strong>PerfilaPro</strong><br>
-      <a href="https://perfilapro.es">Crea tu propio perfil</a>
+      ${qrDataUrl ? `<div class="qr-block">
+        <img src="${qrDataUrl}" alt="QR ${esc(data.nombre)}" width="80" height="80">
+        <div class="qr-meta">
+          <p>Escanea para abrir este perfil</p>
+          ${data.whatsapp ? `<p class="qr-strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
+          ${data.email ? `<p>${esc(data.email)}</p>` : ''}
+          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
+          <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="qr-dl">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar QR
+          </a>
+        </div>
+      </div>` : ''}
+      <div class="card-pw">
+        Creado con <strong>PerfilaPro</strong><br>
+        <a href="https://perfilapro.es">Crea tu propio perfil</a>
+      </div>
     </div>
   </div>
-  <div class="footer">
-    <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? → PerfilaPro.es</a>
+  <div class="pg-foot">
+    <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? &rarr; PerfilaPro.es</a>
   </div>
   <script>
     var CARD = ${safeJson({
