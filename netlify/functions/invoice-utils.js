@@ -92,17 +92,19 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     // Divider
     doc.moveTo(margin, blockY + 82).lineTo(pageW - margin, blockY + 82).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
 
-    // Concepto
+    // Concepto — warm sand card
     const descY = blockY + 96;
-    doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CONCEPTO', margin, descY);
+    doc.roundedRect(margin, descY - 4, usableW, 52, 6).fill('#f5f2ec');
+    doc.rect(margin, descY - 4, 3, 52).fill('#01696f');
+    doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CONCEPTO', margin + 12, descY + 2);
     doc.font('Helvetica').fontSize(10).fillColor('#1e1b14')
       .text(
         `Activación plan ${planInfo.label} — Perfil profesional PerfilaPro — ${planInfo.duration}`,
-        margin, descY + 12, { width: usableW }
+        margin + 12, descY + 15, { width: usableW - 16 }
       );
 
     // Importes
-    const totY   = descY + 60;
+    const totY   = descY + 72;
     const lblX   = pageW - 240;
     const amtX   = pageW - 110;
     const amtW   = 50;
@@ -113,11 +115,11 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     doc.text('IVA (21%):', lblX, totY + 20, { width: 120 });
     doc.text(`${iva.toFixed(2)} €`, amtX, totY + 20, { width: amtW, align: 'right' });
 
-    doc.moveTo(lblX, totY + 42).lineTo(pageW - margin, totY + 42).strokeColor('#01696f').lineWidth(1).stroke();
-
+    // Total row — teal accent
+    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#d9e8e7');
     doc.font('Helvetica-Bold').fontSize(13).fillColor('#01696f');
-    doc.text('TOTAL:', lblX, totY + 50, { width: 120 });
-    doc.text(`${total.toFixed(2)} €`, amtX, totY + 50, { width: amtW, align: 'right' });
+    doc.text('TOTAL:', lblX, totY + 53, { width: 120 });
+    doc.text(`${total.toFixed(2)} €`, amtX, totY + 53, { width: amtW, align: 'right' });
 
     // Footer
     const footY = doc.page.height - 70;
