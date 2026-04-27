@@ -61,7 +61,7 @@ exports.handler = async (event) => {
   const waNumber  = rawDigits.startsWith('34') && rawDigits.length > 9
     ? rawDigits
     : '34' + rawDigits;
-  const siteUrl  = process.env.SITE_URL || 'https://perfilapro.netlify.app';
+  const siteUrl  = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
   try {
     const session = await stripe.checkout.sessions.create({
