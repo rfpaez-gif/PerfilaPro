@@ -112,6 +112,11 @@
   to     = "/.netlify/functions/directory-options"
   status = 200
 
+[[redirects]]
+  from   = "/api/register-free"
+  to     = "/.netlify/functions/register-free"
+  status = 200
+
 [[edge_functions]]
   path     = "/api/admin-*"
   function = "rate-limiter"

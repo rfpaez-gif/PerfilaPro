@@ -1009,7 +1009,13 @@
               </div>
 
               <div class="form-row">
-                <label class="form-label">Tus servicios principales <span class="req">*</span></label>
+                <label class="form-label" for="fEmail">Tu email <span class="req">*</span></label>
+                <input class="form-input" type="email" id="fEmail" name="email" placeholder="Ej: paco@ejemplo.com" autocomplete="email" required>
+                <p class="form-hint">Te enviamos el enlace para editar tu perfil.</p>
+              </div>
+
+              <div class="form-row">
+                <label class="form-label">Tus servicios principales <span class="opt">(opcional)</span></label>
                 <div class="chips-section" id="chipsSection" hidden>
                   <p class="chips-label">Toca para añadir a tus servicios:</p>
                   <div class="chips-wrap" id="chipsWrap"></div>
@@ -1019,7 +1025,7 @@
                   <input class="form-input" type="text" name="servicio2" placeholder="Ej: Urgencias 24h" maxlength="50">
                   <input class="form-input" type="text" name="servicio3" placeholder="Ej: Calefacción y ACS" maxlength="50">
                 </div>
-                <p class="form-hint">Hasta 3 servicios. Al menos uno obligatorio.</p>
+                <p class="form-hint">Hasta 3 servicios. Puedes añadirlos después.</p>
               </div>
 
               <div class="form-row">
@@ -1045,12 +1051,12 @@
 
               <div class="form-free-notice">
                 <span class="notice-icon">ℹ️</span>
-                <span>Empezarás con la versión <strong>gratuita</strong> (con marca de agua, sin QR). Podrás activar tu perfil en cualquier momento por 9€ o 19€.</span>
+                <span>Tu perfil se crea <strong>gratis</strong> ahora mismo. Recibirás el enlace por email para editarlo. Activa el directorio y el QR cuando quieras.</span>
               </div>
 
               <button class="btn btn-primary form-submit" type="submit" id="submitBtn">
-                <span class="submit-text">Ver mi perfil gratis</span>
-                <span class="submit-spinner" hidden>Generando…</span>
+                <span class="submit-text">Crear mi perfil gratis</span>
+                <span class="submit-spinner" hidden>Creando perfil…</span>
               </button>
 
             </form>
@@ -1060,9 +1066,14 @@
           <div class="result-stage" id="stageResult" hidden>
 
             <div class="result-success-bar">
-              <span>👁</span>
-              <strong>Así quedará tu perfil.</strong>
-              <span>Actívala para que esté disponible online y puedas compartirla.</span>
+              <span>✅</span>
+              <strong>¡Tu perfil ya está creado!</strong>
+              <span id="resultSuccessMsg">Ya puedes compartir tu enlace. Activa el directorio para aparecer en búsquedas.</span>
+            </div>
+
+            <div style="text-align:center;margin:.75rem 0 1.25rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+              <a id="resultViewLink" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:.875rem">Ver mi perfil →</a>
+              <a id="resultEditLink" href="#" target="_blank" rel="noopener" class="btn btn-soft" style="font-size:.875rem">Editar mi perfil</a>
             </div>
 
             <!-- Preview tarjeta generada -->
@@ -1378,11 +1389,11 @@
           });
         }
 
-        // Envío del formulario → previsualización
+        // Envío del formulario → register-free → resultado real
         var form = document.getElementById('crearForm');
         var cardData = {};
         if(form){
-          form.addEventListener('submit', function(e){
+          form.addEventListener('submit', async function(e){
             e.preventDefault();
             var nombre   = document.getElementById('fNombre').value.trim();
             var sector   = document.getElementById('fSector').value;
@@ -1391,29 +1402,66 @@
             var cobLabel = cobBtn ? cobBtn.dataset.label : 'Sin límite';
             var zona     = cobLabel === 'Sin límite' ? localidad : localidad + ' · ' + cobLabel;
             var whatsapp = document.getElementById('fWhatsapp').value.trim();
+            var email    = document.getElementById('fEmail') ? document.getElementById('fEmail').value.trim() : '';
             var s1 = form.elements['servicio1'].value.trim();
             var s2 = form.elements['servicio2'].value.trim();
             var s3 = form.elements['servicio3'].value.trim();
             var desc = document.getElementById('fDesc').value.trim();
-            var telefono = '';
 
             // Validación básica
             [document.getElementById('fNombre'),
              document.getElementById('fZona'),document.getElementById('fWhatsapp'),
-             form.elements['servicio1']].forEach(function(el){
+             document.getElementById('fEmail')].filter(Boolean).forEach(function(el){
                el.classList.toggle('is-error', !el.value.trim());
              });
             if (!sector) {
               sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.add('is-error'); });
               if (sectorError) sectorError.removeAttribute('hidden');
             }
-            if(!nombre||!sector||!zona||!whatsapp||!s1) return;
+            if(!nombre||!sector||!zona||!whatsapp||!email) return;
 
             var servicios = [s1,s2,s3].filter(Boolean);
-            var direccion = document.getElementById('fDireccion').value.trim();
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,telefono:telefono,direccion:direccion};
+            var direccion = document.getElementById('fDireccion') ? document.getElementById('fDireccion').value.trim() : '';
 
-            // Rellenar tarjeta de previsualización
+            // Mostrar spinner
+            var submitBtn = document.getElementById('submitBtn');
+            var submitText = submitBtn.querySelector('.submit-text');
+            var submitSpinner = submitBtn.querySelector('.submit-spinner');
+            submitBtn.disabled = true;
+            if(submitText) submitText.setAttribute('hidden','');
+            if(submitSpinner) submitSpinner.removeAttribute('hidden');
+
+            // Llamar a register-free
+            var result;
+            try {
+              var res = await fetch('/api/register-free', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: nombre, sector: sector, zona: zona, whatsapp: whatsapp, email: email, servicios: servicios, desc: desc, direccion: direccion }),
+              });
+              result = await res.json();
+              if (!res.ok || !result.slug) {
+                alert('No se pudo crear el perfil: ' + (result.error || res.status));
+                submitBtn.disabled = false;
+                if(submitText) submitText.removeAttribute('hidden');
+                if(submitSpinner) submitSpinner.setAttribute('hidden','');
+                return;
+              }
+            } catch(err) {
+              alert('Error de conexión: ' + err.message);
+              submitBtn.disabled = false;
+              if(submitText) submitText.removeAttribute('hidden');
+              if(submitSpinner) submitSpinner.setAttribute('hidden','');
+              return;
+            }
+
+            submitBtn.disabled = false;
+            if(submitText) submitText.removeAttribute('hidden');
+            if(submitSpinner) submitSpinner.setAttribute('hidden','');
+
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,direccion:direccion,slug:result.slug,card_url:result.card_url,edit_url:result.edit_url};
+
+            // Rellenar tarjeta de previsualización con datos reales
             document.getElementById('rNombre').textContent = nombre;
             document.getElementById('rSector').textContent = (SECTOR_DATA[sector] && SECTOR_DATA[sector].label) || sector;
             document.getElementById('rZona').textContent = '📍 '+zona;
@@ -1435,10 +1483,8 @@
             var waMsg = encodeURIComponent('Hola, te contacto desde tu perfil PerfilaPro.');
             document.getElementById('rWaBtn').href = 'https://wa.me/'+waNum+'?text='+waMsg;
 
-            var slug = nombre.toLowerCase()
-              .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-              .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40);
-            var cardUrl = 'https://perfilapro.netlify.app/c/'+slug;
+            // URL real devuelta por la API
+            var cardUrl = result.card_url;
             var copyInput = document.getElementById('copyLinkInput');
             if(copyInput){ copyInput.value = cardUrl; copyInput.removeAttribute('hidden'); }
             var waShareBtn = document.getElementById('waShareBtn');
@@ -1446,6 +1492,10 @@
               var waText = encodeURIComponent('Hola, te comparto mi perfil profesional 👇\n'+cardUrl);
               waShareBtn.href = 'https://wa.me/?text='+waText;
             }
+            var editLinkEl = document.getElementById('resultEditLink');
+            if(editLinkEl && result.edit_url){ editLinkEl.href = result.edit_url; }
+            var viewLinkEl = document.getElementById('resultViewLink');
+            if(viewLinkEl) viewLinkEl.href = result.card_url;
 
             stageForm.setAttribute('hidden','');
             stageResult.removeAttribute('hidden');
@@ -1533,13 +1583,14 @@
                 sector:     cardData.sector,
                 zona:       cardData.zona,
                 whatsapp:   cardData.whatsapp,
-                servicios:  cardData.servicios,
+                servicios:  cardData.servicios || [],
                 desc:       cardData.desc || '',
                 direccion:  cardData.direccion || '',
                 plan:       plan,
                 foto:       fotoUrl,
                 telefono:   cardData.telefono || '',
                 agent_code: sessionStorage.getItem('pp_ref') || '',
+                slug:       cardData.slug || '',
               }),
             });
             var json = await res.json();
