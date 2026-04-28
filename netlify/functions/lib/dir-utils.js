@@ -177,6 +177,31 @@ function breadcrumb(items) {
   }</ol></nav>`;
 }
 
+function getPageRange(rawPage, pageSize = 20) {
+  const page = Math.max(1, parseInt(rawPage, 10) || 1);
+  const from = (page - 1) * pageSize;
+  return { page, from, to: from + pageSize - 1 };
+}
+
+function buildDirectoryMeta({ sectorLabel = '', specialtyLabel = '', cityName = '' } = {}) {
+  if (cityName && specialtyLabel) {
+    return {
+      title: `${specialtyLabel} en ${cityName} | PerfilaPro`,
+      desc:  `Encuentra ${specialtyLabel.toLowerCase()} en ${cityName}. Perfiles con contacto directo en PerfilaPro.`,
+    };
+  }
+  if (specialtyLabel) {
+    return {
+      title: `${specialtyLabel} — ${sectorLabel} | PerfilaPro`,
+      desc:  `Directorio de ${specialtyLabel.toLowerCase()}. Contacta profesionales verificados en PerfilaPro.`,
+    };
+  }
+  return {
+    title: `${sectorLabel} — Directorio profesional | PerfilaPro`,
+    desc:  `Encuentra profesionales de ${sectorLabel.toLowerCase()} cerca de ti. Directorio en PerfilaPro.`,
+  };
+}
+
 function paginationLinks(page, totalPages, baseUrl) {
   if (totalPages <= 1) return '';
   const prev = page > 1 ? `${baseUrl}?p=${page - 1}` : null;
@@ -222,4 +247,5 @@ module.exports = {
   esc, safeJson, SECTOR_LABELS, labelOf,
   DIR_CSS, PROFILE_CSS,
   renderCard, breadcrumb, paginationLinks, htmlPage,
+  getPageRange, buildDirectoryMeta,
 };
