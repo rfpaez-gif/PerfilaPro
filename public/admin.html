@@ -960,7 +960,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(`(${res.status}) ${data.error || 'Error'}`);
       const card = allCards.find(c => c.slug === catModalSlug);
-      if (card) { card.category_id = data.category_id; card.city_slug = data.city_slug; }
+      if (card) { card.category_id = data.category_id; card.city_slug = data.city_slug; card.directory_visible = false; }
       closeCatModal();
       renderTable();
     } catch (err) {

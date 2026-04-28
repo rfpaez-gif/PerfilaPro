@@ -188,6 +188,72 @@ describe('admin-actions handler', () => {
     });
   });
 
+  // ── toggle_directory ──
+
+  describe('toggle_directory', () => {
+    const fullCard = { ...baseCard, category_id: 'cat-uuid', city_slug: 'madrid', directory_visible: false, directory_featured: false };
+
+    beforeEach(() => {
+      mockSingle.mockResolvedValue({ data: fullCard, error: null });
+    });
+
+    it('activa directory_visible en un perfil completo y devuelve 200', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'directory_visible', value: true },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).ok).toBe(true);
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.directory_visible).toBe(true);
+    });
+
+    it('activa directory_featured independientemente de category_id', async () => {
+      mockSingle.mockResolvedValue({ data: { ...fullCard, category_id: null }, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'directory_featured', value: true },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.directory_featured).toBe(true);
+    });
+
+    it('devuelve 400 si se intenta activar directory_visible sin category_id', async () => {
+      mockSingle.mockResolvedValue({ data: { ...fullCard, category_id: null }, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'directory_visible', value: true },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Perfil incompleto');
+    });
+
+    it('devuelve 400 si se intenta activar directory_visible sin city_slug', async () => {
+      mockSingle.mockResolvedValue({ data: { ...fullCard, city_slug: null }, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'directory_visible', value: true },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Perfil incompleto');
+    });
+
+    it('permite desactivar directory_visible aunque el perfil esté incompleto', async () => {
+      mockSingle.mockResolvedValue({ data: { ...fullCard, category_id: null, city_slug: null, directory_visible: true }, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'directory_visible', value: false },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.directory_visible).toBe(false);
+    });
+
+    it('devuelve 400 para un campo no permitido', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'toggle_directory', slug: 'ana-electricista', field: 'status', value: true },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Campo no permitido');
+    });
+  });
+
   // ── set_category ──
 
   describe('set_category', () => {
