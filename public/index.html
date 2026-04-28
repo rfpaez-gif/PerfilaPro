@@ -506,6 +506,7 @@
       @media(min-width:480px){.sector-grid{grid-template-columns:repeat(4,1fr)}}
       @media(min-width:720px){.result-layout{grid-template-columns:340px 1fr}}
       .result-card-wrap{position:relative}
+      .svc-placeholder{color:var(--faint);font-style:italic;font-size:.875rem;padding:.5rem 0}
       .result-badge-free{
         display:inline-flex;padding:.35rem .8rem;background:var(--surface-2);color:var(--muted);
         border-radius:999px;font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
@@ -995,10 +996,6 @@
                 </div>
               </div>
 
-              <div class="form-row">
-                <label class="form-label" for="fDireccion">Dirección <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional — solo si tienes local)</span></label>
-                <input class="form-input" type="text" id="fDireccion" name="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
-              </div>
 
               <div class="form-row">
                 <label class="form-label" for="fWhatsapp">Número de WhatsApp <span class="req">*</span></label>
@@ -1014,45 +1011,8 @@
                 <p class="form-hint">Te enviamos el enlace para editar tu perfil.</p>
               </div>
 
-              <div class="form-row">
-                <label class="form-label">Tus servicios principales <span class="opt">(opcional)</span></label>
-                <div class="chips-section" id="chipsSection" hidden>
-                  <p class="chips-label">Toca para añadir a tus servicios:</p>
-                  <div class="chips-wrap" id="chipsWrap"></div>
-                </div>
-                <div class="services-inputs" id="servicesInputs">
-                  <input class="form-input" type="text" name="servicio1" placeholder="Ej: Instalación de tuberías" maxlength="50">
-                  <input class="form-input" type="text" name="servicio2" placeholder="Ej: Urgencias 24h" maxlength="50">
-                  <input class="form-input" type="text" name="servicio3" placeholder="Ej: Calefacción y ACS" maxlength="50">
-                </div>
-                <p class="form-hint">Hasta 3 servicios. Puedes añadirlos después.</p>
-              </div>
 
-              <div class="form-row">
-                <label class="form-label" for="fDesc">Descripción breve <span class="opt">(opcional)</span></label>
-                <textarea class="form-input" id="fDesc" name="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso."></textarea>
-                <p class="form-hint"><span id="descCount">0</span>/200 caracteres</p>
-              </div>
 
-              <div class="form-row">
-                <label class="form-label">Foto de perfil o logo <span class="opt">(opcional)</span></label>
-                <div class="photo-upload" id="photoUpload">
-                  <div class="photo-thumb" id="photoThumb">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                  </div>
-                  <div>
-                    <label for="fFoto" class="photo-select-btn">Subir foto</label>
-                    <input type="file" id="fFoto" name="foto" accept="image/*" hidden>
-                    <p class="form-hint" style="margin-top:.4rem">JPG o PNG · Máx 2 MB · Se sube al activar</p>
-                    <p class="photo-status" id="photoStatus"></p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-free-notice">
-                <span class="notice-icon">ℹ️</span>
-                <span>Tu perfil se crea <strong>gratis</strong> ahora mismo. Recibirás el enlace por email para editarlo. Activa el directorio y el QR cuando quieras.</span>
-              </div>
 
               <button class="btn btn-primary form-submit" type="submit" id="submitBtn">
                 <span class="submit-text">Crear mi perfil gratis</span>
@@ -1096,7 +1056,7 @@
                     <div class="chips-row">
                       <span class="chip chip--loc" id="rZona">📍 —</span>
                     </div>
-                    <div class="svc-list" id="rServicios"></div>
+                    <div class="svc-list" id="rServicios"><div class="svc-item svc-placeholder">Añade tus servicios desde "Editar mi perfil"</div></div>
                     <p class="card-desc" id="rDesc" hidden></p>
                     <div class="btn--wa" id="rWaBtn">
                       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
@@ -1147,12 +1107,6 @@
                     <li>Perfiles adicionales con descuento</li>
                   </ul>
                 </article>
-
-                <!-- Declaración de imagen (aparece solo si hay foto) -->
-                <label class="foto-declaration" id="fotoDeclaration" hidden>
-                  <input type="checkbox" id="fotoConsent">
-                  <span>Confirmo que tengo derecho a usar esta imagen y que no contiene contenido inapropiado.</span>
-                </label>
 
                 <!-- Botones de activación -->
                 <div class="upgrade-btns">
@@ -1257,18 +1211,6 @@
           btn.classList.add('cob-active');
         }
 
-        function addSuggestion(text, chip) {
-          var inputs = ['servicio1','servicio2','servicio3'].map(function(n){ return document.querySelector('[name="'+n+'"]'); });
-          for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i] && !inputs[i].value.trim()) {
-              inputs[i].value = text;
-              inputs[i].classList.remove('is-error');
-              chip.classList.add('is-used');
-              chip.disabled = true;
-              return;
-            }
-          }
-        }
 
         if (sectorGrid) {
           sectorGrid.querySelectorAll('.sector-card').forEach(function(card) {
@@ -1279,20 +1221,6 @@
               fSectorInput.value = val;
               if (sectorError) sectorError.setAttribute('hidden','');
               var data = SECTOR_DATA[val];
-              if (data && data.sugerencias.length) {
-                chipsWrap.innerHTML = '';
-                data.sugerencias.forEach(function(sug) {
-                  var chip = document.createElement('button');
-                  chip.type = 'button';
-                  chip.className = 'chip';
-                  chip.textContent = sug;
-                  chip.addEventListener('click', function(){ addSuggestion(sug, chip); });
-                  chipsWrap.appendChild(chip);
-                });
-                chipsSection.removeAttribute('hidden');
-              } else {
-                chipsSection.setAttribute('hidden','');
-              }
             });
           });
         }
@@ -1327,67 +1255,7 @@
           });
         }
 
-        // Contador de caracteres
-        var descInput = document.getElementById('fDesc');
-        var descCount = document.getElementById('descCount');
-        if(descInput && descCount){
-          descInput.addEventListener('input', function(){
-            descCount.textContent = descInput.value.length;
-          });
-        }
 
-        // Preview de foto al seleccionar archivo
-        var fotoInput   = document.getElementById('fFoto');
-        var photoThumb  = document.getElementById('photoThumb');
-        var photoStatus = document.getElementById('photoStatus');
-        var localFotoDataUrl = null;
-
-        function compressImage(file) {
-          return new Promise(function(resolve) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-              var img = new Image();
-              img.onload = function() {
-                var maxDim = 600, w = img.width, h = img.height;
-                if (w > maxDim || h > maxDim) {
-                  if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-                  else { w = Math.round(w * maxDim / h); h = maxDim; }
-                }
-                var canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
-              };
-              img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-          });
-        }
-
-        if (fotoInput) {
-          fotoInput.addEventListener('change', async function() {
-            var file = fotoInput.files[0];
-            if (!file) return;
-            if (file.size > 10 * 1024 * 1024) {
-              photoStatus.textContent = 'La imagen supera los 10 MB.';
-              photoStatus.className = 'photo-status err';
-              return;
-            }
-            photoStatus.textContent = 'Cargando preview…';
-            photoStatus.className = 'photo-status loading';
-            localFotoDataUrl = await compressImage(file);
-            // Mostrar thumbnail y actualizar avatar del preview
-            photoThumb.innerHTML = '<img src="' + localFotoDataUrl + '" alt="preview">';
-            var rPlaceholder = document.getElementById('rAvatarPlaceholder');
-            if (rPlaceholder) {
-              rPlaceholder.innerHTML = '<img src="' + localFotoDataUrl + '" alt="foto" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-            }
-            photoStatus.textContent = 'Foto lista. Se subirá al activar.';
-            photoStatus.className = 'photo-status ok';
-            var decl = document.getElementById('fotoDeclaration');
-            if (decl) decl.removeAttribute('hidden');
-          });
-        }
 
         // Envío del formulario → register-free → resultado real
         var form = document.getElementById('crearForm');
@@ -1403,10 +1271,7 @@
             var zona     = cobLabel === 'Sin límite' ? localidad : localidad + ' · ' + cobLabel;
             var whatsapp = document.getElementById('fWhatsapp').value.trim();
             var email    = document.getElementById('fEmail') ? document.getElementById('fEmail').value.trim() : '';
-            var s1 = form.elements['servicio1'].value.trim();
-            var s2 = form.elements['servicio2'].value.trim();
-            var s3 = form.elements['servicio3'].value.trim();
-            var desc = document.getElementById('fDesc').value.trim();
+
 
             // Validación básica
             [document.getElementById('fNombre'),
@@ -1420,8 +1285,6 @@
             }
             if(!nombre||!sector||!zona||!whatsapp||!email) return;
 
-            var servicios = [s1,s2,s3].filter(Boolean);
-            var direccion = document.getElementById('fDireccion') ? document.getElementById('fDireccion').value.trim() : '';
 
             // Mostrar spinner
             var submitBtn = document.getElementById('submitBtn');
@@ -1437,7 +1300,7 @@
               var res = await fetch('/api/register-free', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: nombre, sector: sector, zona: zona, whatsapp: whatsapp, email: email, servicios: servicios, desc: desc, direccion: direccion }),
+                body: JSON.stringify({ nombre: nombre, sector: sector, zona: zona, whatsapp: whatsapp, email: email }),
               });
               result = await res.json();
               if (!res.ok || !result.slug) {
@@ -1459,7 +1322,7 @@
             if(submitText) submitText.removeAttribute('hidden');
             if(submitSpinner) submitSpinner.setAttribute('hidden','');
 
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,servicios:servicios,desc:desc,direccion:direccion,slug:result.slug,card_url:result.card_url,edit_url:result.edit_url};
+            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,slug:result.slug,card_url:result.card_url,edit_url:result.edit_url};
 
             // Rellenar tarjeta de previsualización con datos reales
             document.getElementById('rNombre').textContent = nombre;
@@ -1468,12 +1331,19 @@
 
             var rServicios = document.getElementById('rServicios');
             rServicios.innerHTML = '';
-            servicios.forEach(function(s,i){
-              var d = document.createElement('div');
-              d.className = 'svc-item'+(i===0?' svc-item--lead':'');
-              d.textContent = s;
-              rServicios.appendChild(d);
-            });
+            if (servicios && servicios.length) {
+              servicios.forEach(function(s,i){
+                var d = document.createElement('div');
+                d.className = 'svc-item'+(i===0?' svc-item--lead':'');
+                d.textContent = s;
+                rServicios.appendChild(d);
+              });
+            } else {
+              var ph = document.createElement('div');
+              ph.className = 'svc-placeholder';
+              ph.textContent = 'Añade tus servicios desde "Editar mi perfil"';
+              rServicios.appendChild(ph);
+            }
 
             var rDesc = document.getElementById('rDesc');
             if(desc){ rDesc.textContent=desc; rDesc.removeAttribute('hidden'); }
@@ -1530,49 +1400,6 @@
           var btn = plan === 'base' ? ubBtn : upBtn;
           var originalText = btn.textContent;
           btn.disabled = true;
-
-          // Bloquear si hay foto y no se aceptó la declaración
-          var consentBox = document.getElementById('fotoConsent');
-          if (localFotoDataUrl && consentBox && !consentBox.checked) {
-            var decl = document.getElementById('fotoDeclaration');
-            if (decl) decl.style.border = '1.5px solid #dc2626';
-            decl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            btn.disabled = false;
-            btn.textContent = originalText;
-            return;
-          }
-
-          // Subir foto si hay una seleccionada
-          var fotoUrl = '';
-          if (localFotoDataUrl) {
-            btn.textContent = 'Subiendo foto…';
-            try {
-              var base64 = localFotoDataUrl.split(',')[1];
-              var slug = cardData.nombre.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-                .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,40);
-              var upRes = await fetch('/api/upload-avatar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ base64: base64, contentType: 'image/jpeg', slug: slug }),
-              });
-              var upJson = await upRes.json();
-              if (upJson.url) {
-                fotoUrl = upJson.url;
-              } else {
-                console.warn('upload-avatar falló:', upJson.error);
-                if (!confirm('No se pudo subir la foto (' + (upJson.error || 'error') + ').\n¿Continuar sin foto?')) {
-                  btn.disabled = false; btn.textContent = originalText; return;
-                }
-              }
-            } catch(e) {
-              console.warn('upload-avatar excepción:', e);
-              if (!confirm('Error al subir la foto.\n¿Continuar sin foto?')) {
-                btn.disabled = false; btn.textContent = originalText; return;
-              }
-            }
-          }
-
           btn.textContent = 'Redirigiendo…';
           try {
             var res = await fetch('/api/create-checkout', {
@@ -1583,12 +1410,8 @@
                 sector:     cardData.sector,
                 zona:       cardData.zona,
                 whatsapp:   cardData.whatsapp,
-                servicios:  cardData.servicios || [],
-                desc:       cardData.desc || '',
-                direccion:  cardData.direccion || '',
+                servicios:  [],
                 plan:       plan,
-                foto:       fotoUrl,
-                telefono:   cardData.telefono || '',
                 agent_code: sessionStorage.getItem('pp_ref') || '',
                 slug:       cardData.slug || '',
               }),
@@ -1597,7 +1420,7 @@
             if (json.url) {
               window.location.href = json.url;
             } else {
-              alert('Error al iniciar el pago:\n' + (json.error || res.status + ' ' + res.statusText));
+              alert('Error al iniciar el pago:\n' + (json.error || res.status));
               btn.disabled = false;
               btn.textContent = originalText;
             }
@@ -1607,8 +1430,7 @@
             btn.textContent = originalText;
           }
         }
-
-        if(ubBtn) ubBtn.addEventListener('click', function(){ goStripe('base'); });
+                if(ubBtn) ubBtn.addEventListener('click', function(){ goStripe('base'); });
         if(upBtn) upBtn.addEventListener('click', function(){ goStripe('pro'); });
 
         // Volver a crear
@@ -1618,19 +1440,12 @@
             stageResult.setAttribute('hidden','');
             stageForm.removeAttribute('hidden');
             form.reset();
-            if(descCount) descCount.textContent='0';
-            localFotoDataUrl = null;
-            if(photoThumb) photoThumb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
-            if(photoStatus){ photoStatus.textContent=''; photoStatus.className='photo-status'; }
             if(fSectorInput) fSectorInput.value='';
             if(sectorGrid) sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.remove('is-selected','is-error'); });
             if(chipsSection) chipsSection.setAttribute('hidden','');
             if(chipsWrap) chipsWrap.innerHTML='';
             if(sectorError) sectorError.setAttribute('hidden','');
             var decl2 = document.getElementById('fotoDeclaration');
-            if(decl2){ decl2.setAttribute('hidden',''); decl2.style.border=''; }
-            var cb = document.getElementById('fotoConsent');
-            if(cb) cb.checked = false;
             stageForm.scrollIntoView({behavior:'smooth',block:'start'});
           });
         }
