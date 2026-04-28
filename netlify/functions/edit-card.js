@@ -23,10 +23,10 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at, category_id, city_slug, directory_visible')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at, category_id, city_slug, directory_visible, plan, status')
       .eq('slug', slug)
       .eq('edit_token', token)
-      .eq('status', 'active')
+      .in('status', ['active', 'free'])
       .single();
 
     if (error || !card) {
@@ -84,7 +84,7 @@ function makeHandler(db) {
       ];
       const fotoUrlClean = foto_url && ALLOWED_FOTO_HOSTS.some(h => foto_url.includes(h)) ? foto_url : null;
 
-      if (!nombre || !zona || !whatsapp || !Array.isArray(servicios) || servicios.length === 0) {
+      if (!nombre || !zona || !whatsapp || !Array.isArray(servicios)) {
         return {
           statusCode: 400,
           headers: { 'Content-Type': 'application/json' },

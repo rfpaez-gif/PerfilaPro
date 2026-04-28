@@ -12,11 +12,13 @@ function makeBuilder() {
   const b = {
     select: vi.fn(),
     eq: vi.fn(),
+    in: vi.fn(),
     single: mockSingle,
     update: vi.fn(),
   };
   b.select.mockReturnValue(b);
   b.eq.mockReturnValue(b);
+  b.in.mockReturnValue(b);
   b.update.mockReturnValue({ eq: mockEqUpdate });
   return b;
 }
@@ -145,9 +147,9 @@ describe('edit-card handler', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('devuelve 400 si servicios está vacío', async () => {
+    it('acepta servicios vacío (perfiles free sin completar)', async () => {
       const res = await handler(buildEvent({ method: 'POST', body: { ...validBody, servicios: [] } }));
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(200);
     });
 
     it('devuelve 400 si servicios no es un array', async () => {
@@ -177,6 +179,26 @@ describe('edit-card handler', () => {
       const updateArgs = currentBuilder.update.mock.calls[0][0];
       expect(updateArgs.telefono).toBeNull();
     });
+  });
+
+  // ── Perfiles free ──
+
+  it('acepta perfiles con status=free (plan gratuito)', async () => {
+    mockSingle.mockResolvedValue({ data: { ...baseCard, plan: 'free', status: 'free' }, error: null });
+    const res = await handler(buildEvent({ method: 'GET' }));
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.plan).toBe('free');
+    expect(data.status).toBe('free');
+  });
+
+  it('GET expone plan y status en la respuesta', async () => {
+    mockSingle.mockResolvedValue({ data: { ...baseCard, plan: 'base', status: 'active' }, error: null });
+    const res = await handler(buildEvent({ method: 'GET' }));
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.plan).toBe('base');
+    expect(data.status).toBe('active');
   });
 
   // ── Método no permitido ──
