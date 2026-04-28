@@ -188,18 +188,18 @@ function buildDirectoryMeta({ sectorLabel = '', specialtyLabel = '', cityName = 
   if (cityName && specialtyLabel) {
     return {
       title: `${specialtyLabel} en ${cityName} | PerfilaPro`,
-      desc:  `Encuentra ${specialtyLabel.toLowerCase()} en ${cityName}. Perfiles con contacto directo en PerfilaPro.`,
+      desc:  `Encuentra ${specialtyLabel.toLowerCase()} en ${cityName}. Directorio de profesionales actualizado en PerfilaPro.`,
     };
   }
   if (specialtyLabel) {
     return {
-      title: `${specialtyLabel} — ${sectorLabel} | PerfilaPro`,
-      desc:  `Directorio de ${specialtyLabel.toLowerCase()}. Contacta profesionales verificados en PerfilaPro.`,
+      title: `${specialtyLabel} en España | PerfilaPro`,
+      desc:  `Encuentra ${specialtyLabel.toLowerCase()} cerca de ti. Directorio actualizado en PerfilaPro.`,
     };
   }
   return {
-    title: `${sectorLabel} — Directorio profesional | PerfilaPro`,
-    desc:  `Encuentra profesionales de ${sectorLabel.toLowerCase()} cerca de ti. Directorio en PerfilaPro.`,
+    title: `${sectorLabel} profesionales en España | PerfilaPro`,
+    desc:  `Encuentra profesionales de ${sectorLabel.toLowerCase()} cerca de ti. Directorio actualizado en PerfilaPro.`,
   };
 }
 

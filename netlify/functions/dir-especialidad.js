@@ -2,7 +2,7 @@
 
 const { getDb } = require('./lib/supabase-client');
 const { getSpecialtyMeta, getSectorCities, listProfiles, PAGE_SIZE } = require('./lib/get-profile');
-const { esc, labelOf, renderCard, paginationLinks, htmlPage } = require('./lib/dir-utils');
+const { esc, labelOf, renderCard, paginationLinks, htmlPage, getPageRange, buildDirectoryMeta } = require('./lib/dir-utils');
 
 exports.handler = async (event) => {
   const proto   = (event.headers?.['x-forwarded-proto']) || 'https';
@@ -15,7 +15,7 @@ exports.handler = async (event) => {
 
   if (!sector || !specialty) return { statusCode: 400, body: 'Missing params' };
 
-  const page = Math.max(1, parseInt(event.queryStringParameters?.p || '1', 10));
+  const { page } = getPageRange(event.queryStringParameters?.p);
   const db   = getDb();
 
   const [meta, cities, { profiles, total, error }] = await Promise.all([
@@ -32,11 +32,9 @@ exports.handler = async (event) => {
   const canonical      = page > 1 ? `${canonicalBase}?p=${page}` : canonicalBase;
   const totalPages     = Math.ceil(total / PAGE_SIZE);
 
-  const title = meta?.meta_title
-    ? `${meta.meta_title} | PerfilaPro`
-    : `${specialtyLabel} en España | PerfilaPro`;
-  const desc  = meta?.meta_desc
-    || `Encuentra ${specialtyLabel.toLowerCase()} cerca de ti. Directorio actualizado en PerfilaPro.`;
+  const { title: _title, desc: _desc } = buildDirectoryMeta({ sectorLabel, specialtyLabel });
+  const title = meta?.meta_title ? `${meta.meta_title} | PerfilaPro` : _title;
+  const desc  = meta?.meta_desc || _desc;
 
   const jsonLd = {
     '@context': 'https://schema.org',

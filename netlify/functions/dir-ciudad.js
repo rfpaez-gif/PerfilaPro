@@ -2,7 +2,7 @@
 
 const { getDb } = require('./lib/supabase-client');
 const { getSpecialtyMeta, getCityBySlug, listProfiles, PAGE_SIZE } = require('./lib/get-profile');
-const { esc, labelOf, renderCard, paginationLinks, htmlPage } = require('./lib/dir-utils');
+const { esc, labelOf, renderCard, paginationLinks, htmlPage, getPageRange, buildDirectoryMeta } = require('./lib/dir-utils');
 
 exports.handler = async (event) => {
   const proto   = (event.headers?.['x-forwarded-proto']) || 'https';
@@ -18,7 +18,7 @@ exports.handler = async (event) => {
 
   const isAllCities = specialty === '_';
 
-  const page = Math.max(1, parseInt(event.queryStringParameters?.p || '1', 10));
+  const { page } = getPageRange(event.queryStringParameters?.p);
   const db   = getDb();
 
   const [meta, cityMeta, { profiles, total, error }] = await Promise.all([
@@ -36,8 +36,7 @@ exports.handler = async (event) => {
   const canonical      = page > 1 ? `${canonicalBase}?p=${page}` : canonicalBase;
   const totalPages     = Math.ceil(total / PAGE_SIZE);
 
-  const title = `${specialtyLabel} en ${cityLabel} | PerfilaPro`;
-  const desc  = `Encuentra ${specialtyLabel.toLowerCase()} en ${cityLabel}. Directorio de profesionales actualizado en PerfilaPro.`;
+  const { title, desc } = buildDirectoryMeta({ sectorLabel, specialtyLabel, cityName: cityLabel });
 
   const jsonLd = {
     '@context': 'https://schema.org',
