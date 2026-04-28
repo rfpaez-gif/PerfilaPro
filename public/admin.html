@@ -429,6 +429,7 @@
         sessionStorage.removeItem('adminPwd');
         document.getElementById('dashboard').style.display = 'none';
         document.getElementById('loginWrap').style.display = 'flex';
+        closeCatModal();
         return;
       }
 
@@ -903,9 +904,15 @@
     return dirOptions;
   }
 
+  let _catListenerAdded = false;
   async function openCatModal(slug) {
     catModalSlug = slug;
-    document.getElementById('catModal').classList.add('open');
+    const overlay = document.getElementById('catModal');
+    overlay.classList.add('open');
+    if (!_catListenerAdded) {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCatModal(); });
+      _catListenerAdded = true;
+    }
     try {
       const opts = await loadDirOptions();
       const sectors = [...new Map(opts.categories.map(c => [c.sector, c])).values()];
@@ -931,11 +938,12 @@
   }
 
   function closeCatModal() {
-    document.getElementById('catModal').classList.remove('open');
+    document.getElementById('catModal')?.classList.remove('open');
     catModalSlug = null;
   }
 
   async function saveCatModal() {
+    if (!getPassword()) { alert('Sesión expirada. Recarga la página e inicia sesión de nuevo.'); closeCatModal(); return; }
     const sector    = document.getElementById('catSector').value;
     const specialty = document.getElementById('catSpecialty').value;
     const city_slug = document.getElementById('catCity').value;
@@ -950,7 +958,7 @@
         body: JSON.stringify({ action: 'set_category', slug: catModalSlug, sector, specialty, city_slug }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error');
+      if (!res.ok) throw new Error(`(${res.status}) ${data.error || 'Error'}`);
       const card = allCards.find(c => c.slug === catModalSlug);
       if (card) { card.category_id = data.category_id; card.city_slug = data.city_slug; }
       closeCatModal();
@@ -963,9 +971,7 @@
     }
   }
 
-  document.getElementById('catModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('catModal')) closeCatModal();
-  });
+  // event listener attached lazily on first open (element is below </script> tag)
 
   // ── Reenviar factura ──
 
