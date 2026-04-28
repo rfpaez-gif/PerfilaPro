@@ -116,6 +116,14 @@
   path     = "/api/admin-*"
   function = "rate-limiter"
 
+[[edge_functions]]
+  path     = "/api/resend-invoice"
+  function = "rate-limiter"
+
+[[edge_functions]]
+  path     = "/api/legal-settings"
+  function = "rate-limiter"
+
 # Directorio profesional — más específico primero
 [[redirects]]
   from   = "/directorio/:sector/:especialidad/:ciudad"
