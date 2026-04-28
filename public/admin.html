@@ -505,6 +505,9 @@
       const featuredOn = !!card.directory_featured;
       const incomplete = !card.category_id || !card.city_slug;
       const visTitle   = incomplete ? ' title="Sin categoría/ciudad — no aparecerá en listados"' : '';
+      const dirMeta    = incomplete
+        ? `<small style="color:var(--faint);font-size:.68rem">⚠ Sin datos</small>`
+        : `<small style="color:var(--muted);font-size:.68rem">${card.city_slug || ''}</small>`;
 
       return `<tr>
         <td class="name-cell">
@@ -517,9 +520,12 @@
         <td class="col-md"><small style="color:var(--muted)">${expira}</small></td>
         <td><a href="/c/${card.slug}" target="_blank" class="card-link">Ver →</a></td>
         <td class="col-md">
-          <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-            <button class="dir-toggle dir-toggle--${visibleOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_visible',${!visibleOn},this)"${visTitle}>${visibleOn ? '● Visible' : '◌ Oculto'}</button>
-            <button class="dir-toggle dir-toggle--${featuredOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_featured',${!featuredOn},this)">${featuredOn ? '★ Dest.' : '☆ Dest.'}</button>
+          <div style="display:flex;flex-direction:column;gap:.3rem">
+            <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+              <button class="dir-toggle dir-toggle--${visibleOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_visible',${!visibleOn},this)"${visTitle}>${visibleOn ? '● Visible' : '◌ Oculto'}</button>
+              <button class="dir-toggle dir-toggle--${featuredOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_featured',${!featuredOn},this)">${featuredOn ? '★ Dest.' : '☆ Dest.'}</button>
+            </div>
+            ${dirMeta}
           </div>
         </td>
         <td>
