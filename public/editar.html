@@ -308,7 +308,7 @@
           </div>
           <div class="field" id="cityField" style="display:none">
             <label for="citySel">Ciudad</label>
-            <select id="citySel">
+            <select id="citySel" onchange="onCityChange()">
               <option value="">Selecciona ciudad…</option>
             </select>
           </div>
@@ -521,7 +521,10 @@
             document.getElementById('specialtySel').value = currentSpecialty;
             onSpecialtyChange();
           }
-          if (currentCity) document.getElementById('citySel').value = currentCity;
+          if (currentCity) {
+            document.getElementById('citySel').value = currentCity;
+            onCityChange();
+          }
           if (currentVisible) document.getElementById('dirVisible').checked = true;
         }
         // Mostrar enlace perfil público si tiene sector+ciudad configurado
@@ -558,7 +561,13 @@
     function onSpecialtyChange() {
       const specialty = document.getElementById('specialtySel').value;
       document.getElementById('cityField').style.display = specialty ? '' : 'none';
-      document.getElementById('visibleRow').style.display = specialty ? '' : 'none';
+      document.getElementById('visibleRow').style.display = 'none';
+      if (!specialty) document.getElementById('citySel').value = '';
+    }
+
+    function onCityChange() {
+      const city = document.getElementById('citySel').value;
+      document.getElementById('visibleRow').style.display = city ? '' : 'none';
     }
 
     async function saveProfile() {
