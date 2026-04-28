@@ -72,6 +72,7 @@ main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 3rem
 .dir-card{display:grid;grid-template-columns:56px 1fr 28px;gap:.875rem;align-items:center;padding:1rem 1.125rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;transition:box-shadow .18s,border-color .18s}
 .dir-card:hover{box-shadow:var(--shadow);border-color:rgba(1,105,111,.22)}
 .dir-card--featured{border-color:rgba(1,105,111,.22);background:rgba(1,105,111,.025)}
+.dir-feat{font-size:.75em;vertical-align:.1em}
 .dir-av{width:56px;height:56px;border-radius:50%;background:var(--primary-bg);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
 .dir-av img{width:100%;height:100%;object-fit:cover}
 .dir-av-init{font-family:var(--ff-d);font-size:1.5rem;color:var(--primary);line-height:1}
@@ -157,7 +158,7 @@ function renderCard(p, siteUrl) {
     ? `<img src="${esc(p.foto_url)}" alt="${esc(p.nombre)}" loading="lazy" width="56" height="56">`
     : `<span class="dir-av-init">${avatarInitial}</span>`}</div>
   <div class="dir-body">
-    <p class="dir-name">${esc(p.nombre)}</p>
+    <p class="dir-name">${esc(p.nombre)}${p.directory_featured ? ' <span class="dir-feat">⭐</span>' : ''}</p>
     <p class="dir-role">${esc(p.specialty_label || p.tagline || '')}</p>
     ${loc ? `<p class="dir-loc">${PIN_SVG}${loc}</p>` : ''}
   </div>
