@@ -129,6 +129,31 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
+    if (action === 'set_category') {
+      const { sector, specialty, city_slug: newCitySlug } = body;
+      if (!sector || !specialty || !newCitySlug) {
+        return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos: sector, specialty, city_slug' }) };
+      }
+      const { data: cat } = await db
+        .from('categories')
+        .select('id')
+        .eq('sector', sector)
+        .eq('specialty', specialty)
+        .maybeSingle();
+      if (!cat?.id) {
+        return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Categoría no encontrada' }) };
+      }
+      const { error: updateError } = await db
+        .from('cards')
+        .update({ category_id: cat.id, city_slug: newCitySlug, directory_visible: false })
+        .eq('slug', slug);
+      if (updateError) {
+        return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Error guardando' }) };
+      }
+      auditLog(db, ip, 'set_category', slug, 'category_id+city_slug', null, `${sector}/${specialty}/${newCitySlug}`);
+      return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, category_id: cat.id, city_slug: newCitySlug }) };
+    }
+
     return { statusCode: 400, body: JSON.stringify({ error: `Acción desconocida: ${action}` }) };
   };
 }

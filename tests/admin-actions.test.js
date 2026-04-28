@@ -11,6 +11,11 @@ const mockEqUpdate = vi.fn();
 const mockFrom = vi.fn();
 const mockInsert = vi.fn(() => Promise.resolve({ error: null }));
 
+const mockMaybeSingle = vi.fn();
+const mockCatEq2 = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+const mockCatEq1 = vi.fn(() => ({ eq: mockCatEq2 }));
+const mockCatSelect = vi.fn(() => ({ eq: mockCatEq1 }));
+
 const mockRetrieve = vi.fn();
 const mockRefundCreate = vi.fn();
 
@@ -53,8 +58,9 @@ describe('admin-actions handler', () => {
     mockEqUpdate.mockResolvedValue({ error: null });
     mockSingle.mockResolvedValue({ data: baseCard, error: null });
     mockFrom.mockImplementation((table) => {
-      if (table === 'cards') return { select: mockSelect, update: mockUpdate };
+      if (table === 'cards')           return { select: mockSelect, update: mockUpdate };
       if (table === 'admin_audit_log') return { insert: mockInsert };
+      if (table === 'categories')      return { select: mockCatSelect };
       return {};
     });
   });
@@ -179,6 +185,46 @@ describe('admin-actions handler', () => {
       const res = await handler(buildEvent({ body: { action: 'refund', slug: 'ana-electricista' } }));
       expect(res.statusCode).toBe(502);
       expect(JSON.parse(res.body).error).toContain('No such payment');
+    });
+  });
+
+  // ── set_category ──
+
+  describe('set_category', () => {
+    beforeEach(() => {
+      mockMaybeSingle.mockResolvedValue({ data: { id: 'cat-uuid-123' }, error: null });
+    });
+
+    it('asigna category_id y city_slug y devuelve 200', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'set_category', slug: 'ana-electricista', sector: 'construccion', specialty: 'electricista', city_slug: 'madrid' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.ok).toBe(true);
+      expect(data.category_id).toBe('cat-uuid-123');
+      expect(data.city_slug).toBe('madrid');
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.category_id).toBe('cat-uuid-123');
+      expect(updated.city_slug).toBe('madrid');
+      expect(updated.directory_visible).toBe(false);
+    });
+
+    it('devuelve 400 si faltan campos', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'set_category', slug: 'ana-electricista', sector: 'construccion' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Faltan campos');
+    });
+
+    it('devuelve 400 si la categoría no existe en la BD', async () => {
+      mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'set_category', slug: 'ana-electricista', sector: 'foo', specialty: 'bar', city_slug: 'madrid' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Categoría no encontrada');
     });
   });
 });

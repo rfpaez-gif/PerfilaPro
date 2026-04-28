@@ -120,6 +120,8 @@
     .dir-toggle--on  { background: #dcfce7; color: #15803d; }
     .dir-toggle--off { background: #f3f4f6; color: #9ca3af; }
     .dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
+    .dir-config-btn { background: none; border: 1px dashed var(--border); border-radius: .35rem; padding: .15rem .5rem; font-size: .68rem; color: var(--muted); cursor: pointer; font-family: var(--ff-b); transition: all .15s; }
+    .dir-config-btn:hover { background: #eff6ff; color: var(--primary); border-color: var(--primary); border-style: solid; }
 
     /* ── Modal ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
@@ -506,7 +508,7 @@
       const incomplete = !card.category_id || !card.city_slug;
       const visTitle   = incomplete ? ' title="Sin categoría/ciudad — no aparecerá en listados"' : '';
       const dirMeta    = incomplete
-        ? `<small style="color:var(--faint);font-size:.68rem">⚠ Sin datos</small>`
+        ? `<button class="dir-config-btn" onclick="openCatModal('${card.slug}')">⚙ Configurar</button>`
         : `<small style="color:var(--muted);font-size:.68rem">${card.city_slug || ''}</small>`;
 
       return `<tr>
@@ -532,6 +534,7 @@
           <div class="actions-cell">
             <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
             <button class="action-btn btn-extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
+            ${card.email ? `<button class="action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:.7rem">✉ Enlace</button>` : ''}
             ${card.stripe_session_id ? `<button class="action-btn btn-invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
             ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
           </div>
@@ -860,6 +863,110 @@
     }
   }
 
+  // ── Enviar enlace de edición ──
+
+  async function sendEditLink(slug, btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    try {
+      await fetch('/.netlify/functions/send-edit-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      });
+      btn.textContent = '✓ Enviado';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = '#bbf7d0';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+      }, 3000);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
+  }
+
+  // ── Modal Configurar categoría/ciudad ──
+
+  let dirOptions = null;
+  let catModalSlug = null;
+
+  async function loadDirOptions() {
+    if (dirOptions) return dirOptions;
+    const res = await fetch('/.netlify/functions/directory-options');
+    dirOptions = await res.json();
+    return dirOptions;
+  }
+
+  async function openCatModal(slug) {
+    catModalSlug = slug;
+    document.getElementById('catModal').classList.add('open');
+    try {
+      const opts = await loadDirOptions();
+      const sectors = [...new Map(opts.categories.map(c => [c.sector, c])).values()];
+      document.getElementById('catSector').innerHTML =
+        `<option value="">— Sector —</option>` +
+        sectors.map(c => `<option value="${c.sector}">${c.sector_label}</option>`).join('');
+      document.getElementById('catSpecialty').innerHTML = '<option value="">— Especialidad —</option>';
+      document.getElementById('catCity').innerHTML =
+        `<option value="">— Ciudad —</option>` +
+        opts.cities.map(c => `<option value="${c.slug}">${c.name}${c.province ? ` (${c.province})` : ''}</option>`).join('');
+    } catch (err) {
+      alert(`Error cargando opciones: ${err.message}`);
+      closeCatModal();
+    }
+  }
+
+  function onCatSectorChange() {
+    const sector = document.getElementById('catSector').value;
+    const specialties = (dirOptions?.categories || []).filter(c => c.sector === sector);
+    document.getElementById('catSpecialty').innerHTML =
+      `<option value="">— Especialidad —</option>` +
+      specialties.map(c => `<option value="${c.specialty}">${c.specialty_label}</option>`).join('');
+  }
+
+  function closeCatModal() {
+    document.getElementById('catModal').classList.remove('open');
+    catModalSlug = null;
+  }
+
+  async function saveCatModal() {
+    const sector    = document.getElementById('catSector').value;
+    const specialty = document.getElementById('catSpecialty').value;
+    const city_slug = document.getElementById('catCity').value;
+    if (!sector || !specialty || !city_slug) { alert('Completa todos los campos'); return; }
+    const btn = document.getElementById('catSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+    try {
+      const res = await fetch('/.netlify/functions/admin-actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        body: JSON.stringify({ action: 'set_category', slug: catModalSlug, sector, specialty, city_slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error');
+      const card = allCards.find(c => c.slug === catModalSlug);
+      if (card) { card.category_id = data.category_id; card.city_slug = data.city_slug; }
+      closeCatModal();
+      renderTable();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+    }
+  }
+
+  document.getElementById('catModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('catModal')) closeCatModal();
+  });
+
   // ── Reenviar factura ──
 
   async function resendInvoice(slug, btn) {
@@ -903,6 +1010,29 @@
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
       <button class="modal-confirm c-red" onclick="confirmRefund()">Sí, reembolsar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Configurar categoría/ciudad -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal" style="max-width:420px">
+    <h2>Configurar directorio</h2>
+    <p>Asigna sector, especialidad y ciudad para que este perfil pueda activarse en el directorio.</p>
+    <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
+      <select id="catSector" onchange="onCatSectorChange()" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+        <option value="">— Sector —</option>
+      </select>
+      <select id="catSpecialty" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+        <option value="">— Especialidad —</option>
+      </select>
+      <select id="catCity" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+        <option value="">— Ciudad —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeCatModal()">Cancelar</button>
+      <button class="modal-confirm c-green" id="catSaveBtn" onclick="saveCatModal()">Guardar</button>
     </div>
   </div>
 </div>
