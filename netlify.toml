@@ -1,7 +1,8 @@
 [build]
-  command    = "npm test"
-  publish    = "public"
-  functions  = "netlify/functions"
+  command        = "npm test"
+  publish        = "public"
+  functions      = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [functions]
   node_bundler = "esbuild"
@@ -110,6 +111,10 @@
   from   = "/api/directory-options"
   to     = "/.netlify/functions/directory-options"
   status = 200
+
+[[edge_functions]]
+  path     = "/api/admin-*"
+  function = "rate-limiter"
 
 # Directorio profesional — más específico primero
 [[redirects]]
