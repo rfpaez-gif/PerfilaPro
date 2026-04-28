@@ -10,7 +10,7 @@
 
 const { getDb } = require('./lib/supabase-client');
 const { getPublicProfile, getCategoryByCard, getCityBySlug } = require('./lib/get-profile');
-const { esc, safeJson, labelOf, PROFILE_CSS, htmlPage, breadcrumb } = require('./lib/dir-utils');
+const { esc, safeJson, labelOf, PROFILE_CSS, htmlPage } = require('./lib/dir-utils');
 
 function normalizePhone(tel) {
   if (!tel) return null;
@@ -18,96 +18,101 @@ function normalizePhone(tel) {
   return tel.trim().startsWith('+') ? '+' + digits : '+34' + digits;
 }
 
-exports.handler = async (event) => {
-  const proto  = (event.headers?.['x-forwarded-proto']) || 'https';
-  const host   = (event.headers?.host) || 'perfilapro.es';
-  const siteUrl = `${proto}://${host}`;
+function makeHandler(deps) {
+  const _getDb             = deps.getDb;
+  const _getPublicProfile  = deps.getPublicProfile;
+  const _getCategoryByCard = deps.getCategoryByCard;
+  const _getCityBySlug     = deps.getCityBySlug;
 
-  const slug = event.path
-    .replace('/.netlify/functions/perfil-publico', '')
-    .replace(/^\/p\//, '')
-    .replace(/\/$/, '');
+  return async (event) => {
+    const proto  = (event.headers?.['x-forwarded-proto']) || 'https';
+    const host   = (event.headers?.host) || 'perfilapro.es';
+    const siteUrl = `${proto}://${host}`;
 
-  if (!slug) return { statusCode: 400, body: 'Missing slug' };
+    const slug = event.path
+      .replace('/.netlify/functions/perfil-publico', '')
+      .replace(/^\/p\//, '')
+      .replace(/\/$/, '');
 
-  const db = getDb();
-  const data = await getPublicProfile(db, slug);
+    if (!slug) return { statusCode: 400, body: 'Missing slug' };
 
-  if (!data) {
-    return {
-      statusCode: 404,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-      body: htmlPage({
-        title: 'Perfil no encontrado — PerfilaPro',
-        desc: 'Este perfil no existe o no está activo.',
-        canonical: `${siteUrl}/p/${slug}`,
-        body: `<div style="text-align:center;padding:4rem 1rem;color:var(--muted)"><h1 style="font-family:var(--ff-d);font-size:1.5rem;font-weight:400;margin-bottom:.5rem">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
-        crumbs: null,
-        siteUrl,
-      }),
-    };
-  }
+    const db = _getDb();
+    const data = await _getPublicProfile(db, slug);
 
-  // Incrementar contador de visitas (no bloqueante)
-  db.from('cards')
-    .update({ profile_views: (data.profile_views || 0) + 1 })
-    .eq('slug', data.slug)
-    .then(({ error: ve }) => { if (ve) console.error('profile_views error:', ve.message); });
+    if (!data) {
+      return {
+        statusCode: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        body: htmlPage({
+          title: 'Perfil no encontrado — PerfilaPro',
+          desc: 'Este perfil no existe o no está activo.',
+          canonical: `${siteUrl}/p/${slug}`,
+          body: `<div style="text-align:center;padding:4rem 1rem;color:var(--muted)"><h1 style="font-family:var(--ff-d);font-size:1.5rem;font-weight:400;margin-bottom:.5rem">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
+          crumbs: null,
+          siteUrl,
+        }),
+      };
+    }
 
-  const [cat, city] = await Promise.all([
-    getCategoryByCard(db, data.category_id),
-    getCityBySlug(db, data.city_slug),
-  ]);
+    // Incrementar contador de visitas (no bloqueante)
+    db.from('cards')
+      .update({ profile_views: (data.profile_views || 0) + 1 })
+      .eq('slug', data.slug)
+      .then(({ error: ve }) => { if (ve) console.error('profile_views error:', ve.message); });
 
-  const isPaid = !!data.stripe_session_id;
-  const isPro  = data.plan === 'pro';
-  const profileUrl = `${siteUrl}/p/${data.slug}`;
-  const cardUrl    = `${siteUrl}/c/${data.slug}`;
+    const [cat, city] = await Promise.all([
+      _getCategoryByCard(db, data.category_id),
+      _getCityBySlug(db, data.city_slug),
+    ]);
 
-  const avatarInitial = esc((data.nombre || '').trim().charAt(0).toUpperCase() || '?');
-  const sectorLabel   = cat ? cat.sector_label : '';
-  const cityLabel     = city ? `${city.name}${city.province && city.province !== city.name ? `, ${city.province}` : ''}` : (data.zona || '');
-  const descFull      = data.descripcion || '';
-  const descDisplay   = isPaid ? descFull : (descFull.length > 80 ? descFull.substring(0, 80) + '…' : descFull);
+    const isPaid = !!data.stripe_session_id;
+    const profileUrl = `${siteUrl}/p/${data.slug}`;
+    const cardUrl    = `${siteUrl}/c/${data.slug}`;
 
-  const waUrl = isPaid && data.whatsapp
-    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
-    : null;
+    const avatarInitial = esc((data.nombre || '').trim().charAt(0).toUpperCase() || '?');
+    const sectorLabel   = cat ? cat.sector_label : '';
+    const cityLabel     = city ? `${city.name}${city.province && city.province !== city.name ? `, ${city.province}` : ''}` : (data.zona || '');
+    const descFull      = data.descripcion || '';
+    const descDisplay   = isPaid ? descFull : (descFull.length > 80 ? descFull.substring(0, 80) + '…' : descFull);
 
-  const serviciosHTML = (data.servicios || []).map((s, i) => {
-    const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
-    const nombre = esc(m ? m[1].trim() : s);
-    const precio = esc(m ? m[2].trim() : '');
-    return `<div class="prof-svc-item${i === 0 ? ' prof-svc-item--lead' : ''}">
+    const waUrl = isPaid && data.whatsapp
+      ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
+      : null;
+
+    const serviciosHTML = (data.servicios || []).map((s, i) => {
+      const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
+      const nombre = esc(m ? m[1].trim() : s);
+      const precio = esc(m ? m[2].trim() : '');
+      return `<div class="prof-svc-item${i === 0 ? ' prof-svc-item--lead' : ''}">
   <span class="prof-svc-name">${nombre}</span>
   ${precio ? `<span class="prof-svc-price">${precio}</span>` : ''}
 </div>`;
-  }).join('');
+    }).join('');
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: data.nombre || '',
-    description: descFull.substring(0, 200),
-    url: profileUrl,
-    ...(isPaid && data.whatsapp ? { telephone: '+' + data.whatsapp } : {}),
-    ...(city ? { address: { '@type': 'PostalAddress', addressLocality: city.name, addressRegion: city.province, addressCountry: 'ES' } } : {}),
-    ...(cat ? { category: cat.specialty_label } : {}),
-  };
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
+      name: data.nombre || '',
+      description: descFull.substring(0, 200),
+      url: profileUrl,
+      ...(isPaid && data.whatsapp ? { telephone: '+' + data.whatsapp } : {}),
+      ...(city ? { address: { '@type': 'PostalAddress', addressLocality: city.name, addressRegion: city.province, addressCountry: 'ES' } } : {}),
+      ...(cat ? { category: cat.specialty_label } : {}),
+    };
 
-  const crumbs = [
-    { label: 'Directorio', url: `${siteUrl}/directorio` },
-    ...(cat ? [
-      { label: sectorLabel, url: `${siteUrl}/directorio/${cat.sector}` },
-      { label: cat.specialty_label, url: `${siteUrl}/directorio/${cat.sector}/${cat.specialty}` },
-    ] : []),
-    { label: data.nombre || slug },
-  ];
+    const crumbs = [
+      { label: 'Directorio', url: `${siteUrl}/directorio` },
+      ...(cat ? [
+        { label: sectorLabel, url: `${siteUrl}/directorio/${cat.sector}` },
+        { label: cat.specialty_label, url: `${siteUrl}/directorio/${cat.sector}/${cat.specialty}` },
+      ] : []),
+      { label: data.nombre || slug },
+    ];
 
-  const metaTitle = `${esc(data.nombre)} — ${esc(data.tagline || sectorLabel || 'Profesional')} en ${esc(cityLabel || 'España')} | PerfilaPro`;
-  const metaDesc  = `${data.tagline || ''} ${descFull ? '· ' + descFull.substring(0, 120) : ''} ${cityLabel ? '· ' + cityLabel : ''}`.trim().substring(0, 160);
+    const metaTitle = `${esc(data.nombre)} — ${esc(data.tagline || sectorLabel || 'Profesional')} en ${esc(cityLabel || 'España')} | PerfilaPro`;
+    const metaDesc  = `${data.tagline || ''} ${descFull ? '· ' + descFull.substring(0, 120) : ''} ${cityLabel ? '· ' + cityLabel : ''}`.trim().substring(0, 160);
 
-  const body = `<div class="prof-wrap">
+    const body = `<div class="prof-wrap">
   <div class="prof-hero">
     <div class="prof-av">
       ${isPaid && data.foto_url
@@ -164,18 +169,22 @@ exports.handler = async (event) => {
   </div>
 </div>`;
 
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    body: htmlPage({
-      title: metaTitle,
-      desc: metaDesc,
-      canonical: profileUrl,
-      body,
-      crumbs,
-      siteUrl,
-      jsonLd,
-      extraCss: PROFILE_CSS,
-    }),
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      body: htmlPage({
+        title: metaTitle,
+        desc: metaDesc,
+        canonical: profileUrl,
+        body,
+        crumbs,
+        siteUrl,
+        jsonLd,
+        extraCss: PROFILE_CSS,
+      }),
+    };
   };
-};
+}
+
+exports.handler = makeHandler({ getDb, getPublicProfile, getCategoryByCard, getCityBySlug });
+exports.makeHandler = makeHandler;
