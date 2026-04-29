@@ -2,9 +2,9 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
-    <title>PerfilaPro · Tu perfil profesional en 2 minutos</title>
+    <title>PerfilaPro · Tu trabajo, tu negocio y tus planes, en un solo sitio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Tu perfil profesional listo en 2 minutos. Sin cuenta, sin diseñador, sin hosting. Una URL que pones en tu bio, en grupos de WhatsApp o en el QR de tu furgoneta.">
+    <meta name="description" content="PerfilaPro te da un perfil claro, compartible y visible en el directorio para que te encuentren, te escriban y te recuerden. Gratis, sin cuenta, en 2 minutos.">
     <style>
       :root{
         --bg:#f3f4f6;
@@ -622,6 +622,90 @@
       @media (prefers-reduced-motion: reduce){
         *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
       }
+
+      /* ── Hero search ── */
+      .hero-search{
+        display:flex;align-items:center;background:#fff;border:1.5px solid var(--line);
+        border-radius:var(--radius-full);overflow:hidden;box-shadow:var(--shadow-sm);
+        margin:1.1rem 0 .6rem;max-width:560px;
+      }
+      .hs-field{display:flex;align-items:center;gap:.5rem;padding:.65rem 1rem;flex:1;min-width:0}
+      .hs-field svg{color:var(--primary);flex-shrink:0;width:15px;height:15px}
+      .hs-field input{border:none;outline:none;background:transparent;font-size:.875rem;color:var(--text);width:100%}
+      .hs-field input::placeholder{color:var(--faint)}
+      .hs-div{width:1px;background:var(--line);height:1.25rem;flex-shrink:0}
+      .hs-btn{
+        display:flex;align-items:center;padding:.65rem 1.1rem;background:var(--primary);
+        color:#fff;border:none;font-size:.875rem;font-weight:700;cursor:pointer;
+        white-space:nowrap;transition:background .15s;flex-shrink:0;
+      }
+      .hs-btn:hover{background:#0c4e54}
+      .hero-micro{font-size:.8rem;color:var(--faint);margin-bottom:.9rem}
+      @media(max-width:420px){.hs-city-wrap,.hs-div{display:none}}
+
+      /* ── Benefits grid ── */
+      .benefits-grid{
+        display:grid;gap:.875rem;margin-top:1.5rem;
+        grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+      }
+      .benefit{
+        background:#fff;border:1px solid var(--line);border-radius:1.25rem;
+        padding:1.25rem 1.2rem;box-shadow:var(--shadow-sm);
+      }
+      .benefit-icon{font-size:1.625rem;margin-bottom:.6rem}
+      .benefit h3{font-size:.96rem;font-weight:700;margin-bottom:.35rem}
+      .benefit p{font-size:.86rem;color:var(--muted);line-height:1.55}
+
+      /* ── Empresa ── */
+      .empresa-inner{
+        background:linear-gradient(135deg,#ecfeff 0%,#f0fdf4 100%);
+        border:1.5px solid rgba(1,105,111,.15);border-radius:1.75rem;
+        padding:2rem 1.5rem;display:grid;gap:1.75rem;
+      }
+      .empresa-copy h2{font-size:clamp(1.4rem,3.5vw,2rem);margin-bottom:.5rem}
+      .empresa-copy p{color:var(--muted);font-size:.95rem;line-height:1.65;margin-bottom:1rem}
+      .empresa-stats{display:flex;flex-wrap:wrap;gap:.625rem;margin-top:.25rem}
+      .empresa-stat{
+        background:#fff;border:1px solid rgba(1,105,111,.15);border-radius:.75rem;
+        padding:.55rem 1rem;font-size:.82rem;color:var(--muted);
+      }
+      .empresa-stat strong{display:block;font-size:1.05rem;font-weight:800;color:var(--primary)}
+      @media(min-width:900px){
+        .empresa-inner{grid-template-columns:1fr auto;align-items:center}
+        .empresa-copy{max-width:480px}
+        .empresa-visual{flex-shrink:0}
+      }
+
+      /* ── Fun Zone ── */
+      .fun-inner{
+        text-align:center;padding:2rem 1rem;
+        background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fff 100%);
+        border-radius:1.75rem;border:1.5px solid rgba(251,191,36,.25);
+      }
+      .fun-tag{
+        display:inline-flex;padding:.3rem .8rem;background:#fef3c7;color:#92400e;
+        border-radius:999px;font-size:.7rem;font-weight:800;text-transform:uppercase;
+        letter-spacing:.1em;margin-bottom:.75rem;
+      }
+      .fun-inner h2{font-size:clamp(1.4rem,3.5vw,2rem);margin-bottom:.5rem}
+      .fun-inner p{color:var(--muted);max-width:42ch;margin:0 auto 1.25rem;font-size:.95rem;line-height:1.65}
+      .fun-chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+      .fun-chip{
+        padding:.35rem .9rem;background:#fff;border:1px solid rgba(251,191,36,.4);
+        border-radius:999px;font-size:.85rem;color:var(--muted);
+      }
+
+      /* ── CTA final ── */
+      .cta-final-section{padding:2.5rem 0 1rem}
+      .cta-final-inner{
+        background:radial-gradient(circle at top,#e0f2fe,#ecfeff 40%,#f9fafb 100%);
+        border-radius:1.75rem;padding:2.25rem 1.5rem;text-align:center;
+        border:1px solid rgba(148,163,184,.28);box-shadow:var(--shadow-lg);
+      }
+      .cta-final-inner h2{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:.5rem}
+      .cta-final-inner p{color:var(--muted);max-width:40ch;margin:0 auto .5rem;line-height:1.6}
+      .cta-trust{font-size:.8rem;color:var(--faint);margin-top:.9rem}
+      .cta-trust span{margin:0 .4rem}
     </style>
   </head>
   <body>
@@ -632,11 +716,11 @@
           <span>Perfila<em>Pro</em></span>
         </div>
         <nav class="nav" id="mainNav">
+          <a href="/directorio">Directorio</a>
           <a href="#como-funciona">Cómo funciona</a>
-          <a href="#sectores">Sectores</a>
           <a href="#precios">Precios</a>
         </nav>
-        <a class="header-cta" href="#crear">Crear mi perfil</a>
+        <a class="header-cta" href="#crear">Crear mi perfil gratis</a>
         <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
@@ -647,30 +731,33 @@
       <section class="hero">
         <div class="container hero-inner">
           <div class="hero-text">
-            <div class="eyebrow">Tu perfil profesional · Sin complicaciones</div>
+            <div class="eyebrow">Presencia profesional · Gratis · Sin fricción</div>
             <h1 class="hero-title">
-              Tu perfil profesional <span>en 2 minutos.</span>
+              Tu trabajo, tu negocio<br>y tus planes… <span>en un solo sitio.</span>
             </h1>
             <p class="hero-subtitle">
-              Sin cuenta. Sin diseñador. Sin hosting. Rellenas tus datos y tienes una URL propia que funciona sola: en tu bio, en grupos de WhatsApp, en el QR de tu furgoneta.
+              PerfilaPro te da un perfil claro, compartible y visible en el directorio para que te <strong>encuentren</strong>, te <strong>escriban</strong> y te <strong>recuerden</strong>.
             </p>
-            <div class="hero-badges">
-              <div class="badge">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Sin registro ni contraseña.
+
+            <!-- Mini buscador → directorio -->
+            <form class="hero-search" id="heroSearchForm" action="/directorio" method="get" onsubmit="heroSearch(event)">
+              <div class="hs-field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input id="hsWhat" type="text" placeholder="Fontanero, fisio, profesor…" autocomplete="off" aria-label="Servicio o profesión">
               </div>
-              <div class="badge">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                URL propia para compartir donde quieras.
+              <div class="hs-div"></div>
+              <div class="hs-field hs-city-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <input id="hsWhere" type="text" placeholder="Ciudad" autocomplete="off" aria-label="Ciudad">
               </div>
-            </div>
+              <button type="submit" class="hs-btn">Buscar</button>
+            </form>
+
+            <p class="hero-micro">Sin cuenta. Sin complicaciones. Sin pagar por adelantado.</p>
+
             <div class="hero-actions">
               <a class="btn btn-primary" href="#crear">Crear mi perfil gratis</a>
-              <a class="btn btn-secondary" href="https://perfilapro.es/c/paco-fontanero-alicante" target="_blank" rel="noopener noreferrer">Ver ejemplo real</a>
-            </div>
-            <div class="hero-mini">
-              <div class="pill">📱 <strong>Bio de Instagram</strong> · Grupos de WhatsApp · Responder a "¿a qué te dedicas?"</div>
-              <div class="pill">🚐 <strong>QR en tu furgoneta</strong> · Tarjeta de visita · Email de empresa</div>
+              <a class="btn btn-secondary" href="/directorio">Buscar en el directorio →</a>
             </div>
           </div>
 
@@ -713,67 +800,42 @@
       </section>
 
       <section class="section" id="como-funciona">
-        <div class="container duo">
-          <article class="panel">
+        <div class="container">
+          <div class="section-head" style="max-width:52ch">
             <div class="eyebrow">Cómo funciona</div>
-            <h2 class="title" style="font-size:clamp(1.9rem,6vw,2.8rem)">Más útil que una tarjeta. Más rápido que una web.</h2>
-            <div class="bullet-list">
-              <div class="bullet">
-                <div class="bullet-mark">1</div>
-                <div>
-                  <h4>Rellenas solo lo que importa</h4>
-                  <p>Nombre, sector, zona, servicios y WhatsApp. En 2 minutos tienes tu URL lista.</p>
-                </div>
-              </div>
-              <div class="bullet">
-                <div class="bullet-mark">2</div>
-                <div>
-                  <h4>Tienes un perfil profesional con tu enlace</h4>
-                  <p>perfilapro.es/c/tu-nombre — se ve perfecta en móvil y lleva al cliente directo a WhatsApp.</p>
-                </div>
-              </div>
-              <div class="bullet">
-                <div class="bullet-mark">3</div>
-                <div>
-                  <h4>La pones donde quieras y trabaja sola</h4>
-                  <p>Bio de Instagram, grupos de WhatsApp, QR en el coche, respuesta a "¿a qué te dedicas?". Siempre disponible.</p>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel">
-            <div class="section-head">
-              <h2 class="title" style="font-size:clamp(1.8rem,5vw,2.5rem)">Sin cuenta. Sin diseñador. Sin hosting.</h2>
-              <p class="subtitle">Rellenas el formulario, previsualiza gratis y activa cuando quieras. Sin contraseñas ni suscripciones.</p>
-            </div>
-            <div class="steps">
-              <article class="step">
-                <div class="step-num">1</div>
-                <h3>Previsualiza gratis</h3>
-                <p>Rellenas tus datos y ves cómo queda tu perfil al instante. Sin registro, sin compromiso.</p>
-              </article>
-              <article class="step">
-                <div class="step-num">2</div>
-                <h3>Activa con un pago único</h3>
-                <p>Foto, QR descargable y tu URL activa durante 3 o 12 meses. Sin cuotas mensuales ni letra pequeña.</p>
-              </article>
-              <article class="step">
-                <div class="step-num">3</div>
-                <h3>Compártela y que trabaje sola</h3>
-                <p>Ponla en tu bio, en grupos, en el coche. Cada vez que alguien te pida el contacto, mandas el enlace.</p>
-              </article>
-            </div>
-          </article>
+            <h2 class="title" style="font-size:clamp(1.9rem,5vw,2.8rem)">Más útil que una tarjeta. Más rápido que una web.</h2>
+          </div>
+          <div class="steps" style="margin-top:1.5rem">
+            <article class="step">
+              <div class="step-num">1</div>
+              <h3>Entras con 3 datos</h3>
+              <p>Nombre, sector y WhatsApp. Menos de 2 minutos. Sin registro, sin contraseña, sin tarjeta.</p>
+            </article>
+            <article class="step">
+              <div class="step-num">2</div>
+              <h3>Tu perfil existe al instante</h3>
+              <p><strong>perfilapro.es/c/tu-nombre</strong> — URL lista para compartir. Ya puedes mandársela a quien quieras. Gratis.</p>
+            </article>
+            <article class="step">
+              <div class="step-num">3</div>
+              <h3>Lo compartes y trabaja solo</h3>
+              <p>Bio de Instagram, grupos de WhatsApp, QR en el coche, respuesta a "¿a qué te dedicas?". Siempre disponible.</p>
+            </article>
+            <article class="step">
+              <div class="step-num">4</div>
+              <h3>Mejoras a Pro cuando quieras</h3>
+              <p>Activa el directorio, añade foto y QR descargable. Por 9€, pago único. Sin sorpresas, sin suscripción.</p>
+            </article>
+          </div>
         </div>
       </section>
 
       <section class="section" id="sectores">
         <div class="container">
           <div class="section-head">
-            <div class="eyebrow">Sectores</div>
-            <h2 class="title">Para cualquier profesional que quiera una presencia digital que funcione.</h2>
-            <p class="subtitle">Fontaneros, fisios, peluqueros, comerciales, profesores… si tienes clientes, necesitas un enlace que lo cuente todo en segundos.</p>
+            <div class="eyebrow">Lo que ya pasa en PerfilaPro</div>
+            <h2 class="title">Profesionales reales. Contacto directo. Sin intermediarios.</h2>
+            <p class="subtitle">Fontaneros, fisios, entrenadores, comerciales… cada uno con su perfil, su URL y su botón de WhatsApp. Nada más. Nada menos.</p>
           </div>
           <div class="cards-carousel-wrapper">
             <div class="examples">
@@ -781,64 +843,64 @@
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg" alt="Profesional de fontanería" width="600" height="800" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Oficios</span>
-                  <h3>Mohamed Fontanero</h3>
-                  <p>Servicio local, urgencia, zona y WhatsApp directo.</p>
+                  <h3>Mohamed · Fontanero</h3>
+                  <p>Urgencias 24h, zona Alicante. Su perfil va en cada presupuesto que manda por WhatsApp.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/laura%20fisio.png" alt="Fisioterapeuta" width="600" height="600" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Salud</span>
-                  <h3>Laura Fisio</h3>
-                  <p>Imagen cuidada, confianza y contacto sencillo.</p>
+                  <h3>Laura · Fisioterapeuta</h3>
+                  <p>Clínica en Madrid. Usa su URL como firma en todos los emails. Los pacientes la encuentran en el directorio.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Educación</span>
-                  <h3>Ana Profe</h3>
-                  <p>Clases, mentoría y formación con foco local.</p>
+                  <h3>Ana · Profesora</h3>
+                  <p>Clases de mates y selectividad en Sevilla. Su perfil en la bio de Instagram le trae 3-4 consultas a la semana.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sergio%20comercial.png" alt="Comercial" width="600" height="600" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Comercial</span>
-                  <h3>Sergio Área Levante</h3>
-                  <p>Perfil personal que también representa a empresa y territorio.</p>
+                  <h3>Sergio · Zona Levante</h3>
+                  <p>Delegado B2B. Su perfil dice quién es, qué zona cubre y cómo contactarle. Sin tarjeta física.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg" alt="Empleada de hogar" width="600" height="800" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Hogar</span>
-                  <h3>Isabel Servicio Hogar</h3>
-                  <p>Limpieza, plancha y organización. De confianza y con referencias.</p>
+                  <h3>Isabel · Servicio doméstico</h3>
+                  <p>Limpieza, plancha y organización en Valencia. Sus referencias están en el perfil. Sus clientes la recomiendan con el enlace.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg" alt="Cuidador a domicilio" width="600" height="800" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Cuidados</span>
-                  <h3>Antonio Cuidador</h3>
-                  <p>Acompañamiento y cuidado de personas mayores. Cercano y comprometido.</p>
+                  <h3>Antonio · Cuidador</h3>
+                  <p>Acompaña mayores en Madrid norte. Formación en geriatría. Sus familias confían antes de llamar porque leen su perfil.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg" alt="Esteticista profesional" width="600" height="800" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Belleza</span>
-                  <h3>Sonia Estética</h3>
-                  <p>Tratamientos faciales, depilación y manicura. Resultados que se notan.</p>
+                  <h3>Sonia · Estética</h3>
+                  <p>Centro en Murcia. Pone el QR en el mostrador y las clientas vuelven a reservar sin llamar.</p>
                 </div>
               </article>
               <article class="example">
                 <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ruben%20Entrenador.jpg" alt="Entrenador personal" width="600" height="600" loading="lazy"></div>
                 <div class="example-body">
                   <span class="example-tag">Fitness</span>
-                  <h3>Rubén Entrenador</h3>
-                  <p>Entrenamiento personalizado, resultados reales. Online y presencial.</p>
+                  <h3>Rubén · Entrenador personal</h3>
+                  <p>Online y presencial en Barcelona. 200+ clientes. Su perfil es su carta de presentación cuando alguien pregunta en un grupo.</p>
                 </div>
               </article>
             </div>
@@ -851,6 +913,96 @@
               <button class="dot" aria-label="Perfil 6"></button>
               <button class="dot" aria-label="Perfil 7"></button>
               <button class="dot" aria-label="Perfil 8"></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ QUÉ OBTIENES ═══ -->
+      <section class="section" id="que-obtienes">
+        <div class="container">
+          <div class="section-head">
+            <div class="eyebrow">Qué obtienes</div>
+            <h2 class="title">Presencia útil. No solo una URL.</h2>
+            <p class="subtitle">Tu perfil hace cuatro cosas que una tarjeta de visita no puede hacer.</p>
+          </div>
+          <div class="benefits-grid">
+            <div class="benefit">
+              <div class="benefit-icon">🌐</div>
+              <h3>Perfil público</h3>
+              <p>Una página tuya, con tu nombre y lo que haces, visible desde cualquier dispositivo. Sin instalar nada.</p>
+            </div>
+            <div class="benefit">
+              <div class="benefit-icon">🔗</div>
+              <h3>URL propia</h3>
+              <p><strong>perfilapro.es/c/tu-nombre</strong> — va en tu bio, en el QR, en un mensaje de voz. Siempre disponible.</p>
+            </div>
+            <div class="benefit">
+              <div class="benefit-icon">📂</div>
+              <h3>En el directorio</h3>
+              <p>Cuando actives el plan Pro apareces en búsquedas por sector y ciudad. Clientes que te buscan, no que te esperan.</p>
+            </div>
+            <div class="benefit">
+              <div class="benefit-icon">💬</div>
+              <h3>Contacto directo</h3>
+              <p>Botón de WhatsApp en tu perfil. El cliente te escribe directamente a ti. Sin formularios, sin intermediarios, sin comisiones.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ EMPRESA ═══ -->
+      <section class="section" id="empresa">
+        <div class="container">
+          <div class="empresa-inner">
+            <div class="empresa-copy">
+              <div class="eyebrow">Canal empresa</div>
+              <h2>¿Tienes un equipo o varios negocios?</h2>
+              <p>Perfiles para todos tus comerciales, técnicos o franquiciados. Gestión centralizada, descuentos por volumen y un enlace por persona. Sin cuentas corporativas complicadas.</p>
+              <div class="empresa-stats">
+                <div class="empresa-stat"><strong>+5 perfiles</strong>descuento automático</div>
+                <div class="empresa-stat"><strong>1 enlace</strong>por persona del equipo</div>
+                <div class="empresa-stat"><strong>QR</strong>para camiones y uniformes</div>
+              </div>
+              <div style="margin-top:1.25rem">
+                <a href="https://wa.me/34633816729?text=Hola%2C%20me%20interesa%20PerfilaPro%20para%20mi%20equipo." target="_blank" rel="noopener" class="btn btn-wa" style="display:inline-flex;max-width:260px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+                  Hablar con el equipo
+                </a>
+              </div>
+            </div>
+            <div class="empresa-visual" style="display:grid;gap:.5rem;min-width:200px">
+              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
+                <div style="font-weight:700;margin-bottom:.2rem">Mohamed · Fontanería</div>
+                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/mohamed-fontanero</div>
+              </div>
+              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
+                <div style="font-weight:700;margin-bottom:.2rem">Sergio · Zona Levante</div>
+                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/sergio-levante</div>
+              </div>
+              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
+                <div style="font-weight:700;margin-bottom:.2rem">Laura · Fisioterapia</div>
+                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/laura-fisio</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ FUN ZONE ═══ -->
+      <section class="section" id="fun-zone">
+        <div class="container">
+          <div class="fun-inner">
+            <div class="fun-tag">Próximamente</div>
+            <h2>No solo trabajo</h2>
+            <p>Deporte, aficiones, planes locales, comunidad. PerfilaPro pronto será también el sitio donde que te conozcan más allá de tu oficio.</p>
+            <div class="fun-chips">
+              <span class="fun-chip">⚽ Deporte y equipo</span>
+              <span class="fun-chip">🎭 Cultura y ocio</span>
+              <span class="fun-chip">🏕️ Planes locales</span>
+              <span class="fun-chip">🤝 Comunidad y red</span>
+              <span class="fun-chip">🎵 Música y aficiones</span>
+              <span class="fun-chip">🌱 Proyectos personales</span>
             </div>
           </div>
         </div>
@@ -1130,6 +1282,25 @@
 
         </div>
       </section>
+
+      <!-- ═══ CTA FINAL ═══ -->
+      <section class="cta-final-section">
+        <div class="container">
+          <div class="cta-final-inner">
+            <h2>Crea tu perfil. Ahora. Gratis.</h2>
+            <p>Menos de 2 minutos. Sin cuenta. Sin tarjeta de crédito.<br>Tu URL lista para compartir al instante.</p>
+            <div class="cta-actions" style="justify-content:center;margin-top:1.1rem">
+              <a href="#crear" class="btn btn-primary" style="min-width:220px">Crear mi perfil gratis →</a>
+              <a href="/directorio" class="btn btn-secondary">Explorar el directorio</a>
+            </div>
+            <p class="cta-trust">
+              <span>✓ Sin cuotas ni contratos</span>
+              <span>✓ Perfil activo en 2 minutos</span>
+              <span>✓ Mejora cuando quieras</span>
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer>
@@ -1170,6 +1341,19 @@
         var ref = new URLSearchParams(location.search).get('ref');
         if (ref) sessionStorage.setItem('pp_ref', ref.toUpperCase());
       })();
+
+      // Hero search → directorio
+      function heroSearch(e) {
+        e.preventDefault();
+        var q = (document.getElementById('hsWhat').value || '').trim();
+        var city = (document.getElementById('hsWhere').value || '').trim();
+        if (!q && !city) { window.location.href = '/directorio'; return; }
+        var url = '/directorio';
+        var params = new URLSearchParams();
+        if (q) params.set('q', q);
+        if (city) params.set('ciudad', city);
+        window.location.href = url + '?' + params.toString();
+      }
     </script>
 
     <script>
