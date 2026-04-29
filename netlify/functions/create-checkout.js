@@ -40,9 +40,9 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'JSON inválido' };
   }
 
-  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code } = body;
+  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride } = body;
 
-  if (!nombre || !zona || !whatsapp || !servicios?.length || !plan) {
+  if (!nombre || !zona || !whatsapp || !plan) {
     return { statusCode: 400, body: 'Faltan campos obligatorios' };
   }
 
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'Plan no válido' };
   }
 
-  const slug = nombre.toLowerCase()
+  const slug = slugOverride || nombre.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     .substring(0, 40);

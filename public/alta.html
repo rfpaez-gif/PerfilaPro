@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Crea tu perfil gratis · PerfilaPro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Crea tu perfil profesional en 2 minutos. Sin tarjeta, sin cuenta. Tu URL propia lista al instante.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <script src="/assets/js/theme.js"></script>
+  <style>
+    .alta-page {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .alta-main {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--sp-12);
+      align-items: start;
+      padding-block: clamp(2.5rem, 6vw, 5rem);
+    }
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: var(--sp-8);
+    }
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: var(--text-sm);
+      color: var(--faint);
+      font-weight: 500;
+    }
+    .stepper-step.active { color: var(--primary); font-weight: 700; }
+    .stepper-step.done   { color: var(--muted); }
+    .stepper-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      display: grid;
+      place-items: center;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: background var(--t), border-color var(--t), color var(--t);
+    }
+    .stepper-step.active .stepper-num {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .stepper-step.done .stepper-num {
+      background: var(--primary-soft);
+      border-color: var(--primary-mid);
+      color: var(--primary);
+    }
+    .stepper-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin: 0 .5rem;
+      min-width: 2rem;
+    }
+    /* Form card */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: clamp(1.5rem, 4vw, 2.25rem);
+      box-shadow: var(--sh-md);
+    }
+    .form-step { display: none; }
+    .form-step.active { display: block; }
+    .form-step-title {
+      font-family: var(--font-d);
+      font-size: clamp(1.5rem, .8rem + 2vw, 2rem);
+      font-weight: 400;
+      letter-spacing: -.03em;
+      margin-bottom: .35rem;
+    }
+    .form-step-sub {
+      color: var(--muted);
+      font-size: var(--text-sm);
+      margin-bottom: var(--sp-6);
+    }
+    .fields { display: flex; flex-direction: column; gap: var(--sp-5); }
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--sp-8);
+      gap: var(--sp-4);
+    }
+    /* Preview sidebar */
+    .preview-aside { position: sticky; top: 5.5rem; }
+    .preview-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+      color: var(--faint);
+      margin-bottom: var(--sp-3);
+    }
+    /* Success state */
+    .success-panel {
+      display: none;
+      text-align: center;
+      padding: var(--sp-12) var(--sp-8);
+    }
+    .success-panel.active { display: block; }
+    .success-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--primary-soft);
+      border: 2px solid var(--primary-mid);
+      display: grid;
+      place-items: center;
+      margin: 0 auto var(--sp-6);
+      color: var(--primary);
+    }
+    .success-url {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: .65rem 1rem;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      font-family: monospace;
+      margin-block: var(--sp-5);
+      cursor: pointer;
+      color: var(--primary);
+      word-break: break-all;
+    }
+    @media (max-width: 860px) {
+      .alta-main { grid-template-columns: 1fr; }
+      .preview-aside { display: none; }
+    }
+  </style>
+</head>
+<body class="alta-page">
+
+<a href="#main" class="sr-only">Saltar al contenido</a>
+
+<!-- ── Header ── -->
+<header class="site-header">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="/" class="nav-brand" aria-label="PerfilaPro inicio">
+        <span class="nav-brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        PerfilaPro
+      </a>
+      <div class="nav-actions">
+        <button class="btn btn-ghost btn-icon" data-theme-toggle aria-label="Cambiar tema"></button>
+        <a href="/directorio" class="btn btn-secondary btn-sm btn-hide-mobile">Ver directorio</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <div class="alta-main">
+
+      <!-- ── Left: form ── -->
+      <div>
+        <!-- Stepper -->
+        <div class="stepper" id="stepper" aria-label="Progreso del formulario">
+          <div class="stepper-step active" id="st1">
+            <span class="stepper-num">1</span>
+            <span class="stepper-label">Tu identidad</span>
+          </div>
+          <div class="stepper-line"></div>
+          <div class="stepper-step" id="st2">
+            <span class="stepper-num">2</span>
+            <span class="stepper-label">Contacto</span>
+          </div>
+          <div class="stepper-line"></div>
+          <div class="stepper-step" id="st3">
+            <span class="stepper-num">3</span>
+            <span class="stepper-label">Confirmar</span>
+          </div>
+        </div>
+
+        <!-- Form card -->
+        <div class="form-card" id="formCard">
+
+          <!-- Step 1: identidad -->
+          <div class="form-step active" id="step1">
+            <h1 class="form-step-title">¿Cómo te llamas y qué haces?</h1>
+            <p class="form-step-sub">El nombre y sector que verán quienes visiten tu perfil.</p>
+            <div class="fields">
+              <div class="field">
+                <label class="field-label" for="f_nombre">Nombre profesional <span aria-hidden="true" style="color:var(--danger)">*</span></label>
+                <input class="field-input" id="f_nombre" type="text" placeholder="Ej. Benjamín Rodríguez Electricista" maxlength="100" autocomplete="name" required>
+                <p class="field-hint">Puede ser tu nombre, tu marca o ambos.</p>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f_sector">Sector <span aria-hidden="true" style="color:var(--danger)">*</span></label>
+                <select class="field-input" id="f_sector" required>
+                  <option value="">Elige tu sector…</option>
+                  <option value="oficios">Oficios y servicios del hogar</option>
+                  <option value="salud">Salud y bienestar</option>
+                  <option value="educacion">Educación y formación</option>
+                  <option value="comercial">Comercial y ventas</option>
+                  <option value="belleza">Belleza y estética</option>
+                  <option value="reforma">Reforma y construcción</option>
+                  <option value="hosteleria">Hostelería y restauración</option>
+                  <option value="tech">Tecnología y digital</option>
+                  <option value="legal">Legal y asesoría</option>
+                  <option value="jardineria">Jardinería y paisajismo</option>
+                  <option value="transporte">Transporte y mudanzas</option>
+                  <option value="fotografia">Fotografía y vídeo</option>
+                  <option value="eventos">Eventos y celebraciones</option>
+                  <option value="automocion">Automoción y mecánica</option>
+                  <option value="seguridad">Seguridad y vigilancia</option>
+                  <option value="cuidados">Cuidados y asistencia</option>
+                  <option value="fitness">Fitness y deporte</option>
+                  <option value="turismo">Turismo y viajes</option>
+                  <option value="comercio">Comercio y tiendas</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f_desc">¿Qué ofreces?</label>
+                <textarea class="field-input" id="f_desc" rows="3" maxlength="300" placeholder="Cuéntanos qué servicios ofreces y qué te hace diferente…"></textarea>
+                <p class="field-hint" id="descCount">0 / 300 caracteres</p>
+              </div>
+            </div>
+            <div class="form-actions">
+              <span></span>
+              <button class="btn btn-primary btn-lg" onclick="goStep(2)">Continuar →</button>
+            </div>
+          </div>
+
+          <!-- Step 2: contacto -->
+          <div class="form-step" id="step2">
+            <h2 class="form-step-title">¿Cómo te contactan?</h2>
+            <p class="form-step-sub">Dónde operas y cómo pueden escribirte.</p>
+            <div class="fields">
+              <div class="field">
+                <label class="field-label" for="f_zona">Ciudad o zona <span aria-hidden="true" style="color:var(--danger)">*</span></label>
+                <input class="field-input" id="f_zona" type="text" placeholder="Ej. Huesca, Pirineos, Madrid norte…" maxlength="100" required>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f_whatsapp">WhatsApp <span aria-hidden="true" style="color:var(--danger)">*</span></label>
+                <input class="field-input" id="f_whatsapp" type="tel" placeholder="Ej. 612 345 678" autocomplete="tel" required>
+                <p class="field-hint">Solo tú lo controlas. Lo usarán para escribirte directamente.</p>
+              </div>
+              <div class="field">
+                <label class="field-label" for="f_email">Email <span aria-hidden="true" style="color:var(--danger)">*</span></label>
+                <input class="field-input" id="f_email" type="email" placeholder="tu@email.com" autocomplete="email" required>
+                <p class="field-hint">Te enviaremos el enlace para editar tu perfil. No aparece en público.</p>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
+              <button class="btn btn-primary btn-lg" onclick="goStep(3)">Revisar perfil →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: confirmar -->
+          <div class="form-step" id="step3">
+            <h2 class="form-step-title">¿Todo correcto?</h2>
+            <p class="form-step-sub">Revisa tu perfil antes de publicarlo. Podrás editarlo siempre.</p>
+
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp-5);margin-bottom:var(--sp-6);display:flex;flex-direction:column;gap:.6rem;font-size:var(--text-sm)">
+              <div class="flex justify-between" style="gap:.5rem">
+                <span class="text-muted">Nombre</span>
+                <strong id="rev_nombre" style="text-align:right">—</strong>
+              </div>
+              <div class="flex justify-between" style="gap:.5rem">
+                <span class="text-muted">Sector</span>
+                <strong id="rev_sector">—</strong>
+              </div>
+              <div class="flex justify-between" style="gap:.5rem">
+                <span class="text-muted">Zona</span>
+                <strong id="rev_zona">—</strong>
+              </div>
+              <div class="flex justify-between" style="gap:.5rem">
+                <span class="text-muted">WhatsApp</span>
+                <strong id="rev_whatsapp">—</strong>
+              </div>
+              <div class="flex justify-between" style="gap:.5rem">
+                <span class="text-muted">Email</span>
+                <strong id="rev_email" style="text-align:right;word-break:break-all">—</strong>
+              </div>
+              <div id="rev_desc_row" class="flex justify-between" style="gap:.5rem;display:none!important">
+                <span class="text-muted">Descripción</span>
+                <span id="rev_desc" style="text-align:right;color:var(--text);max-width:26ch">—</span>
+              </div>
+            </div>
+
+            <div class="notice notice-info" style="margin-bottom:var(--sp-6)">
+              <span class="notice-icon">🔒</span>
+              <span>Tu perfil se publica como <strong>borrador</strong>. Solo quien tenga tu enlace puede verlo. Para aparecer en el directorio activa el plan Pro cuando quieras.</span>
+            </div>
+
+            <div id="errMsg" style="display:none" class="notice notice-error" role="alert">
+              <span class="notice-icon">⚠️</span>
+              <span id="errText">Ha ocurrido un error. Inténtalo de nuevo.</span>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-ghost" onclick="goStep(2)">← Atrás</button>
+              <button class="btn btn-primary btn-lg" id="submitBtn" onclick="submitForm()">
+                Publicar mi perfil gratis
+              </button>
+            </div>
+          </div>
+
+          <!-- Success -->
+          <div class="success-panel" id="successPanel">
+            <div class="success-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 class="section-h" style="margin-bottom:.5rem">¡Tu perfil está listo!</h2>
+            <p class="text-muted" style="margin-bottom:var(--sp-4)">Hemos enviado el enlace de edición a tu email.</p>
+            <div>
+              <p class="text-muted text-sm" style="margin-bottom:.4rem">Tu URL pública:</p>
+              <button class="success-url" id="successUrl" onclick="copyUrl()" title="Copiar enlace" aria-label="Copiar enlace">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="successUrlText"></span>
+              </button>
+            </div>
+            <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:var(--sp-6)">
+              <a id="btnVerPerfil" href="#" class="btn btn-primary btn-lg">Ver mi perfil</a>
+              <a id="btnWaPerfil" href="#" class="btn btn-wa" target="_blank" rel="noopener">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                Compartir por WhatsApp
+              </a>
+            </div>
+          </div>
+
+        </div><!-- /form-card -->
+
+        <!-- Trust row below form -->
+        <div class="cta-trust" style="margin-top:var(--sp-5);justify-content:flex-start" id="trustRow">
+          <span class="trust-pill">Sin tarjeta de crédito</span>
+          <span class="trust-pill">URL propia al instante</span>
+          <span class="trust-pill">Editable siempre</span>
+        </div>
+      </div>
+
+      <!-- ── Right: preview sidebar ── -->
+      <aside class="preview-aside" aria-label="Vista previa del perfil" aria-live="polite">
+        <p class="preview-label">Vista previa</p>
+        <div class="profile-card">
+          <div class="pc-top">
+            <div class="pc-avatar" id="prevAvatar">?</div>
+            <div>
+              <p class="pc-name" id="prevNombre">Tu nombre</p>
+              <p class="pc-sub" id="prevSub">Sector · Ciudad</p>
+            </div>
+          </div>
+          <div class="pc-bio" id="prevDesc" style="display:none"></div>
+          <div class="pc-role" id="prevRole" style="display:none">
+            <span id="prevRoleText"></span>
+            <span class="pc-role-badge">Free</span>
+          </div>
+          <div class="pc-actions">
+            <button class="btn btn-wa" style="cursor:default;opacity:.6" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              WhatsApp directo
+            </button>
+            <button class="btn btn-secondary" style="cursor:default;opacity:.6" tabindex="-1">Ver perfil</button>
+          </div>
+          <div class="pc-meta" style="margin-top:.75rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>perfilapro.es/c/<strong id="prevSlug">tu-nombre</strong></span>
+          </div>
+        </div>
+      </aside>
+
+    </div><!-- /alta-main -->
+  </div>
+</main>
+
+<!-- ── Footer minimal ── -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>© 2026 PerfilaPro</span>
+      <span>
+        <a href="/terminos.html" class="text-muted">Términos</a> ·
+        <a href="/privacidad.html" class="text-muted">Privacidad</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var SECTOR_LABELS = {
+    oficios:'Oficios y servicios del hogar', salud:'Salud y bienestar',
+    educacion:'Educación y formación', comercial:'Comercial y ventas',
+    belleza:'Belleza y estética', reforma:'Reforma y construcción',
+    hosteleria:'Hostelería y restauración', tech:'Tecnología y digital',
+    legal:'Legal y asesoría', jardineria:'Jardinería y paisajismo',
+    transporte:'Transporte y mudanzas', fotografia:'Fotografía y vídeo',
+    eventos:'Eventos y celebraciones', automocion:'Automoción y mecánica',
+    seguridad:'Seguridad y vigilancia', cuidados:'Cuidados y asistencia',
+    fitness:'Fitness y deporte', turismo:'Turismo y viajes',
+    comercio:'Comercio y tiendas', otro:'Otro',
+  };
+
+  /* ── Slug helper ── */
+  function toSlug(s) {
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      .substring(0, 40);
+  }
+
+  /* ── Initials ── */
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  /* ── Live preview ── */
+  function updatePreview() {
+    var nombre  = document.getElementById('f_nombre').value.trim();
+    var sector  = document.getElementById('f_sector').value;
+    var desc    = document.getElementById('f_desc').value.trim();
+    var zona    = document.getElementById('f_zona').value.trim();
+
+    document.getElementById('prevNombre').textContent = nombre || 'Tu nombre';
+    document.getElementById('prevAvatar').textContent = nombre ? initials(nombre) : '?';
+    document.getElementById('prevSlug').textContent   = nombre ? toSlug(nombre) : 'tu-nombre';
+
+    var subParts = [];
+    if (SECTOR_LABELS[sector]) subParts.push(SECTOR_LABELS[sector].split(' y ')[0].split(' ')[0]);
+    if (zona) subParts.push(zona);
+    document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Sector · Ciudad';
+
+    var descEl = document.getElementById('prevDesc');
+    if (desc) { descEl.textContent = desc; descEl.style.display = ''; }
+    else { descEl.style.display = 'none'; }
+
+    var roleEl   = document.getElementById('prevRole');
+    var roleText = document.getElementById('prevRoleText');
+    if (SECTOR_LABELS[sector]) {
+      roleText.textContent = SECTOR_LABELS[sector];
+      roleEl.style.display = '';
+    } else {
+      roleEl.style.display = 'none';
+    }
+  }
+
+  /* ── Char counter ── */
+  document.getElementById('f_desc').addEventListener('input', function () {
+    document.getElementById('descCount').textContent = this.value.length + ' / 300 caracteres';
+    updatePreview();
+  });
+  ['f_nombre','f_sector','f_zona'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+
+  /* ── Stepper navigation ── */
+  window.goStep = function (n) {
+    if (n === 2 && !validateStep1()) return;
+    if (n === 3 && !validateStep2()) return;
+    if (n === 3) fillReview();
+
+    [1,2,3].forEach(function (i) {
+      document.getElementById('step' + i).classList.toggle('active', i === n);
+      var st = document.getElementById('st' + i);
+      st.classList.remove('active','done');
+      if (i === n) st.classList.add('active');
+      else if (i < n) st.classList.add('done');
+    });
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /* ── Validation ── */
+  function showError(id, msg) {
+    var el = document.getElementById(id);
+    el.classList.add('is-error');
+    var hint = el.parentElement.querySelector('.field-hint, .field-error');
+    if (hint) { hint.textContent = msg; hint.classList.add('field-error'); hint.style.color = 'var(--danger)'; }
+  }
+  function clearError(id) {
+    var el = document.getElementById(id);
+    el.classList.remove('is-error');
+  }
+
+  function validateStep1() {
+    var ok = true;
+    var nombre = document.getElementById('f_nombre').value.trim();
+    var sector = document.getElementById('f_sector').value;
+    clearError('f_nombre'); clearError('f_sector');
+    if (!nombre) { showError('f_nombre', 'El nombre es obligatorio.'); ok = false; }
+    if (!sector) { showError('f_sector', 'Elige un sector.'); ok = false; }
+    return ok;
+  }
+
+  function validateStep2() {
+    var ok = true;
+    var zona     = document.getElementById('f_zona').value.trim();
+    var whatsapp = document.getElementById('f_whatsapp').value.trim();
+    var email    = document.getElementById('f_email').value.trim();
+    clearError('f_zona'); clearError('f_whatsapp'); clearError('f_email');
+    if (!zona)     { showError('f_zona', 'Indica tu ciudad o zona.'); ok = false; }
+    if (!whatsapp) { showError('f_whatsapp', 'El WhatsApp es obligatorio.'); ok = false; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('f_email', 'Introduce un email válido.'); ok = false;
+    }
+    return ok;
+  }
+
+  /* ── Review panel ── */
+  function fillReview() {
+    var sectorKey = document.getElementById('f_sector').value;
+    document.getElementById('rev_nombre').textContent   = document.getElementById('f_nombre').value.trim();
+    document.getElementById('rev_sector').textContent   = SECTOR_LABELS[sectorKey] || sectorKey;
+    document.getElementById('rev_zona').textContent     = document.getElementById('f_zona').value.trim();
+    document.getElementById('rev_whatsapp').textContent = document.getElementById('f_whatsapp').value.trim();
+    document.getElementById('rev_email').textContent    = document.getElementById('f_email').value.trim();
+    var desc = document.getElementById('f_desc').value.trim();
+    var descRow = document.getElementById('rev_desc_row');
+    if (desc) { document.getElementById('rev_desc').textContent = desc; descRow.style.display = ''; }
+    else { descRow.style.display = 'none'; }
+  }
+
+  /* ── Submit ── */
+  window.submitForm = function () {
+    var btn = document.getElementById('submitBtn');
+    var errMsg = document.getElementById('errMsg');
+    errMsg.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Publicando…';
+
+    var payload = {
+      nombre:   document.getElementById('f_nombre').value.trim(),
+      sector:   document.getElementById('f_sector').value,
+      desc:     document.getElementById('f_desc').value.trim(),
+      zona:     document.getElementById('f_zona').value.trim(),
+      whatsapp: document.getElementById('f_whatsapp').value.trim(),
+      email:    document.getElementById('f_email').value.trim(),
+    };
+
+    fetch('/api/register-free', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+    .then(function (r) {
+      if (!r.ok) {
+        document.getElementById('errText').textContent = r.data.error || 'Error al crear el perfil.';
+        errMsg.style.display = '';
+        btn.disabled = false;
+        btn.textContent = 'Publicar mi perfil gratis';
+        return;
+      }
+      var slug    = r.data.slug;
+      var siteUrl = window.location.origin;
+      var cardUrl = siteUrl + '/c/' + slug;
+
+      document.getElementById('successUrlText').textContent = cardUrl;
+      document.getElementById('btnVerPerfil').href = '/c/' + slug;
+      document.getElementById('btnWaPerfil').href =
+        'https://wa.me/?text=' + encodeURIComponent('Mi perfil profesional: ' + cardUrl);
+
+      /* Hide form, show success */
+      [1,2,3].forEach(function (i) { document.getElementById('step' + i).classList.remove('active'); });
+      document.getElementById('stepper').style.display  = 'none';
+      document.getElementById('trustRow').style.display = 'none';
+      document.getElementById('successPanel').classList.add('active');
+    })
+    .catch(function () {
+      document.getElementById('errText').textContent = 'Error de red. Comprueba tu conexión e inténtalo de nuevo.';
+      errMsg.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Publicar mi perfil gratis';
+    });
+  };
+
+  /* ── Copy URL ── */
+  window.copyUrl = function () {
+    var url = document.getElementById('successUrlText').textContent;
+    navigator.clipboard.writeText(url).then(function () {
+      var btn = document.getElementById('successUrl');
+      var orig = btn.querySelector('span').textContent;
+      btn.querySelector('span').textContent = '¡Copiado!';
+      setTimeout(function () { btn.querySelector('span').textContent = orig; }, 2000);
+    });
+  };
+
+  /* Initial preview render */
+  updatePreview();
+})();
+</script>
+
+</body>
+</html>

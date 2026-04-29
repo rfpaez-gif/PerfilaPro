@@ -40,7 +40,7 @@ exports.handler = async (event) => {
     .from('cards')
     .select('*')
     .eq('slug', slug)
-    .eq('status', 'active')
+    .in('status', ['active', 'free'])
     .single();
 
   if (error || !data) {
@@ -83,7 +83,8 @@ exports.handler = async (event) => {
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
     : null;
 
-  const isPaid = isDemo || !!data.stripe_session_id;
+  const isFree = data.status === 'free';
+  const isPaid = isDemo || (!isFree && !!data.stripe_session_id);
   const proto   = (event.headers && event.headers['x-forwarded-proto']) || 'https';
   const host    = (event.headers && event.headers.host) || 'perfilapro.es';
   const siteUrl = `${proto}://${host}`;
@@ -186,6 +187,10 @@ exports.handler = async (event) => {
     .qr-meta a{font-size:.75rem;color:var(--primary);text-decoration:none;font-weight:600;line-height:1.4}
     .qr-dl{display:inline-flex;align-items:center;gap:.3rem;margin-top:.375rem;padding:.3rem .7rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.6875rem;font-weight:700;text-decoration:none}
     .qr-dl:hover{background:var(--primary-h)}
+    .free-banner{background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r-md);padding:.75rem 1rem;margin:.75rem 0;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+    .free-banner p{font-size:.8125rem;color:#92400e;margin:0}
+    .free-banner-btn{font-size:.8125rem;font-weight:700;color:#fff;background:#01696f;padding:.35rem .875rem;border-radius:var(--r-full);text-decoration:none;white-space:nowrap}
+    .free-banner-btn:hover{background:#0c4e54}
     .card-pw{text-align:center;font-size:.6875rem;color:var(--faint);padding:.75rem 0 .125rem;border-top:1px solid var(--line);line-height:1.6}
     .card-pw strong{color:var(--primary)}
     .card-pw a{display:inline-block;margin-top:.3rem;padding:.3rem .875rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.6875rem;font-weight:700;text-decoration:none}
@@ -249,6 +254,10 @@ exports.handler = async (event) => {
             Descargar QR
           </a>
         </div>
+      </div>` : ''}
+      ${isFree ? `<div class="free-banner">
+        <p><strong>Perfil gratuito</strong> · Sin QR ni directorio</p>
+        <a href="https://perfilapro.es/#crear" class="free-banner-btn">Activar por 9€ →</a>
       </div>` : ''}
       <div class="card-pw">
         Creado con <strong>PerfilaPro</strong><br>
