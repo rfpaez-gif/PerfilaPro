@@ -425,11 +425,11 @@
       });
 
       if (res.status === 401) {
-        document.getElementById('loginError').style.display = 'block';
-        sessionStorage.removeItem('adminPwd');
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('loginWrap').style.display = 'flex';
+        logout();
         closeCatModal();
+        document.getElementById('modalOverlay').classList.remove('open');
+        document.getElementById('agentModal').style.display = 'none';
+        document.getElementById('loginError').style.display = 'block';
         return;
       }
 
