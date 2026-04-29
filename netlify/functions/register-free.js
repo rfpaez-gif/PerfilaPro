@@ -184,7 +184,7 @@ function makeHandler(db, emailClient = resend) {
       zona:        stripTags(zona).substring(0, 100),
       servicios:   serviciosParsed,
       email,
-      plan:        'free',
+      plan:        'base',
       status:      'active',
       edit_token:  editToken,
       edit_token_expires_at: editTokenExpiresAt,

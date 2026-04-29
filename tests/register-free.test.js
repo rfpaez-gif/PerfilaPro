@@ -97,7 +97,7 @@ describe('register-free handler', () => {
   it('inserts plan=free, status=active, no directory_visible', async () => {
     await handler(buildEvent({ body: validBody }));
     const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.plan).toBe('free');
+    expect(insertCall.plan).toBe('base');
     expect(insertCall.status).toBe('active');
     expect(insertCall.directory_visible).toBeUndefined();
   });
