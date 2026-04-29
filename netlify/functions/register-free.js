@@ -169,7 +169,9 @@ function makeHandler(db, emailClient = resend) {
 
     const editToken = crypto.randomBytes(32).toString('hex');
     const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const tagline = SECTOR_LABELS[sector] || sector || '';
+    const sectorLabel = SECTOR_LABELS[sector] || sector || '';
+    const cleanDesc   = desc ? stripTags(desc).substring(0, 300) : '';
+    const tagline     = cleanDesc || sectorLabel;
     const serviciosParsed = Array.isArray(rawServicios)
       ? rawServicios.map(s => stripTags(s).substring(0, 100)).filter(Boolean)
       : [];
@@ -181,8 +183,6 @@ function makeHandler(db, emailClient = resend) {
       whatsapp:    waNumber,
       zona:        stripTags(zona).substring(0, 100),
       servicios:   serviciosParsed,
-      descripcion: desc ? stripTags(desc).substring(0, 200) : null,
-      direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
       email,
       plan:        'free',
       status:      'free',
