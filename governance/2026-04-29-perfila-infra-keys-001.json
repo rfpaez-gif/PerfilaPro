@@ -1,0 +1,51 @@
+{
+  "intake_id": "perfila-infra-keys-001",
+  "meta": {
+    "title": "Gobierno de keys y entornos para PerfilaPro",
+    "owner": "CEO",
+    "created_at": "2026-04-29T11:59:00Z",
+    "type": "C",
+    "product_area": "perfila-infra"
+  },
+  "formulation": {
+    "problem_or_opportunity": "Las claves críticas (Supabase, Stripe, Netlify, Resend, ImprovMX, etc.) viven hoy en la cabeza del CEO y en configuraciones dispersas, sin procesos claros de gestión, rotación ni rollback.",
+    "target_user": "Equipo actual (yo + agentes) y cualquier futuro colaborador técnico.",
+    "solution_outline": "Implantar un sistema mínimo de gobierno de secrets y entornos: inventario central, separación por entornos, reglas de acceso y checklist de deploy/rollback.",
+    "why_now": "PerfilaPro se acerca a producción y la concentración de riesgo en el CEO es insostenible; un error con una key puede romper el servicio o filtrar datos.",
+    "differentiator": "En lugar de improvisar, PerfilaPro nace ya con gobierno operativo de keys, poco habitual en proyectos unipersonales.",
+    "asset_type": "infrastructure"
+  },
+  "viability": {
+    "technical": { "status": "green", "note": "Totalmente viable con herramientas actuales." },
+    "legal": { "status": "green", "note": "Reduce riesgo legal y de seguridad." },
+    "operational": { "status": "amber", "note": "Requiere cambiar hábitos del CEO y documentar procesos." },
+    "commercial": { "status": "green", "note": "Protege todos los ingresos futuros del proyecto." }
+  },
+  "scoring": {
+    "total_score": 26
+  },
+  "final_decision": {
+    "status": "proceed",
+    "decided_by": "CEO",
+    "decided_at": "2026-04-29T12:00:00Z",
+    "comment": "No se permite crecer el alcance de PerfilaPro sin cerrar antes este gobierno de keys y entornos.",
+    "next_phase": "design"
+  },
+  "execution": {
+    "status": "done",
+    "completed_at": "2026-04-29",
+    "deliverables": [
+      "docs/keys-inventory.md — inventario completo con hallazgos, checklist de rotación y checklist de deploy",
+      ".env.example — plantilla de todas las variables con descripciones y comandos de generación",
+      "governance/2026-04-29-perfila-infra-keys-001.json — esta iniciativa archivada"
+    ],
+    "findings": [
+      "Sin entorno dev/preview separado — keys de prod usadas en todo contexto",
+      "Sin Stripe test keys configuradas",
+      "ADMIN_TOTP_SECRET opcional no activada en prod",
+      "ImprovMX sin variable de entorno (gestionado solo a nivel DNS)",
+      "Ninguna key hardcodeada encontrada en el código — OK"
+    ],
+    "next_action_for_ceo": "Revisar docs/keys-inventory.md, confirmar hallazgos y decidir si crear entorno dev/preview antes de escalar"
+  }
+}

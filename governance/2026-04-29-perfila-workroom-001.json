@@ -1,0 +1,31 @@
+{
+  "intake_id": "perfila-workroom-001",
+  "meta": {
+    "title": "Work Room v1 — Centro operativo interno",
+    "owner": "CEO",
+    "created_at": "2026-04-29T12:00:00Z",
+    "type": "C",
+    "product_area": "perfila-infra"
+  },
+  "formulation": {
+    "problem_or_opportunity": "No existe un centro único donde CEO, PM y agentes (Claude, Perplexity) compartan estado, decisiones, tareas, capacidad y handoffs.",
+    "target_user": "CEO + agentes internos (Claude Code, Perplexity) + futuros colaboradores externos puntuales.",
+    "solution_outline": "Una aplicación web interna single-page con sidebar de salas: Control (CEO), Intakes, Workspace/Build, Máquinas, Recursos, Validación y Timeline.",
+    "asset_type": "infrastructure"
+  },
+  "scoring": {
+    "total_score": 28
+  },
+  "final_decision": {
+    "status": "proceed",
+    "decided_by": "CEO",
+    "decided_at": "2026-04-29T12:00:00Z",
+    "comment": "Empieza después de cerrar gobierno de keys.",
+    "next_phase": "design"
+  },
+  "execution": {
+    "status": "pending",
+    "preconditions": ["perfila-infra-keys-001 cerrada ✅"],
+    "next_action": "CEO aprueba estructura de salas y campos; CODE arranca diseño e implementación"
+  }
+}
