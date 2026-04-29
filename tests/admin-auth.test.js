@@ -114,16 +114,22 @@ describe('checkAdminAuth con TOTP', () => {
     expect(checkAdminAuth(event).authorized).toBe(true);
   });
 
-  it('rechaza si TOTP configurado pero no enviado', () => {
+  it('rechaza si TOTP configurado pero no enviado (acción destructiva)', () => {
     process.env.ADMIN_TOTP_SECRET = TEST_SECRET;
     const event = { headers: { 'x-admin-password': 'admin123', 'x-forwarded-for': '1.2.3.5' } };
-    expect(checkAdminAuth(event).authorized).toBe(false);
+    expect(checkAdminAuth(event, { requireTotp: true }).authorized).toBe(false);
   });
 
-  it('rechaza si TOTP incorrecto', () => {
+  it('rechaza si TOTP incorrecto (acción destructiva)', () => {
     process.env.ADMIN_TOTP_SECRET = TEST_SECRET;
     const event = { headers: { 'x-admin-password': 'admin123', 'x-admin-totp': '000000', 'x-forwarded-for': '1.2.3.6' } };
-    expect(checkAdminAuth(event).authorized).toBe(false);
+    expect(checkAdminAuth(event, { requireTotp: true }).authorized).toBe(false);
+  });
+
+  it('acepta sin TOTP en lectura aunque TOTP esté configurado', () => {
+    process.env.ADMIN_TOTP_SECRET = TEST_SECRET;
+    const event = { headers: { 'x-admin-password': 'admin123', 'x-forwarded-for': '1.2.3.9' } };
+    expect(checkAdminAuth(event).authorized).toBe(true);
   });
 
   it('acepta con contraseña + TOTP correcto', () => {

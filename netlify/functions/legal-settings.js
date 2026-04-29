@@ -32,7 +32,7 @@ function makeHandler(db) {
     }
 
     if (event.httpMethod === 'POST') {
-      const auth = checkAdminAuth(event);
+      const auth = checkAdminAuth(event, { requireTotp: true });
       if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
       let body;

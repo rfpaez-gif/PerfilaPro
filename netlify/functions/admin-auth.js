@@ -48,7 +48,7 @@ function verifyTotp(secret, code) {
   return false;
 }
 
-function checkAdminAuth(event) {
+function checkAdminAuth(event, opts = {}) {
   const ip = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
   const now = Date.now();
 
@@ -62,13 +62,14 @@ function checkAdminAuth(event) {
     return { authorized: false, blocked: true };
   }
 
-  const pwd       = event.headers['x-admin-password'];
-  const totpCode  = event.headers['x-admin-totp'];
+  const pwd        = event.headers['x-admin-password'];
+  const totpCode   = event.headers['x-admin-totp'];
   const totpSecret = process.env.ADMIN_TOTP_SECRET;
 
   const validPassword = pwd && pwd === process.env.ADMIN_PASSWORD;
-  // Si no hay secreto configurado, TOTP no se exige (compatibilidad hacia atrás)
-  const validTotp = !totpSecret || verifyTotp(totpSecret, totpCode);
+  // opts.requireTotp: true → la función exige TOTP (acciones destructivas: refund, reactivar, etc.)
+  // false (default) → solo contraseña; el código TOTP expira en 30s y rompería el auto-refresh
+  const validTotp = !totpSecret || !opts.requireTotp || verifyTotp(totpSecret, totpCode);
 
   if (!validPassword || !validTotp) {
     const rec = failures.get(ip) || { count: 0, firstAt: now };

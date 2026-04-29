@@ -9,7 +9,8 @@ const supabase = createClient(
 
 function makeHandler(db) {
   return async (event) => {
-    const auth = checkAdminAuth(event);
+    const isWrite = event.httpMethod === 'POST' || event.httpMethod === 'DELETE';
+    const auth = checkAdminAuth(event, { requireTotp: isWrite });
     if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     // GET — list all agents

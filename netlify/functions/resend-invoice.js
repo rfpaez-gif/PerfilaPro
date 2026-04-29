@@ -17,7 +17,7 @@ function makeHandler(db, emailClient) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const auth = checkAdminAuth(event);
+    const auth = checkAdminAuth(event, { requireTotp: true });
     if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     let body;

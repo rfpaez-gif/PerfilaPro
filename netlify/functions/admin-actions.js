@@ -30,7 +30,7 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    const auth = checkAdminAuth(event);
+    const auth = checkAdminAuth(event, { requireTotp: true });
     if (!auth.authorized) return unauthorizedResponse(auth.blocked);
 
     const ip = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
