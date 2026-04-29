@@ -1,0 +1,110 @@
+/* ─────────────────────────────────────────────────────────────
+   PerfilaPro — Design tokens
+   Source of truth for all CSS variables.
+   All pages import this file first.
+───────────────────────────────────────────────────────────── */
+
+/* ── Light theme (default) ── */
+:root,
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg:        #f7f6f2;
+  --surface:   #faf9f6;
+  --surface-2: #f3f0ec;
+  --surface-3: #eeebe5;
+
+  /* Borders */
+  --border:   rgba(40, 37, 29, .10);
+  --divider:  rgba(40, 37, 29, .07);
+
+  /* Text */
+  --text:   #28251d;
+  --muted:  #736f66;
+  --faint:  #b2afa8;
+
+  /* Brand — teal */
+  --primary:      #0b7177;
+  --primary-h:    #085d62;   /* hover */
+  --primary-a:    #064548;   /* active / pressed */
+  --primary-soft: #e4f0ef;
+  --primary-mid:  #bcd9d7;
+
+  /* WhatsApp green */
+  --wa:   #25d366;
+  --wa-h: #1cb058;
+
+  /* Status */
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger:  #dc2626;
+
+  /* Radii */
+  --r-xs:   .35rem;
+  --r-sm:   .5rem;
+  --r-md:   .875rem;
+  --r-lg:   1.25rem;
+  --r-xl:   1.75rem;
+  --r-pill: 999px;
+
+  /* Shadows */
+  --sh-sm: 0 1px 3px rgba(20, 20, 20, .06),
+           0 8px 24px rgba(20, 20, 20, .04);
+  --sh-md: 0 4px 16px rgba(20, 20, 20, .08),
+           0 20px 48px rgba(20, 20, 20, .04);
+  --sh-lg: 0 8px 32px rgba(20, 20, 20, .10),
+           0 32px 72px rgba(20, 20, 20, .06);
+
+  /* Motion */
+  --t:       .18s cubic-bezier(.16, 1, .3, 1);
+  --t-slow:  .35s cubic-bezier(.16, 1, .3, 1);
+
+  /* Typography */
+  --font-d: 'Instrument Serif', Georgia, serif;
+  --font-b: 'Work Sans', system-ui, sans-serif;
+
+  /* Fluid type scale */
+  --text-xs:  clamp(.72rem,  .68rem + .2vw, .8rem);
+  --text-sm:  clamp(.82rem,  .78rem + .2vw, .9rem);
+  --text-base:clamp(.95rem,  .9rem  + .25vw, 1.05rem);
+  --text-lg:  clamp(1.05rem, 1rem   + .3vw,  1.2rem);
+  --text-xl:  clamp(1.2rem,  1.1rem + .5vw,  1.5rem);
+  --text-2xl: clamp(1.5rem,  1.2rem + 1.5vw, 2.2rem);
+  --text-3xl: clamp(2rem,    1.4rem + 3vw,   3.4rem);
+
+  /* Layout */
+  --w:      1180px;
+  --w-text: 720px;
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] {
+  --bg:        #171614;
+  --surface:   #1c1b19;
+  --surface-2: #232220;
+  --surface-3: #2a2927;
+
+  --border:  rgba(255, 255, 255, .09);
+  --divider: rgba(255, 255, 255, .06);
+
+  --text:  #d0cec9;
+  --muted: #7a7874;
+  --faint: #48463f;
+
+  --primary:      #4d9fa8;
+  --primary-h:    #3d8d96;
+  --primary-a:    #2e7580;
+  --primary-soft: #1f3536;
+  --primary-mid:  #2a4a4c;
+
+  --sh-sm: 0 1px 3px rgba(0, 0, 0, .30),
+           0 8px 24px rgba(0, 0, 0, .20);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, .40),
+           0 20px 48px rgba(0, 0, 0, .25);
+  --sh-lg: 0 8px 32px rgba(0, 0, 0, .50),
+           0 32px 72px rgba(0, 0, 0, .35);
+}
+
+/* ── Reduced motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  :root { --t: 0s; --t-slow: 0s; }
+}
