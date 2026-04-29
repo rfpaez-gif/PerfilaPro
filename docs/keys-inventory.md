@@ -31,7 +31,7 @@
 | 1 | **Sin entorno `dev` ni `preview`** | Alto | Cualquier prueba local usa las keys de producción. Ver sección Entornos. |
 | 2 | **`SUPABASE_SERVICE_KEY` es llave maestra** | Crítico | Confirmar que no aparece en logs de Netlify ni en código de frontend. ✅ Verificado en este repo. |
 | 3 | **Sin Stripe test keys** | Alto | No hay forma de probar el flujo de pago sin arriesgar cobros reales o usar la misma cuenta. |
-| 4 | **`ADMIN_TOTP_SECRET` opcional** | Medio | Si no está definida, el admin solo tiene contraseña. Recomendado activar en producción. |
+| 4 | ~~`ADMIN_TOTP_SECRET` no activada~~ | ~~Medio~~ | ✅ **Cerrado** — variable presente en Netlify y 2FA operativo en producción. Verificado 2026-04-29. |
 | 5 | **Sin registro de última rotación** | Medio | No hay fecha de cuándo se crearon/rotaron las keys. Ver sección Rotación. |
 | 6 | **ImprovMX no tiene variable en el código** | Info | ImprovMX gestiona el ruteo de email a nivel DNS/dashboard. No requiere variable de entorno en el repo — confirmar que la configuración DNS está documentada fuera. |
 
