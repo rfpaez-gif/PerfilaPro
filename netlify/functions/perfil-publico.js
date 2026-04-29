@@ -154,7 +154,7 @@ function makeHandler(deps) {
     <p class="prof-section-lbl">Contacto</p>
     <div class="contact-locked">
       <p>Este profesional aún no ha habilitado el contacto directo.</p>
-      <p style="margin-top:.5rem;font-size:.8125rem">¿Eres ${esc(data.nombre)}? <a href="${esc(siteUrl)}/#crear">Activa tu plan</a> para aparecer primero y recibir contactos.</p>
+      <p style="margin-top:.5rem;font-size:.8125rem">¿Eres ${esc(data.nombre)}? <a href="${esc(siteUrl)}/editar.html?slug=${esc(data.slug)}">Activa tu perfil</a> para que tus clientes puedan contactarte.</p>
     </div>
   </div>` : ''}
 

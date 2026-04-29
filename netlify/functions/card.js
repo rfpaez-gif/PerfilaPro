@@ -83,8 +83,8 @@ exports.handler = async (event) => {
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
     : null;
 
-  const isFree = data.status === 'free';
-  const isPaid = isDemo || (!isFree && !!data.stripe_session_id);
+  const isFree = !data.stripe_session_id;
+  const isPaid = isDemo || !!data.stripe_session_id;
   const proto   = (event.headers && event.headers['x-forwarded-proto']) || 'https';
   const host    = (event.headers && event.headers.host) || 'perfilapro.es';
   const siteUrl = `${proto}://${host}`;
@@ -256,8 +256,8 @@ exports.handler = async (event) => {
         </div>
       </div>` : ''}
       ${isFree ? `<div class="free-banner">
-        <p><strong>Perfil gratuito</strong> · Sin QR ni directorio</p>
-        <a href="https://perfilapro.es/#crear" class="free-banner-btn">Activar por 9€ →</a>
+        <p><strong>Perfil básico</strong> · Sin foto, QR ni directorio</p>
+        <a href="${esc(siteUrl)}/editar.html?slug=${esc(data.slug)}" class="free-banner-btn">Activar →</a>
       </div>` : ''}
       <div class="card-pw">
         Creado con <strong>PerfilaPro</strong><br>
