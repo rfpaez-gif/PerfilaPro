@@ -176,7 +176,7 @@ function makeHandler(db, emailClient = resend) {
       ? rawServicios.map(s => stripTags(s).substring(0, 100)).filter(Boolean)
       : [];
 
-    const { error } = await db.from('cards').insert({
+    const row = {
       slug,
       nombre:      cleanNombre,
       tagline,
@@ -185,15 +185,16 @@ function makeHandler(db, emailClient = resend) {
       servicios:   serviciosParsed,
       email,
       plan:        'free',
-      status:      'free',
-      directory_visible: false,
+      status:      'active',
       edit_token:  editToken,
       edit_token_expires_at: editTokenExpiresAt,
-    });
+    };
+
+    const { error } = await db.from('cards').insert(row);
 
     if (error) {
-      console.error('Supabase error:', error.message);
-      return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Error al crear el perfil' }) };
+      console.error('Supabase insert error:', error.message, error.code);
+      return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Error al crear el perfil: ' + error.message }) };
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';

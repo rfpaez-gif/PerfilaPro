@@ -94,12 +94,12 @@ describe('register-free handler', () => {
     expect(json.edit_url).toContain('/editar.html?slug=paco-garcia&token=');
   });
 
-  it('inserts status=free and directory_visible=false', async () => {
+  it('inserts plan=free, status=active, no directory_visible', async () => {
     await handler(buildEvent({ body: validBody }));
     const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.status).toBe('free');
     expect(insertCall.plan).toBe('free');
-    expect(insertCall.directory_visible).toBe(false);
+    expect(insertCall.status).toBe('active');
+    expect(insertCall.directory_visible).toBeUndefined();
   });
 
   it('stores email and generates edit_token', async () => {
