@@ -1,1787 +1,636 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <title>PerfilaPro · Tu trabajo, tu negocio y tus planes, en un solo sitio</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="PerfilaPro te da un perfil claro, compartible y visible en el directorio para que te encuentren, te escriban y te recuerden. Gratis, sin cuenta, en 2 minutos.">
-    <style>
-      :root{
-        --bg:#f3f4f6;
-        --surface:#f9fafb;
-        --surface-2:#edf2f7;
-        --text:#111827;
-        --muted:#6b7280;
-        --faint:#9ca3af;
-        --primary:#01696f;
-        --primary-soft:#d1f5f1;
-        --line:#e5e7eb;
-        --line-strong:#cbd5f5;
-        --wa:#25d366;
-        --radius-sm:.6rem;
-        --radius-full:999px;
-        --shadow-sm:0 8px 20px rgba(15,23,42,.08);
-        --shadow-md:0 18px 45px rgba(15,23,42,.12);
-        --shadow-lg:0 30px 80px rgba(15,23,42,.18);
-        --font-body:system-ui,-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
-        --font-display:"SF Pro Display","system-ui",-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-        --transition:.18s ease;
-      }
-      *{box-sizing:border-box;margin:0;padding:0}
-      html,body{height:100%}
-      body{
-        font-family:var(--font-body);
-        background:radial-gradient(circle at top,#e0f2fe 0,#f9fafb 38%,#f3f4f6 100%);
-        color:var(--text);
-        -webkit-font-smoothing:antialiased;
-      }
-      img{max-width:100%;display:block}
-      a{text-decoration:none;color:inherit}
-      main{min-height:100vh}
-      .container{
-        width:100%;
-        max-width:1100px;
-        margin:0 auto;
-        padding:0 1.2rem;
-      }
-      header{
-        position:sticky;
-        top:0;
-        z-index:40;
-        background:var(--primary);
-        box-shadow:0 2px 12px rgba(0,0,0,.15);
-      }
-      .header-inner{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding:.75rem 0;
-        gap:1rem;
-      }
-      .logo{
-        display:flex;
-        align-items:center;
-        gap:.4rem;
-        font-family:var(--font-display);
-        font-weight:800;
-        font-size:1.15rem;
-        letter-spacing:.04em;
-        text-transform:uppercase;
-      }
-      .logo-mark{
-        width:28px;
-        height:28px;
-        border-radius:.9rem;
-        background:radial-gradient(circle at 30% 20%,#fef9c3 0,#facc15 12%,#16a34a 40%,#0d9488 70%,#0f766e 100%);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        color:#ecfeff;
-        font-size:.9rem;
-        font-weight:900;
-        box-shadow:0 10px 25px rgba(15,23,42,.35);
-      }
-      .logo span:last-child em{font-style:italic;color:#fde68a;font-size:1.2em;letter-spacing:-.01em;}
-      .logo{color:#fff;}
-      .logo-mark{box-shadow:0 4px 12px rgba(0,0,0,.2);}
-      .nav{
-        display:flex;
-        align-items:center;
-        gap:1.5rem;
-        font-size:1rem;
-        color:rgba(255,255,255,.85);
-      }
-      .nav a{
-        font-weight:700;
-        letter-spacing:.01em;
-      }
-      .nav a:hover{
-        color:#fff;
-      }
-      .header-cta{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        padding:.55rem 1.1rem;
-        border-radius:999px;
-        background:#fff;
-        color:var(--primary);
-        font-size:.9rem;
-        font-weight:700;
-        box-shadow:0 2px 8px rgba(0,0,0,.15);
-      }
-      .header-cta:hover{
-        background:#f0fafa;
-        transform:translateY(-1px);
-      }
-      .hero{
-        padding:2.5rem 0 2.4rem;
-      }
-      .hero-inner{
-        display:grid;
-        gap:2rem;
-      }
-      .hero-text{
-        max-width:520px;
-      }
-      .eyebrow{
-        display:flex;
-        align-items:center;
-        gap:.4rem;
-        font-size:.75rem;
-        text-transform:uppercase;
-        letter-spacing:.18em;
-        color:var(--primary);
-        font-weight:800;
-        margin-bottom:.4rem;
-      }
-      .eyebrow::before{
-        content:'';
-        width:24px;
-        height:2px;
-        border-radius:999px;
-        background:var(--primary);
-      }
-      .hero-title{
-        font-family:var(--font-display);
-        font-size:clamp(2.3rem,5vw,3.2rem);
-        line-height:1.04;
-        letter-spacing:-.03em;
-        margin-bottom:.65rem;
-      }
-      .hero-title span{
-        background:linear-gradient(120deg,#0f766e,#22c55e);
-        -webkit-background-clip:text;
-        color:transparent;
-      }
-      .hero-subtitle{
-        font-size:1rem;
-        color:var(--muted);
-        max-width:36rem;
-      }
-      .hero-subtitle strong{color:var(--text);}
-      .hero-badges{
-        display:flex;
-        flex-wrap:wrap;
-        gap:.5rem;
-        margin:1.1rem 0 1.4rem;
-      }
-      .badge{
-        display:inline-flex;
-        align-items:center;
-        gap:.35rem;
-        padding:.3rem .7rem;
-        border-radius:999px;
-        background:rgba(15,23,42,.04);
-        font-size:.8rem;
-        color:var(--muted);
-        font-weight:500;
-      }
-      .badge svg{
-        width:14px;
-        height:14px;
-        color:var(--primary);
-      }
-      .hero-actions{
-        display:flex;
-        flex-wrap:wrap;
-        gap:.75rem;
-        margin-bottom:1rem;
-      }
-      .btn{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        gap:.4rem;
-        border-radius:var(--radius-full);
-        padding:.7rem 1.2rem;
-        font-weight:700;
-        font-size:.95rem;
-        cursor:pointer;
-        border:none;
-        transition:transform var(--transition),box-shadow var(--transition),background-color var(--transition),color var(--transition);
-      }
-      .btn-primary{
-        background:var(--primary);
-        color:#fff;
-        box-shadow:0 12px 30px rgba(1,105,111,.28);
-      }
-      .btn-primary:hover{
-        filter:brightness(1.05);
-        transform:translateY(-1px);
-        box-shadow:0 16px 38px rgba(1,105,111,.34);
-      }
-      .btn-secondary{
-        background:#fff;
-        color:var(--text);
-        border:1px solid var(--line);
-      }
-      .btn-secondary:hover{
-        border-color:var(--primary);
-        color:var(--primary);
-      }
-      .hero-mini{
-        display:grid;
-        gap:.5rem;
-        margin-top:.7rem;
-      }
-      .pill{
-        font-size:.86rem;
-        color:var(--muted);
-        background:rgba(15,23,42,.03);
-        border-radius:999px;
-        padding:.45rem .9rem;
-      }
-      .hero-visual{
-        display:flex;
-        justify-content:center;
-      }
-      .card-stage{
-        background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.62));
-        border:1px solid rgba(255,255,255,.72);border-radius:1.9rem;padding:.9rem;box-shadow:var(--shadow-lg);
-      }
-      .card-top-note{
-        display:inline-flex;padding:.42rem .7rem;border-radius:999px;background:var(--primary-soft);color:var(--primary);
-        font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;
-      }
-      .profile-card{
-        background:#fff;border:1px solid var(--line);border-radius:1.5rem;overflow:hidden;box-shadow:var(--shadow-md);
-        transition:opacity .4s ease;
-      }
-      .profile-card.fading{opacity:0}
-      .profile-head{display:flex;gap:.9rem;align-items:center;padding:1.15rem;border-bottom:1px solid var(--line)}
-      .profile-avatar{width:70px;height:70px;border-radius:50%;overflow:hidden;border:3px solid var(--primary);flex:0 0 auto;background:#d8ebe9}
-      .profile-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
-      .profile-name{font-family:var(--font-display);font-size:1.72rem;line-height:1.02}
-      .profile-sub{font-size:.96rem;color:var(--muted)}
-      .profile-block{padding:1.15rem;border-bottom:1px solid var(--line)}
-      .profile-label{font-size:.8rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin-bottom:.8rem}
-      .service{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.88rem .95rem;border-radius:1rem;font-weight:700;margin-bottom:.65rem}
-      .service:last-child{margin-bottom:0}
-      .service.is-main{background:#d9e8e7;border:1px solid rgba(1,105,111,.12)}
-      .service.is-soft{background:#ece8e2}
-      .price{color:var(--primary)}
-      .profile-text{font-size:1rem;color:var(--muted)}
-      .wa-btn{
-        display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;
-        min-height:52px;background:var(--wa);color:#fff;border-radius:1rem;font-weight:800;font-size:1rem;
-      }
-      .wa-btn svg{width:22px;height:22px}
-      .profile-foot{padding:.95rem 1.15rem;text-align:center;color:var(--faint);font-size:.84rem}
-      .profile-foot strong{color:var(--primary)}
-      /* ── Preview card – Modern App skin ── */
-      .profile-card{background:#fcfbf8}
-      .profile-card .card-hd{display:grid;grid-template-columns:68px 1fr;gap:.85rem;align-items:center;padding:1rem 1.1rem .9rem;border-bottom:1px solid var(--line)}
-      .profile-card .card-av{width:68px;height:68px;border-radius:50%;overflow:hidden;background:#d8ebe9;border:2.5px solid var(--primary);flex:0 0 auto}
-      .profile-card .card-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
-      .profile-card .card-av-init{width:100%;height:100%;display:grid;place-items:center;color:var(--primary)}
-      .profile-card .card-name{font-family:var(--font-display);font-size:1.28rem;line-height:1.1;color:var(--text);font-weight:500;margin:0 0 .1rem}
-      .profile-card .card-role{font-size:.85rem;color:var(--muted);margin:0}
-      .profile-card .card-body{padding:.9rem 1.1rem;display:flex;flex-direction:column;gap:.8rem}
-      .profile-card .chips-row{display:flex;flex-wrap:wrap;gap:.4rem}
-      .profile-card .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .65rem;border-radius:999px;font-size:.73rem;font-weight:600;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-      .profile-card .chip--loc{background:rgba(1,105,111,.08);color:var(--primary);border-color:rgba(1,105,111,.18)}
-      .profile-card .svc-list{display:flex;flex-direction:column;gap:.4rem}
-      .profile-card .svc-item{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.7rem .85rem;border-radius:.75rem;background:#ece8e2;font-size:.88rem;font-weight:600;color:var(--text)}
-      .profile-card .svc-item--lead{background:#d9e8e7;border:1px solid rgba(1,105,111,.15)}
-      .profile-card .card-desc{font-size:.88rem;color:var(--muted);line-height:1.6;margin:0}
-      .profile-card .btn--wa{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;min-height:48px;background:var(--wa);color:#fff;border-radius:.9rem;font-weight:700;font-size:.92rem;cursor:default;opacity:.6}
-      .profile-card .btn--wa svg{width:19px;height:19px}
-      .profile-card .card-pw{padding:.7rem 1.1rem;text-align:center;color:var(--faint);font-size:.77rem;border-top:1px solid var(--line)}
-      .profile-card .card-pw strong{color:var(--primary)}
-      .section{padding:2.4rem 0}
-      .section-head{margin-bottom:1.25rem}
-      .section-head .title{font-size:clamp(1.9rem, 6vw, 3rem)}
-      .section-head .subtitle{font-size:.98rem;color:var(--muted);margin-top:.4rem}
-      .steps{display:grid;gap:.9rem}
-      .step{
-        background:var(--surface);border:1px solid var(--line);border-radius:1.25rem;padding:1.15rem;box-shadow:var(--shadow-sm);
-      }
-      .step-num{
-        width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
-        background:var(--primary-soft);color:var(--primary);font-family:var(--font-display);font-size:1.25rem;margin-bottom:.8rem;
-      }
-      .step h3{font-size:1.04rem;margin-bottom:.35rem}
-      .step p{font-size:.93rem;color:var(--muted)}
-      .cards-carousel-wrapper{position:relative;width:100%}
-      .examples{
-        display:flex;gap:1.25rem;overflow-x:auto;scroll-snap-type:x mandatory;
-        scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-        padding-bottom:1rem;padding-inline:.25rem;
-      }
-      .examples::-webkit-scrollbar{display:none}
-      .examples .example{scroll-snap-align:start;flex:0 0 80%;max-width:320px}
-      .example{
-        display:flex;flex-direction:column;
-        background:#fff;border:1px solid oklch(0.2 0.01 80 / 0.08);border-radius:1.5rem;overflow:hidden;
-        box-shadow:0 2px 8px oklch(0.2 0.01 80 / 0.06),0 12px 32px oklch(0.2 0.01 80 / 0.1);
-        transition:transform .25s ease,box-shadow .25s ease;
-      }
-      .example:hover{transform:translateY(-6px);box-shadow:0 4px 12px oklch(0.2 0.01 80 / 0.08),0 20px 48px oklch(0.2 0.01 80 / 0.14)}
-      .example-photo{width:100%;height:190px;overflow:hidden;background:#d8ebe9;flex-shrink:0}
-      .example-photo img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block}
-      .example-body{padding:1.1rem 1.2rem 1.3rem;display:flex;flex-direction:column;gap:.35rem}
-      .example-tag{
-        display:inline-flex;padding:.2rem .6rem;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;
-        letter-spacing:.12em;background:var(--surface-2);color:var(--muted);align-self:flex-start;
-      }
-      .example h3{font-size:1.05rem;font-weight:700;margin:0}
-      .example p{font-size:.88rem;color:var(--muted);margin:0;line-height:1.45}
-      .carousel-dots{display:flex;justify-content:center;gap:.5rem;margin-top:1.25rem}
-      .dot{width:8px;height:8px;border-radius:9999px;background:#ccc;border:none;cursor:pointer;transition:background .2s,width .2s;padding:0}
-      .dot.active{background:var(--primary);width:24px}
-      .duo{display:grid;gap:1.6rem}
-      .panel{
-        background:#fff;border-radius:1.5rem;padding:1.3rem 1.3rem;border:1px solid var(--line);box-shadow:var(--shadow-sm);
-      }
-      .bullet-list{display:grid;gap:.8rem;margin-top:.9rem}
-      .bullet{display:flex;gap:.7rem;align-items:flex-start}
-      .bullet-mark{
-        width:22px;height:22px;border-radius:50%;background:var(--primary-soft);color:var(--primary);
-        display:grid;place-items:center;font-size:.85rem;font-weight:800;flex:0 0 auto;
-      }
-      .bullet h4{font-size:1rem;margin-bottom:.15rem}
-      .bullet p{font-size:.92rem;color:var(--muted)}
-      .vision{display:grid;gap:1.5rem}
-      .vision-text{display:grid;gap:.6rem}
-      .vision-point{font-size:.95rem;color:var(--muted);display:flex;gap:.5rem}
-      .vision-point::before{content:'•';color:var(--primary);margin-top:.15rem}
-      .cta-card{
-        background:radial-gradient(circle at top,#e0f2fe,#ecfeff 40%,#f9fafb 100%);
-        border-radius:1.7rem;padding:1.7rem 1.3rem;border:1px solid rgba(148,163,184,.28);box-shadow:var(--shadow-lg);text-align:center;
-      }
-      .cta-actions{
-        display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin-top:1.2rem;
-      }
-      .cta-actions .btn{min-width:190px}
-      footer{
-        padding:1.8rem 0;
-      }
-      .footer-inner{
-        display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.9rem;
-        font-size:.86rem;color:var(--muted);
-      }
-      .footer-brand{
-        font-family:var(--font-display);font-weight:800;font-size:1rem;
-      }
-      .footer-brand em{font-style:normal;color:var(--primary);}
-      .footer-note{max-width:420px}
-      .plans-grid{display:grid;gap:1rem;margin-top:2rem}
-      .plan-card{
-        position:relative;background:#fff;border:1px solid var(--line);border-radius:1.4rem;
-        padding:1.3rem;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:1rem;
-      }
-      .plan-card-featured{
-        border-color:var(--primary);
-        box-shadow:0 0 0 1px var(--primary), var(--shadow-lg);
-      }
-      .plan-popular{
-        position:absolute;top:-1px;right:1.2rem;
-        background:var(--primary);color:#fff;font-size:.72rem;font-weight:800;
-        letter-spacing:.08em;text-transform:uppercase;padding:.38rem .75rem;
-        border-radius:0 0 var(--radius-sm) var(--radius-sm);
-      }
-      .plan-badge{
-        display:inline-flex;padding:.32rem .75rem;border-radius:999px;font-size:.75rem;
-        font-weight:800;text-transform:uppercase;letter-spacing:.08em;
-        background:var(--surface-2);color:var(--muted);margin-bottom:.5rem;
-      }
-      .plan-badge-primary{background:var(--primary-soft);color:var(--primary)}
-      .plan-badge-dark{background:var(--text);color:#fff}
-      .plan-price{display:flex;align-items:baseline;gap:.3rem;line-height:1}
-      .plan-amount{font-family:var(--font-display);font-size:2.8rem;color:var(--text)}
-      .plan-period{font-size:.88rem;color:var(--muted)}
-      .plan-desc{font-size:.93rem;color:var(--muted)}
-      .plan-features{list-style:none;display:grid;gap:.65rem;flex:1}
-      .feat{display:flex;align-items:center;gap:.6rem;font-size:.93rem}
-      .feat::before{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:800}
-      .feat.ok{color:var(--text)}
-      .feat.ok::before{content:"✓";background:var(--primary-soft);color:var(--primary)}
-      .feat.no{color:var(--faint);text-decoration:line-through}
-      .feat.no::before{content:"–";background:var(--surface-2);color:var(--faint)}
-      .feat.soon{color:var(--muted);font-style:italic}
-      .feat.soon::before{content:"⏳";background:var(--surface-2);color:var(--muted)}
-      .plan-btn{
-        display:flex;align-items:center;justify-content:center;min-height:48px;
-        border-radius:var(--radius-full);font-weight:700;font-size:.96rem;transition:all var(--transition);
-      }
-      .plan-btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 24px rgba(1,105,111,.20)}
-      .plan-btn-soft{background:var(--surface-2);color:var(--text);border:1px solid var(--line-strong)}
-      .plans-note{text-align:center;margin-top:1.4rem;font-size:.92rem;color:var(--muted)}
-      .plans-extra-cards{margin-top:2rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1.5rem}
-      .plans-extra-header{margin-bottom:1rem}
-      .plans-extra-grid{display:grid;gap:.5rem;grid-template-columns:repeat(3,1fr)}
-      .plans-extra-item{display:flex;flex-direction:column;align-items:center;background:#fff;border:1px solid var(--line);border-radius:.75rem;padding:.75rem .5rem;text-align:center;gap:.2rem}
-      .plans-extra-qty{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-      .plans-extra-price{font-size:clamp(1.1rem,4vw,1.4rem);font-weight:800;color:var(--primary);line-height:1.1}
-      .plans-extra-price span{font-size:.7rem;font-weight:500;color:var(--muted)}
-      .legal-bar{border-top:1px solid var(--line);padding:.9rem 0;background:var(--surface)}
-      .legal-inner{display:flex;flex-wrap:wrap;gap:.65rem;justify-content:space-between;align-items:center;font-size:.84rem;color:var(--muted)}
-      .legal-links{display:flex;flex-wrap:wrap;gap:1rem}
-      .legal-links a{color:var(--muted);font-weight:500}
-      .legal-links a:hover{color:var(--primary)}
-      .cookie-banner{
-        position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:100;
-        width:min(96vw,520px);background:#fff;border:1px solid var(--line);border-radius:1.2rem;
-        padding:1.1rem 1.2rem;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:.85rem;
-      }
-      .cookie-banner p{font-size:.92rem;color:var(--muted)}
-      .cookie-banner a{color:var(--primary);font-weight:700}
-      .cookie-actions{display:flex;gap:.65rem}
-      .cookie-btn{min-height:42px;border-radius:999px;font-weight:700;font-size:.9rem;padding:.6rem 1.1rem;transition:all var(--transition)}
-      .cookie-btn-primary{background:var(--primary);color:#fff}
-      .cookie-btn-soft{background:var(--surface-2);color:var(--text);border:1px solid var(--line-strong)}
-      /* ── FORM CREAR ── */
-      .form-stage,.result-stage{max-width:800px;margin-inline:auto}
-      .crear-form{display:grid;gap:1.15rem}
-      .form-row{display:grid;gap:.45rem}
-      .form-label{font-weight:700;font-size:.94rem;color:var(--text)}
-      .req{color:var(--primary)}
-      .opt{color:var(--muted);font-weight:400;font-size:.88rem}
-      .form-input{
-        width:100%;min-height:48px;padding:.75rem 1rem;
-        border:1.5px solid var(--line);border-radius:.85rem;
-        font-size:1rem;color:var(--text);background:#fff;
-        transition:border-color var(--transition),box-shadow var(--transition);
-      }
-      .form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(1,105,111,.12)}
-      .form-input.is-error{border-color:#e53e3e}
-      select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2301696f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;padding-right:2.5rem}
-      textarea.form-input{resize:vertical;min-height:90px;line-height:1.55}
-      .form-hint{font-size:.84rem;color:var(--muted);margin-top:.25rem}
-      .photo-upload{display:flex;align-items:center;gap:1rem;padding:1rem;border:1.5px dashed var(--line);border-radius:.85rem;background:var(--surface-2)}
-      .photo-thumb{width:72px;height:72px;border-radius:50%;border:2px solid var(--line);background:var(--surface);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--faint)}
-      .photo-thumb img{width:100%;height:100%;object-fit:cover}
-      .photo-select-btn{cursor:pointer;display:inline-block;padding:.5rem 1rem;border-radius:.65rem;font-size:.9rem;font-weight:600;background:var(--surface);border:1.5px solid var(--line);color:var(--text)}
-      .photo-select-btn:hover{border-color:var(--primary);color:var(--primary)}
-      .photo-status{font-size:.82rem;margin-top:.35rem}
-      .upgrade-btns{display:grid;gap:.5rem;margin-top:.25rem}
-      .foto-declaration{display:flex;align-items:flex-start;gap:.6rem;background:#fffbeb;border:1px solid #fbbf24;border-radius:.75rem;padding:.85rem 1rem;font-size:.84rem;color:var(--text);cursor:pointer;margin-bottom:.5rem}
-      .foto-declaration input{margin-top:.15rem;flex-shrink:0;accent-color:var(--primary)}
-      .sector-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-top:.35rem}
-      .sector-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.8rem .4rem;border:1.5px solid var(--line);border-radius:.85rem;background:var(--surface-2);cursor:pointer;transition:border-color .15s,background .15s;text-align:center;width:100%}
-      .sector-card:hover{border-color:var(--primary);background:var(--plight)}
-      .sector-card.is-selected{border-color:var(--primary);background:var(--plight);box-shadow:0 0 0 3px rgba(1,105,111,.12)}
-      .sector-card.is-error{border-color:#dc2626;background:#fff5f5}
-      .sc-icon{font-size:1.5rem;line-height:1}
-      .sc-label{font-size:.68rem;font-weight:600;color:var(--text);line-height:1.25}
-      .sector-hint-error{color:#dc2626;font-size:.84rem;margin-top:.35rem}
-      .chips-section{margin-bottom:.75rem;animation:fadeIn .2s ease}
-      .chips-label{font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:.45rem}
-      .chips-wrap{display:flex;flex-wrap:wrap;gap:.4rem}
-      .chip{padding:.32rem .85rem;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:.82rem;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
-      .chip:hover:not(:disabled){border-color:var(--primary);color:var(--primary);background:var(--plight)}
-      .chip.is-used{background:var(--plight);border-color:var(--primary);color:var(--primary);opacity:.6;cursor:default}
-      .chip.cob-active{background:var(--plight);border-color:var(--primary);color:var(--primary);font-weight:700}
-      @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-      .photo-status.loading{color:var(--muted)}
-      .photo-status.ok{color:#16a34a;font-weight:600}
-      .photo-status.err{color:#dc2626}
-      .services-inputs{display:grid;gap:.6rem}
-      .input-prefix-wrap{display:flex;gap:0}
-      .input-prefix{
-        display:flex;align-items:center;padding:0 .9rem;
-        border:1.5px solid var(--line);border-right:none;border-radius:.85rem 0 0 .85rem;
-        background:var(--surface-2);font-weight:700;font-size:.95rem;color:var(--muted);white-space:nowrap;
-      }
-      .input-prefixed{border-radius:0 .85rem .85rem 0}
-      .form-free-notice{
-        display:flex;gap:.75rem;align-items:flex-start;
-        background:var(--primary-soft);border:1px solid rgba(1,105,111,.18);border-radius:1rem;
-        padding:.9rem 1rem;font-size:.92rem;color:var(--text);
-      }
-      .notice-icon{flex:0 0 auto;font-size:1.1rem;margin-top:.05rem}
-      .form-submit{width:100%;min-height:54px;font-size:1.05rem;margin-top:.5rem}
-      /* ── RESULTADO ── */
-      .result-success-bar{
-        display:flex;flex-wrap:wrap;gap:.5rem .75rem;align-items:center;
-        background:var(--primary-soft);border:1px solid rgba(1,105,111,.18);border-radius:1rem;
-        padding:.9rem 1.1rem;font-size:.95rem;color:var(--text);margin-bottom:1.5rem;
-      }
-      .result-success-bar span:first-child{
-        width:26px;height:26px;background:var(--primary);color:#fff;border-radius:50%;
-        display:grid;place-items:center;font-size:.85rem;flex:0 0 auto;
-      }
-      .result-layout{display:grid;gap:1.25rem}
-      @media(min-width:480px){.sector-grid{grid-template-columns:repeat(4,1fr)}}
-      @media(min-width:720px){.result-layout{grid-template-columns:340px 1fr}}
-      .result-card-wrap{position:relative}
-      .svc-placeholder{color:var(--faint);font-style:italic;font-size:.875rem;padding:.5rem 0}
-      .result-badge-free{
-        display:inline-flex;padding:.35rem .8rem;background:var(--surface-2);color:var(--muted);
-        border-radius:999px;font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
-        margin-bottom:.75rem;
-      }
-      .result-avatar-free{
-        display:grid;place-items:center;background:var(--surface-2);color:var(--faint);
-      }
-      .free-watermark{
-        position:absolute;bottom:0;left:0;right:0;
-        background:repeating-linear-gradient(
-          -45deg,
-          rgba(1,105,111,.07) 0px,
-          rgba(1,105,111,.07) 18px,
-          transparent 18px,
-          transparent 36px
-        );
-        color:rgba(1,105,111,.25);font-weight:900;font-size:.72rem;letter-spacing:.15em;
-        text-align:center;padding:.5rem;border-top:1px solid rgba(1,105,111,.12);pointer-events:none;
-      }
-      .upgrade-panel{display:grid;gap:1rem;align-content:start}
-      .upgrade-copy h3{font-family:var(--font-display);font-size:1.6rem;margin-bottom:.3rem}
-      .upgrade-copy p{font-size:.96rem;color:var(--muted)}
-      .copy-link-row{display:flex;gap:.6rem;flex-direction:column}
-      .btn-wa{
-        display:flex;align-items:center;justify-content:center;gap:.55rem;
-        background:#25d366;color:#fff;border-radius:var(--radius-full);
-        min-height:50px;font-weight:700;font-size:.97rem;
-        box-shadow:0 8px 20px rgba(37,211,102,.30);
-        transition:filter var(--transition),transform var(--transition);
-      }
-      .btn-wa:hover{filter:brightness(1.06);transform:translateY(-1px)}
-      .btn-wa svg{width:20px;height:20px;flex:0 0 auto}
-      .copy-input{flex:1;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .copy-btn{white-space:nowrap;min-height:48px;padding-inline:.95rem}
-      .upgrade-card{
-        position:relative;background:#fff;border:1px solid var(--line);border-radius:1.25rem;
-        padding:1.2rem;box-shadow:var(--shadow-sm);
-      }
-      .upgrade-card-main{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary),var(--shadow-md)}
-      .upgrade-best{
-        position:absolute;top:-1px;right:1.1rem;
-        background:var(--primary);color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.08em;
-        text-transform:uppercase;padding:.32rem .7rem;border-radius:0 0 var(--radius-sm) var(--radius-sm);
-      }
-      .upgrade-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem}
-      .upgrade-plan-name{display:block;font-weight:700;font-size:1.02rem}
-      .upgrade-plan-tag{
-        display:inline-flex;padding:.22rem .65rem;background:var(--primary-soft);color:var(--primary);
-        border-radius:999px;font-size:.73rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-top:.25rem;
-      }
-      .upgrade-plan-tag-dark{background:var(--text);color:#fff}
-      .upgrade-price{font-family:var(--font-display);font-size:1.8rem;line-height:1;text-align:right}
-      .upgrade-price span{display:block;font-size:.78rem;font-family:var(--font-body);color:var(--muted);font-weight:400}
-      .upgrade-list{list-style:none;display:grid;gap:.55rem;margin-bottom:.95rem;font-size:.93rem}
-      .upgrade-list li::before{content:"✓ ";color:var(--primary);font-weight:800}
-      .upgrade-btn{width:100%;min-height:48px}
-      .menu-btn{
-        display:none;flex-direction:column;justify-content:center;gap:5px;
-        width:36px;height:36px;background:none;border:none;cursor:pointer;padding:4px;
-      }
-      .menu-btn span{
-        display:block;width:22px;height:2px;background:#fff;
-        border-radius:2px;transition:all var(--transition);
-      }
-      @media (max-width:768px){
-        .hero-inner{grid-template-columns:1fr}
-        .hero-visual{order:-1}
-        .header-inner{flex-wrap:nowrap}
-        .menu-btn{display:flex}
-        .nav{
-          display:flex;flex-direction:column;gap:0;
-          position:fixed;top:57px;left:0;right:0;z-index:39;
-          background:var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.15);
-          padding:0;max-height:0;overflow:hidden;
-          transition:max-height .25s ease, padding .25s ease;
-        }
-        .nav.is-open{max-height:200px;padding:.75rem 0}
-        .nav a{padding:.65rem 1.25rem;font-size:1.05rem}
-        .header-cta{font-size:.85rem;padding:.45rem .9rem}
-        .duo{grid-template-columns:1fr}
-        .vision{grid-template-columns:1fr}
-        .steps{grid-template-columns:1fr}
-        .examples .example{flex:0 0 80%;max-width:320px}
-        .plans-grid{grid-template-columns:1fr}
-        .copy-link-row{flex-direction:column}
-        .cookie-actions{flex-direction:column}
-        .card-stage{max-width:340px;margin-inline:auto}
-      }
-      @media(min-width:600px) and (max-width:899px){
-        .examples .example{flex:0 0 calc(50% - .625rem);max-width:none}
-      }
-      @media(min-width:900px){
-        .hero-inner{
-          grid-template-columns:minmax(0,1.05fr) minmax(0,1.05fr);
-          align-items:center;
-          column-gap:2.5rem;
-        }
-        .duo{
-          grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
-        }
-        .vision{
-          grid-template-columns:minmax(0,1.1fr) minmax(0,1.15fr);
-          align-items:start;
-        }
-        .steps{
-          grid-template-columns:repeat(3,1fr);
-        }
-        .examples .example{flex:0 0 calc(33.333% - .84rem);max-width:none}
-        .example-photo{height:210px}
-        .plans-grid{grid-template-columns:repeat(2,1fr);max-width:740px;margin-inline:auto}
-      }
-      @media (prefers-reduced-motion: reduce){
-        *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
-      }
+<head>
+  <meta charset="utf-8">
+  <title>PerfilaPro · Tu trabajo, tu negocio y tus planes, en un solo sitio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Crea tu perfil profesional gratis en 2 minutos. URL propia, WhatsApp directo y presencia en el directorio. Sin tarjeta, sin cuenta.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <script src="/assets/js/theme.js"></script>
+  <style>
+    /* ── Hero ── */
+    .hero { padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 4rem); }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: var(--sp-12);
+      align-items: center;
+    }
+    .hero-h1 {
+      font-family: var(--font-d);
+      font-size: clamp(2.4rem, 1rem + 5vw, 4.2rem);
+      font-weight: 400;
+      letter-spacing: -.035em;
+      line-height: .95;
+      margin-bottom: var(--sp-5);
+    }
+    .hero-h1 em { font-style: italic; color: var(--primary); }
+    .hero-sub {
+      color: var(--muted);
+      font-size: var(--text-lg);
+      max-width: 44ch;
+      margin-bottom: var(--sp-8);
+      line-height: 1.6;
+    }
+    .hero-search {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: .9rem .9rem .75rem;
+      box-shadow: var(--sh-md);
+      margin-bottom: var(--sp-5);
+    }
+    .hs-row {
+      display: grid;
+      grid-template-columns: 1.2fr .85fr auto;
+      gap: .65rem;
+      align-items: end;
+      margin-bottom: .65rem;
+    }
+    .hs-field { display: flex; flex-direction: column; gap: .3rem; }
+    .hs-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      padding-left: .1rem;
+    }
+    .hs-input {
+      min-height: 44px;
+      padding: 0 .9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      background: var(--bg);
+      color: var(--text);
+      font-size: var(--text-base);
+      font-family: var(--font-b);
+      transition: border-color var(--t), box-shadow var(--t);
+    }
+    .hs-input::placeholder { color: var(--faint); }
+    .hs-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+    .hs-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-top: var(--sp-4); }
+    .hero-micro { font-size: var(--text-xs); color: var(--faint); margin-top: var(--sp-3); }
+    /* Profiles rail */
+    .rail-section { padding-block: clamp(1.5rem, 3vw, 2.5rem); overflow: hidden; }
+    /* Inline directory */
+    .dir-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-top: var(--sp-6); }
+    /* Empresa 2-col */
+    .empresa-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-6);
+    }
+    /* Fun zone */
+    .fun-zone-section {
+      background: #fffbeb;
+      border-top: 1px solid #fde68a;
+      border-bottom: 1px solid #fde68a;
+    }
+    [data-theme="dark"] .fun-zone-section {
+      background: #1c1700;
+      border-color: #3d2e00;
+    }
+    .fun-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: var(--sp-5); }
+    .fun-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .4rem .9rem;
+      border-radius: var(--r-pill);
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+    [data-theme="dark"] .fun-chip {
+      background: #2d1f00;
+      border-color: #5a3e00;
+      color: #fcd34d;
+    }
+    @media (max-width: 860px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .hs-row { grid-template-columns: 1fr; }
+      .empresa-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .dir-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .dir-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+</head>
+<body>
 
-      /* ── Hero search ── */
-      .hero-search{
-        display:flex;align-items:center;background:#fff;border:1.5px solid var(--line);
-        border-radius:var(--radius-full);overflow:hidden;box-shadow:var(--shadow-sm);
-        margin:1.1rem 0 .6rem;max-width:560px;
-      }
-      .hs-field{display:flex;align-items:center;gap:.5rem;padding:.65rem 1rem;flex:1;min-width:0}
-      .hs-field svg{color:var(--primary);flex-shrink:0;width:15px;height:15px}
-      .hs-field input{border:none;outline:none;background:transparent;font-size:.875rem;color:var(--text);width:100%}
-      .hs-field input::placeholder{color:var(--faint)}
-      .hs-div{width:1px;background:var(--line);height:1.25rem;flex-shrink:0}
-      .hs-btn{
-        display:flex;align-items:center;padding:.65rem 1.1rem;background:var(--primary);
-        color:#fff;border:none;font-size:.875rem;font-weight:700;cursor:pointer;
-        white-space:nowrap;transition:background .15s;flex-shrink:0;
-      }
-      .hs-btn:hover{background:#0c4e54}
-      .hero-micro{font-size:.8rem;color:var(--faint);margin-bottom:.9rem}
-      @media(max-width:420px){.hs-city-wrap,.hs-div{display:none}}
+<a href="#main" class="sr-only">Saltar al contenido</a>
 
-      /* ── Benefits grid ── */
-      .benefits-grid{
-        display:grid;gap:.875rem;margin-top:1.5rem;
-        grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
-      }
-      .benefit{
-        background:#fff;border:1px solid var(--line);border-radius:1.25rem;
-        padding:1.25rem 1.2rem;box-shadow:var(--shadow-sm);
-      }
-      .benefit-icon{font-size:1.625rem;margin-bottom:.6rem}
-      .benefit h3{font-size:.96rem;font-weight:700;margin-bottom:.35rem}
-      .benefit p{font-size:.86rem;color:var(--muted);line-height:1.55}
-
-      /* ── Empresa ── */
-      .empresa-inner{
-        background:linear-gradient(135deg,#ecfeff 0%,#f0fdf4 100%);
-        border:1.5px solid rgba(1,105,111,.15);border-radius:1.75rem;
-        padding:2rem 1.5rem;display:grid;gap:1.75rem;
-      }
-      .empresa-copy h2{font-size:clamp(1.4rem,3.5vw,2rem);margin-bottom:.5rem}
-      .empresa-copy p{color:var(--muted);font-size:.95rem;line-height:1.65;margin-bottom:1rem}
-      .empresa-stats{display:flex;flex-wrap:wrap;gap:.625rem;margin-top:.25rem}
-      .empresa-stat{
-        background:#fff;border:1px solid rgba(1,105,111,.15);border-radius:.75rem;
-        padding:.55rem 1rem;font-size:.82rem;color:var(--muted);
-      }
-      .empresa-stat strong{display:block;font-size:1.05rem;font-weight:800;color:var(--primary)}
-      @media(min-width:900px){
-        .empresa-inner{grid-template-columns:1fr auto;align-items:center}
-        .empresa-copy{max-width:480px}
-        .empresa-visual{flex-shrink:0}
-      }
-
-      /* ── Fun Zone ── */
-      .fun-inner{
-        text-align:center;padding:2rem 1rem;
-        background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fff 100%);
-        border-radius:1.75rem;border:1.5px solid rgba(251,191,36,.25);
-      }
-      .fun-tag{
-        display:inline-flex;padding:.3rem .8rem;background:#fef3c7;color:#92400e;
-        border-radius:999px;font-size:.7rem;font-weight:800;text-transform:uppercase;
-        letter-spacing:.1em;margin-bottom:.75rem;
-      }
-      .fun-inner h2{font-size:clamp(1.4rem,3.5vw,2rem);margin-bottom:.5rem}
-      .fun-inner p{color:var(--muted);max-width:42ch;margin:0 auto 1.25rem;font-size:.95rem;line-height:1.65}
-      .fun-chips{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
-      .fun-chip{
-        padding:.35rem .9rem;background:#fff;border:1px solid rgba(251,191,36,.4);
-        border-radius:999px;font-size:.85rem;color:var(--muted);
-      }
-
-      /* ── CTA final ── */
-      .cta-final-section{padding:2.5rem 0 1rem}
-      .cta-final-inner{
-        background:radial-gradient(circle at top,#e0f2fe,#ecfeff 40%,#f9fafb 100%);
-        border-radius:1.75rem;padding:2.25rem 1.5rem;text-align:center;
-        border:1px solid rgba(148,163,184,.28);box-shadow:var(--shadow-lg);
-      }
-      .cta-final-inner h2{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:.5rem}
-      .cta-final-inner p{color:var(--muted);max-width:40ch;margin:0 auto .5rem;line-height:1.6}
-      .cta-trust{font-size:.8rem;color:var(--faint);margin-top:.9rem}
-      .cta-trust span{margin:0 .4rem}
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="container header-inner">
-        <div class="logo">
-          <div class="logo-mark">P</div>
-          <span>Perfila<em>Pro</em></span>
-        </div>
-        <nav class="nav" id="mainNav">
-          <a href="/directorio">Directorio</a>
-          <a href="#como-funciona">Cómo funciona</a>
-          <a href="#precios">Precios</a>
-        </nav>
-        <a class="header-cta" href="#crear">Crear mi perfil gratis</a>
-        <button class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="site-header">
+  <div class="wrap">
+    <nav class="nav">
+      <a href="/" class="nav-brand" aria-label="PerfilaPro inicio">
+        <span class="nav-brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        PerfilaPro
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="/directorio">Directorio</a></li>
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#empresa">Para empresas</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn btn-ghost btn-icon btn-hide-mobile" data-theme-toggle aria-label="Cambiar tema"></button>
+        <a href="/alta.html" class="btn btn-primary btn-sm">Crear mi perfil gratis</a>
       </div>
-    </header>
+    </nav>
+  </div>
+</header>
 
-    <main>
-      <section class="hero">
-        <div class="container hero-inner">
-          <div class="hero-text">
-            <div class="eyebrow">Presencia profesional · Gratis · Sin fricción</div>
-            <h1 class="hero-title">
-              Tu trabajo, tu negocio<br>y tus planes… <span>en un solo sitio.</span>
-            </h1>
-            <p class="hero-subtitle">
-              PerfilaPro te da un perfil claro, compartible y visible en el directorio para que te <strong>encuentren</strong>, te <strong>escriban</strong> y te <strong>recuerden</strong>.
-            </p>
+<main id="main">
 
-            <!-- Mini buscador → directorio -->
-            <form class="hero-search" id="heroSearchForm" action="/directorio" method="get" onsubmit="heroSearch(event)">
-              <div class="hs-field">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input id="hsWhat" type="text" placeholder="Fontanero, fisio, profesor…" autocomplete="off" aria-label="Servicio o profesión">
-              </div>
-              <div class="hs-div"></div>
-              <div class="hs-field hs-city-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                <input id="hsWhere" type="text" placeholder="Ciudad" autocomplete="off" aria-label="Ciudad">
-              </div>
-              <button type="submit" class="hs-btn">Buscar</button>
-            </form>
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
 
-            <p class="hero-micro">Sin cuenta. Sin complicaciones. Sin pagar por adelantado.</p>
-
-            <div class="hero-actions">
-              <a class="btn btn-primary" href="#crear">Crear mi perfil gratis</a>
-              <a class="btn btn-secondary" href="/directorio">Buscar en el directorio →</a>
-            </div>
-          </div>
-
-          <div class="hero-visual">
-            <div class="card-stage">
-              <div class="card-top-note" id="heroSectorLabel">Ejemplo activo</div>
-              <article class="profile-card" id="heroCard" aria-label="Ejemplo de perfil PerfilaPro">
-                <div class="card-hd">
-                  <div class="card-av">
-                    <img id="heroAvatar" src="" alt="" width="600" height="800" style="width:100%;height:100%;object-fit:cover;object-position:center top">
-                  </div>
-                  <div>
-                    <div class="card-name" id="heroName"></div>
-                    <div class="card-role" id="heroSub"></div>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <div class="chips-row">
-                    <span class="chip chip--loc" id="heroZona"></span>
-                  </div>
-                  <div class="svc-list" id="heroServices"></div>
-                  <p class="card-desc" id="heroDesc"></p>
-                  <div class="btn--wa" style="cursor:default">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-                    Contactar por WhatsApp
-                  </div>
-                  <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border-radius:.75rem;background:rgba(1,105,111,.06);border:1px solid rgba(1,105,111,.14)">
-                    <svg width="34" height="34" viewBox="0 0 36 36" fill="none" style="flex-shrink:0"><rect x="2" y="2" width="14" height="14" rx="1.5" stroke="#01696f" stroke-width="2"/><rect x="5" y="5" width="8" height="8" fill="#01696f" rx=".5"/><rect x="20" y="2" width="14" height="14" rx="1.5" stroke="#01696f" stroke-width="2"/><rect x="23" y="5" width="8" height="8" fill="#01696f" rx=".5"/><rect x="2" y="20" width="14" height="14" rx="1.5" stroke="#01696f" stroke-width="2"/><rect x="5" y="23" width="8" height="8" fill="#01696f" rx=".5"/><rect x="20" y="20" width="4" height="4" fill="#01696f" rx=".5"/><rect x="26" y="20" width="8" height="4" fill="#01696f" rx=".5"/><rect x="20" y="26" width="8" height="4" fill="#01696f" rx=".5"/><rect x="30" y="26" width="4" height="8" fill="#01696f" rx=".5"/></svg>
-                    <div>
-                      <div style="font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--primary);margin-bottom:.1rem">Código QR</div>
-                      <div style="font-size:.77rem;color:var(--muted)">Escanea para abrir este perfil</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-pw">Perfil real creado con <strong>PerfilaPro</strong></div>
-              </article>
-            </div>
-          </div>
+      <!-- Left: copy + search -->
+      <div class="hero-text">
+        <div class="eyebrow reveal in">
+          <span class="eyebrow-dot"></span>
+          Perfil profesional gratuito
         </div>
-      </section>
+        <h1 class="hero-h1 reveal in">
+          Tu trabajo,<br>
+          <em>visible.</em><br>
+          Tu perfil,<br>
+          compartible.
+        </h1>
+        <p class="hero-sub reveal in">
+          Un enlace que lo dice todo: quién eres, qué haces, cómo contratar. Gratis, sin cuenta, en 2 minutos.
+        </p>
 
-      <section class="section" id="como-funciona">
-        <div class="container">
-          <div class="section-head" style="max-width:52ch">
-            <div class="eyebrow">Cómo funciona</div>
-            <h2 class="title" style="font-size:clamp(1.9rem,5vw,2.8rem)">Más útil que una tarjeta. Más rápido que una web.</h2>
+        <!-- Search -->
+        <form class="hero-search reveal in" onsubmit="heroSearch(event)" role="search" aria-label="Buscar profesionales">
+          <div class="hs-row">
+            <div class="hs-field">
+              <label class="hs-label" for="hsWhat">¿Qué buscas?</label>
+              <input class="hs-input" id="hsWhat" type="text" placeholder="Electricista, fontanero…" autocomplete="off">
+            </div>
+            <div class="hs-field">
+              <label class="hs-label" for="hsWhere">¿Dónde?</label>
+              <input class="hs-input" id="hsWhere" type="text" placeholder="Ciudad o zona" autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary" style="align-self:flex-end">Buscar</button>
           </div>
-          <div class="steps" style="margin-top:1.5rem">
-            <article class="step">
-              <div class="step-num">1</div>
-              <h3>Entras con 3 datos</h3>
-              <p>Nombre, sector y WhatsApp. Menos de 2 minutos. Sin registro, sin contraseña, sin tarjeta.</p>
-            </article>
-            <article class="step">
-              <div class="step-num">2</div>
-              <h3>Tu perfil existe al instante</h3>
-              <p><strong>perfilapro.es/c/tu-nombre</strong> — URL lista para compartir. Ya puedes mandársela a quien quieras. Gratis.</p>
-            </article>
-            <article class="step">
-              <div class="step-num">3</div>
-              <h3>Lo compartes y trabaja solo</h3>
-              <p>Bio de Instagram, grupos de WhatsApp, QR en el coche, respuesta a "¿a qué te dedicas?". Siempre disponible.</p>
-            </article>
-            <article class="step">
-              <div class="step-num">4</div>
-              <h3>Mejoras a Pro cuando quieras</h3>
-              <p>Activa el directorio, añade foto y QR descargable. Por 9€, pago único. Sin sorpresas, sin suscripción.</p>
-            </article>
+          <div class="hs-chips" aria-label="Búsquedas rápidas">
+            <button type="button" class="chip" onclick="quickSearch('electricistas')">⚡ Electricistas</button>
+            <button type="button" class="chip" onclick="quickSearch('fontaneros')">🔧 Fontaneros</button>
+            <button type="button" class="chip" onclick="quickSearch('carpinteros')">🪚 Carpinteros</button>
+            <button type="button" class="chip" onclick="quickSearch('pintores')">🖌 Pintores</button>
+            <button type="button" class="chip" onclick="quickSearch('fisioterapeutas')">💆 Fisios</button>
           </div>
+        </form>
+
+        <div class="hero-actions reveal in">
+          <a href="/alta.html" class="btn btn-primary btn-lg">Crear mi perfil gratis</a>
+          <a href="/directorio" class="btn btn-secondary btn-lg">Ver el directorio</a>
         </div>
-      </section>
-
-      <section class="section" id="sectores">
-        <div class="container">
-          <div class="section-head">
-            <div class="eyebrow">Lo que ya pasa en PerfilaPro</div>
-            <h2 class="title">Profesionales reales. Contacto directo. Sin intermediarios.</h2>
-            <p class="subtitle">Fontaneros, fisios, entrenadores, comerciales… cada uno con su perfil, su URL y su botón de WhatsApp. Nada más. Nada menos.</p>
-          </div>
-          <div class="cards-carousel-wrapper">
-            <div class="examples">
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg" alt="Profesional de fontanería" width="600" height="800" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Oficios</span>
-                  <h3>Mohamed · Fontanero</h3>
-                  <p>Urgencias 24h, zona Alicante. Su perfil va en cada presupuesto que manda por WhatsApp.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/laura%20fisio.png" alt="Fisioterapeuta" width="600" height="600" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Salud</span>
-                  <h3>Laura · Fisioterapeuta</h3>
-                  <p>Clínica en Madrid. Usa su URL como firma en todos los emails. Los pacientes la encuentran en el directorio.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg" alt="Profesora en aula" width="200" height="200" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Educación</span>
-                  <h3>Ana · Profesora</h3>
-                  <p>Clases de mates y selectividad en Sevilla. Su perfil en la bio de Instagram le trae 3-4 consultas a la semana.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sergio%20comercial.png" alt="Comercial" width="600" height="600" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Comercial</span>
-                  <h3>Sergio · Zona Levante</h3>
-                  <p>Delegado B2B. Su perfil dice quién es, qué zona cubre y cómo contactarle. Sin tarjeta física.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg" alt="Empleada de hogar" width="600" height="800" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Hogar</span>
-                  <h3>Isabel · Servicio doméstico</h3>
-                  <p>Limpieza, plancha y organización en Valencia. Sus referencias están en el perfil. Sus clientes la recomiendan con el enlace.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg" alt="Cuidador a domicilio" width="600" height="800" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Cuidados</span>
-                  <h3>Antonio · Cuidador</h3>
-                  <p>Acompaña mayores en Madrid norte. Formación en geriatría. Sus familias confían antes de llamar porque leen su perfil.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg" alt="Esteticista profesional" width="600" height="800" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Belleza</span>
-                  <h3>Sonia · Estética</h3>
-                  <p>Centro en Murcia. Pone el QR en el mostrador y las clientas vuelven a reservar sin llamar.</p>
-                </div>
-              </article>
-              <article class="example">
-                <div class="example-photo"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ruben%20Entrenador.jpg" alt="Entrenador personal" width="600" height="600" loading="lazy"></div>
-                <div class="example-body">
-                  <span class="example-tag">Fitness</span>
-                  <h3>Rubén · Entrenador personal</h3>
-                  <p>Online y presencial en Barcelona. 200+ clientes. Su perfil es su carta de presentación cuando alguien pregunta en un grupo.</p>
-                </div>
-              </article>
-            </div>
-            <div class="carousel-dots" role="tablist" aria-label="Navegación del carrusel">
-              <button class="dot active" aria-label="Perfil 1"></button>
-              <button class="dot" aria-label="Perfil 2"></button>
-              <button class="dot" aria-label="Perfil 3"></button>
-              <button class="dot" aria-label="Perfil 4"></button>
-              <button class="dot" aria-label="Perfil 5"></button>
-              <button class="dot" aria-label="Perfil 6"></button>
-              <button class="dot" aria-label="Perfil 7"></button>
-              <button class="dot" aria-label="Perfil 8"></button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ QUÉ OBTIENES ═══ -->
-      <section class="section" id="que-obtienes">
-        <div class="container">
-          <div class="section-head">
-            <div class="eyebrow">Qué obtienes</div>
-            <h2 class="title">Presencia útil. No solo una URL.</h2>
-            <p class="subtitle">Tu perfil hace cuatro cosas que una tarjeta de visita no puede hacer.</p>
-          </div>
-          <div class="benefits-grid">
-            <div class="benefit">
-              <div class="benefit-icon">🌐</div>
-              <h3>Perfil público</h3>
-              <p>Una página tuya, con tu nombre y lo que haces, visible desde cualquier dispositivo. Sin instalar nada.</p>
-            </div>
-            <div class="benefit">
-              <div class="benefit-icon">🔗</div>
-              <h3>URL propia</h3>
-              <p><strong>perfilapro.es/c/tu-nombre</strong> — va en tu bio, en el QR, en un mensaje de voz. Siempre disponible.</p>
-            </div>
-            <div class="benefit">
-              <div class="benefit-icon">📂</div>
-              <h3>En el directorio</h3>
-              <p>Cuando actives el plan Pro apareces en búsquedas por sector y ciudad. Clientes que te buscan, no que te esperan.</p>
-            </div>
-            <div class="benefit">
-              <div class="benefit-icon">💬</div>
-              <h3>Contacto directo</h3>
-              <p>Botón de WhatsApp en tu perfil. El cliente te escribe directamente a ti. Sin formularios, sin intermediarios, sin comisiones.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ EMPRESA ═══ -->
-      <section class="section" id="empresa">
-        <div class="container">
-          <div class="empresa-inner">
-            <div class="empresa-copy">
-              <div class="eyebrow">Canal empresa</div>
-              <h2>¿Tienes un equipo o varios negocios?</h2>
-              <p>Perfiles para todos tus comerciales, técnicos o franquiciados. Gestión centralizada, descuentos por volumen y un enlace por persona. Sin cuentas corporativas complicadas.</p>
-              <div class="empresa-stats">
-                <div class="empresa-stat"><strong>+5 perfiles</strong>descuento automático</div>
-                <div class="empresa-stat"><strong>1 enlace</strong>por persona del equipo</div>
-                <div class="empresa-stat"><strong>QR</strong>para camiones y uniformes</div>
-              </div>
-              <div style="margin-top:1.25rem">
-                <a href="https://wa.me/34633816729?text=Hola%2C%20me%20interesa%20PerfilaPro%20para%20mi%20equipo." target="_blank" rel="noopener" class="btn btn-wa" style="display:inline-flex;max-width:260px">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-                  Hablar con el equipo
-                </a>
-              </div>
-            </div>
-            <div class="empresa-visual" style="display:grid;gap:.5rem;min-width:200px">
-              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
-                <div style="font-weight:700;margin-bottom:.2rem">Mohamed · Fontanería</div>
-                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/mohamed-fontanero</div>
-              </div>
-              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
-                <div style="font-weight:700;margin-bottom:.2rem">Sergio · Zona Levante</div>
-                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/sergio-levante</div>
-              </div>
-              <div style="background:#fff;border:1px solid var(--line);border-radius:1rem;padding:.9rem 1.1rem;font-size:.85rem">
-                <div style="font-weight:700;margin-bottom:.2rem">Laura · Fisioterapia</div>
-                <div style="color:var(--muted);font-size:.78rem">perfilapro.es/c/laura-fisio</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ FUN ZONE ═══ -->
-      <section class="section" id="fun-zone">
-        <div class="container">
-          <div class="fun-inner">
-            <div class="fun-tag">Próximamente</div>
-            <h2>No solo trabajo</h2>
-            <p>Deporte, aficiones, planes locales, comunidad. PerfilaPro pronto será también el sitio donde que te conozcan más allá de tu oficio.</p>
-            <div class="fun-chips">
-              <span class="fun-chip">⚽ Deporte y equipo</span>
-              <span class="fun-chip">🎭 Cultura y ocio</span>
-              <span class="fun-chip">🏕️ Planes locales</span>
-              <span class="fun-chip">🤝 Comunidad y red</span>
-              <span class="fun-chip">🎵 Música y aficiones</span>
-              <span class="fun-chip">🌱 Proyectos personales</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="precios">
-        <div class="container">
-          <div class="section-head" style="text-align:center;max-width:52ch;margin-inline:auto">
-            <div class="eyebrow" style="justify-content:center">Planes</div>
-            <h2 class="title" style="font-size:clamp(2rem,7vw,3.4rem);max-width:none">Elige tu plan. Sin suscripción.</h2>
-            <p class="subtitle" style="margin-inline:auto">Pago único y tu perfil activo. Sin sorpresas, sin letra pequeña.</p>
-          </div>
-          <div class="plans-grid">
-
-            <article class="plan-card plan-card-featured">
-              <div class="plan-popular">Más popular</div>
-              <div class="plan-header">
-                <span class="plan-badge plan-badge-primary">Base</span>
-                <div class="plan-price"><span class="plan-amount">9€</span><span class="plan-period"> · 3 meses</span></div>
-                <p class="plan-desc">Perfil activo y listo para compartir durante 3 meses.</p>
-              </div>
-              <ul class="plan-features">
-                <li class="feat ok">1 perfil profesional</li>
-                <li class="feat ok">Foto de perfil y servicios</li>
-                <li class="feat ok">Botón directo a WhatsApp</li>
-                <li class="feat ok">Código QR descargable</li>
-                <li class="feat ok">Sin marca de agua</li>
-                <li class="feat ok">Analítica de visitas (últimos 7 días)</li>
-                <li class="feat no">Resumen semanal por email</li>
-              </ul>
-              <a href="#crear" class="plan-btn plan-btn-primary">Crear mi perfil por 9€</a>
-            </article>
-
-            <article class="plan-card">
-              <div class="plan-header">
-                <span class="plan-badge plan-badge-dark">Pro</span>
-                <div class="plan-price"><span class="plan-amount">19€</span><span class="plan-period"> · 12 meses</span></div>
-                <p class="plan-desc">Un año completo y visibilidad total de tu actividad.</p>
-              </div>
-              <ul class="plan-features">
-                <li class="feat ok">1 perfil profesional</li>
-                <li class="feat ok">Todo lo del plan Base</li>
-                <li class="feat ok">Analítica de visitas (histórico completo)</li>
-                <li class="feat ok">Resumen semanal por email</li>
-                <li class="feat ok">Perfiles adicionales con descuento</li>
-              </ul>
-              <a href="#crear" class="plan-btn plan-btn-soft">Crear mi perfil por 19€</a>
-            </article>
-
-          </div>
-
-          <!-- Perfiles adicionales -->
-          <div class="plans-extra-cards">
-            <div class="plans-extra-header">
-              <span class="eyebrow" style="justify-content:center;margin-bottom:.5rem">Plan Pro · Perfiles adicionales</span>
-              <p style="font-size:.9rem;color:var(--muted);text-align:center">¿Tienes trabajadores o varios negocios? Añade perfiles con descuento.</p>
-            </div>
-            <div class="plans-extra-grid">
-              <div class="plans-extra-item">
-                <span class="plans-extra-qty">2º perfil</span>
-                <span class="plans-extra-price">+14€<span>/año</span></span>
-              </div>
-              <div class="plans-extra-item">
-                <span class="plans-extra-qty">3º–5º perfil</span>
-                <span class="plans-extra-price">+9€<span>/año cada una</span></span>
-              </div>
-              <div class="plans-extra-item">
-                <span class="plans-extra-qty">6º perfil en adelante</span>
-                <span class="plans-extra-price">+7€<span>/año cada una</span></span>
-              </div>
-            </div>
-            <div style="text-align:center;margin-top:1rem">
-              <a href="https://wa.me/34633816729?text=Hola%2C%20me%20interesa%20informaci%C3%B3n%20sobre%20perfiles%20para%20mi%20empresa." target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:.5rem;background:#25D366;color:#fff;font-size:.85rem;font-weight:700;padding:.55rem 1.25rem;border-radius:999px;text-decoration:none;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.562 4.141 1.541 5.876L.057 23.428a.75.75 0 0 0 .916.919l5.701-1.494A11.951 11.951 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 0 1-4.953-1.354l-.355-.212-3.683.965.982-3.594-.232-.369A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
-                Canal Empresa
-              </a>
-              <p style="font-size:.75rem;color:var(--faint);margin-top:.5rem">Gestión de equipos y descuentos por volumen</p>
-            </div>
-          </div>
-
-          <p class="plans-note">Renovación disponible por <strong style="color:var(--text)">5€/año</strong> al vencer cualquier plan. Sin suscripción automática. · <a href="mailto:hola@perfilapro.es" style="color:var(--primary);font-weight:700">¿Dudas?</a></p>
-        </div>
-      </section>
-
-      <!-- ═══ SECCIÓN CREAR (FREEMIUM) ═══ -->
-      <section class="section" id="crear">
-        <div class="container">
-          <div class="section-head" style="text-align:center;max-width:52ch;margin-inline:auto">
-            <div class="eyebrow" style="justify-content:center">Pruébalo gratis ahora</div>
-            <h2 class="title" style="font-size:clamp(2rem,7vw,3.2rem);max-width:none">Tu perfil profesional, listo en 2 minutos.</h2>
-            <p class="subtitle" style="margin-inline:auto">Sin cuenta. Sin contraseña. Rellena, previsualiza y activa cuando quieras.</p>
-            <div class="cta-actions" style="justify-content:center;margin-top:1rem">
-              <button class="btn btn-primary" type="button" id="startFormBtn">Crear mi perfil gratis</button>
-            </div>
-          </div>
-
-          <!-- STEP 1: FORMULARIO -->
-          <div class="form-stage" id="stageForm" hidden>
-            <form class="crear-form" id="crearForm" novalidate>
-
-              <div class="form-row">
-                <label class="form-label" for="fNombre">Nombre completo o nombre del negocio <span class="req">*</span></label>
-                <input class="form-input" type="text" id="fNombre" name="nombre" placeholder="Ej: Paco García / Fontanería García" autocomplete="name" required>
-              </div>
-
-              <div class="form-row">
-                <label class="form-label">Sector o especialidad <span class="req">*</span></label>
-                <input type="hidden" id="fSector" name="sector">
-                <div class="sector-grid" id="sectorGrid">
-                  <button type="button" class="sector-card" data-value="oficios"><span class="sc-icon">🔧</span><span class="sc-label">Oficios del hogar</span></button>
-                  <button type="button" class="sector-card" data-value="belleza"><span class="sc-icon">✂️</span><span class="sc-label">Belleza y estética</span></button>
-                  <button type="button" class="sector-card" data-value="reforma"><span class="sc-icon">🏗️</span><span class="sc-label">Reforma y construcción</span></button>
-                  <button type="button" class="sector-card" data-value="salud"><span class="sc-icon">🩺</span><span class="sc-label">Salud y bienestar</span></button>
-                  <button type="button" class="sector-card" data-value="educacion"><span class="sc-icon">📚</span><span class="sc-label">Educación y formación</span></button>
-                  <button type="button" class="sector-card" data-value="hosteleria"><span class="sc-icon">🍽️</span><span class="sc-label">Hostelería</span></button>
-                  <button type="button" class="sector-card" data-value="comercial"><span class="sc-icon">💼</span><span class="sc-label">Comercial y ventas</span></button>
-                  <button type="button" class="sector-card" data-value="tech"><span class="sc-icon">💻</span><span class="sc-label">Tecnología y digital</span></button>
-                  <button type="button" class="sector-card" data-value="legal"><span class="sc-icon">⚖️</span><span class="sc-label">Legal y asesoría</span></button>
-                  <button type="button" class="sector-card" data-value="jardineria"><span class="sc-icon">🌿</span><span class="sc-label">Jardinería</span></button>
-                  <button type="button" class="sector-card" data-value="transporte"><span class="sc-icon">🚚</span><span class="sc-label">Transporte y mudanzas</span></button>
-                  <button type="button" class="sector-card" data-value="fotografia"><span class="sc-icon">📸</span><span class="sc-label">Fotografía y vídeo</span></button>
-                  <button type="button" class="sector-card" data-value="eventos"><span class="sc-icon">🎉</span><span class="sc-label">Eventos y celebraciones</span></button>
-                  <button type="button" class="sector-card" data-value="automocion"><span class="sc-icon">🔩</span><span class="sc-label">Automoción y mecánica</span></button>
-                  <button type="button" class="sector-card" data-value="seguridad"><span class="sc-icon">🔒</span><span class="sc-label">Seguridad y vigilancia</span></button>
-                  <button type="button" class="sector-card" data-value="cuidados"><span class="sc-icon">🤝</span><span class="sc-label">Cuidados y asistencia</span></button>
-                  <button type="button" class="sector-card" data-value="fitness"><span class="sc-icon">💪</span><span class="sc-label">Fitness y deporte</span></button>
-                  <button type="button" class="sector-card" data-value="turismo"><span class="sc-icon">🌍</span><span class="sc-label">Turismo y viajes</span></button>
-                  <button type="button" class="sector-card" data-value="comercio"><span class="sc-icon">🏪</span><span class="sc-label">Comercio y tiendas</span></button>
-                  <button type="button" class="sector-card" data-value="otro"><span class="sc-icon">✨</span><span class="sc-label">Otro</span></button>
-                </div>
-                <p class="sector-hint-error" id="sectorError" hidden>Selecciona un sector para continuar.</p>
-              </div>
-
-              <div class="form-row">
-                <label class="form-label" for="fZona">Localidad <span class="req">*</span></label>
-                <input class="form-input" type="text" id="fZona" name="zona" placeholder="Ej: Alicante, Valencia, Madrid…" required>
-                <p class="chips-label" style="margin-top:.6rem;margin-bottom:.4rem">Atiendo a…</p>
-                <div class="chips-wrap" id="coberturaChips">
-                  <button type="button" class="chip cob-chip cob-active" data-label="Sin límite" onclick="selectCob(this)">Sin límite</button>
-                  <button type="button" class="chip cob-chip" data-label="Máx 100km" onclick="selectCob(this)">Máx 100km</button>
-                  <button type="button" class="chip cob-chip" data-label="Máx 50km" onclick="selectCob(this)">Máx 50km</button>
-                  <button type="button" class="chip cob-chip" data-label="Máx 25km" onclick="selectCob(this)">Máx 25km</button>
-                </div>
-              </div>
-
-
-              <div class="form-row">
-                <label class="form-label" for="fWhatsapp">Número de WhatsApp <span class="req">*</span></label>
-                <div class="input-prefix-wrap">
-                  <span class="input-prefix">+34</span>
-                  <input class="form-input input-prefixed" type="tel" id="fWhatsapp" name="whatsapp" placeholder="600 000 000" maxlength="12" required>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <label class="form-label" for="fEmail">Tu email <span class="req">*</span></label>
-                <input class="form-input" type="email" id="fEmail" name="email" placeholder="Ej: paco@ejemplo.com" autocomplete="email" required>
-                <p class="form-hint">Te enviamos el enlace para editar tu perfil.</p>
-              </div>
-
-
-
-
-              <button class="btn btn-primary form-submit" type="submit" id="submitBtn">
-                <span class="submit-text">Crear mi perfil gratis</span>
-                <span class="submit-spinner" hidden>Creando perfil…</span>
-              </button>
-
-            </form>
-          </div>
-
-          <!-- STEP 2: RESULTADO -->
-          <div class="result-stage" id="stageResult" hidden>
-
-            <div class="result-success-bar">
-              <span>✅</span>
-              <strong>¡Tu perfil ya está creado!</strong>
-              <span id="resultSuccessMsg">Ya puedes compartir tu enlace. Activa el directorio para aparecer en búsquedas.</span>
-            </div>
-
-            <div style="text-align:center;margin:.75rem 0 1.25rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
-              <a id="resultViewLink" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:.875rem">Ver mi perfil →</a>
-              <a id="resultEditLink" href="#" target="_blank" rel="noopener" class="btn btn-soft" style="font-size:.875rem">Editar mi perfil</a>
-            </div>
-
-            <!-- Preview tarjeta generada -->
-            <div class="result-layout">
-              <div class="result-card-wrap">
-                <div class="result-badge-free">Vista previa</div>
-                <article class="profile-card" id="resultCard">
-                  <div class="card-hd">
-                    <div class="card-av" id="rAvatarWrap">
-                      <div class="card-av-init" id="rAvatarPlaceholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                      </div>
-                    </div>
-                    <div>
-                      <div class="card-name" id="rNombre">—</div>
-                      <div class="card-role" id="rSector">—</div>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <div class="chips-row">
-                      <span class="chip chip--loc" id="rZona">📍 —</span>
-                    </div>
-                    <div class="svc-list" id="rServicios"><div class="svc-item svc-placeholder">Añade tus servicios desde "Editar mi perfil"</div></div>
-                    <p class="card-desc" id="rDesc" hidden></p>
-                    <div class="btn--wa" id="rWaBtn">
-                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.122 1.528 5.856L0 24l6.335-1.508A11.933 11.933 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.368l-.36-.214-3.728.887.9-3.635-.235-.374A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-                      Contactar por WhatsApp
-                    </div>
-                  </div>
-                  <div class="card-pw">Vista previa · <strong>PerfilaPro</strong></div>
-                </article>
-              </div>
-
-              <!-- Panel activación -->
-              <aside class="upgrade-panel">
-                <div class="upgrade-copy">
-                  <h3>Activa tu perfil.</h3>
-                  <p>Elige el plan y tu perfil estará online al instante.</p>
-                </div>
-
-                <!-- PLAN BASE -->
-                <article class="upgrade-card upgrade-card-main">
-                  <div class="upgrade-best">Más popular</div>
-                  <div class="upgrade-header">
-                    <div>
-                      <span class="upgrade-plan-name">Base</span>
-                      <span class="upgrade-plan-tag">3 meses</span>
-                    </div>
-                    <div class="upgrade-price">9€ <span>pago único</span></div>
-                  </div>
-                  <ul class="upgrade-list">
-                    <li>Perfil público compartible</li>
-                    <li>Foto de perfil y código QR</li>
-                    <li>Sin marca de agua</li>
-                  </ul>
-                </article>
-
-                <!-- PLAN PRO -->
-                <article class="upgrade-card">
-                  <div class="upgrade-header">
-                    <div>
-                      <span class="upgrade-plan-name">Pro</span>
-                      <span class="upgrade-plan-tag upgrade-plan-tag-dark">12 meses</span>
-                    </div>
-                    <div class="upgrade-price">19€ <span>pago único</span></div>
-                  </div>
-                  <ul class="upgrade-list">
-                    <li>Todo lo del plan Base</li>
-                    <li>Analítica de visitas (histórico completo)</li>
-                    <li>Resumen semanal por email</li>
-                    <li>Perfiles adicionales con descuento</li>
-                  </ul>
-                </article>
-
-                <!-- Botones de activación -->
-                <div class="upgrade-btns">
-                  <button class="btn btn-primary upgrade-btn" id="upgradeBaseBtn" type="button">
-                    Activar por 9€ · 3 meses
-                  </button>
-                  <button class="btn btn-soft upgrade-btn" id="upgradeProBtn" type="button">
-                    Activar por 19€ · 12 meses
-                  </button>
-                </div>
-
-                <p style="font-size:.84rem;color:var(--muted);text-align:center">Renovación por <strong style="color:var(--text)">5€/año</strong> al vencer el plan.</p>
-
-              </aside>
-            </div>
-
-            <div style="text-align:center;margin-top:1.5rem">
-              <button class="btn btn-soft" id="resetBtn" type="button">Crear otro perfil</button>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- ═══ CTA FINAL ═══ -->
-      <section class="cta-final-section">
-        <div class="container">
-          <div class="cta-final-inner">
-            <h2>Crea tu perfil. Ahora. Gratis.</h2>
-            <p>Menos de 2 minutos. Sin cuenta. Sin tarjeta de crédito.<br>Tu URL lista para compartir al instante.</p>
-            <div class="cta-actions" style="justify-content:center;margin-top:1.1rem">
-              <a href="#crear" class="btn btn-primary" style="min-width:220px">Crear mi perfil gratis →</a>
-              <a href="/directorio" class="btn btn-secondary">Explorar el directorio</a>
-            </div>
-            <p class="cta-trust">
-              <span>✓ Sin cuotas ni contratos</span>
-              <span>✓ Perfil activo en 2 minutos</span>
-              <span>✓ Mejora cuando quieras</span>
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <div class="container footer-inner">
-        <div>
-          <div class="footer-brand">Perfila<em>Pro</em></div>
-          <div class="footer-note">Perfiles profesionales pensados para compartirse donde ya ocurre la conversación.</div>
-        </div>
-
+        <p class="hero-micro">Sin tarjeta · Sin cuenta · Tu URL lista al instante</p>
       </div>
-    </footer>
 
-    <div class="legal-bar">
-      <div class="container legal-inner">
-        <span>© 2026 PerfilaPro. Todos los derechos reservados.</span>
-        <nav class="legal-links">
-          <a href="/legal.html">Aviso legal</a>
-          <a href="/privacidad.html">Privacidad</a>
-          <a href="/terminos.html">Términos y condiciones</a>
-        </nav>
+      <!-- Right: profile card preview -->
+      <div class="hero-visual reveal in" aria-hidden="true">
+        <div class="profile-card">
+          <div class="pc-top">
+            <div class="pc-avatar">B</div>
+            <div>
+              <p class="pc-name">Benjamín Rodríguez</p>
+              <p class="pc-sub">Electricista · Huesca</p>
+            </div>
+          </div>
+          <div class="pc-bio">
+            Instalaciones eléctricas rurales, cuadros de mando y mantenimiento en los Pirineos. 20 años en el oficio.
+          </div>
+          <div class="pc-role">
+            <span>Electricidad &amp; Apicultura</span>
+            <span class="pc-role-badge">Pro</span>
+          </div>
+          <div class="pc-actions">
+            <button class="btn btn-wa" style="cursor:default;opacity:.7">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              WhatsApp directo
+            </button>
+            <button class="btn btn-secondary" style="cursor:default;opacity:.7">Ver perfil</button>
+          </div>
+          <div class="pro-fun" style="margin-top:.5rem">Apicultor en Pirineos · Esquiador de backcountry · Guitarrista</div>
+          <div class="pc-meta" style="margin-top:.75rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>perfilapro.es/c/<strong>benjamin-rodriguez</strong></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ PROFILES RAIL ══════════════════ -->
+<section class="rail-section section-alt">
+  <div class="wrap">
+    <p class="section-kicker">Profesionales reales</p>
+    <div class="profiles-rail" aria-label="Perfiles de ejemplo">
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#e4f0ef;color:#0b7177">BR</div>
+          <div>
+            <h3 class="pro-name">Benjamín Rodríguez</h3>
+            <p class="pro-role">Electricista · Huesca</p>
+          </div>
+        </div>
+        <p class="pro-line">Instalaciones rurales y cuadros de mando en los Pirineos.</p>
+        <div class="pro-tags">
+          <span class="chip">Electricidad</span>
+          <span class="chip">Urgencias</span>
+        </div>
+        <div class="pro-fun">Apicultor · Esquiador de backcountry</div>
+      </article>
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#fef3c7;color:#92400e">MG</div>
+          <div>
+            <h3 class="pro-name">María García</h3>
+            <p class="pro-role">Diseño gráfico · Madrid</p>
+          </div>
+        </div>
+        <p class="pro-line">Identidad visual y packaging para pequeños negocios.</p>
+        <div class="pro-tags">
+          <span class="chip">Branding</span>
+          <span class="chip">Web</span>
+        </div>
+        <div class="pro-fun">Senderismo los fines de semana · Acuarela</div>
+      </article>
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#f0fdf4;color:#166534">LP</div>
+          <div>
+            <h3 class="pro-name">Luis Peña</h3>
+            <p class="pro-role">Fontanería · Madrid</p>
+          </div>
+        </div>
+        <p class="pro-line">Reparaciones urgentes, sanitarios y calderas.</p>
+        <div class="pro-tags">
+          <span class="chip">Urgencias 24h</span>
+          <span class="chip">Calderas</span>
+        </div>
+        <div class="pro-fun">Cocinero aficionado · Ciclismo de montaña</div>
+      </article>
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#fdf2f8;color:#831843">AS</div>
+          <div>
+            <h3 class="pro-name">Ana Soto</h3>
+            <p class="pro-role">Fisioterapia · Barcelona</p>
+          </div>
+        </div>
+        <p class="pro-line">Fisioterapia deportiva y rehabilitación postoperatoria.</p>
+        <div class="pro-tags">
+          <span class="chip">Deportiva</span>
+          <span class="chip">Domicilio</span>
+        </div>
+        <div class="pro-fun">Corredora de montaña · Yoga</div>
+      </article>
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#eff6ff;color:#1e40af">JM</div>
+          <div>
+            <h3 class="pro-name">Jorge Martín</h3>
+            <p class="pro-role">Carpintería · Valencia</p>
+          </div>
+        </div>
+        <p class="pro-line">Muebles a medida y restauración de piezas antiguas.</p>
+        <div class="pro-tags">
+          <span class="chip">A medida</span>
+          <span class="chip">Restauración</span>
+        </div>
+        <div class="pro-fun">Apicultor urbano · Luthier los domingos</div>
+      </article>
+
+      <article class="pro-card">
+        <div class="pro-card-top">
+          <div class="pro-avatar" style="background:#fff7ed;color:#9a3412">CR</div>
+          <div>
+            <h3 class="pro-name">Carmen Ruiz</h3>
+            <p class="pro-role">Pintura · Sevilla</p>
+          </div>
+        </div>
+        <p class="pro-line">Pintura de interiores, exteriores y decoración mural.</p>
+        <div class="pro-tags">
+          <span class="chip">Interiores</span>
+          <span class="chip">Murales</span>
+        </div>
+        <div class="pro-fun">Flamenca · Cultivadora de tomates cherry</div>
+      </article>
+
+    </div>
+    <div style="text-align:center;margin-top:var(--sp-6)">
+      <a href="/directorio" class="btn btn-secondary">Ver todos los perfiles</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CÓMO FUNCIONA ══════════════════ -->
+<section class="section" id="como-funciona">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:var(--sp-10)">
+      <span class="section-kicker">Proceso</span>
+      <h2 class="section-h reveal in">Cuatro pasos, cero fricción</h2>
+      <p class="section-copy reveal in" style="margin-inline:auto">Empieza gratis. Mejora solo si lo necesitas.</p>
+    </div>
+    <div class="grid-4">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h3>Crea tu perfil</h3>
+        <p>Nombre, sector, descripción y ciudad. Sin tarjeta, sin cuenta.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <h3>Tu URL al instante</h3>
+        <p>perfilapro.es/c/tu-nombre. Lista para compartir en segundos.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <h3>Compártela</h3>
+        <p>WhatsApp, Instagram, tarjeta de visita o código QR. Tú eliges.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">4</div>
+        <h3>Mejora cuando quieras</h3>
+        <p>Directorio público, estadísticas y QR premium. Solo si lo necesitas.</p>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="cookie-banner" id="cookieBanner" role="dialog" aria-label="Aviso de cookies">
-      <p>Usamos cookies propias y de terceros para mejorar tu experiencia. Puedes aceptarlas o rechazarlas. <a href="/privacidad.html">Más info</a></p>
-      <div class="cookie-actions">
-        <button class="cookie-btn cookie-btn-primary" onclick="document.getElementById('cookieBanner').style.display='none';localStorage.setItem('pp_cookies','ok')">Aceptar</button>
-        <button class="cookie-btn cookie-btn-soft" onclick="document.getElementById('cookieBanner').style.display='none';localStorage.setItem('pp_cookies','no')">Rechazar</button>
+<!-- ══════════════════ QUÉ OBTIENES ══════════════════ -->
+<section class="section section-alt" id="que-obtienes">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:var(--sp-10)">
+      <span class="section-kicker">Incluido gratis</span>
+      <h2 class="section-h reveal in">Lo que te da PerfilaPro</h2>
+    </div>
+    <div class="grid-4">
+      <div class="benefit-card reveal">
+        <div class="benefit-icon">
+          <svg width="20" height="20" data-lucide="globe"></svg>
+        </div>
+        <h3>Perfil público</h3>
+        <p>Visible para cualquiera con tu enlace. Sin login, sin app.</p>
+      </div>
+      <div class="benefit-card reveal">
+        <div class="benefit-icon">
+          <svg width="20" height="20" data-lucide="link"></svg>
+        </div>
+        <h3>URL propia</h3>
+        <p>perfilapro.es/c/tu-nombre. Tuya para siempre.</p>
+      </div>
+      <div class="benefit-card reveal">
+        <div class="benefit-icon">
+          <svg width="20" height="20" data-lucide="search"></svg>
+        </div>
+        <h3>Directorio</h3>
+        <p>Aparece en búsquedas de tu sector y ciudad (plan Pro).</p>
+      </div>
+      <div class="benefit-card reveal">
+        <div class="benefit-icon">
+          <svg width="20" height="20" data-lucide="message-circle"></svg>
+        </div>
+        <h3>WhatsApp directo</h3>
+        <p>Botón que abre una conversación contigo sin copiar números.</p>
       </div>
     </div>
+  </div>
+</section>
 
-    <script>
-      if(localStorage.getItem('pp_cookies')){
-        var b=document.getElementById('cookieBanner');if(b)b.style.display='none';
-      }
-      // Captura código de agente desde ?ref=CODIGO
-      (function(){
-        var ref = new URLSearchParams(location.search).get('ref');
-        if (ref) sessionStorage.setItem('pp_ref', ref.toUpperCase());
-      })();
+<!-- ══════════════════ DIRECTORIO INLINE ══════════════════ -->
+<section class="section dir-section" id="directorio">
+  <div class="wrap">
+    <span class="section-kicker">Directorio</span>
+    <h2 class="section-h reveal in">Encuentra al profesional que necesitas</h2>
+    <p class="section-copy reveal in">Busca por oficio o explora por sector.</p>
 
-      // Hero search → directorio
-      function heroSearch(e) {
-        e.preventDefault();
-        var q = (document.getElementById('hsWhat').value || '').trim();
-        var city = (document.getElementById('hsWhere').value || '').trim();
-        if (!q && !city) { window.location.href = '/directorio'; return; }
-        var url = '/directorio';
-        var params = new URLSearchParams();
-        if (q) params.set('q', q);
-        if (city) params.set('ciudad', city);
-        window.location.href = url + '?' + params.toString();
-      }
-    </script>
+    <form onsubmit="heroSearch(event)" role="search" aria-label="Buscar en el directorio" style="margin-top:var(--sp-6);max-width:560px">
+      <div class="search-box">
+        <div class="search-row">
+          <div class="hs-field" style="flex:1">
+            <input class="hs-input" type="text" id="dirWhat" placeholder="¿Qué necesitas?" autocomplete="off">
+          </div>
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </div>
+      </div>
+    </form>
 
-    <script>
-      (function(){
-        // Datos de sectores y sugerencias
-        var SECTOR_DATA = {
-          oficios:   {label:'Oficios y servicios del hogar', sugerencias:['Fontanería urgente','Electricista 24h','Cerrajero urgencias 24h','Pintura interior','Carpintería','Instalaciones de gas']},
-          cuidados:  {label:'Cuidados y asistencia', sugerencias:['Cuidado de personas mayores','Asistencia a domicilio','Servicio doméstico','Cuidado de niños','Acompañamiento y gestiones','Limpieza del hogar']},
-          limpieza:  {label:'Limpieza profesional', sugerencias:['Limpieza de hogar','Limpieza de oficinas','Limpieza de comunidades','Limpieza tras obra','Cristales y ventanas','Desinfección y desinsectación']},
-          belleza:   {label:'Belleza y estética', sugerencias:['Corte y peinado','Coloración','Manicura','Depilación','Tratamientos faciales','Maquillaje']},
-          reforma:   {label:'Reforma y construcción', sugerencias:['Reforma integral','Alicatado y solado','Pintura','Obras menores','Interiorismo','Presupuesto sin compromiso']},
-          salud:     {label:'Salud y bienestar', sugerencias:['Fisioterapia','Masaje terapéutico','Nutrición y dietética','Psicología','Podología','Osteopatía']},
-          educacion: {label:'Educación y formación', sugerencias:['Clases particulares','Inglés','Matemáticas','Apoyo escolar','Preparación de exámenes','Formación online']},
-          hosteleria:{label:'Hostelería y restauración', sugerencias:['Catering','Cocina a domicilio','Eventos y banquetes','Menú diario','Comida para llevar','Barra de bar']},
-          comercial: {label:'Comercial y ventas', sugerencias:['Asesoría comercial','Marketing digital','Captación de clientes','Gestión de ventas','Consultoría de negocio']},
-          tech:      {label:'Tecnología y digital', sugerencias:['Diseño web','Reparación de ordenadores','Soporte IT','Apps móviles','Ciberseguridad','Redes y servidores']},
-          legal:     {label:'Legal y asesoría', sugerencias:['Asesoría fiscal','Gestoría','Abogacía','Contratos','Herencias y testamentos','Derecho laboral']},
-          jardineria:{label:'Jardinería y paisajismo', sugerencias:['Diseño de jardines','Mantenimiento de jardín','Poda y tala','Césped artificial','Riego automático','Terrazas']},
-          transporte:{label:'Transporte y mudanzas', sugerencias:['Mudanzas locales','Transporte de muebles','Portes económicos','Guardamuebles','Mudanzas de oficina']},
-          fotografia:{label:'Fotografía y vídeo', sugerencias:['Fotografía de bodas','Retrato profesional','Fotografía de producto','Vídeo corporativo','Fotografía de eventos','Edición y retoque']},
-          eventos:   {label:'Eventos y celebraciones', sugerencias:['Organización de bodas','Eventos corporativos','Comuniones y bautizos','DJ y música','Animación infantil','Decoración de eventos']},
-          automocion:{label:'Automoción y mecánica', sugerencias:['Mecánica general','Diagnosis electrónica','Chapa y pintura','Cambio de neumáticos','Aire acondicionado','ITV y trámites']},
-          seguridad: {label:'Seguridad y vigilancia', sugerencias:['Instalación de alarmas','Videovigilancia','Control de accesos','Cerrajería de seguridad','Seguridad para empresas']},
-          fitness:   {label:'Fitness y deporte', sugerencias:['Entrenamiento personal','Clases grupales','Pilates','Crossfit','Yoga y meditación','Nutrición deportiva']},
-          turismo:   {label:'Turismo y viajes', sugerencias:['Guía turístico','Excursiones y rutas','Traslados aeropuerto','Tours privados','Experiencias locales','Alquiler vacacional']},
-          comercio:  {label:'Comercio y tiendas', sugerencias:['Tienda de ropa','Alimentación y ultramarinos','Ferretería','Floristería','Papelería y librería','Regalos y souvenirs']},
-          otro:      {label:'Otro', sugerencias:[]},
-        };
+    <div class="dir-grid" id="dirGrid">
+      <a href="/directorio/electricistas" class="dir-card reveal">
+        <span class="dir-icon">⚡</span>
+        <div class="dir-card-text"><h4>Electricistas</h4><p>Instalaciones y averías</p></div>
+      </a>
+      <a href="/directorio/fontaneros" class="dir-card reveal">
+        <span class="dir-icon">🔧</span>
+        <div class="dir-card-text"><h4>Fontaneros</h4><p>Tuberías y sanitarios</p></div>
+      </a>
+      <a href="/directorio/carpinteros" class="dir-card reveal">
+        <span class="dir-icon">🪚</span>
+        <div class="dir-card-text"><h4>Carpinteros</h4><p>Muebles y restauración</p></div>
+      </a>
+      <a href="/directorio/pintores" class="dir-card reveal">
+        <span class="dir-icon">🖌</span>
+        <div class="dir-card-text"><h4>Pintores</h4><p>Interiores y exteriores</p></div>
+      </a>
+      <a href="/directorio/fisioterapeutas" class="dir-card reveal">
+        <span class="dir-icon">💆</span>
+        <div class="dir-card-text"><h4>Fisioterapeutas</h4><p>Rehabilitación y deporte</p></div>
+      </a>
+      <a href="/directorio/disenadores" class="dir-card reveal">
+        <span class="dir-icon">🎨</span>
+        <div class="dir-card-text"><h4>Diseñadores</h4><p>Gráfico, web e interiors</p></div>
+      </a>
+      <a href="/directorio/abogados" class="dir-card reveal">
+        <span class="dir-icon">⚖️</span>
+        <div class="dir-card-text"><h4>Abogados</h4><p>Asesoría y defensa</p></div>
+      </a>
+      <a href="/directorio/fotografos" class="dir-card reveal">
+        <span class="dir-icon">📷</span>
+        <div class="dir-card-text"><h4>Fotógrafos</h4><p>Bodas, producto y retrato</p></div>
+      </a>
+    </div>
 
-        // Sector grid
-        var sectorGrid  = document.getElementById('sectorGrid');
-        var fSectorInput = document.getElementById('fSector');
-        var chipsSection = document.getElementById('chipsSection');
-        var chipsWrap    = document.getElementById('chipsWrap');
-        var sectorError  = document.getElementById('sectorError');
+    <div style="text-align:center;margin-top:var(--sp-8)">
+      <a href="/directorio" class="btn btn-secondary">Ver todos los sectores</a>
+    </div>
+  </div>
+</section>
 
-        function selectCob(btn) {
-          document.querySelectorAll('.cob-chip').forEach(function(b){ b.classList.remove('cob-active'); });
-          btn.classList.add('cob-active');
-        }
+<!-- ══════════════════ EMPRESA + FUN ZONE ══════════════════ -->
+<section class="section section-alt" id="empresa">
+  <div class="wrap">
+    <div class="empresa-grid">
 
+      <!-- Empresa card -->
+      <div class="big-card accent reveal">
+        <span class="section-kicker">Para empresas</span>
+        <h3>Tu equipo, con cara y ojos</h3>
+        <p>Cada persona del equipo con su propio perfil: nombre, rol, WhatsApp. Sin centralitas, sin formularios.</p>
+        <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:var(--sp-6)">
+          <a href="/c/benjamin-rodriguez" class="pro-fun" style="text-decoration:none">Benjamín R. — Electricidad</a>
+          <a href="/c/maria-garcia" class="pro-fun" style="text-decoration:none">María G. — Diseño gráfico</a>
+          <a href="/c/luis-pena" class="pro-fun" style="text-decoration:none">Luis P. — Fontanería</a>
+        </div>
+        <div style="margin-top:auto">
+          <a href="https://wa.me/34600000000?text=Hola%2C%20me%20interesa%20PerfilaPro%20para%20mi%20equipo" class="btn btn-wa" target="_blank" rel="noopener">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            Hablemos por WhatsApp
+          </a>
+        </div>
+      </div>
 
-        if (sectorGrid) {
-          sectorGrid.querySelectorAll('.sector-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-              sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.remove('is-selected','is-error'); });
-              card.classList.add('is-selected');
-              var val = card.dataset.value;
-              fSectorInput.value = val;
-              if (sectorError) sectorError.setAttribute('hidden','');
-              var data = SECTOR_DATA[val];
-            });
-          });
-        }
+      <!-- Fun Zone card -->
+      <div class="big-card reveal fun-zone-section" style="border-radius:var(--r-xl);border:1px solid #fde68a">
+        <span class="section-kicker" style="color:#b45309">Próximamente</span>
+        <h3 style="color:#78350f">Fun Zone</h3>
+        <p style="color:#92400e">Porque los mejores profesionales tienen vida más allá del trabajo. Pronto podrás mostrar tus hobbies, intereses y planes en tu perfil.</p>
+        <div class="fun-chips">
+          <span class="fun-chip">🐝 Apicultura</span>
+          <span class="fun-chip">⛷ Esquí de travesía</span>
+          <span class="fun-chip">🎸 Guitarra eléctrica</span>
+          <span class="fun-chip">🍅 Huerto urbano</span>
+          <span class="fun-chip">🎨 Acuarela</span>
+          <span class="fun-chip">🚵 Bikepacking</span>
+        </div>
+        <div class="big-card fun-quote" style="margin-top:var(--sp-6)">
+          "Llevo 20 años poniendo luz en los Pirineos, y los domingos cuido mis colmenas. ¿Tú qué haces cuando no trabajas?"
+          <br><strong style="color:#78350f">— Benjamín, electricista y apicultor</strong>
+        </div>
+      </div>
 
-        // Menú móvil
-        var menuBtn = document.getElementById('menuBtn');
-        var mainNav = document.getElementById('mainNav');
-        if(menuBtn && mainNav){
-          menuBtn.addEventListener('click', function(){
-            var open = mainNav.classList.toggle('is-open');
-            menuBtn.setAttribute('aria-expanded', open);
-          });
-          mainNav.querySelectorAll('a').forEach(function(a){
-            a.addEventListener('click', function(){
-              mainNav.classList.remove('is-open');
-              menuBtn.setAttribute('aria-expanded','false');
-            });
-          });
-        }
+    </div>
+  </div>
+</section>
 
-        // Mostrar formulario
-        var startBtn = document.getElementById('startFormBtn');
-        var stageForm = document.getElementById('stageForm');
-        var stageResult = document.getElementById('stageResult');
-        if(startBtn){
-          startBtn.addEventListener('click', function(){
-            stageForm.removeAttribute('hidden');
-            setTimeout(function(){
-              document.getElementById('fNombre').scrollIntoView({behavior:'smooth',block:'center'});
-              document.getElementById('fNombre').focus();
-            }, 100);
-          });
-        }
+<!-- ══════════════════ CTA FINAL ══════════════════ -->
+<section class="section" id="cta">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <div>
+        <h2>¿Listo para tener tu perfil?</h2>
+        <p>Gratis, sin tarjeta. Tu URL propia en menos de 2 minutos.</p>
+        <div class="cta-trust">
+          <span class="trust-pill">Sin tarjeta de crédito</span>
+          <span class="trust-pill">URL propia al instante</span>
+          <span class="trust-pill">Editable siempre</span>
+          <span class="trust-pill">Sin comisiones</span>
+        </div>
+      </div>
+      <div class="cta-actions">
+        <a href="/alta.html" class="btn btn-primary btn-lg">Crear mi perfil gratis</a>
+        <a href="/directorio" class="btn btn-secondary">Explorar el directorio</a>
+      </div>
+    </div>
+  </div>
+</section>
 
+</main>
 
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <span class="nav-brand-mark" style="width:1.75rem;height:1.75rem;border-radius:.55rem">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          PerfilaPro
+        </div>
+        <p class="footer-tagline">Tu trabajo, tu negocio y tus planes, en un solo sitio.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Producto</h4>
+        <a href="/directorio">Directorio</a>
+        <a href="/alta.html">Crear perfil</a>
+        <a href="#como-funciona">Cómo funciona</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="/terminos.html">Términos de uso</a>
+        <a href="/privacidad.html">Privacidad</a>
+        <a href="/legal.html">Aviso legal</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contacto</h4>
+        <a href="https://wa.me/34600000000" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 PerfilaPro — Todos los derechos reservados</span>
+      <span>Hecho con cariño en España 🇪🇸</span>
+    </div>
+  </div>
+</footer>
 
-        // Envío del formulario → register-free → resultado real
-        var form = document.getElementById('crearForm');
-        var cardData = {};
-        if(form){
-          form.addEventListener('submit', async function(e){
-            e.preventDefault();
-            var nombre   = document.getElementById('fNombre').value.trim();
-            var sector   = document.getElementById('fSector').value;
-            var localidad = document.getElementById('fZona').value.trim();
-            var cobBtn   = document.querySelector('.cob-chip.cob-active');
-            var cobLabel = cobBtn ? cobBtn.dataset.label : 'Sin límite';
-            var zona     = cobLabel === 'Sin límite' ? localidad : localidad + ' · ' + cobLabel;
-            var whatsapp = document.getElementById('fWhatsapp').value.trim();
-            var email    = document.getElementById('fEmail') ? document.getElementById('fEmail').value.trim() : '';
+<script>
+  /* Init Lucide icons */
+  if (window.lucide) lucide.createIcons();
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.lucide) lucide.createIcons();
+  });
 
+  /* Hero / directorio search */
+  function heroSearch(e) {
+    e.preventDefault();
+    var q = (document.getElementById('hsWhat') || document.getElementById('dirWhat') || {}).value || '';
+    q = q.trim();
+    var where = (document.getElementById('hsWhere') || {}).value || '';
+    where = where.trim();
+    if (!q && !where) { window.location.href = '/directorio'; return; }
+    var p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (where) p.set('ciudad', where);
+    window.location.href = '/directorio?' + p.toString();
+  }
 
-            // Validación básica
-            [document.getElementById('fNombre'),
-             document.getElementById('fZona'),document.getElementById('fWhatsapp'),
-             document.getElementById('fEmail')].filter(Boolean).forEach(function(el){
-               el.classList.toggle('is-error', !el.value.trim());
-             });
-            if (!sector) {
-              sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.add('is-error'); });
-              if (sectorError) sectorError.removeAttribute('hidden');
-            }
-            if(!nombre||!sector||!zona||!whatsapp||!email) return;
+  function quickSearch(term) {
+    window.location.href = '/directorio?q=' + encodeURIComponent(term);
+  }
 
+  /* Scroll reveal */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+</script>
 
-            // Mostrar spinner
-            var submitBtn = document.getElementById('submitBtn');
-            var submitText = submitBtn.querySelector('.submit-text');
-            var submitSpinner = submitBtn.querySelector('.submit-spinner');
-            submitBtn.disabled = true;
-            if(submitText) submitText.setAttribute('hidden','');
-            if(submitSpinner) submitSpinner.removeAttribute('hidden');
-
-            // Llamar a register-free
-            var result;
-            try {
-              var res = await fetch('/api/register-free', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: nombre, sector: sector, zona: zona, whatsapp: whatsapp, email: email }),
-              });
-              result = await res.json();
-              if (!res.ok || !result.slug) {
-                alert('No se pudo crear el perfil: ' + (result.error || res.status));
-                submitBtn.disabled = false;
-                if(submitText) submitText.removeAttribute('hidden');
-                if(submitSpinner) submitSpinner.setAttribute('hidden','');
-                return;
-              }
-            } catch(err) {
-              alert('Error de conexión: ' + err.message);
-              submitBtn.disabled = false;
-              if(submitText) submitText.removeAttribute('hidden');
-              if(submitSpinner) submitSpinner.setAttribute('hidden','');
-              return;
-            }
-
-            submitBtn.disabled = false;
-            if(submitText) submitText.removeAttribute('hidden');
-            if(submitSpinner) submitSpinner.setAttribute('hidden','');
-
-            cardData = {nombre:nombre,sector:sector,zona:zona,whatsapp:whatsapp,slug:result.slug,card_url:result.card_url,edit_url:result.edit_url};
-
-            // Rellenar tarjeta de previsualización con datos reales
-            document.getElementById('rNombre').textContent = nombre;
-            document.getElementById('rSector').textContent = (SECTOR_DATA[sector] && SECTOR_DATA[sector].label) || sector;
-            document.getElementById('rZona').textContent = '📍 '+zona;
-
-            var rServicios = document.getElementById('rServicios');
-            rServicios.innerHTML = '';
-            if (servicios && servicios.length) {
-              servicios.forEach(function(s,i){
-                var d = document.createElement('div');
-                d.className = 'svc-item'+(i===0?' svc-item--lead':'');
-                d.textContent = s;
-                rServicios.appendChild(d);
-              });
-            } else {
-              var ph = document.createElement('div');
-              ph.className = 'svc-placeholder';
-              ph.textContent = 'Añade tus servicios desde "Editar mi perfil"';
-              rServicios.appendChild(ph);
-            }
-
-            var rDesc = document.getElementById('rDesc');
-            if(desc){ rDesc.textContent=desc; rDesc.removeAttribute('hidden'); }
-            else { rDesc.setAttribute('hidden',''); }
-
-            var waNum = '34'+whatsapp.replace(/\D/g,'');
-            var waMsg = encodeURIComponent('Hola, te contacto desde tu perfil PerfilaPro.');
-            document.getElementById('rWaBtn').href = 'https://wa.me/'+waNum+'?text='+waMsg;
-
-            // URL real devuelta por la API
-            var cardUrl = result.card_url;
-            var copyInput = document.getElementById('copyLinkInput');
-            if(copyInput){ copyInput.value = cardUrl; copyInput.removeAttribute('hidden'); }
-            var waShareBtn = document.getElementById('waShareBtn');
-            if(waShareBtn){
-              var waText = encodeURIComponent('Hola, te comparto mi perfil profesional 👇\n'+cardUrl);
-              waShareBtn.href = 'https://wa.me/?text='+waText;
-            }
-            var editLinkEl = document.getElementById('resultEditLink');
-            if(editLinkEl && result.edit_url){ editLinkEl.href = result.edit_url; }
-            var viewLinkEl = document.getElementById('resultViewLink');
-            if(viewLinkEl) viewLinkEl.href = result.card_url;
-
-            stageForm.setAttribute('hidden','');
-            stageResult.removeAttribute('hidden');
-            stageResult.scrollIntoView({behavior:'smooth',block:'start'});
-          });
-        }
-
-        // Copiar enlace
-        var copyBtn = document.getElementById('copyLinkBtn');
-        if(copyBtn){
-          copyBtn.addEventListener('click', function(){
-            var val = document.getElementById('copyLinkInput').value;
-            if(navigator.clipboard){
-              navigator.clipboard.writeText(val).then(function(){
-                copyBtn.textContent='¡Enlace copiado!';
-                setTimeout(function(){ copyBtn.textContent='Compartir perfil'; },2000);
-              });
-            } else {
-              document.getElementById('copyLinkInput').select();
-              document.execCommand('copy');
-              copyBtn.textContent='¡Enlace copiado!';
-              setTimeout(function(){ copyBtn.textContent='Compartir perfil'; },2000);
-            }
-          });
-        }
-
-        // Botones de mejora → Stripe Checkout
-        var ubBtn = document.getElementById('upgradeBaseBtn');
-        var upBtn = document.getElementById('upgradeProBtn');
-
-        async function goStripe(plan) {
-          var btn = plan === 'base' ? ubBtn : upBtn;
-          var originalText = btn.textContent;
-          btn.disabled = true;
-          btn.textContent = 'Redirigiendo…';
-          try {
-            var res = await fetch('/api/create-checkout', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                nombre:     cardData.nombre,
-                sector:     cardData.sector,
-                zona:       cardData.zona,
-                whatsapp:   cardData.whatsapp,
-                servicios:  [],
-                plan:       plan,
-                agent_code: sessionStorage.getItem('pp_ref') || '',
-                slug:       cardData.slug || '',
-              }),
-            });
-            var json = await res.json();
-            if (json.url) {
-              window.location.href = json.url;
-            } else {
-              alert('Error al iniciar el pago:\n' + (json.error || res.status));
-              btn.disabled = false;
-              btn.textContent = originalText;
-            }
-          } catch(err) {
-            alert('Error de conexión:\n' + err.message);
-            btn.disabled = false;
-            btn.textContent = originalText;
-          }
-        }
-                if(ubBtn) ubBtn.addEventListener('click', function(){ goStripe('base'); });
-        if(upBtn) upBtn.addEventListener('click', function(){ goStripe('pro'); });
-
-        // Volver a crear
-        var resetBtn = document.getElementById('resetBtn');
-        if(resetBtn){
-          resetBtn.addEventListener('click', function(){
-            stageResult.setAttribute('hidden','');
-            stageForm.removeAttribute('hidden');
-            form.reset();
-            if(fSectorInput) fSectorInput.value='';
-            if(sectorGrid) sectorGrid.querySelectorAll('.sector-card').forEach(function(c){ c.classList.remove('is-selected','is-error'); });
-            if(chipsSection) chipsSection.setAttribute('hidden','');
-            if(chipsWrap) chipsWrap.innerHTML='';
-            if(sectorError) sectorError.setAttribute('hidden','');
-            var decl2 = document.getElementById('fotoDeclaration');
-            stageForm.scrollIntoView({behavior:'smooth',block:'start'});
-          });
-        }
-      })();
-
-      // Rotación de perfiles en el hero
-      (function(){
-        var HERO_PROFILES = [
-          {
-            sector: 'Oficios · Fontanería',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg',
-            nombre: 'Mohamed Fontanero',
-            sub: 'Fontanería y urgencias 24h',
-            zona: '📍 Alicante y alrededores',
-            servicios: [
-              {txt:'Reparaciones y fugas', precio:'Desde 40€', main:true},
-              {txt:'Instalaciones baño y cocina', precio:'', main:false},
-              {txt:'Urgencias 24/7', precio:'', main:false},
-            ],
-            desc: '15 años de experiencia en Alicante. Trabajo limpio, precios claros y atención rápida.',
-          },
-          {
-            sector: 'Hogar · Servicio doméstico',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg',
-            nombre: 'Isabel Servicio Hogar',
-            sub: 'Limpieza y organización del hogar',
-            zona: '📍 Valencia y zona metropolitana',
-            servicios: [
-              {txt:'Limpieza semanal', precio:'Desde 15€/h', main:true},
-              {txt:'Plancha y ropa', precio:'', main:false},
-              {txt:'Organización y orden', precio:'', main:false},
-            ],
-            desc: 'Profesional de confianza con referencias contrastadas. Puntual, discreta y detallista.',
-          },
-          {
-            sector: 'Cuidados · Asistencia a domicilio',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg',
-            nombre: 'Antonio Cuidador',
-            sub: 'Cuidado de personas mayores',
-            zona: '📍 Madrid norte',
-            servicios: [
-              {txt:'Acompañamiento diario', precio:'Desde 12€/h', main:true},
-              {txt:'Gestiones y citas médicas', precio:'', main:false},
-              {txt:'Cuidados nocturnos', precio:'', main:false},
-            ],
-            desc: 'Cercano, paciente y comprometido. Formación en geriatría y primeros auxilios.',
-          },
-          {
-            sector: 'Belleza · Estética',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg',
-            nombre: 'Sonia Estética',
-            sub: 'Centro de estética y tratamientos',
-            zona: '📍 Murcia centro',
-            servicios: [
-              {txt:'Tratamiento facial completo', precio:'Desde 45€', main:true},
-              {txt:'Depilación y manicura', precio:'', main:false},
-              {txt:'Extensiones de pestañas', precio:'', main:false},
-            ],
-            desc: 'Resultados visibles desde la primera sesión. Productos de calidad y trato personalizado.',
-          },
-          {
-            sector: 'Educación · Clases particulares',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg',
-            nombre: 'Ana Profe',
-            sub: 'Clases particulares y apoyo escolar',
-            zona: '📍 Sevilla y online',
-            servicios: [
-              {txt:'Matemáticas y ciencias', precio:'Desde 20€/h', main:true},
-              {txt:'Inglés todos los niveles', precio:'', main:false},
-              {txt:'Preparación selectividad', precio:'', main:false},
-            ],
-            desc: 'Graduada en Matemáticas con 8 años de experiencia. Resultados garantizados o te devuelvo la clase.',
-          },
-          {
-            sector: 'Fitness · Entrenamiento personal',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ruben%20Entrenador.jpg',
-            nombre: 'Rubén Entrenador',
-            sub: 'Entrenamiento personalizado online y presencial',
-            zona: '📍 Barcelona y online',
-            servicios: [
-              {txt:'Plan de entrenamiento', precio:'Desde 60€/mes', main:true},
-              {txt:'Seguimiento nutricional', precio:'', main:false},
-              {txt:'Clases online', precio:'', main:false},
-            ],
-            desc: 'Más de 200 clientes transformados en 5 años. Resultados reales, sin excusas y con seguimiento diario.',
-          },
-          {
-            sector: 'Comercial · Ventas B2B',
-            foto: 'https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sergio%20comercial.png',
-            nombre: 'Sergio Área Levante',
-            sub: 'Delegado comercial · Zona Levante',
-            zona: '📍 Valencia, Alicante, Murcia',
-            servicios: [
-              {txt:'Representación de marca', precio:'', main:true},
-              {txt:'Gestión de cuentas clave', precio:'', main:false},
-              {txt:'Canal distribución B2B', precio:'', main:false},
-            ],
-            desc: 'Cubro toda la zona de Levante. Agenda abierta, trato directo y sin intermediarios.',
-          },
-        ];
-
-        var idx = 0;
-        var card = document.getElementById('heroCard');
-        var sectorLabel = document.getElementById('heroSectorLabel');
-
-        function renderHero(p) {
-          document.getElementById('heroAvatar').src = p.foto;
-          document.getElementById('heroAvatar').alt = p.nombre;
-          document.getElementById('heroName').textContent = p.nombre;
-          document.getElementById('heroSub').textContent = p.sub;
-          document.getElementById('heroZona').textContent = p.zona;
-          document.getElementById('heroDesc').textContent = p.desc;
-          sectorLabel.textContent = p.sector;
-          document.getElementById('heroServices').innerHTML = p.servicios.map(function(s){
-            return '<div class="svc-item' + (s.main ? ' svc-item--lead' : '') + '">' +
-              '<span>' + s.txt + '</span>' +
-              (s.precio ? '<span style="color:var(--primary);font-size:.82rem">' + s.precio + '</span>' : '') +
-            '</div>';
-          }).join('');
-        }
-
-        renderHero(HERO_PROFILES[0]);
-
-        setInterval(function(){
-          card.classList.add('fading');
-          setTimeout(function(){
-            idx = (idx + 1) % HERO_PROFILES.length;
-            renderHero(HERO_PROFILES[idx]);
-            card.classList.remove('fading');
-          }, 400);
-        }, 4000);
-      })();
-
-      // Carrusel de ejemplos
-      (function(){
-        var carousel = document.querySelector('.examples');
-        var dots = document.querySelectorAll('.dot');
-        if(!carousel || !dots.length) return;
-        function cardStep(){
-          var card = carousel.querySelector('.example');
-          return card ? card.offsetWidth + 20 : carousel.offsetWidth; // 20 ≈ gap 1.25rem
-        }
-        carousel.addEventListener('scroll', function(){
-          var index = Math.round(carousel.scrollLeft / cardStep());
-          dots.forEach(function(dot, i){ dot.classList.toggle('active', i === index); });
-        });
-        dots.forEach(function(dot, i){
-          dot.addEventListener('click', function(){
-            carousel.scrollTo({ left: cardStep() * i, behavior: 'smooth' });
-          });
-        });
-      })();
-    </script>
-  </body>
+</body>
 </html>
