@@ -40,7 +40,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'JSON inválido' };
   }
 
-  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride } = body;
+  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
   if (!nombre || !zona || !whatsapp || !plan) {
     return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -82,7 +82,7 @@ exports.handler = async (event) => {
         agent_code: agent_code || '',
       },
       success_url: `${siteUrl}/success.html?slug=${slug}`,
-      cancel_url:  `${siteUrl}/#crear`,
+      cancel_url:  cancelUrl || `${siteUrl}/#crear`,
     });
 
     return {

@@ -173,13 +173,20 @@
       border-radius: .75rem;
       padding: 1rem 1.25rem;
       margin-bottom: 1.25rem;
-      gap: .75rem;
     }
-    .free-banner.visible { display: flex; align-items: center; flex-wrap: wrap; }
-    .free-banner-copy { flex: 1; min-width: 0; }
-    .free-banner-copy strong { font-size: .9375rem; color: #92400e; display: block; margin-bottom: .25rem; }
-    .free-banner-copy p { font-size: .8125rem; color: #b45309; margin: 0; }
-    .free-banner-btn { white-space: nowrap; background: #01696f; color: #fff; border: none; border-radius: .5rem; padding: .55rem 1.1rem; font-family: var(--ff-b); font-size: .875rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background .15s; }
+    .free-banner.visible { display: block; }
+    .free-banner-title { font-size: .9375rem; font-weight: 700; color: #92400e; margin: 0 0 .2rem; }
+    .free-banner-sub { font-size: .8125rem; color: #b45309; margin: 0 0 .75rem; }
+    .free-perks { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-bottom: .875rem; }
+    .free-perks li { font-size: .8125rem; color: #b45309; }
+    .free-perks li::before { content: "✓ "; font-weight: 700; }
+    .plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
+    .plan-btn { flex: 1; padding: .5rem .75rem; border: 1.5px solid #fde68a; border-radius: .5rem; background: transparent; font-family: var(--ff-b); font-size: .8125rem; color: #92400e; cursor: pointer; transition: all .15s; text-align: left; line-height: 1.3; }
+    .plan-btn:hover { border-color: #f59e0b; background: #fef9e7; }
+    .plan-btn.selected { border-color: #01696f; background: #deeeed; color: #01696f; }
+    .plan-btn strong { display: block; font-size: .875rem; font-weight: 700; }
+    .plan-btn span { font-size: .75rem; opacity: .75; }
+    .free-banner-btn { width: 100%; background: #01696f; color: #fff; border: none; border-radius: .5rem; padding: .7rem 1.1rem; font-family: var(--ff-b); font-size: .9375rem; font-weight: 700; cursor: pointer; text-decoration: none; display: block; text-align: center; transition: background .15s; box-sizing: border-box; }
     .free-banner-btn:hover { background: #0c4e54; }
     .dir-box { border: 1.5px solid var(--border); border-radius: .75rem; padding: 1rem; }
     .dir-box .field:last-of-type { margin-bottom: 0; }
@@ -243,11 +250,25 @@
       <div id="editMsg" style="display:none" class="msg"></div>
 
       <div class="free-banner" id="freeBanner">
-        <div class="free-banner-copy">
-          <strong>Plan gratuito</strong>
-          <p>Tu perfil no aparece en el directorio ni tiene código QR. Actívalo para conseguir más clientes.</p>
+        <p class="free-banner-title">Perfil básico · activa tu plan</p>
+        <p class="free-banner-sub">Desbloquea todo para que tus clientes te encuentren:</p>
+        <ul class="free-perks">
+          <li>Foto de perfil</li>
+          <li>Botón de WhatsApp directo</li>
+          <li>Código QR en tu tarjeta</li>
+          <li>Posición preferente en el directorio</li>
+        </ul>
+        <div class="plan-toggle" role="group" aria-label="Elige tu plan">
+          <button class="plan-btn selected" data-plan="base" type="button">
+            <strong>Base · 9€</strong>
+            <span>90 días</span>
+          </button>
+          <button class="plan-btn" data-plan="pro" type="button">
+            <strong>Pro · 20€</strong>
+            <span>365 días · estadísticas</span>
+          </button>
         </div>
-        <a id="freeBannerBtn" href="#" class="free-banner-btn">Activar por 9€ →</a>
+        <button class="free-banner-btn" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
       </div>
 
       <div class="field">
@@ -465,28 +486,42 @@
           document.getElementById('editDescCount').textContent = this.value.length;
         });
 
-        // Upgrade banner for free plan
+        // Upgrade banner
         const freeBanner = document.getElementById('freeBanner');
         const freeBannerBtn = document.getElementById('freeBannerBtn');
-        if (freeBanner && (card.plan === 'free' || card.status === 'free')) {
+        if (freeBanner && !card.stripe_session_id) {
           freeBanner.classList.add('visible');
+          let selectedPlan = 'base';
+          freeBanner.querySelectorAll('.plan-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              freeBanner.querySelectorAll('.plan-btn').forEach(function(b) { b.classList.remove('selected'); });
+              btn.classList.add('selected');
+              selectedPlan = btn.dataset.plan;
+              freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+            });
+          });
           if (freeBannerBtn) {
-            freeBannerBtn.addEventListener('click', async function(e) {
-              e.preventDefault();
+            freeBannerBtn.addEventListener('click', async function() {
+              const label = freeBannerBtn.textContent;
               freeBannerBtn.textContent = 'Redirigiendo…';
               freeBannerBtn.style.pointerEvents = 'none';
               try {
                 const r = await fetch('/api/create-checkout', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ nombre: card.nombre, sector: card.tagline, zona: card.zona, whatsapp: card.whatsapp, servicios: card.servicios || [], plan: 'base', slug: slug }),
+                  body: JSON.stringify({
+                    nombre: card.nombre, sector: card.tagline, zona: card.zona,
+                    whatsapp: card.whatsapp, servicios: card.servicios || [],
+                    plan: selectedPlan, slug: slug,
+                    cancel_url: window.location.href,
+                  }),
                 });
                 const j = await r.json();
                 if (j.url) { window.location.href = j.url; }
-                else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = 'Activar por 9€ →'; freeBannerBtn.style.pointerEvents = ''; }
+                else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
               } catch(err) {
                 alert('Error de conexión: ' + err.message);
-                freeBannerBtn.textContent = 'Activar por 9€ →';
+                freeBannerBtn.textContent = label;
                 freeBannerBtn.style.pointerEvents = '';
               }
             });

@@ -23,7 +23,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at, category_id, city_slug, directory_visible, plan, status')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, edit_token_expires_at, category_id, city_slug, directory_visible, plan, status, stripe_session_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
