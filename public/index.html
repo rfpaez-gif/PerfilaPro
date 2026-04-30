@@ -83,6 +83,60 @@
     .hero-micro { font-size: var(--text-xs); color: var(--faint); margin-top: var(--sp-3); }
     /* Profiles rail */
     .rail-section { padding-block: clamp(1.5rem, 3vw, 2.5rem); overflow: hidden; }
+    /* Escaparate (carrusel por sector) */
+    .showcase-block { display: flex; flex-direction: column; gap: var(--sp-9); margin-top: var(--sp-6); }
+    .showcase-sector { display: flex; flex-direction: column; gap: var(--sp-4); }
+    .showcase-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--sp-4);
+      flex-wrap: wrap;
+    }
+    .showcase-head h3 {
+      font-family: var(--font-d);
+      font-weight: 400;
+      letter-spacing: -.02em;
+      font-size: clamp(1.4rem, .8rem + 1.4vw, 1.85rem);
+      margin: 0;
+    }
+    .showcase-head a { font-size: var(--text-sm); color: var(--primary); font-weight: 600; }
+    .showcase-head a:hover { text-decoration: underline; }
+    .showcase-rail {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: .5rem;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .showcase-rail::-webkit-scrollbar { display: none; }
+    .showcase-rail .pro-card {
+      scroll-snap-align: start;
+      flex: 0 0 240px;
+      min-width: 240px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .showcase-skeleton {
+      display: flex;
+      gap: 1rem;
+      overflow: hidden;
+    }
+    .showcase-skeleton-card {
+      flex: 0 0 240px;
+      height: 230px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      opacity: .55;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: .35; }
+      50% { opacity: .65; }
+    }
     /* Inline directory */
     .dir-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-top: var(--sp-6); }
     /* Empresa 2-col */
@@ -249,111 +303,29 @@
   </div>
 </section>
 
-<!-- ══════════════════ PROFILES RAIL ══════════════════ -->
-<section class="rail-section section-alt">
+<!-- ══════════════════ ESCAPARATE (carrusel por sector) ══════════════════ -->
+<section class="rail-section section-alt" id="escaparate">
   <div class="wrap">
-    <p class="section-kicker">Profesionales reales</p>
-    <div class="profiles-rail" aria-label="Perfiles de ejemplo">
+    <p class="section-kicker">Escaparate</p>
+    <h2 class="section-h reveal in">Profesionales por sector</h2>
+    <p class="section-copy reveal in" style="max-width:54ch">Una pequeña selección de cada gremio. Desliza para descubrir.</p>
 
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#e4f0ef;color:#0b7177">BR</div>
-          <div>
-            <h3 class="pro-name">Benjamín Rodríguez</h3>
-            <p class="pro-role">Electricista · Huesca</p>
-          </div>
+    <div id="showcaseRoot" class="showcase-block" aria-busy="true">
+      <!-- Skeleton inicial mientras carga el fetch -->
+      <div class="showcase-sector">
+        <div class="showcase-head"><h3 style="opacity:.4">Cargando…</h3></div>
+        <div class="showcase-skeleton" aria-hidden="true">
+          <div class="showcase-skeleton-card"></div>
+          <div class="showcase-skeleton-card"></div>
+          <div class="showcase-skeleton-card"></div>
+          <div class="showcase-skeleton-card"></div>
+          <div class="showcase-skeleton-card"></div>
         </div>
-        <p class="pro-line">Instalaciones rurales y cuadros de mando en los Pirineos.</p>
-        <div class="pro-tags">
-          <span class="chip">Electricidad</span>
-          <span class="chip">Urgencias</span>
-        </div>
-        <div class="pro-fun">Apicultor · Esquiador de backcountry</div>
-      </article>
-
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#fef3c7;color:#92400e">MG</div>
-          <div>
-            <h3 class="pro-name">María García</h3>
-            <p class="pro-role">Diseño gráfico · Madrid</p>
-          </div>
-        </div>
-        <p class="pro-line">Identidad visual y packaging para pequeños negocios.</p>
-        <div class="pro-tags">
-          <span class="chip">Branding</span>
-          <span class="chip">Web</span>
-        </div>
-        <div class="pro-fun">Senderismo los fines de semana · Acuarela</div>
-      </article>
-
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#f0fdf4;color:#166534">LP</div>
-          <div>
-            <h3 class="pro-name">Luis Peña</h3>
-            <p class="pro-role">Fontanería · Madrid</p>
-          </div>
-        </div>
-        <p class="pro-line">Reparaciones urgentes, sanitarios y calderas.</p>
-        <div class="pro-tags">
-          <span class="chip">Urgencias 24h</span>
-          <span class="chip">Calderas</span>
-        </div>
-        <div class="pro-fun">Cocinero aficionado · Ciclismo de montaña</div>
-      </article>
-
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#fdf2f8;color:#831843">AS</div>
-          <div>
-            <h3 class="pro-name">Ana Soto</h3>
-            <p class="pro-role">Fisioterapia · Barcelona</p>
-          </div>
-        </div>
-        <p class="pro-line">Fisioterapia deportiva y rehabilitación postoperatoria.</p>
-        <div class="pro-tags">
-          <span class="chip">Deportiva</span>
-          <span class="chip">Domicilio</span>
-        </div>
-        <div class="pro-fun">Corredora de montaña · Yoga</div>
-      </article>
-
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#eff6ff;color:#1e40af">JM</div>
-          <div>
-            <h3 class="pro-name">Jorge Martín</h3>
-            <p class="pro-role">Carpintería · Valencia</p>
-          </div>
-        </div>
-        <p class="pro-line">Muebles a medida y restauración de piezas antiguas.</p>
-        <div class="pro-tags">
-          <span class="chip">A medida</span>
-          <span class="chip">Restauración</span>
-        </div>
-        <div class="pro-fun">Apicultor urbano · Luthier los domingos</div>
-      </article>
-
-      <article class="pro-card">
-        <div class="pro-card-top">
-          <div class="pro-avatar" style="background:#fff7ed;color:#9a3412">CR</div>
-          <div>
-            <h3 class="pro-name">Carmen Ruiz</h3>
-            <p class="pro-role">Pintura · Sevilla</p>
-          </div>
-        </div>
-        <p class="pro-line">Pintura de interiores, exteriores y decoración mural.</p>
-        <div class="pro-tags">
-          <span class="chip">Interiores</span>
-          <span class="chip">Murales</span>
-        </div>
-        <div class="pro-fun">Flamenca · Cultivadora de tomates cherry</div>
-      </article>
-
+      </div>
     </div>
-    <div style="text-align:center;margin-top:var(--sp-6)">
-      <a href="/directorio" class="btn btn-secondary">Ver todos los perfiles</a>
+
+    <div style="text-align:center;margin-top:var(--sp-7)">
+      <a href="/directorio" class="btn btn-secondary">Ver el directorio completo</a>
     </div>
   </div>
 </section>
@@ -630,6 +602,78 @@
     });
   }, { threshold: 0.08 });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+  /* Escaparate — carga los perfiles seed agrupados por sector */
+  (function () {
+    var root = document.getElementById('showcaseRoot');
+    if (!root) return;
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function citySlugToLabel(slug) {
+      if (!slug) return '';
+      return slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+    }
+
+    function initials(name) {
+      var parts = String(name || '').trim().split(/\s+/).slice(0, 2);
+      return parts.map(function (p) { return (p[0] || '').toUpperCase(); }).join('') || '?';
+    }
+
+    function renderCard(p) {
+      var role = p.profession_label || p.tagline || '';
+      var city = citySlugToLabel(p.city_slug);
+      var avatar = p.foto_url
+        ? '<div class="pro-avatar"><img src="' + escapeHtml(p.foto_url) + '" alt="' + escapeHtml(p.nombre) + '" loading="lazy" width="52" height="52"></div>'
+        : '<div class="pro-avatar">' + escapeHtml(initials(p.nombre)) + '</div>';
+      return ''
+        + '<a class="pro-card" href="/p/' + escapeHtml(p.slug) + '">'
+        +   '<div class="pro-card-top">'
+        +     avatar
+        +     '<div>'
+        +       '<h3 class="pro-name">' + escapeHtml(p.nombre) + '</h3>'
+        +       '<p class="pro-role">' + escapeHtml(role) + (city ? ' · ' + escapeHtml(city) : '') + '</p>'
+        +     '</div>'
+        +   '</div>'
+        + '</a>';
+    }
+
+    function renderSector(s) {
+      var rail = s.profiles.map(renderCard).join('');
+      return ''
+        + '<div class="showcase-sector">'
+        +   '<div class="showcase-head">'
+        +     '<h3>' + escapeHtml(s.sector_label || s.sector) + '</h3>'
+        +     '<a href="/directorio/' + escapeHtml(s.sector) + '">Ver todos →</a>'
+        +   '</div>'
+        +   '<div class="showcase-rail" role="list" aria-label="Profesionales de ' + escapeHtml(s.sector_label || s.sector) + '">'
+        +     rail
+        +   '</div>'
+        + '</div>';
+    }
+
+    fetch('/api/showcase')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+      .then(function (data) {
+        var sectors = (data && data.sectors) || [];
+        if (!sectors.length) {
+          root.innerHTML = '<p class="hero-micro" style="text-align:center">Aún no hay perfiles para mostrar.</p>';
+          root.removeAttribute('aria-busy');
+          return;
+        }
+        root.innerHTML = sectors.map(renderSector).join('');
+        root.removeAttribute('aria-busy');
+      })
+      .catch(function (err) {
+        console.warn('showcase load failed', err);
+        root.innerHTML = '<p class="hero-micro" style="text-align:center">No se pudieron cargar los perfiles. <a href="/directorio">Abrir directorio →</a></p>';
+        root.removeAttribute('aria-busy');
+      });
+  })();
 </script>
 
 </body>

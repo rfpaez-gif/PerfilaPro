@@ -117,6 +117,11 @@
   to     = "/.netlify/functions/register-free"
   status = 200
 
+[[redirects]]
+  from   = "/api/showcase"
+  to     = "/.netlify/functions/showcase"
+  status = 200
+
 [[edge_functions]]
   path     = "/api/admin-*"
   function = "rate-limiter"
