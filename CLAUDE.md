@@ -161,3 +161,37 @@ AGENT_JWT_SECRET      # signs agent JWT tokens
 - **Field allowlisting** — `legal-settings` and `edit-card` ignore unknown fields; `edit-card` additionally strips HTML tags and validates phone/email format.
 - **Avatar URL whitelist** — `edit-card` only accepts `foto_url` values that start with the configured Supabase storage URL.
 - **XSS prevention** — `card.js` escapes all user content via `esc()` before rendering HTML; `stripTags()` sanitises inputs on write.
+
+## Pending work (rama `claude/resume-seed-generation-CWNDw`)
+
+### 1. Renovación de imágenes seed desde Admin — Fase 1 (por tarjeta)
+- **Refactor**: extraer la lógica de generación de `scripts/generate-seeds.js` a `netlify/functions/lib/seed-generator.js`. Debe exportar:
+  - `generateImage(prompt, opts)` — con backoff exponencial (ya implementado en el script).
+  - `regenerateSeedCard(db, slug)` — localiza el arquetipo, regenera la imagen, sube a Storage con cache-bust (path `seeds/<slug>-<timestamp>.jpg` o `?v=ts` en `foto_url`), actualiza `cards.foto_url`.
+- **Endpoint síncrono** `netlify/functions/admin-regenerate-seed.js` (POST `{ slug }`) protegido por `x-admin-password`. Devuelve `{ foto_url }`. Patrón `makeHandler(deps)`.
+- **Redirect** en `netlify.toml`: `/api/admin-regenerate-seed` → función.
+- **UI** en `public/admin.html`: botón ↻ por fila de seed, spinner durante la llamada, swap de `<img>` cuando vuelve la respuesta.
+- **Tests** en `tests/admin-regenerate-seed.test.js`: éxito, slug inexistente, fallo de generación, auth fallida.
+
+### 2. Renovación masiva de seeds — Fase 2 (background)
+- **Netlify Background Function** `admin-regenerate-seeds-background.js` (15 min timeout, fire-and-forget) con filtros: `{ sector, missing_photo, all }`.
+- **Tracking de estado**: añadir columna `regen_status` (`pending`/`running`/`done`/`failed`) y `regen_started_at` a `cards`, o usar Netlify Blobs.
+- **UI** en admin: botón "Regenerar todas las semillas" + indicador de progreso (consulta periódica de `regen_status`).
+- **No programar cron**: la renovación se dispara siempre manualmente.
+
+### 3. Diversidad — refactor de arquetipos
+- `scripts/archetypes.json` → añadir a cada entrada:
+  - `atributos: { apariencia: "<frase corta tipo 'Latin American woman in her 30s'>", edad_aprox: "20-30|30-45|45-60|60+", genero: "femenino|masculino|no_binario" }`
+- **Distribución objetivo** (75 entradas):
+  - Origen: ~70% blanco/europeo, ~13% latinoamericano, ~8% magrebí, ~4% negro africano, ~3% asiático oriental, ~3% sur-asiático.
+  - Edad: ~20% 20-30, ~45% 30-45, ~25% 45-60, ~10% +60.
+  - Género: ~50/50, con 1-2 explícitamente disonantes con el estereotipo del rol.
+- **Neutralizar** `rol_profesional` con género lingüístico fijo (Enfermera→Enfermería, Cocinera→Cocina, Albañil→Albañilería…) sólo donde el título choque con `atributos.genero`.
+- `scripts/generate-seeds.js`: el prompt pasa a ser `BASE_PROMPT + atributos.apariencia + descripcion_accion`.
+- **Acción manual del usuario**: borrar los seeds ya generados (`Avatars/seeds/*` en Supabase Storage + `DELETE FROM cards WHERE is_seed=true`) antes de regenerar los 75.
+
+### 4. Otros pendientes del kickoff
+- Reanudar generación de seeds → `node scripts/generate-seeds.js` (ya con checkpoint y backoff, retoma solo).
+- Construir búsqueda Petri en home (`¿Qué necesitas?`).
+- Combobox de especialidad con sugerencias locales en `alta.html` y `editar.html`.
+
