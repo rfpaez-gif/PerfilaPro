@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 'use strict';
 
-/**
- * generate-seeds.js — genera fotos y fichas de perfiles semilla via Imagen 3 (Google AI)
- *
- * Uso:
- *   node scripts/generate-seeds.js              # genera todos
- *   node scripts/generate-seeds.js --dry-run    # simula sin llamar a la API
- *   node scripts/generate-seeds.js --limit 5    # solo los primeros 5
- *   node scripts/generate-seeds.js --start 10   # desde el arquetipo nº 10
- *
- * Variables de entorno requeridas (en .env o exportadas):
- *   GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY
- */
-
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const fs   = require('fs');
+
+// Carga manual del .env para evitar problemas con dotenv
+const envPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const clean = line.trim();
+    if (!clean || clean.startsWith('#')) return;
+    const eq = clean.indexOf('=');
+    if (eq < 0) return;
+    const key = clean.substring(0, eq).trim();
+    const val = clean.substring(eq + 1).trim();
+    if (key && !process.env[key]) process.env[key] = val;
+  });
+}
 
 const { createClient } = require('@supabase/supabase-js');
 const archetypes = require('./archetypes.json');
