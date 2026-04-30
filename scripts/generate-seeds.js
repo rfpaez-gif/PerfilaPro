@@ -68,64 +68,149 @@ function toSlug(s) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── Generación de imagen via Pollinations.ai (Flux, gratuito, sin API key) ───
+// ── Checkpoint de progreso ───────────────────────────────────────────────────
+const PROGRESS_FILE = path.join(__dirname, '.seed-progress.json');
+
+function loadProgress() {
+  try {
+    if (fs.existsSync(PROGRESS_FILE)) {
+      return JSON.parse(fs.readFileSync(PROGRESS_FILE, 'utf8'));
+    }
+  } catch (_) { /* ignore corrupt file, start fresh */ }
+  return { lastCompleted: -1, ok: 0, skipped: 0, errors: 0 };
+}
+
+function saveProgress(state) {
+  try {
+    fs.writeFileSync(PROGRESS_FILE, JSON.stringify(state, null, 2));
+  } catch (e) {
+    console.warn(`⚠ no se pudo guardar progreso: ${e.message}`);
+  }
+}
+
+// ── Generación de imagen con backoff exponencial ─────────────────────────────
 async function generateImage(prompt) {
   const encoded = encodeURIComponent(prompt);
-  const seed = Math.floor(Math.random() * 999999);
-  const url = `https://image.pollinations.ai/prompt/${encoded}?width=600&height=800&model=flux&nologo=true&enhance=true&seed=${seed}`;
+  // Hasta 6 reintentos: 5s, 10s, 20s, 40s, 80s, 160s (≈5 min total en el peor caso)
+  const MAX_ATTEMPTS = 6;
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Pollinations ${res.status}`);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const seed = Math.floor(Math.random() * 999999);
+    const url = `https://image.pollinations.ai/prompt/${encoded}?width=600&height=800&model=flux&nologo=true&enhance=true&seed=${seed}`;
 
-  const arrayBuffer = await res.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+    let res;
+    try {
+      res = await fetch(url);
+    } catch (netErr) {
+      if (attempt === MAX_ATTEMPTS) throw netErr;
+      const wait = 5000 * Math.pow(2, attempt - 1);
+      process.stdout.write(`(red ${netErr.code || 'err'}, retry ${attempt}/${MAX_ATTEMPTS} en ${wait / 1000}s) `);
+      await sleep(wait);
+      continue;
+    }
+
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
+
+    // 429 o 5xx → reintentar; otros códigos → fallar inmediatamente
+    const retryable = res.status === 429 || (res.status >= 500 && res.status < 600);
+    if (!retryable || attempt === MAX_ATTEMPTS) {
+      throw new Error(`Pollinations ${res.status}`);
+    }
+
+    const wait = 5000 * Math.pow(2, attempt - 1);
+    process.stdout.write(`(${res.status}, retry ${attempt}/${MAX_ATTEMPTS} en ${wait / 1000}s) `);
+    await sleep(wait);
+  }
+
+  throw new Error('Pollinations: agotados los reintentos');
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function run() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
+  const reset  = args.includes('--reset');
   const limitIdx = args.indexOf('--limit');
   const startIdx = args.indexOf('--start');
-  const limit  = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : archetypes.length;
-  const start  = startIdx >= 0 ? parseInt(args[startIdx + 1], 10) : 0;
 
-  const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  if (reset && fs.existsSync(PROGRESS_FILE)) {
+    fs.unlinkSync(PROGRESS_FILE);
+    console.log('Checkpoint eliminado.');
+  }
+
+  const progress = loadProgress();
+
+  // Prioridad: --start explícito > checkpoint > 0
+  let start;
+  if (startIdx >= 0) {
+    start = parseInt(args[startIdx + 1], 10);
+  } else if (progress.lastCompleted >= 0) {
+    start = progress.lastCompleted + 1;
+    console.log(`↻ Reanudando desde índice ${start} (checkpoint previo).`);
+  } else {
+    start = 0;
+  }
+
+  const limit = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : archetypes.length - start;
+  const db    = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   const batch = archetypes.slice(start, start + limit);
+
+  if (batch.length === 0) {
+    console.log('Nada que generar (¿checkpoint completo? usa --reset para empezar de cero).');
+    return;
+  }
 
   console.log(`\nGenerando ${batch.length} perfiles semilla${dryRun ? ' [DRY RUN — sin llamadas API]' : ''}...\n`);
 
-  let ok = 0, skipped = 0, errors = 0;
+  let ok = progress.ok, skipped = progress.skipped, errors = progress.errors;
+  let lastCompletedAbs = start - 1;
+  let interrupted = false;
+
+  // Guardar progreso si el usuario interrumpe (Ctrl-C / SIGTERM)
+  const onSignal = (sig) => {
+    if (interrupted) return;
+    interrupted = true;
+    console.log(`\n${sig} recibido — guardando checkpoint y saliendo...`);
+    saveProgress({ lastCompleted: lastCompletedAbs, ok, skipped, errors });
+    process.exit(130);
+  };
+  process.on('SIGINT', onSignal);
+  process.on('SIGTERM', onSignal);
 
   for (let i = 0; i < batch.length; i++) {
+    const absoluteIdx = start + i;
     const arch   = batch[i];
     const slug   = 'seed-' + toSlug(arch.nombre_arquetipo);
     const sector = SECTOR_MAP[arch.sector] || 'otro';
-    const city   = CITIES[i % CITIES.length];
+    const city   = CITIES[absoluteIdx % CITIES.length];
     const nombre = arch.nombre_arquetipo.split(' ')[0];
 
-    process.stdout.write(`[${String(i + 1).padStart(2)}/${batch.length}] ${arch.nombre_arquetipo.padEnd(32)} `);
+    process.stdout.write(`[${String(absoluteIdx + 1).padStart(2)}/${archetypes.length}] ${arch.nombre_arquetipo.padEnd(32)} `);
 
     // Saltar si ya existe
     const { data: existing } = await db.from('cards').select('slug').eq('slug', slug).maybeSingle();
     if (existing) {
       console.log('↩ ya existe');
       skipped++;
+      lastCompletedAbs = absoluteIdx;
+      saveProgress({ lastCompleted: lastCompletedAbs, ok, skipped, errors });
       continue;
     }
 
     if (dryRun) {
       console.log(`✓ dry  slug=${slug}  sector=${sector}  ciudad=${city}`);
       ok++;
+      lastCompletedAbs = absoluteIdx;
       continue;
     }
 
     try {
-      // 1. Generar imagen
       const fullPrompt = `${BASE_PROMPT} ${arch.descripcion_accion}`;
       const imageBuffer = await generateImage(fullPrompt);
 
-      // 2. Subir a Supabase Storage (bucket Avatars, carpeta seeds/)
       const storagePath = `seeds/${slug}.jpg`;
       const { error: uploadErr } = await db.storage
         .from('Avatars')
@@ -134,11 +219,9 @@ async function run() {
 
       const { data: { publicUrl } } = db.storage.from('Avatars').getPublicUrl(storagePath);
 
-      // 3. Buscar category_id del sector (primera especialidad disponible)
       const { data: cat } = await db
         .from('categories').select('id').eq('sector', sector).limit(1).maybeSingle();
 
-      // 4. Insertar ficha semilla
       const { error: insertErr } = await db.from('cards').insert({
         slug,
         nombre,
@@ -157,17 +240,22 @@ async function run() {
 
       console.log('✓ ok');
       ok++;
+      lastCompletedAbs = absoluteIdx;
+      saveProgress({ lastCompleted: lastCompletedAbs, ok, skipped, errors });
     } catch (e) {
       console.log(`✗ ERROR: ${e.message}`);
       errors++;
+      // No avanzamos lastCompleted: el siguiente arranque reintentará este índice.
+      saveProgress({ lastCompleted: lastCompletedAbs, ok, skipped, errors });
     }
 
-    // Rate limit: Imagen 3 permite ~30 req/min → ~2,1 s entre llamadas
+    // Espaciar peticiones para no disparar el rate-limit de Pollinations
     if (i < batch.length - 1) await sleep(2200);
   }
 
   console.log(`\n─────────────────────────────────────────`);
   console.log(`Generados: ${ok}  |  Saltados: ${skipped}  |  Errores: ${errors}`);
+  console.log(`Checkpoint: ${PROGRESS_FILE}`);
   console.log(`─────────────────────────────────────────\n`);
 }
 

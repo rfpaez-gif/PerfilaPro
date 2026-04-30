@@ -4,3 +4,4 @@ node_modules/
 fix-netlify-env.sh
 .env.local
 .env.*.local
+scripts/.seed-progress.json
