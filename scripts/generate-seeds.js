@@ -67,36 +67,32 @@ function toSlug(s) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── Generación de imagen via Imagen 3 (Google AI REST API) ───────────────────
+// ── Generación de imagen via Gemini 2.0 Flash (Google AI REST API) ───────────
 async function generateImage(prompt) {
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/` +
-    `imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`;
+    `gemini-2.0-flash-preview-image-generation:generateContent?key=${GEMINI_API_KEY}`;
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      instances: [{ prompt }],
-      parameters: {
-        sampleCount: 1,
-        aspectRatio: '3:4',
-        personGeneration: 'allow_adult',
-        safetySetting: 'block_only_high',
-      },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
     }),
   });
 
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`Imagen API ${res.status}: ${txt.substring(0, 200)}`);
+    throw new Error(`Gemini API ${res.status}: ${txt.substring(0, 200)}`);
   }
 
   const data = await res.json();
-  const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-  if (!b64) throw new Error(`Sin imagen en respuesta: ${JSON.stringify(data).substring(0, 200)}`);
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+  if (!imgPart) throw new Error(`Sin imagen en respuesta: ${JSON.stringify(data).substring(0, 200)}`);
 
-  return Buffer.from(b64, 'base64');
+  return Buffer.from(imgPart.inlineData.data, 'base64');
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
