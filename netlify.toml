@@ -122,6 +122,11 @@
   to     = "/.netlify/functions/showcase"
   status = 200
 
+[[redirects]]
+  from   = "/api/lab-gemini"
+  to     = "/.netlify/functions/lab-gemini"
+  status = 200
+
 [[edge_functions]]
   path     = "/api/admin-*"
   function = "rate-limiter"
