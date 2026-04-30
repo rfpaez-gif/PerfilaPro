@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Validación · 3 seeds con Gemini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --bg: #f6f3ee; --surface: #fcfbf8; --line: rgba(31,26,20,.10);
+      --text: #1f1a14; --muted: #6f675c; --primary: #01696f;
+      --danger: #b91c1c;
+      --serif: "Instrument Serif", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); padding: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    main, header { max-width: 720px; margin: 0 auto; }
+    header { margin-bottom: 1.25rem; }
+    header h1 { font-family: var(--serif); font-weight: 400; font-size: 1.55rem; letter-spacing: -.02em; }
+    header p { color: var(--muted); font-size: .85rem; margin-top: .25rem; }
+    .pwd-card, .actions-bar {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: .9rem 1rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .35rem; }
+    input[type="password"] {
+      width: 100%; font-family: var(--sans); font-size: .9rem;
+      padding: .6rem .8rem; border: 1px solid var(--line); border-radius: .55rem;
+      background: var(--bg); color: var(--text);
+    }
+    input:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+    button {
+      font-family: var(--sans); font-size: .9rem; font-weight: 700;
+      padding: .55rem 1.05rem; border-radius: 999px; border: none; cursor: pointer;
+      background: var(--primary); color: #fff; min-height: 42px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active { opacity: .8; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+    .hint { font-size: .78rem; color: var(--muted); }
+    .err { color: var(--danger); font-size: .82rem; padding: .55rem .75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: .55rem; margin-top: .5rem; }
+    .cards { display: flex; flex-direction: column; gap: 1rem; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+    .card-head { padding: .8rem 1rem .35rem; }
+    .card-title { font-weight: 700; font-size: .98rem; }
+    .card-attrs { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+    .img-wrap { aspect-ratio: 600 / 800; background: #ece7df; position: relative; overflow: hidden; isolation: isolate; }
+    .img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; position: relative; z-index: 1; }
+    .img-wrap .ph {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      color: var(--muted); font-size: .85rem; letter-spacing: .04em; z-index: 0;
+    }
+    .img-wrap .ph.spinning::after {
+      content: ""; display: block; width: 22px; height: 22px; margin-top: .5rem;
+      border: 2px solid var(--line); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .card-actions { padding: .55rem .9rem .9rem; display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+    .card-actions button { padding: .35rem .85rem; min-height: 32px; font-size: .78rem; }
+    .meta { font-size: .76rem; color: var(--muted); margin-left: auto; }
+    details { padding: 0 .9rem .9rem; }
+    details summary { cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--primary); list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary { margin-bottom: .35rem; }
+    pre {
+      font-family: var(--mono); font-size: .72rem;
+      background: #f1ede5; padding: .55rem .7rem; border-radius: .5rem;
+      white-space: pre-wrap; word-break: break-word; line-height: 1.55;
+    }
+    footer { color: var(--muted); font-size: .78rem; margin-top: 1.5rem; max-width: 720px; margin-left: auto; margin-right: auto; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Validación · 3 seeds con Gemini Nano Banana</h1>
+  <p>Si las 3 cuajan, aplico el mismo estilo a los 75 arquetipos restantes. Cada generación cuesta ≈ $0.04 (las tres ≈ $0.12).</p>
+</header>
+
+<div id="pwdCard" class="pwd-card" hidden>
+  <label for="pwd">Contraseña admin</label>
+  <input type="password" id="pwd" autocomplete="current-password">
+  <div class="row">
+    <button id="pwdOk">Continuar</button>
+    <span class="hint">La misma de /admin.html. Se guarda solo en este iPhone.</span>
+  </div>
+  <div id="pwdErr" class="err" hidden></div>
+</div>
+
+<div id="actionsBar" class="actions-bar" hidden>
+  <div class="row" style="margin-top:0">
+    <button id="genAll">Generar las 3</button>
+    <button id="logout" class="secondary" type="button">Olvidar contraseña</button>
+    <span class="hint" id="globalStatus"></span>
+  </div>
+</div>
+
+<main id="content" hidden>
+  <div class="cards" id="cards"></div>
+</main>
+
+<footer>
+  Página temporal sin indexar. La imagen vive solo en tu pestaña — tap-largo para guardar en Fotos.
+</footer>
+
+<script>
+'use strict';
+
+const BASE_PROMPT = 'Portrait photo, professional, warm natural light, subject in upper third of frame, neutral or soft background. 600x800px, vertical format. Realistic, approachable, no text.';
+
+const ARCHETYPES = [
+  {
+    title: '1 · Albañilería',
+    attrs: 'Mujer · Latinoamericana · ~30 años · Rompe estereotipo de género',
+    action: 'Guapa y sonriente mujer albañil de origen latino coloca ladrillos en una pared al sol',
+  },
+  {
+    title: '2 · Electricidad',
+    attrs: 'Hombre · Magrebí · ~25 años · Diversidad étnica',
+    action: 'Joven árabe electricista arregla un cuadro eléctrico mientras sonríe a un compañero de trabajo',
+  },
+  {
+    title: '3 · Transporte',
+    attrs: 'Hombre · Europeo · ~50 años · Edad madura, pose',
+    action: 'Camionero de 50 años posa sonriente con los brazos cruzados, apoyado en su moderno Mercedes-Benz nuevo',
+  },
+];
+
+const $ = (id) => document.getElementById(id);
+const PWD_KEY = 'lab_gemini_pwd';
+let password = localStorage.getItem(PWD_KEY) || '';
+
+function showLab() { $('pwdCard').hidden = true; $('actionsBar').hidden = false; $('content').hidden = false; renderCards(); }
+function showPwd() { $('pwdCard').hidden = false; $('actionsBar').hidden = true; $('content').hidden = true; }
+if (password) showLab(); else showPwd();
+
+$('pwdOk').addEventListener('click', () => {
+  const v = $('pwd').value.trim();
+  if (!v) return;
+  password = v;
+  localStorage.setItem(PWD_KEY, v);
+  $('pwd').value = '';
+  $('pwdErr').hidden = true;
+  showLab();
+});
+
+$('logout').addEventListener('click', () => {
+  localStorage.removeItem(PWD_KEY);
+  password = '';
+  showPwd();
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderCards() {
+  const html = ARCHETYPES.map((a, i) => `
+    <article class="card" data-i="${i}">
+      <div class="card-head">
+        <p class="card-title">${escapeHtml(a.title)}</p>
+        <p class="card-attrs">${escapeHtml(a.attrs)}</p>
+      </div>
+      <div class="img-wrap" id="img-${i}">
+        <div class="ph" id="ph-${i}">listo</div>
+      </div>
+      <div class="card-actions">
+        <button data-act="gen" data-i="${i}">Generar</button>
+        <span class="meta" id="meta-${i}"></span>
+      </div>
+      <details>
+        <summary>Ver prompt completo</summary>
+        <pre>${escapeHtml(BASE_PROMPT + ' ' + a.action)}</pre>
+      </details>
+      <div class="err" id="err-${i}" hidden></div>
+    </article>
+  `).join('');
+  $('cards').innerHTML = html;
+
+  document.querySelectorAll('button[data-act="gen"]').forEach(btn => {
+    btn.addEventListener('click', () => generateOne(parseInt(btn.dataset.i, 10)));
+  });
+}
+
+async function generateOne(i) {
+  const a = ARCHETYPES[i];
+  const ph = $('ph-' + i);
+  const meta = $('meta-' + i);
+  const err = $('err-' + i);
+  const wrap = $('img-' + i);
+
+  err.hidden = true;
+  meta.textContent = '';
+  ph.textContent = 'generando…';
+  ph.classList.add('spinning');
+  // remove any previous img
+  wrap.querySelectorAll('img').forEach(el => el.remove());
+
+  const t0 = performance.now();
+  try {
+    const res = await fetch('/api/lab-gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: BASE_PROMPT + ' ' + a.action, password }),
+    });
+    const data = await res.json();
+    if (res.status === 401) {
+      localStorage.removeItem(PWD_KEY);
+      password = '';
+      $('pwdErr').textContent = 'Contraseña incorrecta. Vuelve a introducirla.';
+      $('pwdErr').hidden = false;
+      showPwd();
+      return;
+    }
+    if (!res.ok) {
+      throw new Error(data.details || data.modelText || data.error || ('HTTP ' + res.status));
+    }
+    const img = new Image();
+    img.alt = a.title;
+    img.src = data.dataUrl;
+    wrap.appendChild(img);
+    const total = Math.round(performance.now() - t0);
+    meta.textContent = `${(data.bytes / 1024).toFixed(0)} KB · ${data.elapsedMs} ms server / ${total} ms total`;
+    ph.textContent = '';
+    ph.classList.remove('spinning');
+  } catch (e) {
+    err.textContent = '✗ ' + (e.message || 'error');
+    err.hidden = false;
+    ph.textContent = 'error';
+    ph.classList.remove('spinning');
+  }
+}
+
+$('genAll').addEventListener('click', async () => {
+  $('genAll').disabled = true;
+  $('globalStatus').textContent = '';
+  for (let i = 0; i < ARCHETYPES.length; i++) {
+    $('globalStatus').textContent = `(${i + 1}/${ARCHETYPES.length})`;
+    await generateOne(i);
+  }
+  $('globalStatus').textContent = 'listo';
+  $('genAll').disabled = false;
+});
+</script>
+
+</body>
+</html>
