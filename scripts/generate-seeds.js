@@ -67,32 +67,17 @@ function toSlug(s) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// ── Generación de imagen via Gemini 2.0 Flash (Google AI REST API) ───────────
+// ── Generación de imagen via Pollinations.ai (Flux, gratuito, sin API key) ───
 async function generateImage(prompt) {
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/` +
-    `gemini-2.0-flash-preview-image-generation:generateContent?key=${GEMINI_API_KEY}`;
+  const encoded = encodeURIComponent(prompt);
+  const seed = Math.floor(Math.random() * 999999);
+  const url = `https://image.pollinations.ai/prompt/${encoded}?width=600&height=800&model=flux&nologo=true&enhance=true&seed=${seed}`;
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
-    }),
-  });
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Pollinations ${res.status}`);
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`Gemini API ${res.status}: ${txt.substring(0, 200)}`);
-  }
-
-  const data = await res.json();
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-  if (!imgPart) throw new Error(`Sin imagen en respuesta: ${JSON.stringify(data).substring(0, 200)}`);
-
-  return Buffer.from(imgPart.inlineData.data, 'base64');
+  const arrayBuffer = await res.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
