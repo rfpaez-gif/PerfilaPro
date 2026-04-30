@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Preview · 3 seeds de prueba</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --bg: #f6f3ee; --surface: #fcfbf8; --line: rgba(31,26,20,.10);
+      --text: #1f1a14; --muted: #6f675c; --primary: #01696f;
+      --serif: "Instrument Serif", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); padding: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    header { max-width: 720px; margin: 0 auto 1.5rem; }
+    header h1 { font-family: var(--serif); font-weight: 400; font-size: 1.6rem; letter-spacing: -.02em; }
+    header p { color: var(--muted); font-size: .9rem; margin-top: .35rem; }
+    main { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+    .card-head { padding: .9rem 1rem .35rem; }
+    .card-title { font-weight: 700; font-size: 1rem; }
+    .card-attrs { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
+    .img-wrap { aspect-ratio: 600 / 800; background: #ece7df; position: relative; overflow: hidden; }
+    .img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-wrap::before {
+      content: "Generando…";
+      position: absolute; inset: 0; display: grid; place-items: center;
+      color: var(--muted); font-size: .85rem; letter-spacing: .04em;
+    }
+    .card-prompt { padding: .75rem 1rem 1rem; }
+    .card-prompt summary {
+      cursor: pointer; font-size: .8rem; color: var(--primary); font-weight: 600;
+      list-style: none; -webkit-tap-highlight-color: transparent;
+    }
+    .card-prompt summary::-webkit-details-marker { display: none; }
+    .card-prompt[open] summary { margin-bottom: .5rem; }
+    .card-prompt code {
+      display: block; font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .72rem; color: var(--text); background: #f1ede5;
+      padding: .65rem .75rem; border-radius: .55rem; word-break: break-word;
+      white-space: pre-wrap; line-height: 1.5;
+    }
+    footer { max-width: 720px; margin: 2rem auto 1rem; color: var(--muted); font-size: .8rem; }
+    footer code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: .75rem; }
+    .tip { background: #fff8e6; border: 1px solid #fde68a; padding: .75rem .9rem; border-radius: .55rem; font-size: .82rem; color: #78350f; margin-top: .75rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Preview · 3 seeds de prueba</h1>
+  <p>Validamos el prompt fotoperiodístico antes de regenerar los 75. Las imágenes se piden en directo a Pollinations al cargar la página — pueden tardar 5-15&nbsp;s cada una.</p>
+  <div class="tip">📷 Si una imagen no carga: refresca la página (Pollinations hace 429 con frecuencia). Cada refresco usa el mismo seed y debería devolver la misma imagen.</div>
+</header>
+
+<main>
+
+  <article class="card">
+    <div class="card-head">
+      <p class="card-title">1 · Albañilería</p>
+      <p class="card-attrs">Mujer · Latinoamericana · ~30 años · Rompe estereotipo</p>
+    </div>
+    <div class="img-wrap">
+      <img loading="lazy"
+           alt="Mujer latinoamericana albañil en una obra"
+           src="https://image.pollinations.ai/prompt/Candid%20documentary%20portrait%20photo%2C%2035mm%20film%20grain%2C%20natural%20skin%20texture%20with%20pores%20and%20imperfections%2C%20real%20workplace%20lighting%2C%20photojournalism%20style%2C%20shallow%20depth%20of%20field.%20Subject%20framed%20in%20upper%20third%2C%20vertical%20600x800.%20No%20text%2C%20no%20watermark%2C%20no%20logo.%20Latin%20American%20woman%20in%20her%20early%2030s%2C%20light%20brown%20skin%2C%20dark%20hair%20tied%20back%2C%20sweat%20on%20forehead%2C%20laying%20bricks%20on%20a%20half-built%20wall%20on%20a%20real%20construction%20site%2C%20wearing%20a%20hard%20hat%20and%20dusty%20work%20clothes.?width=600&amp;height=800&amp;model=flux&amp;nologo=true&amp;enhance=false&amp;seed=601144">
+    </div>
+    <details class="card-prompt">
+      <summary>Ver prompt completo</summary>
+      <code>Candid documentary portrait photo, 35mm film grain, natural skin texture with pores and imperfections, real workplace lighting, photojournalism style, shallow depth of field. Subject framed in upper third, vertical 600x800. No text, no watermark, no logo. Latin American woman in her early 30s, light brown skin, dark hair tied back, sweat on forehead, laying bricks on a half-built wall on a real construction site, wearing a hard hat and dusty work clothes.</code>
+    </details>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <p class="card-title">2 · Enfermería hospitalaria</p>
+      <p class="card-attrs">Hombre · Magrebí · ~40 años · Rompe estereotipo</p>
+    </div>
+    <div class="img-wrap">
+      <img loading="lazy"
+           alt="Enfermero magrebí ajustando un gotero"
+           src="https://image.pollinations.ai/prompt/Candid%20documentary%20portrait%20photo%2C%2035mm%20film%20grain%2C%20natural%20skin%20texture%20with%20pores%20and%20imperfections%2C%20real%20workplace%20lighting%2C%20photojournalism%20style%2C%20shallow%20depth%20of%20field.%20Subject%20framed%20in%20upper%20third%2C%20vertical%20600x800.%20No%20text%2C%20no%20watermark%2C%20no%20logo.%20North%20African%20Maghrebi%20man%20in%20his%20mid%2040s%2C%20short%20dark%20hair%2C%20trimmed%20beard%2C%20light%20skin%20tone%2C%20carefully%20adjusting%20an%20IV%20drip%20beside%20a%20patient%20bed%20in%20a%20real%20hospital%20room%20with%20fluorescent%20lights.?width=600&amp;height=800&amp;model=flux&amp;nologo=true&amp;enhance=false&amp;seed=916067">
+    </div>
+    <details class="card-prompt">
+      <summary>Ver prompt completo</summary>
+      <code>Candid documentary portrait photo, 35mm film grain, natural skin texture with pores and imperfections, real workplace lighting, photojournalism style, shallow depth of field. Subject framed in upper third, vertical 600x800. No text, no watermark, no logo. North African Maghrebi man in his mid 40s, short dark hair, trimmed beard, light skin tone, carefully adjusting an IV drip beside a patient bed in a real hospital room with fluorescent lights.</code>
+    </details>
+  </article>
+
+  <article class="card">
+    <div class="card-head">
+      <p class="card-title">3 · Abogada</p>
+      <p class="card-attrs">Mujer · Negra africana · ~50 años · Diversidad subrepresentada</p>
+    </div>
+    <div class="img-wrap">
+      <img loading="lazy"
+           alt="Abogada negra africana revisando un contrato"
+           src="https://image.pollinations.ai/prompt/Candid%20documentary%20portrait%20photo%2C%2035mm%20film%20grain%2C%20natural%20skin%20texture%20with%20pores%20and%20imperfections%2C%20real%20workplace%20lighting%2C%20photojournalism%20style%2C%20shallow%20depth%20of%20field.%20Subject%20framed%20in%20upper%20third%2C%20vertical%20600x800.%20No%20text%2C%20no%20watermark%2C%20no%20logo.%20Black%20African%20woman%20in%20her%20early%2050s%2C%20short%20natural%20afro%20hair%2C%20thin-rimmed%20glasses%2C%20dark%20skin%20tone%2C%20reviewing%20a%20paper%20contract%20at%20a%20cluttered%20desk%20in%20a%20law%20office%20lined%20with%20legal%20books.?width=600&amp;height=800&amp;model=flux&amp;nologo=true&amp;enhance=false&amp;seed=29287">
+    </div>
+    <details class="card-prompt">
+      <summary>Ver prompt completo</summary>
+      <code>Candid documentary portrait photo, 35mm film grain, natural skin texture with pores and imperfections, real workplace lighting, photojournalism style, shallow depth of field. Subject framed in upper third, vertical 600x800. No text, no watermark, no logo. Black African woman in her early 50s, short natural afro hair, thin-rimmed glasses, dark skin tone, reviewing a paper contract at a cluttered desk in a law office lined with legal books.</code>
+    </details>
+  </article>
+
+</main>
+
+<footer>
+  <p>Página temporal. Borrar tras validar prompts. URL: <code>/preview-seeds.html</code></p>
+</footer>
+
+</body>
+</html>
