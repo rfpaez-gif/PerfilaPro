@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Lab Gemini · Probar prompts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --bg: #f6f3ee; --surface: #fcfbf8; --line: rgba(31,26,20,.10);
+      --text: #1f1a14; --muted: #6f675c; --primary: #01696f;
+      --danger: #b91c1c; --warn: #b45309;
+      --serif: "Instrument Serif", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); padding: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    main { max-width: 720px; margin: 0 auto; }
+    header { margin-bottom: 1.25rem; }
+    header h1 { font-family: var(--serif); font-weight: 400; font-size: 1.6rem; letter-spacing: -.02em; }
+    header p { color: var(--muted); font-size: .85rem; margin-top: .25rem; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+    label { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .35rem; }
+    textarea, input[type="password"] {
+      width: 100%; font-family: var(--sans); font-size: .9rem;
+      padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .55rem;
+      background: var(--bg); color: var(--text); resize: vertical;
+      -webkit-appearance: none; appearance: none;
+    }
+    textarea { min-height: 9rem; line-height: 1.5; }
+    textarea:focus, input:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+    .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: .65rem; }
+    button {
+      font-family: var(--sans); font-size: .9rem; font-weight: 700;
+      padding: .6rem 1.1rem; border-radius: 999px; border: none; cursor: pointer;
+      background: var(--primary); color: #fff; min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active { opacity: .8; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    button.danger { background: var(--danger); }
+    .hint { font-size: .78rem; color: var(--muted); }
+    details { margin-top: .65rem; }
+    details summary { cursor: pointer; font-size: .8rem; font-weight: 600; color: var(--primary); list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary { margin-bottom: .5rem; }
+    code, pre {
+      font-family: var(--mono); font-size: .75rem;
+      background: #f1ede5; padding: .55rem .7rem; border-radius: .5rem;
+      display: block; white-space: pre-wrap; word-break: break-word; line-height: 1.5;
+    }
+    .results { display: flex; flex-direction: column; gap: 1rem; }
+    .res { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden; }
+    .res-img { aspect-ratio: 3 / 4; background: #ece7df; display: grid; place-items: center; color: var(--muted); font-size: .85rem; }
+    .res-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .res-meta { padding: .65rem .9rem .25rem; display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; font-size: .78rem; color: var(--muted); }
+    .res-meta strong { color: var(--text); }
+    .res-actions { padding: 0 .9rem .9rem; display: flex; gap: .4rem; flex-wrap: wrap; }
+    .res-actions button { padding: .35rem .8rem; min-height: 32px; font-size: .78rem; }
+    .res-prompt { padding: 0 .9rem .9rem; }
+    .err { color: var(--danger); font-size: .82rem; padding: .65rem .8rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: .55rem; }
+    .ok-banner { color: #065f46; font-size: .82rem; padding: .65rem .8rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: .55rem; }
+    .pwd-card { display: block; }
+    .pwd-card.hidden { display: none; }
+    .meter {
+      height: 4px; background: #e5e1d8; border-radius: 2px; overflow: hidden; margin-top: .65rem;
+    }
+    .meter-bar { height: 100%; width: 0; background: var(--primary); transition: width .3s ease; }
+  </style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Lab · Gemini Nano Banana</h1>
+  <p>Itera prompts con <code style="display:inline;padding:.05rem .35rem">gemini-2.5-flash-image</code>. Cada generación cuesta ≈ $0.04. Las imágenes generadas no se guardan en el servidor — viven sólo en esta pestaña.</p>
+</header>
+
+<div id="pwdCard" class="card pwd-card">
+  <label for="pwd">Contraseña admin</label>
+  <input type="password" id="pwd" autocomplete="current-password" placeholder="ADMIN_PASSWORD">
+  <div class="row">
+    <button id="pwdBtn">Continuar</button>
+    <span class="hint">Se guarda solo en este dispositivo.</span>
+  </div>
+  <div id="pwdErr" class="err" style="display:none;margin-top:.65rem"></div>
+</div>
+
+<div id="labCard" class="card" style="display:none">
+  <label for="prompt">Prompt</label>
+  <textarea id="prompt" placeholder="Pega aquí el prompt que quieras probar"></textarea>
+
+  <details>
+    <summary>Plantilla base sugerida (clic para insertar)</summary>
+    <code id="basePrompt">Portrait photo, professional, warm natural light, subject in upper third of frame, neutral or soft background. 600x800px, vertical format. Realistic, approachable, no text.
+
+[Aquí pones la frase del arquetipo, en español o inglés]</code>
+    <div class="row">
+      <button class="secondary" id="useBaseBtn">Usar esta plantilla</button>
+    </div>
+  </details>
+
+  <div class="row">
+    <button id="genBtn">Generar</button>
+    <span class="hint" id="status"></span>
+  </div>
+  <div class="meter" id="meter" style="display:none"><div class="meter-bar" id="meterBar"></div></div>
+  <div id="genErr" class="err" style="display:none;margin-top:.65rem"></div>
+</div>
+
+<div class="results" id="results"></div>
+
+</main>
+
+<script>
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const PWD_KEY = 'lab_gemini_pwd';
+const HISTORY_KEY = 'lab_gemini_history';
+
+const state = { password: localStorage.getItem(PWD_KEY) || '', history: [] };
+try {
+  const raw = localStorage.getItem(HISTORY_KEY);
+  if (raw) state.history = JSON.parse(raw);
+} catch (_) {}
+
+function showLab() {
+  $('pwdCard').classList.add('hidden');
+  $('labCard').style.display = '';
+  renderHistory();
+}
+function showPwd() {
+  $('pwdCard').classList.remove('hidden');
+  $('labCard').style.display = 'none';
+}
+
+if (state.password) showLab(); else showPwd();
+
+$('pwdBtn').addEventListener('click', () => {
+  const v = $('pwd').value.trim();
+  if (!v) return;
+  state.password = v;
+  localStorage.setItem(PWD_KEY, v);
+  $('pwd').value = '';
+  $('pwdErr').style.display = 'none';
+  showLab();
+});
+
+$('useBaseBtn').addEventListener('click', () => {
+  $('prompt').value = $('basePrompt').textContent;
+  $('prompt').focus();
+});
+
+let progressTimer = null;
+function startProgress() {
+  $('meter').style.display = '';
+  $('meterBar').style.width = '0';
+  let p = 0;
+  progressTimer = setInterval(() => {
+    p = Math.min(p + 4, 92);
+    $('meterBar').style.width = p + '%';
+  }, 400);
+}
+function endProgress() {
+  if (progressTimer) clearInterval(progressTimer);
+  $('meterBar').style.width = '100%';
+  setTimeout(() => { $('meter').style.display = 'none'; }, 350);
+}
+
+$('genBtn').addEventListener('click', async () => {
+  const prompt = $('prompt').value.trim();
+  if (!prompt) return;
+  $('genErr').style.display = 'none';
+  $('genBtn').disabled = true;
+  $('status').textContent = 'Generando…';
+  startProgress();
+
+  const t0 = performance.now();
+  try {
+    const res = await fetch('/api/lab-gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, password: state.password }),
+    });
+    const data = await res.json();
+    if (res.status === 401) {
+      localStorage.removeItem(PWD_KEY);
+      state.password = '';
+      $('pwdErr').textContent = 'Contraseña incorrecta. Vuelve a introducirla.';
+      $('pwdErr').style.display = '';
+      showPwd();
+      return;
+    }
+    if (!res.ok) {
+      const detail = data?.details || data?.modelText || data?.error || ('HTTP ' + res.status);
+      throw new Error(detail);
+    }
+    const elapsedClient = Math.round(performance.now() - t0);
+    addResult({
+      prompt,
+      dataUrl: data.dataUrl,
+      elapsedMs: data.elapsedMs,
+      elapsedClientMs: elapsedClient,
+      bytes: data.bytes,
+      ts: Date.now(),
+    });
+    $('status').textContent = '';
+  } catch (err) {
+    $('genErr').textContent = '✗ ' + (err.message || 'error desconocido');
+    $('genErr').style.display = '';
+    $('status').textContent = '';
+  } finally {
+    $('genBtn').disabled = false;
+    endProgress();
+  }
+});
+
+function addResult(r) {
+  state.history.unshift(r);
+  if (state.history.length > 12) state.history.length = 12;
+  persist();
+  renderHistory();
+}
+
+function persist() {
+  // No guardamos dataUrl en localStorage (se llenaría en seguida).
+  // Sólo metadata + prompt.
+  const slim = state.history.map(({ dataUrl, ...rest }) => rest);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(slim)); } catch (_) {}
+}
+
+function renderHistory() {
+  const root = $('results');
+  if (!state.history.length) { root.innerHTML = ''; return; }
+  root.innerHTML = state.history.map((r, i) => `
+    <article class="res">
+      <div class="res-img">${r.dataUrl
+        ? `<img src="${r.dataUrl}" alt="generación ${i+1}" loading="lazy">`
+        : '<span>(imagen no almacenada)</span>'}</div>
+      <div class="res-meta">
+        <span><strong>${(r.bytes / 1024).toFixed(0)} KB</strong> · ${r.elapsedMs} ms server / ${r.elapsedClientMs} ms total</span>
+        <span>${new Date(r.ts).toLocaleTimeString()}</span>
+      </div>
+      <div class="res-prompt">
+        <details>
+          <summary>Ver prompt</summary>
+          <pre>${escapeHtml(r.prompt)}</pre>
+        </details>
+      </div>
+      <div class="res-actions">
+        <button class="secondary" data-act="reuse" data-i="${i}">Reutilizar prompt</button>
+        <button class="danger" data-act="del" data-i="${i}">Borrar</button>
+      </div>
+    </article>
+  `).join('');
+
+  root.querySelectorAll('button[data-act]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i, 10);
+      const act = btn.dataset.act;
+      if (act === 'reuse') {
+        $('prompt').value = state.history[i].prompt;
+        $('prompt').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (act === 'del') {
+        state.history.splice(i, 1);
+        persist();
+        renderHistory();
+      }
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Re-render history if user comes back to the tab
+window.addEventListener('focus', renderHistory);
+</script>
+</body>
+</html>
