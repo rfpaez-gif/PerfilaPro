@@ -5,895 +5,1077 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editar mi perfil — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    :root {
-      --primary: #01696f;
-      --phover: #0c4e54;
-      --plight: #deeeed;
-      --bg: #f5f2ec;
-      --text: #1e1b14;
-      --muted: #6b6458;
-      --faint: #a89f90;
-      --border: rgba(30,27,20,.10);
-      --ff-d: "Instrument Serif", Georgia, serif;
-      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--ff-b);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
+    /* ── Layout específico de editar ────────────────────────── */
+    .pp-edit-main {
+      padding-block: clamp(32px, 5vw, 64px);
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem 1rem 4rem;
-      -webkit-font-smoothing: antialiased;
+      justify-content: center;
     }
-    .logo {
-      font-family: var(--ff-d);
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 2rem;
-      text-decoration: none;
-    }
-    .card {
-      background: #fff;
-      border-radius: 1rem;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+    .pp-edit-card {
       width: 100%;
-      max-width: 480px;
-      overflow: hidden;
+      max-width: 520px;
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-xl);
+      box-shadow: var(--pp-sh-md);
+      padding: clamp(1.75rem, 4vw, 2.25rem);
     }
-    .card-header {
-      background: var(--primary);
-      padding: 2rem;
-      text-align: center;
-      color: #fff;
+    .pp-edit-card__title {
+      font-family: var(--pp-f-display);
+      font-size: clamp(1.5rem, .8rem + 1.6vw, 1.875rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--pp-color-ink);
+      margin: 0 0 .25rem;
     }
-    .card-header h1 {
-      font-family: var(--ff-d);
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0;
+    .pp-edit-card__sub {
+      color: var(--pp-color-ink-soft);
+      font-size: 14px;
+      margin: 0 0 var(--pp-s-6);
     }
-    .card-header p {
-      font-size: .875rem;
-      opacity: .8;
-      margin-top: .4rem;
-    }
-    .card-body { padding: 2rem; }
-    .field { margin-bottom: 1.25rem; }
-    label {
-      display: block;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--primary);
-      margin-bottom: .4rem;
-    }
-    input[type="text"],
-    input[type="email"] {
-      width: 100%;
-      padding: .75rem 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: .5rem;
-      font-family: var(--ff-b);
-      font-size: 1rem;
-      color: var(--text);
-      background: #fff;
-      transition: border-color .15s;
-      outline: none;
-    }
-    input[type="text"]:focus,
-    input[type="email"]:focus { border-color: var(--primary); }
-    .hint {
-      font-size: .78rem;
-      color: var(--faint);
-      margin-top: .35rem;
-    }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: .9rem;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: .5rem;
-      font-family: var(--ff-b);
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s;
-      margin-top: 1.5rem;
-    }
-    .btn:hover { background: var(--phover); }
-    .btn:disabled { opacity: .6; cursor: default; }
-    .msg {
+
+    /* ── Mensajes (msg-ok / msg-err) ────────────────────────── */
+    .pp-msg {
       padding: .875rem 1rem;
-      border-radius: .5rem;
-      font-size: .875rem;
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
       margin-bottom: 1.25rem;
       line-height: 1.5;
+      border: 1px solid;
     }
-    .msg-ok { background: var(--plight); color: var(--primary); }
-    .msg-err { background: #fee2e2; color: #991b1b; }
-    .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
-    .services-list { display: flex; flex-direction: column; gap: .5rem; }
-    .svc-item { display: flex; gap: .5rem; align-items: center; }
-    .svc-item input { flex: 1; }
-    .svc-remove {
+    .pp-msg--ok {
+      background: var(--pp-color-accent-soft);
+      border-color: var(--pp-color-accent);
+      color: var(--pp-color-accent-deep);
+    }
+    .pp-msg--err {
+      background: rgba(178, 58, 72, 0.08);
+      border-color: var(--pp-color-danger);
+      color: var(--pp-color-danger);
+    }
+    .pp-msg a {
+      color: var(--pp-color-accent-deep);
+      font-weight: 700;
+    }
+
+    /* ── Divider ────────────────────────────────────────────── */
+    .pp-divider {
+      border: none;
+      border-top: 1px solid var(--pp-color-border-soft);
+      margin: 1.5rem 0;
+    }
+
+    /* ── Optional label suffix ──────────────────────────────── */
+    .pp-field__optional {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--pp-color-ink-muted);
+      margin-left: .25rem;
+      font-size: 12px;
+    }
+
+    /* ── Servicios editor ───────────────────────────────────── */
+    .pp-services-list { display: flex; flex-direction: column; gap: .5rem; }
+    .pp-svc-item { display: flex; gap: .5rem; align-items: center; }
+    .pp-svc-item .pp-input { flex: 1; }
+    .pp-svc-remove {
       width: 2.25rem;
       height: 2.25rem;
-      border: 1.5px solid var(--border);
-      border-radius: .4rem;
-      background: #fff;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-sm);
+      background: var(--pp-color-surface);
       cursor: pointer;
       font-size: 1.1rem;
-      color: var(--muted);
+      color: var(--pp-color-ink-muted);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: border-color .15s, color .15s;
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
       line-height: 1;
     }
-    .svc-remove:hover { border-color: #991b1b; color: #991b1b; }
-    .svc-add {
+    .pp-svc-remove:hover {
+      border-color: var(--pp-color-danger);
+      color: var(--pp-color-danger);
+    }
+    .pp-svc-add {
       display: inline-flex;
       align-items: center;
       gap: .4rem;
       margin-top: .5rem;
       padding: .45rem .875rem;
-      border: 1.5px dashed var(--border);
-      border-radius: .4rem;
+      border: 1px dashed var(--pp-color-border);
+      border-radius: var(--pp-r-sm);
       background: none;
-      font-family: var(--ff-b);
-      font-size: .875rem;
-      color: var(--muted);
+      font-family: var(--pp-f-sans);
+      font-size: 14px;
+      color: var(--pp-color-ink-soft);
       cursor: pointer;
-      transition: border-color .15s, color .15s;
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
     }
-    .svc-add:hover { border-color: var(--primary); color: var(--primary); }
-    .foto-wrap { display: flex; align-items: center; gap: 1rem; }
-    .foto-preview { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border); background: var(--plight); display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
-    .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .btn-foto { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-size: .875rem; font-weight: 600; color: var(--text); cursor: pointer; background: #fff; transition: border-color .15s, color .15s; }
-    .btn-foto:hover { border-color: var(--primary); color: var(--primary); }
-    select { width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border); border-radius: .5rem; font-family: var(--ff-b); font-size: 1rem; color: var(--text); background: #fff; outline: none; transition: border-color .15s; cursor: pointer; -webkit-appearance: none; appearance: none; }
-    select:focus { border-color: var(--primary); }
-    .free-banner {
+    .pp-svc-add:hover {
+      border-color: var(--pp-color-accent);
+      color: var(--pp-color-accent-deep);
+    }
+
+    /* ── Foto upload ────────────────────────────────────────── */
+    .pp-foto { display: flex; align-items: center; gap: 1rem; }
+    .pp-foto__preview {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid var(--pp-color-border);
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .pp-foto__preview img { width: 100%; height: 100%; object-fit: cover; }
+    .pp-foto__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .55rem 1rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+      cursor: pointer;
+      background: var(--pp-color-surface);
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
+    }
+    .pp-foto__btn:hover {
+      border-color: var(--pp-color-accent);
+      color: var(--pp-color-accent-deep);
+    }
+
+    /* ── Banner upgrade (free → plan) ───────────────────────── */
+    .pp-upgrade {
       display: none;
       background: #fffbeb;
-      border: 1.5px solid #fde68a;
-      border-radius: .75rem;
+      border: 1px solid #fde68a;
+      border-radius: var(--pp-r-lg);
       padding: 1rem 1.25rem;
       margin-bottom: 1.25rem;
     }
-    .free-banner.visible { display: block; }
-    .free-banner-title { font-size: .9375rem; font-weight: 700; color: #92400e; margin: 0 0 .2rem; }
-    .free-banner-sub { font-size: .8125rem; color: #b45309; margin: 0 0 .75rem; }
-    .free-perks { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-bottom: .875rem; }
-    .free-perks li { font-size: .8125rem; color: #b45309; }
-    .free-perks li::before { content: "✓ "; font-weight: 700; }
-    .plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
-    .plan-btn { flex: 1; padding: .5rem .75rem; border: 1.5px solid #fde68a; border-radius: .5rem; background: transparent; font-family: var(--ff-b); font-size: .8125rem; color: #92400e; cursor: pointer; transition: all .15s; text-align: left; line-height: 1.3; }
-    .plan-btn:hover { border-color: #f59e0b; background: #fef9e7; }
-    .plan-btn.selected { border-color: #01696f; background: #deeeed; color: #01696f; }
-    .plan-btn strong { display: block; font-size: .875rem; font-weight: 700; }
-    .plan-btn span { font-size: .75rem; opacity: .75; }
-    .free-banner-btn { width: 100%; background: #01696f; color: #fff; border: none; border-radius: .5rem; padding: .7rem 1.1rem; font-family: var(--ff-b); font-size: .9375rem; font-weight: 700; cursor: pointer; text-decoration: none; display: block; text-align: center; transition: background .15s; box-sizing: border-box; }
-    .free-banner-btn:hover { background: #0c4e54; }
-    .dir-box { border: 1.5px solid var(--border); border-radius: .75rem; padding: 1rem; }
-    .dir-box .field:last-of-type { margin-bottom: 0; }
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .875rem 1rem; background: var(--bg); border-radius: .5rem; border: 1.5px solid var(--border); margin-top: .875rem; }
-    .toggle-info { flex: 1; }
-    .toggle-label { font-size: .9375rem; font-weight: 600; color: var(--text); }
-    .toggle-hint { font-size: .75rem; color: var(--faint); margin-top: .2rem; }
-    .toggle-sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; display: inline-block; }
-    .toggle-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
-    .toggle-track { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 12px; transition: background .2s; }
-    .toggle-track::before { content: ""; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
-    .toggle-sw input:checked ~ .toggle-track { background: var(--primary); }
-    .toggle-sw input:checked ~ .toggle-track::before { transform: translateX(20px); }
-    /* City autocomplete */
-    .city-ac-wrap { position: relative; }
-    .city-ac-list {
-      position: absolute; z-index: 200; left: 0; right: 0; top: calc(100% + 4px);
-      background: #fff; border: 1px solid var(--border);
-      border-radius: .625rem; box-shadow: 0 4px 16px rgba(0,0,0,.14);
+    .pp-upgrade.is-visible { display: block; }
+    .pp-upgrade__title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #92400e;
+      margin: 0 0 .2rem;
+    }
+    .pp-upgrade__sub {
+      font-size: 13px;
+      color: #b45309;
+      margin: 0 0 .75rem;
+    }
+    .pp-upgrade__perks {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1.25rem;
+      margin: 0 0 .875rem;
+      padding: 0;
+    }
+    .pp-upgrade__perks li { font-size: 13px; color: #b45309; }
+    .pp-upgrade__perks li::before { content: "✓ "; font-weight: 700; }
+
+    .pp-plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
+    .pp-plan-btn {
+      flex: 1;
+      padding: .5rem .75rem;
+      border: 1px solid #fde68a;
+      border-radius: var(--pp-r-md);
+      background: transparent;
+      font-family: var(--pp-f-sans);
+      font-size: 13px;
+      color: #92400e;
+      cursor: pointer;
+      transition: border-color var(--pp-t-fast),
+                  background var(--pp-t-fast),
+                  color var(--pp-t-fast);
+      text-align: left;
+      line-height: 1.3;
+    }
+    .pp-plan-btn:hover { border-color: #f59e0b; background: #fef9e7; }
+    .pp-plan-btn.is-selected {
+      border-color: var(--pp-color-accent);
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+    }
+    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; }
+    .pp-plan-btn span { font-size: 12px; opacity: .75; }
+
+    .pp-upgrade__cta {
+      width: 100%;
+      background: var(--pp-color-accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--pp-r-md);
+      padding: .7rem 1.1rem;
+      font-family: var(--pp-f-sans);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-upgrade__cta:hover { background: var(--pp-color-accent-deep); }
+
+    /* ── Directorio box + toggle ───────────────────────────── */
+    .pp-dir-box {
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1rem;
+    }
+    .pp-dir-box .pp-field:last-of-type { margin-bottom: 0; }
+    .pp-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .875rem 1rem;
+      background: var(--pp-color-bg);
+      border-radius: var(--pp-r-md);
+      border: 1px solid var(--pp-color-border);
+      margin-top: .875rem;
+    }
+    .pp-toggle-row__info { flex: 1; }
+    .pp-toggle-row__label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+    }
+    .pp-toggle-row__hint {
+      font-size: 12px;
+      color: var(--pp-color-ink-muted);
+      margin-top: .2rem;
+    }
+    .pp-toggle-sw {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    .pp-toggle-sw input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .pp-toggle-track {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--pp-color-border);
+      border-radius: 12px;
+      transition: background var(--pp-t-base);
+    }
+    .pp-toggle-track::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform var(--pp-t-base);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track {
+      background: var(--pp-color-accent);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track::before {
+      transform: translateX(20px);
+    }
+
+    /* ── Secondary action links bajo el botón guardar ───────── */
+    .pp-edit-actions {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .pp-edit-actions a {
+      font-size: 14px;
+      color: var(--pp-color-accent-deep);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .pp-edit-actions a:hover { text-decoration: underline; }
+
+    .pp-public-link {
+      display: none;
+      margin-top: .875rem;
+      font-size: 13px;
+      color: var(--pp-color-accent-deep);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .pp-public-link.is-visible { display: inline; }
+
+    /* ── City autocomplete ──────────────────────────────────── */
+    .pp-city-ac { position: relative; }
+    .pp-city-ac__list {
+      position: absolute; z-index: var(--pp-z-dropdown);
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      box-shadow: var(--pp-sh-md);
       list-style: none; margin: 0; padding: .25rem 0;
       max-height: 260px; overflow-y: auto;
     }
-    .city-ac-item {
+    .pp-city-ac__item {
       display: flex; justify-content: space-between; align-items: center; gap: .5rem;
-      padding: .5rem .875rem; cursor: pointer; font-size: .875rem;
+      padding: .5rem .875rem; cursor: pointer; font-size: 14px;
+      color: var(--pp-color-ink);
     }
-    .city-ac-item:hover, .city-ac-item[data-sel] { background: var(--plight); }
-    .city-ac-name { font-weight: 500; }
-    .city-ac-prov { color: var(--muted); font-size: .75rem; white-space: nowrap; }
-    .city-ac-msg { padding: .5rem .875rem; font-size: .875rem; color: var(--muted); font-style: italic; }
-    .city-radius {
+    .pp-city-ac__item:hover,
+    .pp-city-ac__item[data-sel] { background: var(--pp-color-accent-soft); }
+    .pp-city-ac__name { font-weight: 500; }
+    .pp-city-ac__prov { color: var(--pp-color-ink-muted); font-size: 12px; white-space: nowrap; }
+    .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--pp-color-ink-muted); font-style: italic; }
+    .pp-city-radius {
       display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem;
       margin-top: .5rem; padding: .5rem .75rem;
-      background: var(--bg); border-radius: .5rem; border: 1px solid var(--border);
-      font-size: .8125rem;
+      background: var(--pp-color-bg);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 13px;
+      color: var(--pp-color-ink);
     }
-    .city-radius-lbl { color: var(--muted); font-size: .75rem; flex: 0 0 100%; margin-bottom: -.1rem; }
-    .city-radius label { display: flex; align-items: center; gap: .3rem; cursor: pointer; white-space: nowrap; }
-    .city-osm { font-size: .6875rem; color: var(--faint); margin-top: .3rem; text-align: right; }
-    .city-osm a { color: inherit; text-decoration: none; }
-    .city-osm a:hover { text-decoration: underline; }
+    .pp-city-radius__lbl {
+      color: var(--pp-color-ink-muted);
+      font-size: 12px;
+      flex: 0 0 100%;
+      margin-bottom: -.1rem;
+    }
+    .pp-city-radius label {
+      display: flex; align-items: center; gap: .3rem;
+      cursor: pointer; white-space: nowrap;
+    }
+    .pp-city-osm {
+      font-size: 11px;
+      color: var(--pp-color-ink-muted);
+      margin: .3rem 0 0;
+      text-align: right;
+    }
+    .pp-city-osm a { color: inherit; text-decoration: none; }
+    .pp-city-osm a:hover { text-decoration: underline; }
+
+    /* ── Hint dentro de .pp-field ───────────────────────────── */
+    .pp-field__hint {
+      font-size: 12px;
+      color: var(--pp-color-ink-muted);
+      margin: .35rem 0 0;
+    }
   </style>
 </head>
 <body>
-  <a class="logo" href="/">PerfilaPro</a>
 
-  <!-- Phase 0: Slug-based send (desde el footer de la tarjeta) -->
-  <div class="card" id="slugPhase" style="display:none">
-    <div class="card-header">
-      <h1>Editar mi perfil</h1>
-      <p>Te enviamos el enlace de acceso</p>
-    </div>
-    <div class="card-body">
-      <div id="slugMsg" style="display:none" class="msg"></div>
-      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">
-        Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
-      </p>
-      <button class="btn" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
-      <p style="margin-top:1rem;text-align:center;font-size:.8rem;color:var(--faint)">
-        ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--primary)">Accede con tu email</a>
-      </p>
-    </div>
+<a href="#main" class="pp-sr-only">Saltar al contenido</a>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="pp-site-header">
+  <div class="pp-wrap">
+    <nav class="pp-nav">
+      <a href="/" class="pp-nav__brand" aria-label="PerfilaPro inicio">
+        <span class="pp-nav__brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        PerfilaPro
+      </a>
+      <div class="pp-nav__actions">
+        <a href="/directorio" class="pp-btn pp-btn--secondary pp-btn--sm pp-btn--pill">Ver directorio</a>
+      </div>
+    </nav>
   </div>
+</header>
 
-  <!-- Phase 1: Email form -->
-  <div class="card" id="emailPhase">
-    <div class="card-header">
-      <h1>Editar mi perfil</h1>
-      <p>Introduce tu email y te enviamos un enlace de acceso</p>
-    </div>
-    <div class="card-body">
-      <div id="emailMsg" style="display:none" class="msg"></div>
-      <div class="field">
-        <label for="emailInput">Email</label>
-        <input type="email" id="emailInput" placeholder="tu@email.com" autocomplete="email">
-        <p class="hint">El email que usaste al crear tu perfil</p>
+<main id="main">
+  <div class="pp-wrap">
+    <div class="pp-edit-main">
+
+      <!-- Phase 0: Slug-based send (desde el footer de la tarjeta) -->
+      <div class="pp-edit-card" id="slugPhase" style="display:none">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub">Te enviamos el enlace de acceso.</p>
+        <div id="slugMsg" style="display:none" class="pp-msg"></div>
+        <p style="font-size:14px;color:var(--pp-color-ink-soft);margin-bottom:1.5rem;line-height:1.6">
+          Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
+        </p>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
+        <p style="margin-top:1rem;text-align:center;font-size:13px;color:var(--pp-color-ink-muted)">
+          ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--pp-color-accent-deep);font-weight:600">Accede con tu email</a>
+        </p>
       </div>
-      <button class="btn" id="sendBtn" onclick="sendLink()">Enviar enlace de edición</button>
-    </div>
-  </div>
 
-  <!-- Phase 2: Edit form -->
-  <div class="card" id="editPhase" style="display:none">
-    <div class="card-header">
-      <h1>Editar mi perfil</h1>
-      <p id="editSubtitle">Actualiza tus datos profesionales</p>
-    </div>
-    <div class="card-body">
-      <div id="editMsg" style="display:none" class="msg"></div>
-
-      <div class="free-banner" id="freeBanner">
-        <p class="free-banner-title">Perfil básico · activa tu plan</p>
-        <p class="free-banner-sub">Desbloquea todo para que tus clientes te encuentren:</p>
-        <ul class="free-perks">
-          <li>Foto de perfil</li>
-          <li>Botón de WhatsApp directo</li>
-          <li>Código QR en tu tarjeta</li>
-          <li>Posición preferente en el directorio</li>
-        </ul>
-        <div class="plan-toggle" role="group" aria-label="Elige tu plan">
-          <button class="plan-btn selected" data-plan="base" type="button">
-            <strong>Base · 9€</strong>
-            <span>90 días</span>
-          </button>
-          <button class="plan-btn" data-plan="pro" type="button">
-            <strong>Pro · 20€</strong>
-            <span>365 días · estadísticas</span>
-          </button>
+      <!-- Phase 1: Email form -->
+      <div class="pp-edit-card" id="emailPhase">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub">Introduce tu email y te enviamos un enlace de acceso.</p>
+        <div id="emailMsg" style="display:none" class="pp-msg"></div>
+        <div class="pp-field">
+          <label class="pp-field__label" for="emailInput">Email</label>
+          <input type="email" class="pp-input" id="emailInput" placeholder="tu@email.com" autocomplete="email">
+          <p class="pp-field__hint">El email que usaste al crear tu perfil.</p>
         </div>
-        <button class="free-banner-btn" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="sendBtn" onclick="sendLink()" style="margin-top:1.5rem">Enviar enlace de edición</button>
       </div>
 
-      <div class="field">
-        <label for="nombre">Nombre completo</label>
-        <input type="text" id="nombre" placeholder="Ej: Juan García López">
-      </div>
+      <!-- Phase 2: Edit form -->
+      <div class="pp-edit-card" id="editPhase" style="display:none">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub" id="editSubtitle">Actualiza tus datos profesionales.</p>
+        <div id="editMsg" style="display:none" class="pp-msg"></div>
 
-      <div class="field">
-        <label for="tagline">Especialidad</label>
-        <input type="text" id="tagline" placeholder="Ej: Fontanero en Alicante">
-      </div>
-
-      <div class="field">
-        <label for="zona">Ciudad o zona de cobertura</label>
-        <div class="city-ac-wrap">
-          <input type="text" id="zona" placeholder="Escribe tu ciudad o municipio…" autocomplete="off">
-          <ul class="city-ac-list" id="zona_list" role="listbox" hidden></ul>
-          <div class="city-radius" id="zona_radius" hidden>
-            <span class="city-radius-lbl">Radio de cobertura:</span>
-            <label><input type="radio" name="e_r" value="none" checked> Sin límite</label>
-            <label><input type="radio" name="e_r" value="100km"> hasta 100 km</label>
-            <label><input type="radio" name="e_r" value="50km"> hasta 50 km</label>
-            <label><input type="radio" name="e_r" value="35km"> hasta 35 km</label>
+        <div class="pp-upgrade" id="freeBanner">
+          <p class="pp-upgrade__title">Perfil básico · activa tu plan</p>
+          <p class="pp-upgrade__sub">Desbloquea todo para que tus clientes te encuentren:</p>
+          <ul class="pp-upgrade__perks">
+            <li>Foto de perfil</li>
+            <li>Botón de WhatsApp directo</li>
+            <li>Código QR en tu tarjeta</li>
+            <li>Posición preferente en el directorio</li>
+          </ul>
+          <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
+            <button class="pp-plan-btn is-selected" data-plan="base" type="button">
+              <strong>Base · 9€</strong>
+              <span>90 días</span>
+            </button>
+            <button class="pp-plan-btn" data-plan="pro" type="button">
+              <strong>Pro · 20€</strong>
+              <span>365 días · estadísticas</span>
+            </button>
           </div>
-          <p class="city-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
+          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
         </div>
-      </div>
 
-      <div class="field">
-        <label for="whatsapp">WhatsApp</label>
-        <input type="text" id="whatsapp" placeholder="Ej: 34612345678">
-        <p class="hint">Con prefijo de país — 34 para España</p>
-      </div>
-
-      <div class="field">
-        <label for="telefono">Teléfono fijo <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <input type="text" id="telefono" placeholder="Ej: 965123456">
-      </div>
-
-      <div class="field">
-        <label>Foto de perfil <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <div class="foto-wrap">
-          <div class="foto-preview" id="fotoPreview">👤</div>
-          <div>
-            <label for="fotoFileInput" class="btn-foto">📷 Cámara o galería</label>
-            <input type="file" id="fotoFileInput" accept="image/*" hidden>
-            <p class="hint" style="margin-top:.4rem">En móvil puedes sacar foto o elegir de la galería.</p>
-            <p class="hint" id="fotoFileName"></p>
-          </div>
+        <div class="pp-field">
+          <label class="pp-field__label" for="nombre">Nombre completo</label>
+          <input type="text" class="pp-input" id="nombre" placeholder="Ej: Juan García López">
         </div>
-        <input type="hidden" id="foto_url">
-      </div>
 
-      <div class="field">
-        <label for="descripcion">Descripción breve <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <textarea id="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso." style="width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.5rem;font-family:var(--ff-b);font-size:.95rem;color:var(--text);background:#fff;resize:vertical;outline:none;transition:border-color .15s"></textarea>
-        <p class="hint"><span id="editDescCount">0</span>/200 caracteres</p>
-      </div>
+        <div class="pp-field">
+          <label class="pp-field__label" for="tagline">Especialidad</label>
+          <input type="text" class="pp-input" id="tagline" placeholder="Ej: Fontanero en Alicante">
+        </div>
 
-      <div class="field">
-        <label for="direccion">Dirección <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <input type="text" id="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
-        <p class="hint">Aparecerá con enlace a Google Maps. Ideal para comercios y locales.</p>
-      </div>
-
-      <hr class="divider">
-
-      <div class="field">
-        <label>Servicios</label>
-        <div class="services-list" id="servicesList"></div>
-        <button class="svc-add" type="button" onclick="addService()">+ Añadir servicio</button>
-        <p class="hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€"</p>
-      </div>
-
-      <hr class="divider">
-
-      <div class="field">
-        <label>Directorio profesional</label>
-        <p class="hint" style="margin-bottom:.75rem">Elige tu especialidad y ciudad para aparecer cuando los clientes te busquen en Google</p>
-        <div class="dir-box">
-          <div class="field">
-            <label for="sectorSel">Sector</label>
-            <select id="sectorSel" onchange="onSectorChange()">
-              <option value="">Selecciona sector…</option>
-            </select>
-          </div>
-          <div class="field" id="specialtyField" style="display:none">
-            <label for="specialtySel">Especialidad</label>
-            <select id="specialtySel" onchange="onSpecialtyChange()">
-              <option value="">Selecciona especialidad…</option>
-            </select>
-          </div>
-          <div class="field" id="cityField" style="display:none">
-            <label for="citySel">Ciudad</label>
-            <select id="citySel" onchange="onCityChange()">
-              <option value="">Selecciona ciudad…</option>
-            </select>
-          </div>
-          <div class="toggle-row" id="visibleRow" style="display:none">
-            <div class="toggle-info">
-              <p class="toggle-label">Visible en el directorio</p>
-              <p class="toggle-hint">Tu perfil aparecerá en Google y en perfilapro.es/directorio</p>
+        <div class="pp-field">
+          <label class="pp-field__label" for="zona">Ciudad o zona de cobertura</label>
+          <div class="pp-city-ac">
+            <input type="text" class="pp-input" id="zona" placeholder="Escribe tu ciudad o municipio…" autocomplete="off">
+            <ul class="pp-city-ac__list" id="zona_list" role="listbox" hidden></ul>
+            <div class="pp-city-radius" id="zona_radius" hidden>
+              <span class="pp-city-radius__lbl">Radio de cobertura:</span>
+              <label><input type="radio" name="e_r" value="none" checked> Sin límite</label>
+              <label><input type="radio" name="e_r" value="100km"> hasta 100 km</label>
+              <label><input type="radio" name="e_r" value="50km"> hasta 50 km</label>
+              <label><input type="radio" name="e_r" value="35km"> hasta 35 km</label>
             </div>
-            <label class="toggle-sw">
-              <input type="checkbox" id="dirVisible">
-              <span class="toggle-track"></span>
-            </label>
+            <p class="pp-city-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
           </div>
-          <a id="pubProfileLink" href="#" target="_blank" style="display:none;margin-top:.875rem;font-size:.8125rem;color:var(--primary);font-weight:600;text-decoration:none">
-            Ver mi perfil público →
-          </a>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="whatsapp">WhatsApp</label>
+          <input type="text" class="pp-input" id="whatsapp" placeholder="Ej: 34612345678">
+          <p class="pp-field__hint">Con prefijo de país — 34 para España.</p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="telefono">Teléfono fijo<span class="pp-field__optional">(opcional)</span></label>
+          <input type="text" class="pp-input" id="telefono" placeholder="Ej: 965123456">
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label">Foto de perfil<span class="pp-field__optional">(opcional)</span></label>
+          <div class="pp-foto">
+            <div class="pp-foto__preview" id="fotoPreview">👤</div>
+            <div>
+              <label for="fotoFileInput" class="pp-foto__btn">📷 Cámara o galería</label>
+              <input type="file" id="fotoFileInput" accept="image/*" hidden>
+              <p class="pp-field__hint">En móvil puedes sacar foto o elegir de la galería.</p>
+              <p class="pp-field__hint" id="fotoFileName"></p>
+            </div>
+          </div>
+          <input type="hidden" id="foto_url">
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="descripcion">Descripción breve<span class="pp-field__optional">(opcional)</span></label>
+          <textarea class="pp-input pp-input--textarea" id="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso."></textarea>
+          <p class="pp-field__hint"><span id="editDescCount">0</span>/200 caracteres</p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="direccion">Dirección<span class="pp-field__optional">(opcional)</span></label>
+          <input type="text" class="pp-input" id="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
+          <p class="pp-field__hint">Aparecerá con enlace a Google Maps. Ideal para comercios y locales.</p>
+        </div>
+
+        <hr class="pp-divider">
+
+        <div class="pp-field">
+          <label class="pp-field__label">Servicios</label>
+          <div class="pp-services-list" id="servicesList"></div>
+          <button class="pp-svc-add" type="button" onclick="addService()">+ Añadir servicio</button>
+          <p class="pp-field__hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€".</p>
+        </div>
+
+        <hr class="pp-divider">
+
+        <div class="pp-field">
+          <label class="pp-field__label">Directorio profesional</label>
+          <p class="pp-field__hint" style="margin-bottom:.75rem">Elige tu especialidad y ciudad para aparecer cuando los clientes te busquen en Google.</p>
+          <div class="pp-dir-box">
+            <div class="pp-field">
+              <label class="pp-field__label" for="sectorSel">Sector</label>
+              <select class="pp-input pp-input--select" id="sectorSel" onchange="onSectorChange()">
+                <option value="">Selecciona sector…</option>
+              </select>
+            </div>
+            <div class="pp-field" id="specialtyField" style="display:none">
+              <label class="pp-field__label" for="specialtySel">Especialidad</label>
+              <select class="pp-input pp-input--select" id="specialtySel" onchange="onSpecialtyChange()">
+                <option value="">Selecciona especialidad…</option>
+              </select>
+            </div>
+            <div class="pp-field" id="cityField" style="display:none">
+              <label class="pp-field__label" for="citySel">Ciudad</label>
+              <select class="pp-input pp-input--select" id="citySel" onchange="onCityChange()">
+                <option value="">Selecciona ciudad…</option>
+              </select>
+            </div>
+            <div class="pp-toggle-row" id="visibleRow" style="display:none">
+              <div class="pp-toggle-row__info">
+                <p class="pp-toggle-row__label">Visible en el directorio</p>
+                <p class="pp-toggle-row__hint">Tu perfil aparecerá en Google y en perfilapro.es/directorio.</p>
+              </div>
+              <label class="pp-toggle-sw">
+                <input type="checkbox" id="dirVisible">
+                <span class="pp-toggle-track"></span>
+              </label>
+            </div>
+            <a id="pubProfileLink" href="#" target="_blank" class="pp-public-link">
+              Ver mi perfil público →
+            </a>
+          </div>
+        </div>
+
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Guardar cambios</button>
+
+        <div class="pp-edit-actions">
+          <a id="viewCardLink" href="#" target="_blank">Ver mi tarjeta →</a>
+          <a id="viewProfileLink" href="#" target="_blank" style="display:none">Ver perfil público →</a>
         </div>
       </div>
 
-      <button class="btn" id="saveBtn" onclick="saveProfile()">Guardar cambios</button>
+    </div><!-- /pp-edit-main -->
+  </div>
+</main>
 
-      <div style="margin-top:1rem;text-align:center;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-        <a id="viewCardLink" href="#" target="_blank" style="font-size:.875rem;color:var(--primary);font-weight:700;text-decoration:none">
-          Ver mi tarjeta →
-        </a>
-        <a id="viewProfileLink" href="#" target="_blank" style="display:none;font-size:.875rem;color:var(--primary);font-weight:700;text-decoration:none">
-          Ver perfil público →
-        </a>
-      </div>
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="pp-site-footer">
+  <div class="pp-wrap">
+    <div class="pp-footer__bottom">
+      <span>© 2026 PerfilaPro</span>
+      <span>
+        <a href="/terminos.html" style="color:inherit">Términos</a> ·
+        <a href="/privacidad.html" style="color:inherit">Privacidad</a>
+      </span>
     </div>
   </div>
+</footer>
 
-  <script>
-    /* ── City autocomplete state ── */
-    let _acCity = ''; let _acRadius = 'none';
-    const RADIUS_LABELS = { '100km': 'hasta 100 km', '50km': 'hasta 50 km', '35km': 'hasta 35 km' };
-    function getZonaEditar() {
-      const city = _acCity || document.getElementById('zona').value.trim();
-      if (!city) return '';
-      return _acRadius !== 'none' ? city + ' · ' + RADIUS_LABELS[_acRadius] : city;
+<script>
+  /* ── City autocomplete state ── */
+  let _acCity = ''; let _acRadius = 'none';
+  const RADIUS_LABELS = { '100km': 'hasta 100 km', '50km': 'hasta 50 km', '35km': 'hasta 35 km' };
+  function getZonaEditar() {
+    const city = _acCity || document.getElementById('zona').value.trim();
+    if (!city) return '';
+    return _acRadius !== 'none' ? city + ' · ' + RADIUS_LABELS[_acRadius] : city;
+  }
+
+  /* ── City autocomplete init ── */
+  (function () {
+    const inp = document.getElementById('zona');
+    const lst = document.getElementById('zona_list');
+    const rad = document.getElementById('zona_radius');
+    let timer;
+
+    function hide() { lst.hidden = true; }
+
+    function selectCity(displayName) {
+      _acCity = displayName;
+      inp.value = displayName;
+      hide();
+      rad.hidden = false;
     }
 
-    /* ── City autocomplete init ── */
-    (function () {
-      const inp = document.getElementById('zona');
-      const lst = document.getElementById('zona_list');
-      const rad = document.getElementById('zona_radius');
-      let timer;
-
-      function hide() { lst.hidden = true; }
-
-      function selectCity(displayName) {
-        _acCity = displayName;
-        inp.value = displayName;
-        hide();
-        rad.hidden = false;
-      }
-
-      function render(results) {
-        lst.innerHTML = '';
-        if (!results.length) {
-          lst.innerHTML = '<li class="city-ac-msg">Sin resultados</li>';
-          lst.hidden = false;
-          return;
-        }
-        results.forEach(function (r) {
-          const addr = r.address || {};
-          const name = addr.city || addr.town || addr.village || addr.hamlet || addr.municipality || r.name || '';
-          const prov = addr.state || addr.county || '';
-          const display = name + (prov ? ', ' + prov : '');
-          const li = document.createElement('li');
-          li.className = 'city-ac-item';
-          li.setAttribute('role', 'option');
-          li.innerHTML = '<span class="city-ac-name">' + name + '</span>' + (prov ? '<span class="city-ac-prov">' + prov + '</span>' : '');
-          li.addEventListener('mousedown', function (e) { e.preventDefault(); selectCity(display); });
-          lst.appendChild(li);
-        });
+    function render(results) {
+      lst.innerHTML = '';
+      if (!results.length) {
+        lst.innerHTML = '<li class="pp-city-ac__msg">Sin resultados</li>';
         lst.hidden = false;
-      }
-
-      function doSearch(q) {
-        lst.innerHTML = '<li class="city-ac-msg">Buscando…</li>';
-        lst.hidden = false;
-        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&countrycodes=es&format=json&limit=8&addressdetails=1', {
-          headers: { 'Accept-Language': 'es' }
-        })
-          .then(res => res.json())
-          .then(data => {
-            const places = data.filter(r => r.class === 'place' || r.class === 'boundary');
-            render(places.length ? places : data.slice(0, 8));
-          })
-          .catch(() => hide());
-      }
-
-      inp.addEventListener('input', function () {
-        _acCity = '';
-        rad.hidden = true;
-        _acRadius = 'none';
-        rad.querySelector('input[value="none"]').checked = true;
-        clearTimeout(timer);
-        const q = inp.value.trim();
-        if (q.length < 2) { hide(); return; }
-        timer = setTimeout(() => doSearch(q), 400);
-      });
-
-      inp.addEventListener('blur', () => setTimeout(hide, 150));
-
-      inp.addEventListener('keydown', function (e) {
-        const items = [...lst.querySelectorAll('.city-ac-item')];
-        if (lst.hidden || !items.length) return;
-        const cur = lst.querySelector('.city-ac-item[data-sel]');
-        let idx = cur ? items.indexOf(cur) : -1;
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          cur?.removeAttribute('data-sel');
-          idx = Math.min(idx + 1, items.length - 1);
-          items[idx].dataset.sel = '1';
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          cur?.removeAttribute('data-sel');
-          idx = Math.max(idx - 1, 0);
-          items[idx].dataset.sel = '1';
-        } else if (e.key === 'Enter' && cur) {
-          e.preventDefault();
-          cur.dispatchEvent(new MouseEvent('mousedown'));
-        } else if (e.key === 'Escape') {
-          hide();
-        }
-      });
-
-      rad.querySelectorAll('input[type=radio]').forEach(r => {
-        r.addEventListener('change', function () { _acRadius = this.value; });
-      });
-    })();
-
-    const params = new URLSearchParams(location.search);
-    const slug = params.get('slug');
-    const token = params.get('token');
-
-    if (slug && token) {
-      loadEditForm();
-    } else if (slug && !token) {
-      document.getElementById('emailPhase').style.display = 'none';
-      document.getElementById('slugPhase').style.display = '';
-    }
-
-    // Foto preview
-    var pendingFotoDataUrl = null;
-    var directoryData = null;
-    document.getElementById('fotoFileInput').addEventListener('change', function() {
-      var file = this.files[0];
-      if (!file) return;
-      document.getElementById('fotoFileName').textContent = file.name;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        pendingFotoDataUrl = e.target.result;
-        var preview = document.getElementById('fotoPreview');
-        preview.innerHTML = '<img src="' + pendingFotoDataUrl + '" alt="preview">';
-      };
-      reader.readAsDataURL(file);
-    });
-
-    async function sendLinkBySlug() {
-      const btn = document.getElementById('slugSendBtn');
-      const msg = document.getElementById('slugMsg');
-      btn.disabled = true;
-      btn.textContent = 'Enviando…';
-      msg.style.display = 'none';
-      try {
-        await fetch('/api/send-edit-link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug }),
-        });
-        showMsg(msg, 'ok', '¡Listo! Recibirás el enlace en tu email en breve. Revisa también la carpeta de spam.');
-        btn.textContent = 'Enlace enviado ✓';
-      } catch {
-        showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
-        btn.disabled = false;
-        btn.textContent = 'Enviar enlace de edición';
-      }
-    }
-
-    async function sendLink() {
-      const email = document.getElementById('emailInput').value.trim();
-      if (!email) return;
-      const btn = document.getElementById('sendBtn');
-      const msg = document.getElementById('emailMsg');
-      btn.disabled = true;
-      btn.textContent = 'Enviando…';
-      msg.style.display = 'none';
-      try {
-        await fetch('/api/send-edit-link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-        showMsg(msg, 'ok', '¡Listo! Si tu email está registrado recibirás el enlace en breve. Revisa también la carpeta de spam.');
-        btn.textContent = 'Enlace enviado';
-      } catch {
-        showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
-        btn.disabled = false;
-        btn.textContent = 'Enviar enlace de edición';
-      }
-    }
-
-    async function loadEditForm() {
-      try {
-        const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
-        if (!res.ok) {
-          const emailMsg = document.getElementById('emailMsg');
-          showMsg(emailMsg, 'err', 'El enlace de edición no es válido o ha expirado. Solicita uno nuevo introduciendo tu email.');
-          return;
-        }
-        const card = await res.json();
-        document.getElementById('emailPhase').style.display = 'none';
-        document.getElementById('editPhase').style.display = '';
-        document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
-        document.getElementById('nombre').value = card.nombre || '';
-        document.getElementById('tagline').value = card.tagline || '';
-        const zonaVal = card.zona || '';
-        const zonaRad = document.getElementById('zona_radius');
-        const zonaRadiusParts = zonaVal.match(/^(.+)\s·\s(hasta \d+ km)$/);
-        if (zonaRadiusParts) {
-          document.getElementById('zona').value = zonaRadiusParts[1];
-          _acCity = zonaRadiusParts[1];
-          const rKey = Object.keys(RADIUS_LABELS).find(k => RADIUS_LABELS[k] === zonaRadiusParts[2]);
-          if (rKey) {
-            _acRadius = rKey;
-            const rEl = zonaRad.querySelector('input[value="' + rKey + '"]');
-            if (rEl) rEl.checked = true;
-          }
-          zonaRad.hidden = false;
-        } else {
-          document.getElementById('zona').value = zonaVal;
-        }
-        document.getElementById('whatsapp').value = card.whatsapp || '';
-        document.getElementById('telefono').value = card.telefono || '';
-        document.getElementById('foto_url').value = card.foto_url || '';
-        if (card.foto_url) {
-          document.getElementById('fotoPreview').innerHTML = '<img src="' + card.foto_url + '" alt="foto actual">';
-        }
-        const descEl = document.getElementById('descripcion');
-        descEl.value = card.descripcion || '';
-        document.getElementById('editDescCount').textContent = descEl.value.length;
-        document.getElementById('direccion').value = card.direccion || '';
-        descEl.addEventListener('input', function() {
-          document.getElementById('editDescCount').textContent = this.value.length;
-        });
-
-        // Upgrade banner
-        const freeBanner = document.getElementById('freeBanner');
-        const freeBannerBtn = document.getElementById('freeBannerBtn');
-        if (freeBanner && !card.stripe_session_id) {
-          freeBanner.classList.add('visible');
-          let selectedPlan = 'base';
-          freeBanner.querySelectorAll('.plan-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-              freeBanner.querySelectorAll('.plan-btn').forEach(function(b) { b.classList.remove('selected'); });
-              btn.classList.add('selected');
-              selectedPlan = btn.dataset.plan;
-              freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
-            });
-          });
-          if (freeBannerBtn) {
-            freeBannerBtn.addEventListener('click', async function() {
-              const label = freeBannerBtn.textContent;
-              freeBannerBtn.textContent = 'Redirigiendo…';
-              freeBannerBtn.style.pointerEvents = 'none';
-              try {
-                const r = await fetch('/api/create-checkout', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    nombre: card.nombre, sector: card.tagline, zona: card.zona,
-                    whatsapp: card.whatsapp, servicios: card.servicios || [],
-                    plan: selectedPlan, slug: slug,
-                    cancel_url: window.location.href,
-                  }),
-                });
-                const j = await r.json();
-                if (j.url) { window.location.href = j.url; }
-                else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
-              } catch(err) {
-                alert('Error de conexión: ' + err.message);
-                freeBannerBtn.textContent = label;
-                freeBannerBtn.style.pointerEvents = '';
-              }
-            });
-          }
-        }
-
-        // Enlace a la tarjeta y al perfil público
-        const cardLink = document.getElementById('viewCardLink');
-        if (cardLink) cardLink.href = '/c/' + slug;
-        const profileLink = document.getElementById('viewProfileLink');
-        if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
-
-        // Cargar opciones del directorio y pre-seleccionar valores actuales
-        loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible);
-        const list = document.getElementById('servicesList');
-        list.innerHTML = '';
-        const services = card.servicios || [];
-        if (services.length === 0) {
-          addService();
-        } else {
-          services.forEach(s => addService(s));
-        }
-      } catch {
-        const emailMsg = document.getElementById('emailMsg');
-        showMsg(emailMsg, 'err', 'Error al cargar el formulario. Inténtalo de nuevo.');
-      }
-    }
-
-    function addService(value) {
-      const list = document.getElementById('servicesList');
-      if (list.children.length >= 8) return;
-      const item = document.createElement('div');
-      item.className = 'svc-item';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Ej: Fontanería · 50€';
-      if (value) input.value = value;
-      const btn = document.createElement('button');
-      btn.className = 'svc-remove';
-      btn.type = 'button';
-      btn.title = 'Eliminar';
-      btn.textContent = '×';
-      btn.onclick = function() { removeService(this); };
-      item.appendChild(input);
-      item.appendChild(btn);
-      list.appendChild(item);
-    }
-
-    function removeService(btn) {
-      const list = document.getElementById('servicesList');
-      if (list.children.length <= 1) return;
-      btn.closest('.svc-item').remove();
-    }
-
-    async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible) {
-      try {
-        const res = await fetch('/api/directory-options');
-        if (!res.ok) return;
-        directoryData = await res.json();
-
-        // Poblar sectores (únicos, preservando label)
-        const sectorMap = {};
-        directoryData.categories.forEach(c => { if (!sectorMap[c.sector]) sectorMap[c.sector] = c.sector_label; });
-        const sectorSel = document.getElementById('sectorSel');
-        Object.entries(sectorMap).forEach(([val, label]) => {
-          const o = document.createElement('option'); o.value = val; o.textContent = label;
-          sectorSel.appendChild(o);
-        });
-
-        // Poblar ciudades
-        const citySel = document.getElementById('citySel');
-        directoryData.cities.forEach(c => {
-          const o = document.createElement('option'); o.value = c.slug;
-          o.textContent = c.province && c.province !== c.name ? c.name + ' (' + c.province + ')' : c.name;
-          citySel.appendChild(o);
-        });
-
-        // Pre-seleccionar si hay valores guardados
-        if (currentSector) {
-          sectorSel.value = currentSector;
-          onSectorChange();
-          if (currentSpecialty) {
-            document.getElementById('specialtySel').value = currentSpecialty;
-            onSpecialtyChange();
-          }
-          if (currentCity) {
-            document.getElementById('citySel').value = currentCity;
-            onCityChange();
-          }
-          if (currentVisible) document.getElementById('dirVisible').checked = true;
-        }
-        // Mostrar enlace perfil público si tiene sector+ciudad configurado
-        if (currentSector && currentCity) {
-          const lnk = document.getElementById('pubProfileLink');
-          lnk.href = '/p/' + slug; lnk.style.display = '';
-        }
-      } catch (e) {
-        console.warn('loadDirectoryOptions error:', e);
-      }
-    }
-
-    function onSectorChange() {
-      if (!directoryData) return;
-      const sector = document.getElementById('sectorSel').value;
-      const specialtySel = document.getElementById('specialtySel');
-      const specialtyField = document.getElementById('specialtyField');
-
-      // Limpiar especialidades
-      specialtySel.innerHTML = '<option value="">Selecciona especialidad…</option>';
-      document.getElementById('cityField').style.display = 'none';
-      document.getElementById('visibleRow').style.display = 'none';
-
-      if (!sector) { specialtyField.style.display = 'none'; return; }
-
-      const specs = directoryData.categories.filter(c => c.sector === sector);
-      specs.forEach(c => {
-        const o = document.createElement('option'); o.value = c.specialty; o.textContent = c.specialty_label;
-        specialtySel.appendChild(o);
-      });
-      specialtyField.style.display = '';
-    }
-
-    function onSpecialtyChange() {
-      const specialty = document.getElementById('specialtySel').value;
-      document.getElementById('cityField').style.display = specialty ? '' : 'none';
-      document.getElementById('visibleRow').style.display = 'none';
-      if (!specialty) document.getElementById('citySel').value = '';
-    }
-
-    function onCityChange() {
-      const city = document.getElementById('citySel').value;
-      document.getElementById('visibleRow').style.display = city ? '' : 'none';
-    }
-
-    async function saveProfile() {
-      const nombre = document.getElementById('nombre').value.trim();
-      const tagline = document.getElementById('tagline').value.trim();
-      const zona = getZonaEditar();
-      const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
-      const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
-      let foto_url = document.getElementById('foto_url').value.trim();
-      const descripcion = document.getElementById('descripcion').value.trim();
-      const direccion = document.getElementById('direccion').value.trim();
-      const servicios = Array.from(document.querySelectorAll('#servicesList input'))
-        .map(i => i.value.trim()).filter(Boolean);
-      const sector = document.getElementById('sectorSel').value;
-      const specialty = document.getElementById('specialtySel').value;
-      const city_slug = document.getElementById('citySel').value;
-      const directory_visible = document.getElementById('dirVisible').checked;
-
-      const msg = document.getElementById('editMsg');
-      msg.style.display = 'none';
-
-      if (!nombre || !zona || !whatsapp || !servicios.length) {
-        showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, zona, WhatsApp y al menos un servicio.');
         return;
       }
+      results.forEach(function (r) {
+        const addr = r.address || {};
+        const name = addr.city || addr.town || addr.village || addr.hamlet || addr.municipality || r.name || '';
+        const prov = addr.state || addr.county || '';
+        const display = name + (prov ? ', ' + prov : '');
+        const li = document.createElement('li');
+        li.className = 'pp-city-ac__item';
+        li.setAttribute('role', 'option');
+        li.innerHTML = '<span class="pp-city-ac__name">' + name + '</span>' + (prov ? '<span class="pp-city-ac__prov">' + prov + '</span>' : '');
+        li.addEventListener('mousedown', function (e) { e.preventDefault(); selectCity(display); });
+        lst.appendChild(li);
+      });
+      lst.hidden = false;
+    }
 
-      const btn = document.getElementById('saveBtn');
-      btn.disabled = true;
-      btn.textContent = 'Guardando…';
+    function doSearch(q) {
+      lst.innerHTML = '<li class="pp-city-ac__msg">Buscando…</li>';
+      lst.hidden = false;
+      fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&countrycodes=es&format=json&limit=8&addressdetails=1', {
+        headers: { 'Accept-Language': 'es' }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const places = data.filter(r => r.class === 'place' || r.class === 'boundary');
+          render(places.length ? places : data.slice(0, 8));
+        })
+        .catch(() => hide());
+    }
 
-      // Subir foto nueva si hay una seleccionada
-      if (pendingFotoDataUrl) {
-        btn.textContent = 'Subiendo foto…';
-        try {
-          const base64 = pendingFotoDataUrl.split(',')[1];
-          const upRes = await fetch('/api/upload-avatar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64, contentType: 'image/jpeg', slug }),
-          });
-          const upJson = await upRes.json();
-          if (upJson.url) {
-            foto_url = upJson.url;
-            document.getElementById('foto_url').value = upJson.url;
-          }
-        } catch (e) {
-          console.warn('upload-avatar error:', e);
+    inp.addEventListener('input', function () {
+      _acCity = '';
+      rad.hidden = true;
+      _acRadius = 'none';
+      rad.querySelector('input[value="none"]').checked = true;
+      clearTimeout(timer);
+      const q = inp.value.trim();
+      if (q.length < 2) { hide(); return; }
+      timer = setTimeout(() => doSearch(q), 400);
+    });
+
+    inp.addEventListener('blur', () => setTimeout(hide, 150));
+
+    inp.addEventListener('keydown', function (e) {
+      const items = [...lst.querySelectorAll('.pp-city-ac__item')];
+      if (lst.hidden || !items.length) return;
+      const cur = lst.querySelector('.pp-city-ac__item[data-sel]');
+      let idx = cur ? items.indexOf(cur) : -1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        cur?.removeAttribute('data-sel');
+        idx = Math.min(idx + 1, items.length - 1);
+        items[idx].dataset.sel = '1';
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        cur?.removeAttribute('data-sel');
+        idx = Math.max(idx - 1, 0);
+        items[idx].dataset.sel = '1';
+      } else if (e.key === 'Enter' && cur) {
+        e.preventDefault();
+        cur.dispatchEvent(new MouseEvent('mousedown'));
+      } else if (e.key === 'Escape') {
+        hide();
+      }
+    });
+
+    rad.querySelectorAll('input[type=radio]').forEach(r => {
+      r.addEventListener('change', function () { _acRadius = this.value; });
+    });
+  })();
+
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('slug');
+  const token = params.get('token');
+
+  if (slug && token) {
+    loadEditForm();
+  } else if (slug && !token) {
+    document.getElementById('emailPhase').style.display = 'none';
+    document.getElementById('slugPhase').style.display = '';
+  }
+
+  // Foto preview
+  var pendingFotoDataUrl = null;
+  var directoryData = null;
+  document.getElementById('fotoFileInput').addEventListener('change', function() {
+    var file = this.files[0];
+    if (!file) return;
+    document.getElementById('fotoFileName').textContent = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      pendingFotoDataUrl = e.target.result;
+      var preview = document.getElementById('fotoPreview');
+      preview.innerHTML = '<img src="' + pendingFotoDataUrl + '" alt="preview">';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function sendLinkBySlug() {
+    const btn = document.getElementById('slugSendBtn');
+    const msg = document.getElementById('slugMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    msg.style.display = 'none';
+    try {
+      await fetch('/api/send-edit-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      });
+      showMsg(msg, 'ok', '¡Listo! Recibirás el enlace en tu email en breve. Revisa también la carpeta de spam.');
+      btn.textContent = 'Enlace enviado ✓';
+    } catch {
+      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Enviar enlace de edición';
+    }
+  }
+
+  async function sendLink() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email) return;
+    const btn = document.getElementById('sendBtn');
+    const msg = document.getElementById('emailMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    msg.style.display = 'none';
+    try {
+      await fetch('/api/send-edit-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      showMsg(msg, 'ok', '¡Listo! Si tu email está registrado recibirás el enlace en breve. Revisa también la carpeta de spam.');
+      btn.textContent = 'Enlace enviado';
+    } catch {
+      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Enviar enlace de edición';
+    }
+  }
+
+  async function loadEditForm() {
+    try {
+      const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
+      if (!res.ok) {
+        const emailMsg = document.getElementById('emailMsg');
+        showMsg(emailMsg, 'err', 'El enlace de edición no es válido o ha expirado. Solicita uno nuevo introduciendo tu email.');
+        return;
+      }
+      const card = await res.json();
+      document.getElementById('emailPhase').style.display = 'none';
+      document.getElementById('editPhase').style.display = '';
+      document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
+      document.getElementById('nombre').value = card.nombre || '';
+      document.getElementById('tagline').value = card.tagline || '';
+      const zonaVal = card.zona || '';
+      const zonaRad = document.getElementById('zona_radius');
+      const zonaRadiusParts = zonaVal.match(/^(.+)\s·\s(hasta \d+ km)$/);
+      if (zonaRadiusParts) {
+        document.getElementById('zona').value = zonaRadiusParts[1];
+        _acCity = zonaRadiusParts[1];
+        const rKey = Object.keys(RADIUS_LABELS).find(k => RADIUS_LABELS[k] === zonaRadiusParts[2]);
+        if (rKey) {
+          _acRadius = rKey;
+          const rEl = zonaRad.querySelector('input[value="' + rKey + '"]');
+          if (rEl) rEl.checked = true;
         }
-        btn.textContent = 'Guardando…';
+        zonaRad.hidden = false;
+      } else {
+        document.getElementById('zona').value = zonaVal;
+      }
+      document.getElementById('whatsapp').value = card.whatsapp || '';
+      document.getElementById('telefono').value = card.telefono || '';
+      document.getElementById('foto_url').value = card.foto_url || '';
+      if (card.foto_url) {
+        document.getElementById('fotoPreview').innerHTML = '<img src="' + card.foto_url + '" alt="foto actual">';
+      }
+      const descEl = document.getElementById('descripcion');
+      descEl.value = card.descripcion || '';
+      document.getElementById('editDescCount').textContent = descEl.value.length;
+      document.getElementById('direccion').value = card.direccion || '';
+      descEl.addEventListener('input', function() {
+        document.getElementById('editDescCount').textContent = this.value.length;
+      });
+
+      // Upgrade banner
+      const freeBanner = document.getElementById('freeBanner');
+      const freeBannerBtn = document.getElementById('freeBannerBtn');
+      if (freeBanner && !card.stripe_session_id) {
+        freeBanner.classList.add('is-visible');
+        let selectedPlan = 'base';
+        freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
+            btn.classList.add('is-selected');
+            selectedPlan = btn.dataset.plan;
+            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+          });
+        });
+        if (freeBannerBtn) {
+          freeBannerBtn.addEventListener('click', async function() {
+            const label = freeBannerBtn.textContent;
+            freeBannerBtn.textContent = 'Redirigiendo…';
+            freeBannerBtn.style.pointerEvents = 'none';
+            try {
+              const r = await fetch('/api/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  nombre: card.nombre, sector: card.tagline, zona: card.zona,
+                  whatsapp: card.whatsapp, servicios: card.servicios || [],
+                  plan: selectedPlan, slug: slug,
+                  cancel_url: window.location.href,
+                }),
+              });
+              const j = await r.json();
+              if (j.url) { window.location.href = j.url; }
+              else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
+            } catch(err) {
+              alert('Error de conexión: ' + err.message);
+              freeBannerBtn.textContent = label;
+              freeBannerBtn.style.pointerEvents = '';
+            }
+          });
+        }
       }
 
+      // Enlace a la tarjeta y al perfil público
+      const cardLink = document.getElementById('viewCardLink');
+      if (cardLink) cardLink.href = '/c/' + slug;
+      const profileLink = document.getElementById('viewProfileLink');
+      if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
+
+      // Cargar opciones del directorio y pre-seleccionar valores actuales
+      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible);
+      const list = document.getElementById('servicesList');
+      list.innerHTML = '';
+      const services = card.servicios || [];
+      if (services.length === 0) {
+        addService();
+      } else {
+        services.forEach(s => addService(s));
+      }
+    } catch {
+      const emailMsg = document.getElementById('emailMsg');
+      showMsg(emailMsg, 'err', 'Error al cargar el formulario. Inténtalo de nuevo.');
+    }
+  }
+
+  function addService(value) {
+    const list = document.getElementById('servicesList');
+    if (list.children.length >= 8) return;
+    const item = document.createElement('div');
+    item.className = 'pp-svc-item';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'pp-input';
+    input.placeholder = 'Ej: Fontanería · 50€';
+    if (value) input.value = value;
+    const btn = document.createElement('button');
+    btn.className = 'pp-svc-remove';
+    btn.type = 'button';
+    btn.title = 'Eliminar';
+    btn.textContent = '×';
+    btn.onclick = function() { removeService(this); };
+    item.appendChild(input);
+    item.appendChild(btn);
+    list.appendChild(item);
+  }
+
+  function removeService(btn) {
+    const list = document.getElementById('servicesList');
+    if (list.children.length <= 1) return;
+    btn.closest('.pp-svc-item').remove();
+  }
+
+  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible) {
+    try {
+      const res = await fetch('/api/directory-options');
+      if (!res.ok) return;
+      directoryData = await res.json();
+
+      // Poblar sectores (únicos, preservando label)
+      const sectorMap = {};
+      directoryData.categories.forEach(c => { if (!sectorMap[c.sector]) sectorMap[c.sector] = c.sector_label; });
+      const sectorSel = document.getElementById('sectorSel');
+      Object.entries(sectorMap).forEach(([val, label]) => {
+        const o = document.createElement('option'); o.value = val; o.textContent = label;
+        sectorSel.appendChild(o);
+      });
+
+      // Poblar ciudades
+      const citySel = document.getElementById('citySel');
+      directoryData.cities.forEach(c => {
+        const o = document.createElement('option'); o.value = c.slug;
+        o.textContent = c.province && c.province !== c.name ? c.name + ' (' + c.province + ')' : c.name;
+        citySel.appendChild(o);
+      });
+
+      // Pre-seleccionar si hay valores guardados
+      if (currentSector) {
+        sectorSel.value = currentSector;
+        onSectorChange();
+        if (currentSpecialty) {
+          document.getElementById('specialtySel').value = currentSpecialty;
+          onSpecialtyChange();
+        }
+        if (currentCity) {
+          document.getElementById('citySel').value = currentCity;
+          onCityChange();
+        }
+        if (currentVisible) document.getElementById('dirVisible').checked = true;
+      }
+      // Mostrar enlace perfil público si tiene sector+ciudad configurado
+      if (currentSector && currentCity) {
+        const lnk = document.getElementById('pubProfileLink');
+        lnk.href = '/p/' + slug;
+        lnk.classList.add('is-visible');
+      }
+    } catch (e) {
+      console.warn('loadDirectoryOptions error:', e);
+    }
+  }
+
+  function onSectorChange() {
+    if (!directoryData) return;
+    const sector = document.getElementById('sectorSel').value;
+    const specialtySel = document.getElementById('specialtySel');
+    const specialtyField = document.getElementById('specialtyField');
+
+    // Limpiar especialidades
+    specialtySel.innerHTML = '<option value="">Selecciona especialidad…</option>';
+    document.getElementById('cityField').style.display = 'none';
+    document.getElementById('visibleRow').style.display = 'none';
+
+    if (!sector) { specialtyField.style.display = 'none'; return; }
+
+    const specs = directoryData.categories.filter(c => c.sector === sector);
+    specs.forEach(c => {
+      const o = document.createElement('option'); o.value = c.specialty; o.textContent = c.specialty_label;
+      specialtySel.appendChild(o);
+    });
+    specialtyField.style.display = '';
+  }
+
+  function onSpecialtyChange() {
+    const specialty = document.getElementById('specialtySel').value;
+    document.getElementById('cityField').style.display = specialty ? '' : 'none';
+    document.getElementById('visibleRow').style.display = 'none';
+    if (!specialty) document.getElementById('citySel').value = '';
+  }
+
+  function onCityChange() {
+    const city = document.getElementById('citySel').value;
+    document.getElementById('visibleRow').style.display = city ? '' : 'none';
+  }
+
+  async function saveProfile() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const tagline = document.getElementById('tagline').value.trim();
+    const zona = getZonaEditar();
+    const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+    const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+    let foto_url = document.getElementById('foto_url').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const servicios = Array.from(document.querySelectorAll('#servicesList input'))
+      .map(i => i.value.trim()).filter(Boolean);
+    const sector = document.getElementById('sectorSel').value;
+    const specialty = document.getElementById('specialtySel').value;
+    const city_slug = document.getElementById('citySel').value;
+    const directory_visible = document.getElementById('dirVisible').checked;
+
+    const msg = document.getElementById('editMsg');
+    msg.style.display = 'none';
+
+    if (!nombre || !zona || !whatsapp || !servicios.length) {
+      showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, zona, WhatsApp y al menos un servicio.');
+      return;
+    }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+
+    // Subir foto nueva si hay una seleccionada
+    if (pendingFotoDataUrl) {
+      btn.textContent = 'Subiendo foto…';
       try {
-        const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
+        const base64 = pendingFotoDataUrl.split(',')[1];
+        const upRes = await fetch('/api/upload-avatar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, sector, specialty, city_slug, directory_visible }),
+          body: JSON.stringify({ base64, contentType: 'image/jpeg', slug }),
         });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          showMsg(msg, 'err', data.error || 'Error al guardar. Inténtalo de nuevo.');
-          btn.disabled = false;
-          btn.textContent = 'Guardar cambios';
-          return;
+        const upJson = await upRes.json();
+        if (upJson.url) {
+          foto_url = upJson.url;
+          document.getElementById('foto_url').value = upJson.url;
         }
-        pendingFotoDataUrl = null;
-        btn.disabled = false;
-        btn.textContent = 'Guardar cambios';
-        msg.className = 'msg msg-ok';
-        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver mi tarjeta →</a>' + (directory_visible ? ' · <a href="/p/' + slug + '" target="_blank" style="color:var(--primary);font-weight:700">Ver perfil público →</a>' : '');
-        msg.style.display = '';
-        msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      } catch {
-        showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
-        btn.disabled = false;
-        btn.textContent = 'Guardar cambios';
+      } catch (e) {
+        console.warn('upload-avatar error:', e);
       }
+      btn.textContent = 'Guardando…';
     }
 
-    function showMsg(el, type, text) {
-      el.className = 'msg msg-' + type;
-      el.textContent = text;
-      el.style.display = '';
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    try {
+      const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, sector, specialty, city_slug, directory_visible }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showMsg(msg, 'err', data.error || 'Error al guardar. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Guardar cambios';
+        return;
+      }
+      pendingFotoDataUrl = null;
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
+      msg.className = 'pp-msg pp-msg--ok';
+      msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank">Ver mi tarjeta →</a>' + (directory_visible ? ' · <a href="/p/' + slug + '" target="_blank">Ver perfil público →</a>' : '');
+      msg.style.display = '';
+      msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch {
+      showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
     }
-  </script>
+  }
+
+  function showMsg(el, type, text) {
+    el.className = 'pp-msg pp-msg--' + type;
+    el.textContent = text;
+    el.style.display = '';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
 </body>
 </html>
