@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshot · email completo de ejemplo > rendering completo con todos los opts es estable 1`] = `
+"<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PerfilaPro</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f2ec;font-family:'Helvetica Neue',Arial,sans-serif;color:#1e1b14">
+  <!-- Preheader (oculto visualmente, visible en preview de bandeja) -->
+  <div style="display:none;font-size:1px;color:#f5f2ec;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden">Tu perfil ya está en el mundo</div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid rgba(30,27,20,.10);overflow:hidden">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:#01696f;padding:32px 40px;text-align:center">
+            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px">PerfilaPro</p>
+            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional siempre a mano</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px">
+            <p style="margin:0 0 20px;font-size:24px;font-weight:700;color:#1e1b14">¡Listo, Ana! 💪</p>
+            <p style="margin:0 0 16px;font-size:15px;color:#6b6458;line-height:1.7">Comparte tu enlace en grupos de WhatsApp.</p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
+              <tr><td align="center">
+                <a href="https://perfilapro.es/c/ana" style="display:inline-block;background:#01696f;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Ver mi perfil →</a>
+              </td></tr>
+            </table>
+
+            <p style="margin:0;font-size:12px;color:#a89f90;line-height:1.6">🔒 Enlace personal — no compartas este email.</p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(30,27,20,.08);text-align:center">
+            <p style="margin:0 0 6px;font-size:12px;color:#a89f90">PerfilaPro · Tu perfil profesional siempre a mano</p>
+            <p style="margin:0;font-size:11px;color:#c4bdb2">
+              <a href="https://perfilapro.es/terminos.html" style="color:#a89f90;text-decoration:none">Términos</a> ·
+              <a href="https://perfilapro.es/privacidad.html" style="color:#a89f90;text-decoration:none">Privacidad</a> ·
+              <a href="https://perfilapro.es/legal.html" style="color:#a89f90;text-decoration:none">Aviso legal</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"
+`;

@@ -7,7 +7,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary'],
-      include: ['netlify/functions/lib/render.js'],
+      include: [
+        'netlify/functions/lib/render.js',
+        'netlify/functions/lib/email-layout.js',
+      ],
     },
   },
 });
