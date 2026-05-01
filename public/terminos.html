@@ -4,123 +4,208 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Términos y Condiciones — PerfilaPro</title>
+  <meta name="description" content="Términos y condiciones de uso de PerfilaPro: planes, precios, política de reembolso y normas de uso.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    :root {
-      --primary: #01696f;
-      --bg: #f5f2ec;
-      --text: #1e1b14;
-      --muted: #6b6458;
-      --border: rgba(30,27,20,.10);
-      --ff-d: "Instrument Serif", Georgia, serif;
-      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+    /* ── pp-legal-doc · plantilla compartida con
+       legal.html y privacidad.html ────────────────────── */
+    .pp-legal-doc {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: clamp(2rem, 5vw, 3.5rem) 1.5rem clamp(3rem, 6vw, 5rem);
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    .pp-legal-doc h1 {
+      font-family: var(--pp-f-display);
+      font-size: clamp(2rem, 1rem + 2.5vw, 2.75rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      line-height: var(--pp-lh-heading);
+      color: var(--pp-color-ink);
+      margin: 0 0 .5rem;
+    }
+    .pp-legal-doc__updated {
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin: 0 0 2.5rem;
+    }
+    .pp-legal-doc h2 {
+      font-family: var(--pp-f-sans);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--pp-color-accent-deep);
+      margin: 2rem 0 .75rem;
+    }
+    .pp-legal-doc p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--pp-color-ink-soft);
+      margin: 0 0 .75rem;
+    }
+    .pp-legal-doc ul {
+      padding-left: 1.4rem;
+      margin: 0 0 .75rem;
+    }
+    .pp-legal-doc li {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--pp-color-ink-soft);
+      margin-bottom: .3rem;
+    }
+    .pp-legal-doc strong {
+      color: var(--pp-color-ink);
+      font-weight: 600;
+    }
+    .pp-legal-doc a {
+      color: var(--pp-color-accent-deep);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .pp-legal-doc a:hover { text-decoration: underline; }
 
-    .topbar { background: var(--primary); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar a { color: #fff; text-decoration: none; font-weight: 800; font-size: 1.1rem; }
-    .topbar-back { color: rgba(255,255,255,.8); font-size: .85rem; text-decoration: none; }
-    .topbar-back:hover { color: #fff; }
-
-    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
-
-    h1 { font-family: var(--ff-d); font-size: 2.25rem; margin-bottom: .5rem; }
-    .updated { font-size: .8rem; color: var(--muted); margin-bottom: 2.5rem; }
-
-    h2 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 .75rem; color: var(--primary); }
-    p { font-size: .9375rem; color: var(--muted); line-height: 1.75; margin-bottom: .75rem; }
-    ul { padding-left: 1.4rem; margin-bottom: .75rem; }
-    li { font-size: .9375rem; color: var(--muted); line-height: 1.75; margin-bottom: .3rem; }
-    strong { color: var(--text); }
-
-    .highlight-box { background: #fff; border-left: 3px solid var(--primary); border-radius: 0 .5rem .5rem 0; padding: 1rem 1.25rem; margin: 1.25rem 0; }
-    .highlight-box p { margin: 0; }
-
-    footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); margin-top: 3rem; }
-    footer a { color: var(--primary); font-size: .8rem; margin: 0 .75rem; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    /* ── Highlight box (sólo terminos.html) ────────────── */
+    .pp-legal-highlight {
+      background: var(--pp-color-surface);
+      border-left: 3px solid var(--pp-color-accent);
+      border-radius: 0 var(--pp-r-md) var(--pp-r-md) 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .pp-legal-highlight p { margin: 0; }
   </style>
 </head>
 <body>
 
-<div class="topbar">
-  <a href="/">PerfilaPro</a>
-  <a href="/" class="topbar-back">← Volver al inicio</a>
-</div>
+  <header class="pp-site-header">
+    <div class="pp-wrap">
+      <nav class="pp-nav">
+        <a href="/" class="pp-nav__brand" aria-label="PerfilaPro inicio">
+          <span class="pp-nav__brand-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          PerfilaPro
+        </a>
+        <ul class="pp-nav__links" role="list">
+          <li><a href="/directorio">Directorio</a></li>
+          <li><a href="/#como-funciona">Cómo funciona</a></li>
+          <li><a href="/#empresa">Para empresas</a></li>
+        </ul>
+        <div class="pp-nav__actions">
+          <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--sm pp-btn--pill">Crear mi perfil gratis</a>
+        </div>
+      </nav>
+    </div>
+  </header>
 
-<div class="container">
-  <h1>Términos y Condiciones</h1>
-  <p class="updated">Última actualización: abril 2026</p>
+  <main id="main">
+    <article class="pp-legal-doc">
+      <h1>Términos y Condiciones</h1>
+      <p class="pp-legal-doc__updated">Última actualización: abril 2026</p>
 
-  <p>Bienvenido a <strong>PerfilaPro</strong>. Al usar el servicio o contratar cualquiera de nuestros planes, aceptas los presentes términos. Por favor, léelos con atención antes de realizar tu compra.</p>
+      <p>Bienvenido a <strong>PerfilaPro</strong>. Al usar el servicio o contratar cualquiera de nuestros planes, aceptas los presentes términos. Por favor, léelos con atención antes de realizar tu compra.</p>
 
-  <h2>1. Quiénes somos</h2>
-  <p>PerfilaPro es un servicio de perfiles digitales profesionales operado por <span data-legal="name">Rafael Páez Manso</span>, con NIF <span data-legal="nif">72573077G</span>, domiciliado en <span data-legal="address">Orihuela, Alicante, España</span>. Contacto: <a href="mailto:hola@perfilapro.es" style="color:var(--primary)" data-legal="email" data-legal-href="email">hola@perfilapro.es</a>.</p>
+      <h2>1. Quiénes somos</h2>
+      <p>PerfilaPro es un servicio de perfiles digitales profesionales operado por <span data-legal="name">Rafael Páez Manso</span>, con NIF <span data-legal="nif">72573077G</span>, domiciliado en <span data-legal="address">Orihuela, Alicante, España</span>. Contacto: <a href="mailto:hola@perfilapro.es" data-legal="email" data-legal-href="email">hola@perfilapro.es</a>.</p>
 
-  <h2>2. El servicio</h2>
-  <p>PerfilaPro proporciona perfiles digitales profesionales accesibles mediante un enlace único, optimizados para compartir por WhatsApp y redes sociales. El servicio incluye:</p>
-  <ul>
-    <li>Una página de perfil personalizada con nombre, especialidad, servicios, zona y datos de contacto.</li>
-    <li>Botón directo de contacto por WhatsApp.</li>
-    <li>Código QR descargable que enlaza al perfil.</li>
-    <li>Acceso activo durante el período contratado según el plan elegido.</li>
-  </ul>
+      <h2>2. El servicio</h2>
+      <p>PerfilaPro proporciona perfiles digitales profesionales accesibles mediante un enlace único, optimizados para compartir por WhatsApp y redes sociales. El servicio incluye:</p>
+      <ul>
+        <li>Una página de perfil personalizada con nombre, especialidad, servicios, zona y datos de contacto.</li>
+        <li>Botón directo de contacto por WhatsApp.</li>
+        <li>Código QR descargable que enlaza al perfil.</li>
+        <li>Acceso activo durante el período contratado según el plan elegido.</li>
+      </ul>
 
-  <h2>3. Planes y precios</h2>
-  <p>Los planes disponibles son:</p>
-  <ul>
-    <li><strong>Plan gratuito:</strong> Perfil activo con marca de agua y sin código QR. Sin límite de tiempo, sin coste.</li>
-    <li><strong>Plan Base — 9 € (pago único):</strong> Perfil activo sin marca de agua, con QR descargable, durante 90 días (3 meses).</li>
-    <li><strong>Plan Pro — 19 € (pago único):</strong> Perfil activo sin marca de agua, con QR, analítica de visitas e histórico completo, durante 365 días (12 meses).</li>
-    <li><strong>Renovación — 5 € (pago único):</strong> Extiende cualquier plan activo o expirado por 12 meses adicionales.</li>
-  </ul>
-  <p>El precio mostrado incluye todos los impuestos aplicables. El pago se realiza en un único cargo por adelantado a través de <strong>Stripe</strong>, plataforma de pagos certificada PCI DSS. No hay cuotas mensuales ni suscripciones automáticas.</p>
+      <h2>3. Planes y precios</h2>
+      <p>Los planes disponibles son:</p>
+      <ul>
+        <li><strong>Plan gratuito:</strong> Perfil activo con marca de agua y sin código QR. Sin límite de tiempo, sin coste.</li>
+        <li><strong>Plan Base — 9 € (pago único):</strong> Perfil activo sin marca de agua, con QR descargable, durante 90 días (3 meses).</li>
+        <li><strong>Plan Pro — 19 € (pago único):</strong> Perfil activo sin marca de agua, con QR, analítica de visitas e histórico completo, durante 365 días (12 meses).</li>
+        <li><strong>Renovación — 5 € (pago único):</strong> Extiende cualquier plan activo o expirado por 12 meses adicionales.</li>
+      </ul>
+      <p>El precio mostrado incluye todos los impuestos aplicables. El pago se realiza en un único cargo por adelantado a través de <strong>Stripe</strong>, plataforma de pagos certificada PCI DSS. No hay cuotas mensuales ni suscripciones automáticas.</p>
 
-  <h2>4. Activación del servicio y política de reembolso</h2>
-  <div class="highlight-box">
-    <p><strong>Importante:</strong> Al completar el pago, el servicio se activa de forma inmediata. De conformidad con el artículo 103.a) de la Ley General para la Defensa de los Consumidores y Usuarios (RDL 1/2007), al tratarse de contenido digital cuya ejecución comienza con tu consentimiento expreso antes de que finalice el plazo de desistimiento, <strong>no se aplica el derecho de desistimiento de 14 días</strong> una vez iniciada la activación del perfil.</p>
-  </div>
-  <p><strong>No se realizan reembolsos</strong> una vez que el perfil ha sido activado y el enlace está disponible, salvo en los siguientes casos:</p>
-  <ul>
-    <li>Fallo técnico imputable exclusivamente al servicio que impida el acceso al perfil durante más de 72 horas continuadas.</li>
-    <li>Error en la generación del perfil por causa de un problema en nuestra plataforma, no subsanable en un plazo razonable.</li>
-  </ul>
-  <p>Para cualquier incidencia, escríbenos a <a href="mailto:hola@perfilapro.es" style="color:var(--primary)">hola@perfilapro.es</a> y lo gestionamos.</p>
+      <h2>4. Activación del servicio y política de reembolso</h2>
+      <div class="pp-legal-highlight">
+        <p><strong>Importante:</strong> Al completar el pago, el servicio se activa de forma inmediata. De conformidad con el artículo 103.a) de la Ley General para la Defensa de los Consumidores y Usuarios (RDL 1/2007), al tratarse de contenido digital cuya ejecución comienza con tu consentimiento expreso antes de que finalice el plazo de desistimiento, <strong>no se aplica el derecho de desistimiento de 14 días</strong> una vez iniciada la activación del perfil.</p>
+      </div>
+      <p><strong>No se realizan reembolsos</strong> una vez que el perfil ha sido activado y el enlace está disponible, salvo en los siguientes casos:</p>
+      <ul>
+        <li>Fallo técnico imputable exclusivamente al servicio que impida el acceso al perfil durante más de 72 horas continuadas.</li>
+        <li>Error en la generación del perfil por causa de un problema en nuestra plataforma, no subsanable en un plazo razonable.</li>
+      </ul>
+      <p>Para cualquier incidencia, escríbenos a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y lo gestionamos.</p>
 
-  <h2>5. Vigencia y renovación</h2>
-  <p>El acceso a tu perfil estará activo durante el período contratado. Transcurrido ese tiempo, el perfil dejará de ser público pero los datos se conservan durante 12 meses adicionales por si deseas renovar. No realizamos renovaciones automáticas: recibirás un aviso por email antes de que expire tu plan.</p>
-  <p>La renovación está disponible por <strong>5 € al año</strong> y puede realizarse en cualquier momento, incluso si el plan ha expirado.</p>
+      <h2>5. Vigencia y renovación</h2>
+      <p>El acceso a tu perfil estará activo durante el período contratado. Transcurrido ese tiempo, el perfil dejará de ser público pero los datos se conservan durante 12 meses adicionales por si deseas renovar. No realizamos renovaciones automáticas: recibirás un aviso por email antes de que expire tu plan.</p>
+      <p>La renovación está disponible por <strong>5 € al año</strong> y puede realizarse en cualquier momento, incluso si el plan ha expirado.</p>
 
-  <h2>6. Modificación del contenido</h2>
-  <p>Si necesitas modificar los datos de tu perfil (nombre, servicios, teléfono, etc.) durante el período de vigencia, contáctanos en <a href="mailto:hola@perfilapro.es" style="color:var(--primary)">hola@perfilapro.es</a> y lo gestionamos sin coste adicional.</p>
+      <h2>6. Modificación del contenido</h2>
+      <p>Si necesitas modificar los datos de tu perfil (nombre, servicios, teléfono, etc.) durante el período de vigencia, contáctanos en <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y lo gestionamos sin coste adicional.</p>
 
-  <h2>7. Uso aceptable</h2>
-  <p>El servicio está destinado exclusivamente a profesionales para presentar su actividad legítima. Queda prohibido:</p>
-  <ul>
-    <li>Publicar contenido falso, engañoso o que infrinja derechos de terceros.</li>
-    <li>Usar el servicio para actividades ilegales o contrarias a la buena fe.</li>
-    <li>Intentar acceder a datos de otros usuarios o manipular el sistema.</li>
-  </ul>
-  <p>Nos reservamos el derecho de desactivar perfiles que incumplan estas condiciones, sin derecho a reembolso.</p>
+      <h2>7. Uso aceptable</h2>
+      <p>El servicio está destinado exclusivamente a profesionales para presentar su actividad legítima. Queda prohibido:</p>
+      <ul>
+        <li>Publicar contenido falso, engañoso o que infrinja derechos de terceros.</li>
+        <li>Usar el servicio para actividades ilegales o contrarias a la buena fe.</li>
+        <li>Intentar acceder a datos de otros usuarios o manipular el sistema.</li>
+      </ul>
+      <p>Nos reservamos el derecho de desactivar perfiles que incumplan estas condiciones, sin derecho a reembolso.</p>
 
-  <h2>8. Responsabilidad</h2>
-  <p>PerfilaPro actúa como proveedor técnico. El contenido publicado en cada perfil es responsabilidad exclusiva del usuario. No garantizamos resultados comerciales derivados del uso del servicio.</p>
+      <h2>8. Responsabilidad</h2>
+      <p>PerfilaPro actúa como proveedor técnico. El contenido publicado en cada perfil es responsabilidad exclusiva del usuario. No garantizamos resultados comerciales derivados del uso del servicio.</p>
 
-  <h2>9. Modificaciones del servicio</h2>
-  <p>Podemos modificar estos términos o las características del servicio con previo aviso por email. Los cambios no afectarán a los planes ya contratados y en vigor en el momento del cambio.</p>
+      <h2>9. Modificaciones del servicio</h2>
+      <p>Podemos modificar estos términos o las características del servicio con previo aviso por email. Los cambios no afectarán a los planes ya contratados y en vigor en el momento del cambio.</p>
 
-  <h2>10. Legislación aplicable y jurisdicción</h2>
-  <p>Estos términos se rigen por la legislación española. Para cualquier controversia derivada del uso del servicio, las partes se someten a los Juzgados y Tribunales de Orihuela (Alicante), sin perjuicio del fuero que corresponda al consumidor conforme a la normativa vigente.</p>
-</div>
+      <h2>10. Legislación aplicable y jurisdicción</h2>
+      <p>Estos términos se rigen por la legislación española. Para cualquier controversia derivada del uso del servicio, las partes se someten a los Juzgados y Tribunales de Orihuela (Alicante), sin perjuicio del fuero que corresponda al consumidor conforme a la normativa vigente.</p>
+    </article>
+  </main>
 
-<footer>
-  <a href="/legal.html">Aviso Legal</a>
-  <a href="/privacidad.html">Privacidad</a>
-  <a href="/terminos.html">Términos</a>
-</footer>
+  <footer class="pp-site-footer">
+    <div class="pp-wrap">
+      <div class="pp-footer-grid">
+        <div>
+          <div class="pp-footer__brand">
+            <span class="pp-nav__brand-mark" style="width:28px;height:28px;border-radius:9px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
+            PerfilaPro
+          </div>
+          <p class="pp-footer__tagline">Tu trabajo, tu negocio y tus planes, en un solo sitio.</p>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Producto</h4>
+          <a href="/directorio">Directorio</a>
+          <a href="/alta.html">Crear perfil</a>
+          <a href="/#como-funciona">Cómo funciona</a>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Legal</h4>
+          <a href="/terminos.html">Términos de uso</a>
+          <a href="/privacidad.html">Privacidad</a>
+          <a href="/legal.html">Aviso legal</a>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Contacto</h4>
+          <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a>
+        </div>
+      </div>
+      <div class="pp-footer__bottom">
+        <span>© 2026 PerfilaPro — Todos los derechos reservados</span>
+        <span>Hecho con cariño en España 🇪🇸</span>
+      </div>
+    </div>
+  </footer>
 
-<script src="/js/legal-data.js"></script>
+  <script src="/js/legal-data.js"></script>
 </body>
 </html>

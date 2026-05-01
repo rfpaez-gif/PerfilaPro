@@ -4,95 +4,182 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aviso Legal — PerfilaPro</title>
+  <meta name="description" content="Aviso legal de PerfilaPro: datos identificativos del titular y condiciones de uso del sitio web.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    :root {
-      --primary: #01696f;
-      --bg: #f5f2ec;
-      --text: #1e1b14;
-      --muted: #6b6458;
-      --border: rgba(30,27,20,.10);
-      --ff-d: "Instrument Serif", Georgia, serif;
-      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+    /* ── pp-legal-doc · plantilla compartida con
+       terminos.html y privacidad.html ──────────────────── */
+    .pp-legal-doc {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: clamp(2rem, 5vw, 3.5rem) 1.5rem clamp(3rem, 6vw, 5rem);
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    .pp-legal-doc h1 {
+      font-family: var(--pp-f-display);
+      font-size: clamp(2rem, 1rem + 2.5vw, 2.75rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      line-height: var(--pp-lh-heading);
+      color: var(--pp-color-ink);
+      margin: 0 0 .5rem;
+    }
+    .pp-legal-doc__updated {
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin: 0 0 2.5rem;
+    }
+    .pp-legal-doc h2 {
+      font-family: var(--pp-f-sans);
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--pp-color-accent-deep);
+      margin: 2rem 0 .75rem;
+    }
+    .pp-legal-doc p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--pp-color-ink-soft);
+      margin: 0 0 .75rem;
+    }
+    .pp-legal-doc ul {
+      padding-left: 1.4rem;
+      margin: 0 0 .75rem;
+    }
+    .pp-legal-doc li {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--pp-color-ink-soft);
+      margin-bottom: .3rem;
+    }
+    .pp-legal-doc strong {
+      color: var(--pp-color-ink);
+      font-weight: 600;
+    }
+    .pp-legal-doc a {
+      color: var(--pp-color-accent-deep);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .pp-legal-doc a:hover { text-decoration: underline; }
 
-    .topbar { background: var(--primary); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar a { color: #fff; text-decoration: none; font-weight: 800; font-size: 1.1rem; }
-    .topbar-back { color: rgba(255,255,255,.8); font-size: .85rem; text-decoration: none; }
-    .topbar-back:hover { color: #fff; }
-
-    .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
-
-    h1 { font-family: var(--ff-d); font-size: 2.25rem; margin-bottom: .5rem; }
-    .updated { font-size: .8rem; color: var(--muted); margin-bottom: 2.5rem; }
-
-    h2 { font-size: 1.1rem; font-weight: 700; margin: 2rem 0 .75rem; color: var(--primary); }
-    p { font-size: .9375rem; color: var(--muted); line-height: 1.75; margin-bottom: .75rem; }
-    ul { padding-left: 1.4rem; margin-bottom: .75rem; }
-    li { font-size: .9375rem; color: var(--muted); line-height: 1.75; margin-bottom: .3rem; }
-    strong { color: var(--text); }
-
-    .identity-card { background: #fff; border-radius: .75rem; border: 1px solid var(--border); padding: 1.5rem; margin: 1rem 0 1.5rem; }
-    .identity-card p { margin-bottom: .4rem; }
-    .identity-card p:last-child { margin-bottom: 0; }
-
-    footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); margin-top: 3rem; }
-    footer a { color: var(--primary); font-size: .8rem; margin: 0 .75rem; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    /* ── Identity card (sólo legal.html) ───────────────── */
+    .pp-legal-identity {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1.5rem;
+      margin: 1rem 0 1.5rem;
+    }
+    .pp-legal-identity p {
+      margin: 0 0 .4rem;
+    }
+    .pp-legal-identity p:last-child { margin-bottom: 0; }
   </style>
 </head>
 <body>
 
-<div class="topbar">
-  <a href="/">PerfilaPro</a>
-  <a href="/" class="topbar-back">← Volver al inicio</a>
-</div>
+  <header class="pp-site-header">
+    <div class="pp-wrap">
+      <nav class="pp-nav">
+        <a href="/" class="pp-nav__brand" aria-label="PerfilaPro inicio">
+          <span class="pp-nav__brand-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          PerfilaPro
+        </a>
+        <ul class="pp-nav__links" role="list">
+          <li><a href="/directorio">Directorio</a></li>
+          <li><a href="/#como-funciona">Cómo funciona</a></li>
+          <li><a href="/#empresa">Para empresas</a></li>
+        </ul>
+        <div class="pp-nav__actions">
+          <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--sm pp-btn--pill">Crear mi perfil gratis</a>
+        </div>
+      </nav>
+    </div>
+  </header>
 
-<div class="container">
-  <h1>Aviso Legal</h1>
-  <p class="updated">Última actualización: abril 2026</p>
+  <main id="main">
+    <article class="pp-legal-doc">
+      <h1>Aviso Legal</h1>
+      <p class="pp-legal-doc__updated">Última actualización: abril 2026</p>
 
-  <p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y del Comercio Electrónico (LSSI-CE), se informa de los siguientes datos identificativos del titular de este sitio web.</p>
+      <p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y del Comercio Electrónico (LSSI-CE), se informa de los siguientes datos identificativos del titular de este sitio web.</p>
 
-  <h2>1. Datos identificativos</h2>
-  <div class="identity-card">
-    <p><strong>Titular:</strong> <span data-legal="name">Rafael Páez Manso</span></p>
-    <p><strong>NIF:</strong> <span data-legal="nif">72573077G</span></p>
-    <p><strong>Domicilio:</strong> <span data-legal="address">Orihuela, Alicante, España</span></p>
-    <p><strong>Nombre comercial:</strong> PerfilaPro</p>
-    <p><strong>Sitio web:</strong> perfilapro.es</p>
-    <p><strong>Email de contacto:</strong> <a href="mailto:hola@perfilapro.es" style="color:var(--primary)" data-legal="email" data-legal-href="email">hola@perfilapro.es</a></p>
-  </div>
+      <h2>1. Datos identificativos</h2>
+      <div class="pp-legal-identity">
+        <p><strong>Titular:</strong> <span data-legal="name">Rafael Páez Manso</span></p>
+        <p><strong>NIF:</strong> <span data-legal="nif">72573077G</span></p>
+        <p><strong>Domicilio:</strong> <span data-legal="address">Orihuela, Alicante, España</span></p>
+        <p><strong>Nombre comercial:</strong> PerfilaPro</p>
+        <p><strong>Sitio web:</strong> perfilapro.es</p>
+        <p><strong>Email de contacto:</strong> <a href="mailto:hola@perfilapro.es" data-legal="email" data-legal-href="email">hola@perfilapro.es</a></p>
+      </div>
 
-  <h2>2. Objeto y actividad</h2>
-  <p>PerfilaPro es un servicio online que permite a profesionales crear y publicar perfiles digitales accesibles mediante un enlace único, orientados a ser compartidos por WhatsApp y redes sociales. La actividad se presta íntegramente a través de internet, sin establecimiento físico de atención al público.</p>
+      <h2>2. Objeto y actividad</h2>
+      <p>PerfilaPro es un servicio online que permite a profesionales crear y publicar perfiles digitales accesibles mediante un enlace único, orientados a ser compartidos por WhatsApp y redes sociales. La actividad se presta íntegramente a través de internet, sin establecimiento físico de atención al público.</p>
 
-  <h2>3. Condiciones de uso del sitio</h2>
-  <p>El acceso y uso de este sitio web implica la aceptación de las presentes condiciones. El usuario se compromete a hacer un uso lícito del sitio, sin incurrir en actividades que puedan dañar los derechos e intereses de terceros o que contravengan la legislación vigente.</p>
+      <h2>3. Condiciones de uso del sitio</h2>
+      <p>El acceso y uso de este sitio web implica la aceptación de las presentes condiciones. El usuario se compromete a hacer un uso lícito del sitio, sin incurrir en actividades que puedan dañar los derechos e intereses de terceros o que contravengan la legislación vigente.</p>
 
-  <h2>4. Propiedad intelectual e industrial</h2>
-  <p>El nombre comercial <strong>PerfilaPro</strong>, el diseño, los textos, el código fuente y demás elementos del sitio son propiedad del titular o dispone de las licencias correspondientes para su uso. Queda prohibida su reproducción, distribución o comunicación pública sin autorización expresa.</p>
-  <p>El contenido publicado en cada perfil digital (textos, imágenes, datos de contacto) es responsabilidad exclusiva del usuario que lo creó. PerfilaPro actúa únicamente como proveedor técnico.</p>
+      <h2>4. Propiedad intelectual e industrial</h2>
+      <p>El nombre comercial <strong>PerfilaPro</strong>, el diseño, los textos, el código fuente y demás elementos del sitio son propiedad del titular o dispone de las licencias correspondientes para su uso. Queda prohibida su reproducción, distribución o comunicación pública sin autorización expresa.</p>
+      <p>El contenido publicado en cada perfil digital (textos, imágenes, datos de contacto) es responsabilidad exclusiva del usuario que lo creó. PerfilaPro actúa únicamente como proveedor técnico.</p>
 
-  <h2>5. Exclusión de garantías y responsabilidad</h2>
-  <p>PerfilaPro no garantiza la disponibilidad continua e ininterrumpida del servicio, aunque se esfuerza por mantener la máxima disponibilidad. El titular no será responsable de los daños o perjuicios que pudieran derivarse de interrupciones, fallos técnicos o accesos no autorizados ajenos a su control.</p>
+      <h2>5. Exclusión de garantías y responsabilidad</h2>
+      <p>PerfilaPro no garantiza la disponibilidad continua e ininterrumpida del servicio, aunque se esfuerza por mantener la máxima disponibilidad. El titular no será responsable de los daños o perjuicios que pudieran derivarse de interrupciones, fallos técnicos o accesos no autorizados ajenos a su control.</p>
 
-  <h2>6. Legislación aplicable y jurisdicción</h2>
-  <p>Este aviso legal se rige por la legislación española vigente. Para la resolución de cualquier conflicto derivado del acceso o uso del sitio web, las partes se someten a los Juzgados y Tribunales de Orihuela (Alicante), sin perjuicio del fuero que corresponda al consumidor según la normativa aplicable.</p>
+      <h2>6. Legislación aplicable y jurisdicción</h2>
+      <p>Este aviso legal se rige por la legislación española vigente. Para la resolución de cualquier conflicto derivado del acceso o uso del sitio web, las partes se someten a los Juzgados y Tribunales de Orihuela (Alicante), sin perjuicio del fuero que corresponda al consumidor según la normativa aplicable.</p>
 
-  <h2>7. Resolución de litigios en línea</h2>
-  <p>Si eres consumidor en la UE, puedes acceder a la plataforma de resolución de litigios en línea de la Comisión Europea en: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener" style="color:var(--primary)">ec.europa.eu/consumers/odr</a>.</p>
-</div>
+      <h2>7. Resolución de litigios en línea</h2>
+      <p>Si eres consumidor en la UE, puedes acceder a la plataforma de resolución de litigios en línea de la Comisión Europea en: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>.</p>
+    </article>
+  </main>
 
-<footer>
-  <a href="/legal.html">Aviso Legal</a>
-  <a href="/privacidad.html">Privacidad</a>
-  <a href="/terminos.html">Términos</a>
-</footer>
+  <footer class="pp-site-footer">
+    <div class="pp-wrap">
+      <div class="pp-footer-grid">
+        <div>
+          <div class="pp-footer__brand">
+            <span class="pp-nav__brand-mark" style="width:28px;height:28px;border-radius:9px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
+            PerfilaPro
+          </div>
+          <p class="pp-footer__tagline">Tu trabajo, tu negocio y tus planes, en un solo sitio.</p>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Producto</h4>
+          <a href="/directorio">Directorio</a>
+          <a href="/alta.html">Crear perfil</a>
+          <a href="/#como-funciona">Cómo funciona</a>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Legal</h4>
+          <a href="/terminos.html">Términos de uso</a>
+          <a href="/privacidad.html">Privacidad</a>
+          <a href="/legal.html">Aviso legal</a>
+        </div>
+        <div class="pp-footer__col">
+          <h4>Contacto</h4>
+          <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a>
+        </div>
+      </div>
+      <div class="pp-footer__bottom">
+        <span>© 2026 PerfilaPro — Todos los derechos reservados</span>
+        <span>Hecho con cariño en España 🇪🇸</span>
+      </div>
+    </div>
+  </footer>
 
-<script src="/js/legal-data.js"></script>
+  <script src="/js/legal-data.js"></script>
 </body>
 </html>
