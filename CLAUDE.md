@@ -180,15 +180,14 @@ AGENT_JWT_SECRET      # signs agent JWT tokens
 - **No programar cron**: la renovación se dispara siempre manualmente.
 
 ### 3. Diversidad — refactor de arquetipos
-- `scripts/archetypes.json` → añadir a cada entrada:
-  - `atributos: { apariencia: "<frase corta tipo 'Latin American woman in her 30s'>", edad_aprox: "20-30|30-45|45-60|60+", genero: "femenino|masculino|no_binario" }`
-- **Distribución objetivo** (75 entradas):
-  - Origen: ~70% blanco/europeo, ~13% latinoamericano, ~8% magrebí, ~4% negro africano, ~3% asiático oriental, ~3% sur-asiático.
-  - Edad: ~20% 20-30, ~45% 30-45, ~25% 45-60, ~10% +60.
-  - Género: ~50/50, con 1-2 explícitamente disonantes con el estereotipo del rol.
-- **Neutralizar** `rol_profesional` con género lingüístico fijo (Enfermera→Enfermería, Cocinera→Cocina, Albañil→Albañilería…) sólo donde el título choque con `atributos.genero`.
-- `scripts/generate-seeds.js`: el prompt pasa a ser `BASE_PROMPT + atributos.apariencia + descripcion_accion`.
-- **Acción manual del usuario**: borrar los seeds ya generados (`Avatars/seeds/*` en Supabase Storage + `DELETE FROM cards WHERE is_seed=true`) antes de regenerar los 75.
+> **Trabajo en curso** — toda la información operativa (reglas, distribución, bloques, running totals, plan de retoma) vive en `scripts/archetypes-progress.md`. Lee ese archivo primero al retomar.
+
+Resumen de alto nivel:
+- Reescribir las 75 `descripcion_accion` con un "acento" demográfico (origen, edad, género, expresión).
+- Distribución de origen ~70/13/8/4/3/3, edad ~20/45/25/10, género ~50/50 con disonancias estratégicas.
+- Modelo de imagen ya validado: `gemini-2.5-flash-image` (Nano Banana). `BASE_PROMPT` fijo (definido en el progress.md).
+- Trabajo dividido en 3 bloques de ~25 entradas + 1 bloque final de pipeline (refactor del generador para usar Gemini en vez de Pollinations).
+- **Acción manual del usuario al final**: borrar los seeds ya generados (`Avatars/seeds/*` en Supabase Storage + `DELETE FROM cards WHERE is_seed=true`) antes de regenerar los 75.
 
 ### 4. Otros pendientes del kickoff
 - Reanudar generación de seeds → `node scripts/generate-seeds.js` (ya con checkpoint y backoff, retoma solo).
