@@ -70,7 +70,7 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 
 ## 5 · Bloques de trabajo (una sesión por bloque)
 
-- [ ] **Bloque 1** — entradas 1-25: Sanidad, Educación, Hostelería, Comercio, Oficios
+- [x] **Bloque 1** — entradas 1-25: Sanidad, Educación, Hostelería, Comercio, Oficios
 - [ ] **Bloque 2** — entradas 26-50: Transporte, Automoción, Tecnología, Legal, Belleza
 - [ ] **Bloque 3** — entradas 51-75: Fitness, Jardinería, Seguridad, Fotografía, Servicios oficina
 - [ ] **Bloque 4** — pipeline: refactor de `scripts/generate-seeds.js` para usar Gemini
@@ -80,31 +80,36 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 ### Origen
 | Origen | Asignados | Target | Pendientes |
 |---|---|---|---|
-| Blanco europeo | 0 | 52 | 52 |
-| Latinoamericano | 0 | 10 | 10 |
-| Magrebí | 0 | 6 | 6 |
-| Negro africano | 0 | 3 | 3 |
-| Asiático oriental | 0 | 2 | 2 |
-| Sur-asiático | 0 | 2 | 2 |
+| Blanco europeo | 15 | 52 | 37 |
+| Latinoamericano | 4 | 10 | 6 |
+| Magrebí | 3 | 6 | 3 |
+| Negro africano | 1 | 3 | 2 |
+| Asiático oriental | 1 | 2 | 1 |
+| Sur-asiático | 1 | 2 | 1 |
 
 ### Edad
 | Rango | Asignados | Target | Pendientes |
 |---|---|---|---|
-| 20-30 | 0 | 15 | 15 |
-| 30-45 | 0 | 34 | 34 |
-| 45-60 | 0 | 19 | 19 |
-| 60+ | 0 | 7 | 7 |
+| 20-30 | 5 | 15 | 10 |
+| 30-45 | 10 | 34 | 24 |
+| 45-60 | 6 | 19 | 13 |
+| 60+ | 4 | 7 | 3 |
 
 ### Género
 | Género | Asignados | Target | Pendientes |
 |---|---|---|---|
-| Femenino | 0 | 37 | 37 |
-| Masculino | 0 | 38 | 38 |
+| Femenino | 15 | 37 | 22 |
+| Masculino | 10 | 38 | 28 |
+
+> ⚠ Bloque 1 cierra con desbalance 15F/10M y un magrebí extra. Compensar en bloques 2-3 (más hombres y menos magrebíes).
 
 ### Disonancias estratégicas registradas
 | # entrada | Rol | Disonancia |
 |---|---|---|
-| (vacío — registrar al cerrar cada bloque) | | |
+| 5 | Cuidador de personas mayores (Samir) | Hombre magrebí mayor cuidando a una señora |
+| 21 | Albañilería (Marisol) | Mujer latina en obra colocando ladrillos |
+| 22 | Electricista (Lidia) | Mujer europea en cuadros eléctricos |
+| 24 | Carpintera (Julia) | Mujer europea en taller de madera |
 
 ## 7 · Bloque 4 — pipeline post-JSON
 
