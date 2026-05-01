@@ -5,259 +5,734 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    :root {
-      --primary: #01696f;
-      --phover: #0c4e54;
-      --plight: #deeeed;
-      --bg: #f5f2ec;
-      --text: #1e1b14;
-      --muted: #6b6458;
-      --faint: #a89f90;
-      --border: rgba(30,27,20,.10);
-      --ff-d: "Instrument Serif", Georgia, serif;
-      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
-      --green: #16a34a;
-      --yellow: #ca8a04;
-      --red: #dc2626;
+    /* ── Login ────────────────────────────────────────────── */
+    .pp-admin-login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 1rem;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
-
-    /* ── Login ── */
-    .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 1rem; }
-    .login-box { background: #fff; border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,.10); padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center; }
-    .login-box h1 { font-family: var(--ff-d); font-size: 1.75rem; margin-bottom: .25rem; }
-    .login-box p { color: var(--muted); font-size: .875rem; margin-bottom: 1.75rem; }
-    .login-box input { width: 100%; padding: .75rem 1rem; border: 1px solid var(--border); border-radius: .5rem; font-size: 1rem; font-family: var(--ff-b); background: var(--bg); margin-bottom: 1rem; outline: none; transition: border-color .2s; }
-    .login-box input:focus { border-color: var(--primary); }
-    .login-box button { width: 100%; padding: .875rem; background: var(--primary); color: #fff; border: none; border-radius: .5rem; font-size: 1rem; font-weight: 700; font-family: var(--ff-b); cursor: pointer; transition: background .2s; }
-    .login-box button:hover { background: var(--phover); }
-    .login-error { color: var(--red); font-size: .8rem; margin-top: .75rem; display: none; }
-
-    /* ── Dashboard ── */
-    .dashboard { display: none; }
-    .topbar { background: var(--primary); color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar h1 { font-family: var(--ff-d); font-size: 1.5rem; }
-    .topbar-right { display: flex; align-items: center; gap: 1rem; }
-    .refresh-info { font-size: .75rem; opacity: .75; }
-    .logout-btn { background: rgba(255,255,255,.2); border: none; color: #fff; padding: .4rem .9rem; border-radius: 999px; cursor: pointer; font-size: .78rem; font-family: var(--ff-b); font-weight: 600; transition: background .2s; }
-    .logout-btn:hover { background: rgba(255,255,255,.35); }
-
-    .main { padding: 2rem; max-width: 1280px; margin: 0 auto; }
-
-    /* ── Stats ── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: #fff; border-radius: .75rem; border: 1px solid var(--border); padding: 1.25rem; }
-    .stat-label { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; }
-    .stat-value { font-size: 2.25rem; font-weight: 800; line-height: 1; }
-    .stat-value.c-primary { color: var(--primary); }
-    .stat-value.c-green  { color: var(--green); }
-    .stat-value.c-yellow { color: var(--yellow); }
-    .stat-value.c-red    { color: var(--red); }
-    .stat-sub { font-size: .72rem; color: var(--faint); margin-top: .3rem; }
-
-    /* ── Controls ── */
-    .controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
-    .section-title { font-family: var(--ff-d); font-size: 1.25rem; }
-    .filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
-    .search-input { padding: .5rem .9rem; border: 1px solid var(--border); border-radius: .5rem; font-size: .875rem; font-family: var(--ff-b); background: #fff; outline: none; min-width: 200px; transition: border-color .2s; }
-    .search-input:focus { border-color: var(--primary); }
-    .filter-btn { padding: .4rem .9rem; border: 1px solid var(--border); border-radius: 999px; background: #fff; font-size: .78rem; font-weight: 600; cursor: pointer; font-family: var(--ff-b); color: var(--text); transition: all .2s; }
-    .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
-    .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-    /* ── Table ── */
-    .table-wrap { background: #fff; border-radius: .75rem; border: 1px solid var(--border); overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-    th { text-align: left; padding: .75rem 1rem; font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--bg); white-space: nowrap; }
-    td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #faf9f6; }
-    .empty-row td { text-align: center; color: var(--muted); padding: 3rem; font-size: .875rem; }
-
-    .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .65rem; border-radius: 999px; font-size: .7rem; font-weight: 700; white-space: nowrap; }
-    .badge-active  { background: #dcfce7; color: #15803d; }
-    .badge-expired { background: #fee2e2; color: #b91c1c; }
-    .badge-soon    { background: #fef9c3; color: #854d0e; }
-    .badge-free    { background: #f3f4f6; color: #4b5563; }
-
-    .plan-badge { display: inline-block; padding: .2rem .55rem; border-radius: .3rem; font-size: .7rem; font-weight: 700; }
-    .plan-pro        { background: #ede9fe; color: #5b21b6; }
-    .plan-base       { background: var(--plight); color: var(--primary); }
-    .plan-renovacion { background: #fef3c7; color: #92400e; }
-    .plan-none       { background: #f3f4f6; color: #9ca3af; }
-
-    .card-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: .8rem; }
-    .card-link:hover { text-decoration: underline; }
-    .name-cell strong { display: block; }
-    .name-cell small { color: var(--muted); font-size: .75rem; font-family: monospace; }
-
-    @media (max-width: 768px) {
-      .main { padding: 1rem; }
-      .topbar { padding: 1rem; }
-      .col-md { display: none; }
-      table { font-size: .8rem; }
-      th, td { padding: .6rem .75rem; }
+    .pp-admin-login__box {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-xl);
+      box-shadow: var(--pp-sh-md);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .pp-admin-login__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.75rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--pp-color-ink);
+      margin: 0 0 .25rem;
+    }
+    .pp-admin-login__sub {
+      color: var(--pp-color-ink-soft);
+      font-size: 14px;
+      margin: 0 0 1.75rem;
+    }
+    .pp-admin-login__error {
+      color: var(--pp-color-danger);
+      font-size: 13px;
+      margin-top: .75rem;
+      display: none;
+    }
+    .pp-admin-login__totp {
+      letter-spacing: .2em;
+      font-size: 1.25rem;
+      text-align: center;
     }
 
-    /* ── Acciones ── */
-    .action-btn { padding: .28rem .65rem; border-radius: .35rem; border: 1px solid var(--border); background: #fff; font-size: .72rem; font-weight: 600; cursor: pointer; font-family: var(--ff-b); transition: all .15s; }
-    .action-btn:hover { opacity: .8; }
-    .btn-reactivate { color: var(--green); border-color: #bbf7d0; }
-    .btn-reactivate:hover { background: #dcfce7; }
-    .btn-extend { color: var(--yellow); border-color: #fde68a; }
-    .btn-extend:hover { background: #fef9c3; }
-    .btn-refund { color: var(--red); border-color: #fecaca; }
-    .btn-refund:hover { background: #fee2e2; }
-    .btn-invoice { color: #2563eb; border-color: #bfdbfe; }
-    .btn-invoice:hover { background: #eff6ff; }
-    .btn-regen { color: var(--primary); border-color: var(--plight); }
-    .btn-regen:hover { background: var(--plight); }
-    .btn-regen[disabled] { opacity: .55; cursor: progress; }
-    .btn-regen .spin { display: inline-block; animation: ppSpin 1s linear infinite; }
+    /* ── Topbar ───────────────────────────────────────────── */
+    .pp-admin-dash { display: none; }
+    .pp-admin-topbar {
+      background: var(--pp-color-accent-deep);
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pp-admin-topbar__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      margin: 0;
+    }
+    .pp-admin-topbar__right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .pp-admin-topbar__refresh {
+      font-size: 12px;
+      opacity: .75;
+    }
+    .pp-admin-topbar__logout {
+      background: rgba(255,255,255,.2);
+      border: none;
+      color: #fff;
+      padding: .4rem .9rem;
+      border-radius: var(--pp-r-pill);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--pp-f-sans);
+      font-weight: 600;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-admin-topbar__logout:hover { background: rgba(255,255,255,.35); }
+
+    .pp-admin-main {
+      padding: 2rem;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* ── Stats grid ───────────────────────────────────────── */
+    .pp-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .pp-stat {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem;
+    }
+    .pp-stat__label {
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin-bottom: .5rem;
+    }
+    .pp-stat__value {
+      font-family: var(--pp-f-display);
+      font-size: 2.25rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      line-height: 1;
+      color: var(--pp-color-ink);
+    }
+    .pp-stat__value--primary { color: var(--pp-color-accent-deep); }
+    .pp-stat__value--success { color: var(--pp-color-success); }
+    .pp-stat__value--warning { color: var(--pp-color-warning); }
+    .pp-stat__value--danger  { color: var(--pp-color-danger); }
+    .pp-stat__sub {
+      font-size: 12px;
+      color: var(--pp-color-ink-muted);
+      margin-top: .3rem;
+    }
+
+    /* ── Section controls ─────────────────────────────────── */
+    .pp-admin-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+    .pp-admin-controls__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.25rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-heading);
+      color: var(--pp-color-ink);
+    }
+    .pp-admin-filters {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pp-admin-search {
+      padding: .5rem .9rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-family: var(--pp-f-sans);
+      background: var(--pp-color-surface);
+      color: var(--pp-color-ink);
+      outline: none;
+      min-width: 200px;
+      transition: border-color var(--pp-t-fast),
+                  box-shadow var(--pp-t-fast);
+    }
+    .pp-admin-search:focus {
+      border-color: var(--pp-color-accent);
+      box-shadow: 0 0 0 3px var(--pp-color-accent-soft);
+    }
+    .pp-filter-btn {
+      padding: .4rem .9rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-pill);
+      background: var(--pp-color-surface);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--pp-f-sans);
+      color: var(--pp-color-ink);
+      transition: border-color var(--pp-t-fast),
+                  color var(--pp-t-fast),
+                  background var(--pp-t-fast);
+    }
+    .pp-filter-btn:hover {
+      border-color: var(--pp-color-accent);
+      color: var(--pp-color-accent-deep);
+    }
+    .pp-filter-btn.is-active {
+      background: var(--pp-color-accent);
+      color: #fff;
+      border-color: var(--pp-color-accent);
+    }
+    .pp-filter-btn--primary {
+      background: var(--pp-color-accent);
+      color: #fff;
+      border-color: var(--pp-color-accent);
+    }
+    .pp-filter-btn--primary:hover {
+      background: var(--pp-color-accent-deep);
+      border-color: var(--pp-color-accent-deep);
+      color: #fff;
+    }
+
+    /* ── Table ────────────────────────────────────────────── */
+    .pp-tbl-wrap {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      overflow: hidden;
+    }
+    .pp-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .pp-tbl th {
+      text-align: left;
+      padding: .75rem 1rem;
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      border-bottom: 1px solid var(--pp-color-border);
+      background: var(--pp-color-bg);
+      white-space: nowrap;
+    }
+    .pp-tbl td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--pp-color-border);
+      vertical-align: middle;
+      color: var(--pp-color-ink);
+    }
+    .pp-tbl tr:last-child td { border-bottom: none; }
+    .pp-tbl tr:hover td {
+      background: color-mix(in srgb, var(--pp-color-bg) 60%, var(--pp-color-surface));
+    }
+    .pp-tbl__empty td {
+      text-align: center;
+      color: var(--pp-color-ink-muted);
+      padding: 3rem;
+      font-size: 14px;
+    }
+    .pp-tbl__name strong { display: block; color: var(--pp-color-ink); }
+    .pp-tbl__name small {
+      color: var(--pp-color-ink-muted);
+      font-size: 12px;
+      font-family: var(--pp-f-mono);
+    }
+    .pp-tbl__email a {
+      color: var(--pp-color-accent-deep);
+      text-decoration: none;
+    }
+    .pp-tbl__card-link {
+      color: var(--pp-color-accent-deep);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .pp-tbl__card-link:hover { text-decoration: underline; }
+
+    /* ── Status / plan badges ─────────────────────────────── */
+    .pp-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .25rem .65rem;
+      border-radius: var(--pp-r-pill);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      font-family: var(--pp-f-sans);
+    }
+    .pp-status-badge--active  { background: #dcfce7; color: #15803d; }
+    .pp-status-badge--expired { background: #fee2e2; color: #b91c1c; }
+    .pp-status-badge--soon    { background: #fef9c3; color: #854d0e; }
+    .pp-status-badge--free    { background: #f3f4f6; color: #4b5563; }
+
+    .pp-plan-badge {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: var(--pp-r-sm);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--pp-f-sans);
+    }
+    .pp-plan-badge--pro        { background: #ede9fe; color: #5b21b6; }
+    .pp-plan-badge--base       { background: var(--pp-color-accent-soft); color: var(--pp-color-accent-deep); }
+    .pp-plan-badge--renovacion { background: #fef3c7; color: #92400e; }
+    .pp-plan-badge--none       { background: #f3f4f6; color: #9ca3af; }
+
+    .pp-agent-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .25rem .65rem;
+      border-radius: var(--pp-r-pill);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--pp-f-sans);
+    }
+    .pp-agent-badge--active { background: #dcfce7; color: #15803d; }
+    .pp-agent-badge--muted  { background: #f3f4f6; color: #6b7280; }
+
+    /* ── Action buttons ───────────────────────────────────── */
+    .pp-action-btn {
+      padding: .28rem .65rem;
+      border-radius: var(--pp-r-sm);
+      border: 1px solid var(--pp-color-border);
+      background: var(--pp-color-surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--pp-f-sans);
+      color: var(--pp-color-ink);
+      transition: background var(--pp-t-fast),
+                  border-color var(--pp-t-fast),
+                  opacity var(--pp-t-fast);
+    }
+    .pp-action-btn:hover { opacity: .85; }
+    .pp-action-btn--reactivate { color: var(--pp-color-success); border-color: #bbf7d0; }
+    .pp-action-btn--reactivate:hover { background: #dcfce7; }
+    .pp-action-btn--extend { color: var(--pp-color-warning); border-color: #fde68a; }
+    .pp-action-btn--extend:hover { background: #fef9c3; }
+    .pp-action-btn--refund { color: var(--pp-color-danger); border-color: #fecaca; }
+    .pp-action-btn--refund:hover { background: #fee2e2; }
+    .pp-action-btn--invoice { color: #2563eb; border-color: #bfdbfe; }
+    .pp-action-btn--invoice:hover { background: #eff6ff; }
+    .pp-action-btn--regen {
+      color: var(--pp-color-accent-deep);
+      border-color: var(--pp-color-accent);
+    }
+    .pp-action-btn--regen:hover { background: var(--pp-color-accent-soft); }
+    .pp-action-btn--regen[disabled] { opacity: .55; cursor: progress; }
+    .pp-action-btn--regen .pp-spin { display: inline-block; animation: ppSpin 1s linear infinite; }
     @keyframes ppSpin { to { transform: rotate(360deg); } }
-    .actions-cell { display: flex; gap: .35rem; flex-wrap: wrap; }
+    .pp-tbl__actions {
+      display: flex;
+      gap: .35rem;
+      flex-wrap: wrap;
+    }
 
-    /* ── Seed thumbnail ── */
-    .seed-row { display: flex; align-items: center; gap: .65rem; }
-    .seed-thumb { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
-    .seed-thumb.is-empty { background: var(--plight); }
-    .seed-flag { display: inline-block; padding: .1rem .45rem; border-radius: .3rem; background: var(--plight); color: var(--primary); font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin-left: .35rem; vertical-align: middle; }
+    /* ── Seed thumbnail ───────────────────────────────────── */
+    .pp-seed-row {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+    }
+    .pp-seed-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--pp-color-border);
+      flex-shrink: 0;
+      background: var(--pp-color-bg);
+    }
+    .pp-seed-thumb.is-empty { background: var(--pp-color-accent-soft); }
+    .pp-seed-flag {
+      display: inline-block;
+      padding: .1rem .45rem;
+      border-radius: var(--pp-r-sm);
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+      font-family: var(--pp-f-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-left: .35rem;
+      vertical-align: middle;
+    }
 
-    /* ── Directory toggles ── */
-    .dir-toggle { display: inline-flex; align-items: center; gap: .2rem; padding: .2rem .55rem; border-radius: 999px; font-size: .68rem; font-weight: 700; cursor: pointer; border: none; font-family: var(--ff-b); transition: all .15s; white-space: nowrap; }
-    .dir-toggle--on  { background: #dcfce7; color: #15803d; }
-    .dir-toggle--off { background: #f3f4f6; color: #9ca3af; }
-    .dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
-    .dir-config-btn { background: none; border: 1px dashed var(--border); border-radius: .35rem; padding: .15rem .5rem; font-size: .68rem; color: var(--muted); cursor: pointer; font-family: var(--ff-b); transition: all .15s; }
-    .dir-config-btn:hover { background: #eff6ff; color: var(--primary); border-color: var(--primary); border-style: solid; }
+    /* ── Directory toggles ────────────────────────────────── */
+    .pp-dir-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: .2rem;
+      padding: .2rem .55rem;
+      border-radius: var(--pp-r-pill);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      font-family: var(--pp-f-sans);
+      transition: background var(--pp-t-fast), color var(--pp-t-fast);
+      white-space: nowrap;
+    }
+    .pp-dir-toggle--on  { background: #dcfce7; color: #15803d; }
+    .pp-dir-toggle--off { background: #f3f4f6; color: #9ca3af; }
+    .pp-dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
+    .pp-dir-config-btn {
+      background: none;
+      border: 1px dashed var(--pp-color-border);
+      border-radius: var(--pp-r-sm);
+      padding: .15rem .5rem;
+      font-size: 11px;
+      color: var(--pp-color-ink-muted);
+      cursor: pointer;
+      font-family: var(--pp-f-sans);
+      transition: background var(--pp-t-fast), border-color var(--pp-t-fast), color var(--pp-t-fast);
+    }
+    .pp-dir-config-btn:hover {
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+      border-color: var(--pp-color-accent);
+      border-style: solid;
+    }
+    .pp-dir-meta {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+    .pp-dir-meta__row {
+      display: flex;
+      gap: .3rem;
+      flex-wrap: wrap;
+    }
+    .pp-dir-meta__city {
+      color: var(--pp-color-ink-muted);
+      font-size: 11px;
+      font-family: var(--pp-f-mono);
+    }
 
-    /* ── Modal ── */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: #fff; border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 8px 40px rgba(0,0,0,.18); padding: 2rem; width: 100%; max-width: 400px; }
-    .modal h2 { font-family: var(--ff-d); font-size: 1.25rem; margin: 0 0 .5rem; }
-    .modal p { font-size: .9rem; color: var(--muted); margin: 0 0 1.5rem; line-height: 1.5; }
-    .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; }
-    .modal-cancel { padding: .6rem 1.2rem; border: 1px solid var(--border); border-radius: .5rem; background: #fff; font-family: var(--ff-b); font-size: .875rem; cursor: pointer; }
-    .modal-confirm { padding: .6rem 1.2rem; border: none; border-radius: .5rem; font-family: var(--ff-b); font-size: .875rem; font-weight: 700; color: #fff; cursor: pointer; }
-    .modal-confirm.c-green  { background: var(--green); }
-    .modal-confirm.c-yellow { background: var(--yellow); }
-    .modal-confirm.c-red    { background: var(--red); }
+    /* ── Modal ────────────────────────────────────────────── */
+    .pp-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: var(--pp-z-modal);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .pp-modal-overlay.is-open { display: flex; }
+    .pp-modal {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-xl);
+      box-shadow: var(--pp-sh-xl);
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    .pp-modal__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.25rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-heading);
+      color: var(--pp-color-ink);
+      margin: 0 0 .5rem;
+    }
+    .pp-modal__text {
+      font-size: 14px;
+      color: var(--pp-color-ink-soft);
+      margin: 0 0 1.5rem;
+      line-height: 1.5;
+    }
+    .pp-modal__actions {
+      display: flex;
+      gap: .75rem;
+      justify-content: flex-end;
+    }
+    .pp-modal__cancel {
+      padding: .6rem 1.2rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      background: var(--pp-color-surface);
+      color: var(--pp-color-ink);
+      font-family: var(--pp-f-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pp-modal__cancel:hover { border-color: var(--pp-color-ink); }
+    .pp-modal__confirm {
+      padding: .6rem 1.2rem;
+      border: none;
+      border-radius: var(--pp-r-md);
+      font-family: var(--pp-f-sans);
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+    }
+    .pp-modal__confirm--success { background: var(--pp-color-success); }
+    .pp-modal__confirm--warning { background: var(--pp-color-warning); }
+    .pp-modal__confirm--danger  { background: var(--pp-color-danger); }
+    .pp-modal__select {
+      padding: .6rem .85rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-family: var(--pp-f-sans);
+      background: var(--pp-color-surface);
+      color: var(--pp-color-ink);
+      outline: none;
+      transition: border-color var(--pp-t-fast),
+                  box-shadow var(--pp-t-fast);
+    }
+    .pp-modal__select:focus {
+      border-color: var(--pp-color-accent);
+      box-shadow: 0 0 0 3px var(--pp-color-accent-soft);
+    }
+    .pp-modal__textarea {
+      width: 100%;
+      padding: .65rem .85rem;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-family: var(--pp-f-sans);
+      color: var(--pp-color-ink);
+      background: var(--pp-color-surface);
+      resize: vertical;
+      outline: none;
+      transition: border-color var(--pp-t-fast),
+                  box-shadow var(--pp-t-fast);
+    }
+    .pp-modal__textarea:focus {
+      border-color: var(--pp-color-danger);
+      box-shadow: 0 0 0 3px rgba(178, 58, 72, .15);
+    }
+    .pp-modal__field-label {
+      display: block;
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin-bottom: .4rem;
+    }
+
+    /* ── Legal panel ──────────────────────────────────────── */
+    .pp-legal-panel {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .pp-legal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .pp-legal-grid__full { grid-column: 1 / -1; }
+    .pp-legal-actions {
+      display: flex;
+      gap: .75rem;
+      justify-content: flex-end;
+      margin-top: 1.25rem;
+    }
+    .pp-legal-msg {
+      text-align: right;
+      font-size: 13px;
+      margin-top: .5rem;
+      min-height: 1rem;
+    }
+
+    /* ── Section spacing ──────────────────────────────────── */
+    .pp-admin-section { margin-bottom: 2rem; }
+
+    /* ── Agent modal grid ─────────────────────────────────── */
+    .pp-agent-modal {
+      max-width: 480px;
+    }
+    .pp-agent-modal__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+    .pp-agent-modal__grid > .pp-agent-modal__full { grid-column: 1 / -1; }
+    .pp-agent-modal__err {
+      color: var(--pp-color-danger);
+      font-size: 13px;
+      margin-top: .75rem;
+      min-height: 1rem;
+    }
+
+    /* ── Cat modal stack ──────────────────────────────────── */
+    .pp-cat-modal__stack {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Code chip (agent code) ───────────────────────────── */
+    .pp-code-chip {
+      background: #f3f4f6;
+      padding: .15rem .4rem;
+      border-radius: var(--pp-r-sm);
+      font-family: var(--pp-f-mono);
+      font-size: 13px;
+      color: var(--pp-color-ink);
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .pp-admin-main { padding: 1rem; }
+      .pp-admin-topbar { padding: 1rem; }
+      .pp-tbl__col-md { display: none; }
+      .pp-tbl { font-size: 13px; }
+      .pp-tbl th, .pp-tbl td { padding: .6rem .75rem; }
+      .pp-legal-grid { grid-template-columns: 1fr; }
+      .pp-agent-modal__grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-<!-- Login -->
-<div class="login-wrap" id="loginWrap">
-  <div class="login-box">
-    <h1>PerfilaPro</h1>
-    <p>Panel de administración</p>
-    <input type="password" id="passwordInput" placeholder="Contraseña" autocomplete="current-password">
-    <input type="text" id="totpInput" placeholder="Código autenticador (6 dígitos)" autocomplete="one-time-code" inputmode="numeric" maxlength="6" style="letter-spacing:.2em;font-size:1.25rem;text-align:center">
-    <button onclick="login()">Entrar</button>
-    <div class="login-error" id="loginError">Contraseña o código incorrectos.</div>
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div class="pp-admin-login" id="loginWrap">
+  <div class="pp-admin-login__box">
+    <h1 class="pp-admin-login__title">PerfilaPro</h1>
+    <p class="pp-admin-login__sub">Panel de administración</p>
+    <div class="pp-field">
+      <input type="password" class="pp-input" id="passwordInput" placeholder="Contraseña" autocomplete="current-password">
+    </div>
+    <div class="pp-field">
+      <input type="text" class="pp-input pp-admin-login__totp" id="totpInput" placeholder="Código autenticador (6 dígitos)" autocomplete="one-time-code" inputmode="numeric" maxlength="6">
+    </div>
+    <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" onclick="login()">Entrar</button>
+    <div class="pp-admin-login__error" id="loginError">Contraseña o código incorrectos.</div>
   </div>
 </div>
 
-<!-- Dashboard -->
-<div class="dashboard" id="dashboard">
-  <div class="topbar">
-    <h1>PerfilaPro Admin</h1>
-    <div class="topbar-right">
-      <span class="refresh-info" id="refreshInfo">Cargando...</span>
-      <button class="logout-btn" onclick="logout()">Salir</button>
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<div class="pp-admin-dash" id="dashboard">
+  <div class="pp-admin-topbar">
+    <h1 class="pp-admin-topbar__title">PerfilaPro Admin</h1>
+    <div class="pp-admin-topbar__right">
+      <span class="pp-admin-topbar__refresh" id="refreshInfo">Cargando...</span>
+      <button class="pp-admin-topbar__logout" onclick="logout()">Salir</button>
     </div>
   </div>
 
-  <div class="main">
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total tarjetas</div>
-        <div class="stat-value c-primary" id="statTotal">—</div>
+  <div class="pp-admin-main">
+    <!-- ── Stats ── -->
+    <div class="pp-stats">
+      <div class="pp-stat">
+        <div class="pp-stat__label">Total tarjetas</div>
+        <div class="pp-stat__value pp-stat__value--primary" id="statTotal">—</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Activas</div>
-        <div class="stat-value c-green" id="statActive">—</div>
-        <div class="stat-sub">pagadas y vigentes</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Activas</div>
+        <div class="pp-stat__value pp-stat__value--success" id="statActive">—</div>
+        <div class="pp-stat__sub">pagadas y vigentes</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Por expirar</div>
-        <div class="stat-value c-yellow" id="statSoon">—</div>
-        <div class="stat-sub">en menos de 30 días</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Por expirar</div>
+        <div class="pp-stat__value pp-stat__value--warning" id="statSoon">—</div>
+        <div class="pp-stat__sub">en menos de 30 días</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Expiradas</div>
-        <div class="stat-value c-red" id="statExpired">—</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Expiradas</div>
+        <div class="pp-stat__value pp-stat__value--danger" id="statExpired">—</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">En preview</div>
-        <div class="stat-value" id="statFree">—</div>
-        <div class="stat-sub">sin pagar</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">En preview</div>
+        <div class="pp-stat__value" id="statFree">—</div>
+        <div class="pp-stat__sub">sin pagar</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Ingresos activos</div>
-        <div class="stat-value c-primary" id="statRevenue">—</div>
-        <div class="stat-sub">tarjetas vigentes</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Ingresos activos</div>
+        <div class="pp-stat__value pp-stat__value--primary" id="statRevenue">—</div>
+        <div class="pp-stat__sub">tarjetas vigentes</div>
       </div>
     </div>
 
-    <!-- Datos legales -->
-    <div class="legal-section">
-      <div class="controls" style="margin-bottom:.75rem">
-        <div class="section-title">Datos legales</div>
-        <button class="filter-btn" id="legalToggle" onclick="toggleLegal()">Editar</button>
+    <!-- ── Datos legales ── -->
+    <div class="pp-admin-section">
+      <div class="pp-admin-controls" style="margin-bottom:.75rem">
+        <div class="pp-admin-controls__title">Datos legales</div>
+        <button class="pp-filter-btn" id="legalToggle" onclick="toggleLegal()">Editar</button>
       </div>
       <div id="legalPanel" style="display:none">
-        <div class="table-wrap" style="padding:1.5rem;margin-bottom:1.5rem">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="pp-legal-panel">
+          <div class="pp-legal-grid">
             <div>
-              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Nombre completo</label>
-              <input id="legalName" type="text" placeholder="Tu nombre y apellidos" class="search-input" style="width:100%">
+              <label class="pp-modal__field-label">Nombre completo</label>
+              <input id="legalName" type="text" placeholder="Tu nombre y apellidos" class="pp-input">
             </div>
             <div>
-              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">NIF</label>
-              <input id="legalNif" type="text" placeholder="12345678A" class="search-input" style="width:100%">
+              <label class="pp-modal__field-label">NIF</label>
+              <input id="legalNif" type="text" placeholder="12345678A" class="pp-input">
             </div>
-            <div style="grid-column:1/-1">
-              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Dirección</label>
-              <input id="legalAddress" type="text" placeholder="Calle, número, CP, ciudad" class="search-input" style="width:100%">
+            <div class="pp-legal-grid__full">
+              <label class="pp-modal__field-label">Dirección</label>
+              <input id="legalAddress" type="text" placeholder="Calle, número, CP, ciudad" class="pp-input">
             </div>
-            <div style="grid-column:1/-1">
-              <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem">Email de contacto</label>
-              <input id="legalEmail" type="email" placeholder="hola@perfilapro.com" class="search-input" style="width:100%">
+            <div class="pp-legal-grid__full">
+              <label class="pp-modal__field-label">Email de contacto</label>
+              <input id="legalEmail" type="email" placeholder="hola@perfilapro.com" class="pp-input">
             </div>
           </div>
-          <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem">
-            <button class="modal-cancel" onclick="toggleLegal()">Cancelar</button>
-            <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveLegal()">Guardar</button>
+          <div class="pp-legal-actions">
+            <button class="pp-modal__cancel" onclick="toggleLegal()">Cancelar</button>
+            <button class="pp-filter-btn pp-filter-btn--primary" onclick="saveLegal()">Guardar</button>
           </div>
-          <p id="legalMsg" style="text-align:right;font-size:.8rem;margin-top:.5rem;min-height:1rem"></p>
+          <p id="legalMsg" class="pp-legal-msg"></p>
         </div>
       </div>
     </div>
 
-    <!-- Facturas -->
-    <div style="margin-bottom:2rem">
-      <div class="controls" style="margin-bottom:.75rem">
-        <div class="section-title">Facturas</div>
-        <div class="filters">
-          <input type="date" id="invoiceFrom" class="search-input" style="min-width:auto" title="Desde">
-          <input type="date" id="invoiceTo"   class="search-input" style="min-width:auto" title="Hasta">
-          <button class="filter-btn" onclick="loadInvoices()">Filtrar</button>
-          <button class="filter-btn" onclick="exportInvoicesCSV()">Exportar CSV</button>
+    <!-- ── Facturas ── -->
+    <div class="pp-admin-section">
+      <div class="pp-admin-controls" style="margin-bottom:.75rem">
+        <div class="pp-admin-controls__title">Facturas</div>
+        <div class="pp-admin-filters">
+          <input type="date" id="invoiceFrom" class="pp-admin-search" style="min-width:auto" title="Desde">
+          <input type="date" id="invoiceTo"   class="pp-admin-search" style="min-width:auto" title="Hasta">
+          <button class="pp-filter-btn" onclick="loadInvoices()">Filtrar</button>
+          <button class="pp-filter-btn" onclick="exportInvoicesCSV()">Exportar CSV</button>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="pp-tbl-wrap">
+        <table class="pp-tbl">
           <thead>
             <tr>
               <th>Número</th>
               <th>Fecha</th>
-              <th class="col-md">Cliente</th>
+              <th class="pp-tbl__col-md">Cliente</th>
               <th>Plan</th>
               <th>Base</th>
               <th>IVA</th>
@@ -266,20 +741,20 @@
             </tr>
           </thead>
           <tbody id="invoicesTable">
-            <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
+            <tr class="pp-tbl__empty"><td colspan="8">Cargando...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Agentes -->
-    <div style="margin-bottom:2rem">
-      <div class="controls" style="margin-bottom:.75rem">
-        <div class="section-title">Agentes colaboradores</div>
-        <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="openAgentModal()">+ Nuevo agente</button>
+    <!-- ── Agentes ── -->
+    <div class="pp-admin-section">
+      <div class="pp-admin-controls" style="margin-bottom:.75rem">
+        <div class="pp-admin-controls__title">Agentes colaboradores</div>
+        <button class="pp-filter-btn pp-filter-btn--primary" onclick="openAgentModal()">+ Nuevo agente</button>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="pp-tbl-wrap">
+        <table class="pp-tbl">
           <thead>
             <tr>
               <th>Nombre</th>
@@ -293,91 +768,91 @@
             </tr>
           </thead>
           <tbody id="agentsTable">
-            <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
+            <tr class="pp-tbl__empty"><td colspan="8">Cargando...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Modal agente -->
-    <div id="agentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem">
-      <div style="background:#fff;border-radius:1rem;padding:2rem;width:100%;max-width:480px;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-        <h2 style="font-family:var(--ff-d);font-size:1.25rem;margin-bottom:1.25rem" id="agentModalTitle">Nuevo agente</h2>
+    <!-- ── Modal agente ── -->
+    <div id="agentModal" class="pp-modal-overlay">
+      <div class="pp-modal pp-agent-modal">
+        <h2 class="pp-modal__title" id="agentModalTitle">Nuevo agente</h2>
         <input type="hidden" id="agentId">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-          <div style="grid-column:1/-1">
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Nombre</label>
-            <input id="agentName" type="text" class="search-input" style="width:100%" placeholder="Nombre del colaborador">
+        <div class="pp-agent-modal__grid">
+          <div class="pp-agent-modal__full">
+            <label class="pp-modal__field-label">Nombre</label>
+            <input id="agentName" type="text" class="pp-input" placeholder="Nombre del colaborador">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Email</label>
-            <input id="agentEmail" type="email" class="search-input" style="width:100%" placeholder="email@ejemplo.com">
+            <label class="pp-modal__field-label">Email</label>
+            <input id="agentEmail" type="email" class="pp-input" placeholder="email@ejemplo.com">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Código</label>
-            <input id="agentCode" type="text" class="search-input" style="width:100%;text-transform:uppercase" placeholder="CODIGO" oninput="this.value=this.value.toUpperCase()">
+            <label class="pp-modal__field-label">Código</label>
+            <input id="agentCode" type="text" class="pp-input" style="text-transform:uppercase" placeholder="CODIGO" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Contraseña</label>
-            <input id="agentPwd" type="text" class="search-input" style="width:100%" placeholder="Dejar vacío para no cambiar">
+            <label class="pp-modal__field-label">Contraseña</label>
+            <input id="agentPwd" type="text" class="pp-input" placeholder="Dejar vacío para no cambiar">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Comisión %</label>
-            <input id="agentRate" type="number" min="0" max="100" class="search-input" style="width:100%" value="15">
+            <label class="pp-modal__field-label">Comisión %</label>
+            <input id="agentRate" type="number" min="0" max="100" class="pp-input" value="15">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Agente padre (código)</label>
-            <input id="agentParent" type="text" class="search-input" style="width:100%;text-transform:uppercase" placeholder="Vacío = nivel 1" oninput="this.value=this.value.toUpperCase()">
+            <label class="pp-modal__field-label">Agente padre (código)</label>
+            <input id="agentParent" type="text" class="pp-input" style="text-transform:uppercase" placeholder="Vacío = nivel 1" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div>
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">NIF (opcional)</label>
-            <input id="agentNif" type="text" class="search-input" style="width:100%" placeholder="12345678A">
+            <label class="pp-modal__field-label">NIF (opcional)</label>
+            <input id="agentNif" type="text" class="pp-input" placeholder="12345678A">
           </div>
           <div id="agentStatusRow" style="display:none">
-            <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">Estado</label>
-            <select id="agentStatus" class="search-input" style="width:100%">
+            <label class="pp-modal__field-label">Estado</label>
+            <select id="agentStatus" class="pp-input pp-input--select">
               <option value="active">Activo</option>
               <option value="inactive">Inactivo</option>
             </select>
           </div>
         </div>
-        <p id="agentModalErr" style="color:var(--red,#dc2626);font-size:.8rem;margin-top:.75rem;min-height:1rem"></p>
-        <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.25rem">
-          <button class="modal-cancel" onclick="closeAgentModal()">Cancelar</button>
-          <button class="filter-btn" style="background:var(--primary);color:#fff;border-color:var(--primary)" onclick="saveAgent()">Guardar</button>
+        <p id="agentModalErr" class="pp-agent-modal__err"></p>
+        <div class="pp-modal__actions" style="margin-top:1.25rem">
+          <button class="pp-modal__cancel" onclick="closeAgentModal()">Cancelar</button>
+          <button class="pp-filter-btn pp-filter-btn--primary" onclick="saveAgent()">Guardar</button>
         </div>
       </div>
     </div>
 
-    <!-- Tabla -->
-    <div class="controls">
-      <div class="section-title">Perfiles</div>
-      <div class="filters">
-        <input type="text" class="search-input" id="searchInput" placeholder="Buscar nombre o slug…" oninput="renderTable()">
-        <button class="filter-btn active" data-filter="all"    onclick="setFilter(this)">Todas</button>
-        <button class="filter-btn"        data-filter="active" onclick="setFilter(this)">Activas</button>
-        <button class="filter-btn"        data-filter="soon"   onclick="setFilter(this)">Por expirar</button>
-        <button class="filter-btn"        data-filter="expired" onclick="setFilter(this)">Expiradas</button>
-        <button class="filter-btn"        data-filter="free"   onclick="setFilter(this)">Preview</button>
+    <!-- ── Tabla de perfiles ── -->
+    <div class="pp-admin-controls">
+      <div class="pp-admin-controls__title">Perfiles</div>
+      <div class="pp-admin-filters">
+        <input type="text" class="pp-admin-search" id="searchInput" placeholder="Buscar nombre o slug…" oninput="renderTable()">
+        <button class="pp-filter-btn is-active" data-filter="all"     onclick="setFilter(this)">Todas</button>
+        <button class="pp-filter-btn"           data-filter="active"  onclick="setFilter(this)">Activas</button>
+        <button class="pp-filter-btn"           data-filter="soon"    onclick="setFilter(this)">Por expirar</button>
+        <button class="pp-filter-btn"           data-filter="expired" onclick="setFilter(this)">Expiradas</button>
+        <button class="pp-filter-btn"           data-filter="free"    onclick="setFilter(this)">Preview</button>
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
+    <div class="pp-tbl-wrap">
+      <table class="pp-tbl">
         <thead>
           <tr>
             <th>Nombre</th>
-            <th class="col-md">Email</th>
+            <th class="pp-tbl__col-md">Email</th>
             <th>Plan</th>
             <th>Estado</th>
-            <th class="col-md">Expira</th>
+            <th class="pp-tbl__col-md">Expira</th>
             <th>Ver</th>
-            <th class="col-md">Directorio</th>
+            <th class="pp-tbl__col-md">Directorio</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="cardsTable">
-          <tr class="empty-row"><td colspan="8">Cargando...</td></tr>
+          <tr class="pp-tbl__empty"><td colspan="8">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -438,8 +913,8 @@
       if (res.status === 401) {
         logout();
         closeCatModal();
-        document.getElementById('modalOverlay').classList.remove('open');
-        document.getElementById('agentModal').style.display = 'none';
+        document.getElementById('modalOverlay').classList.remove('is-open');
+        document.getElementById('agentModal').classList.remove('is-open');
         document.getElementById('loginError').style.display = 'block';
         return;
       }
@@ -480,8 +955,8 @@
 
   function setFilter(btn) {
     currentFilter = btn.dataset.filter;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
     renderTable();
   }
 
@@ -497,15 +972,15 @@
     });
 
     if (!filtered.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No hay tarjetas con estos filtros.</td></tr>';
+      tbody.innerHTML = '<tr class="pp-tbl__empty"><td colspan="8">No hay tarjetas con estos filtros.</td></tr>';
       return;
     }
 
     const BADGE = {
-      active:  '<span class="badge badge-active">● Activa</span>',
-      expired: '<span class="badge badge-expired">● Expirada</span>',
-      soon:    '<span class="badge badge-soon">⚠ Por expirar</span>',
-      free:    '<span class="badge badge-free">◌ Preview</span>',
+      active:  '<span class="pp-status-badge pp-status-badge--active">● Activa</span>',
+      expired: '<span class="pp-status-badge pp-status-badge--expired">● Expirada</span>',
+      soon:    '<span class="pp-status-badge pp-status-badge--soon">⚠ Por expirar</span>',
+      free:    '<span class="pp-status-badge pp-status-badge--free">◌ Preview</span>',
     };
 
     tbody.innerHTML = filtered.map(card => {
@@ -520,18 +995,18 @@
       const incomplete = !card.category_id || !card.city_slug;
       const visTitle   = incomplete ? ' title="Sin categoría/ciudad — no aparecerá en listados"' : '';
       const dirMeta    = incomplete
-        ? `<button class="dir-config-btn" onclick="openCatModal('${card.slug}')">⚙ Configurar</button>`
-        : `<small style="color:var(--muted);font-size:.68rem">${card.city_slug || ''}</small>`;
+        ? `<button class="pp-dir-config-btn" onclick="openCatModal('${card.slug}')">⚙ Configurar</button>`
+        : `<small class="pp-dir-meta__city">${card.city_slug || ''}</small>`;
 
       const isSeed = !!card.is_seed;
       const thumbHtml = isSeed
-        ? `<img class="seed-thumb${card.foto_url ? '' : ' is-empty'}" alt="" loading="lazy" data-slug="${card.slug}" src="${card.foto_url || '/assets/icons/user.svg'}">`
+        ? `<img class="pp-seed-thumb${card.foto_url ? '' : ' is-empty'}" alt="" loading="lazy" data-slug="${card.slug}" src="${card.foto_url || '/assets/icons/user.svg'}">`
         : '';
-      const seedFlag = isSeed ? '<span class="seed-flag">seed</span>' : '';
+      const seedFlag = isSeed ? '<span class="pp-seed-flag">seed</span>' : '';
 
       return `<tr>
-        <td class="name-cell">
-          <div class="seed-row">
+        <td class="pp-tbl__name">
+          <div class="pp-seed-row">
             ${thumbHtml}
             <div>
               <strong>${card.nombre || '—'}${seedFlag}</strong>
@@ -539,28 +1014,28 @@
             </div>
           </div>
         </td>
-        <td class="col-md"><small style="color:var(--muted)">${card.email ? `<a href="mailto:${card.email}" style="color:var(--primary);text-decoration:none">${card.email}</a>` : '—'}</small></td>
-        <td><span class="plan-badge plan-${plan}">${planLabel}</span></td>
+        <td class="pp-tbl__col-md pp-tbl__email"><small>${card.email ? `<a href="mailto:${card.email}">${card.email}</a>` : '—'}</small></td>
+        <td><span class="pp-plan-badge pp-plan-badge--${plan}">${planLabel}</span></td>
         <td>${BADGE[status]}</td>
-        <td class="col-md"><small style="color:var(--muted)">${expira}</small></td>
-        <td><a href="/c/${card.slug}" target="_blank" class="card-link">Ver →</a></td>
-        <td class="col-md">
-          <div style="display:flex;flex-direction:column;gap:.3rem">
-            <div style="display:flex;gap:.3rem;flex-wrap:wrap">
-              <button class="dir-toggle dir-toggle--${visibleOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_visible',${!visibleOn},this)"${visTitle}>${visibleOn ? '● Visible' : '◌ Oculto'}</button>
-              <button class="dir-toggle dir-toggle--${featuredOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_featured',${!featuredOn},this)">${featuredOn ? '★ Dest.' : '☆ Dest.'}</button>
+        <td class="pp-tbl__col-md"><small style="color:var(--pp-color-ink-muted)">${expira}</small></td>
+        <td><a href="/c/${card.slug}" target="_blank" class="pp-tbl__card-link">Ver →</a></td>
+        <td class="pp-tbl__col-md">
+          <div class="pp-dir-meta">
+            <div class="pp-dir-meta__row">
+              <button class="pp-dir-toggle pp-dir-toggle--${visibleOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_visible',${!visibleOn},this)"${visTitle}>${visibleOn ? '● Visible' : '◌ Oculto'}</button>
+              <button class="pp-dir-toggle pp-dir-toggle--${featuredOn ? 'on' : 'off'}" onclick="toggleDir('${card.slug}','directory_featured',${!featuredOn},this)">${featuredOn ? '★ Dest.' : '☆ Dest.'}</button>
             </div>
             ${dirMeta}
           </div>
         </td>
         <td>
-          <div class="actions-cell">
-            ${isSeed ? `<button class="action-btn btn-regen" onclick="regenerateSeed('${card.slug}',this)" title="Regenerar foto"><span class="ico">↻</span> Foto</button>` : ''}
-            <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
-            <button class="action-btn btn-extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
-            ${card.email ? `<button class="action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:.7rem">✉ Enlace</button>` : ''}
-            ${card.stripe_session_id ? `<button class="action-btn btn-invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
-            ${card.stripe_session_id ? `<button class="action-btn btn-refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
+          <div class="pp-tbl__actions">
+            ${isSeed ? `<button class="pp-action-btn pp-action-btn--regen" onclick="regenerateSeed('${card.slug}',this)" title="Regenerar foto"><span class="pp-ico">↻</span> Foto</button>` : ''}
+            <button class="pp-action-btn pp-action-btn--reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
+            <button class="pp-action-btn pp-action-btn--extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
+            ${card.email ? `<button class="pp-action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:11px">✉ Enlace</button>` : ''}
+            ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
+            ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
           </div>
         </td>
       </tr>`;
@@ -601,7 +1076,7 @@
 
   async function saveLegal() {
     const msg = document.getElementById('legalMsg');
-    msg.style.color = 'var(--muted)';
+    msg.style.color = 'var(--pp-color-ink-muted)';
     msg.textContent = 'Guardando…';
 
     try {
@@ -617,10 +1092,10 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
-      msg.style.color = 'var(--green)';
+      msg.style.color = 'var(--pp-color-success)';
       msg.textContent = '✓ Guardado correctamente';
     } catch (err) {
-      msg.style.color = 'var(--red)';
+      msg.style.color = 'var(--pp-color-danger)';
       msg.textContent = `Error: ${err.message}`;
     }
   }
@@ -647,7 +1122,7 @@
     const original = btn ? btn.innerHTML : '';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span class="ico spin">↻</span> …';
+      btn.innerHTML = '<span class="pp-ico pp-spin">↻</span> …';
     }
     try {
       const res = await fetch('/.netlify/functions/admin-regenerate-seed', {
@@ -660,7 +1135,7 @@
 
       const idx = allCards.findIndex(c => c.slug === slug);
       if (idx >= 0) allCards[idx] = { ...allCards[idx], foto_url: data.foto_url };
-      const img = document.querySelector(`img.seed-thumb[data-slug="${slug}"]`);
+      const img = document.querySelector(`img.pp-seed-thumb[data-slug="${slug}"]`);
       if (img && data.foto_url) {
         img.src = data.foto_url;
         img.classList.remove('is-empty');
@@ -683,11 +1158,11 @@
     refundSlug = slug;
     document.getElementById('refundNombre').textContent = nombre;
     document.getElementById('refundReason').value = '';
-    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('modalOverlay').classList.add('is-open');
   }
 
   function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
+    document.getElementById('modalOverlay').classList.remove('is-open');
     refundSlug = null;
   }
 
@@ -734,21 +1209,21 @@
   function renderInvoicesTable(rows) {
     const tbody = document.getElementById('invoicesTable');
     if (!rows.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No hay facturas.</td></tr>';
+      tbody.innerHTML = '<tr class="pp-tbl__empty"><td colspan="8">No hay facturas.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(f => {
       const fecha = new Date(f.fecha).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'2-digit' });
       const plan  = f.plan ? f.plan.charAt(0).toUpperCase() + f.plan.slice(1) : '—';
       return `<tr>
-        <td><strong style="font-size:.82rem;font-family:monospace">${f.numero_factura}</strong></td>
-        <td><small style="color:var(--muted)">${fecha}</small></td>
-        <td class="col-md"><small style="color:var(--muted)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--faint)">${f.email_cliente}</span>` : ''}</small></td>
-        <td><span class="plan-badge plan-${f.plan || 'none'}">${plan}</span></td>
+        <td><strong style="font-size:13px;font-family:var(--pp-f-mono)">${f.numero_factura}</strong></td>
+        <td><small style="color:var(--pp-color-ink-muted)">${fecha}</small></td>
+        <td class="pp-tbl__col-md"><small style="color:var(--pp-color-ink-muted)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--pp-color-ink-muted);opacity:.7">${f.email_cliente}</span>` : ''}</small></td>
+        <td><span class="pp-plan-badge pp-plan-badge--${f.plan || 'none'}">${plan}</span></td>
         <td><small>${(+f.base_imponible).toFixed(2)} €</small></td>
         <td><small>${(+f.iva).toFixed(2)} €</small></td>
         <td><strong>${(+f.total).toFixed(2)} €</strong></td>
-        <td><button class="action-btn btn-reactivate" onclick="downloadInvoicePDF('${f.numero_factura}')">PDF ↓</button></td>
+        <td><button class="pp-action-btn pp-action-btn--reactivate" onclick="downloadInvoicePDF('${f.numero_factura}')">PDF ↓</button></td>
       </tr>`;
     }).join('');
   }
@@ -805,7 +1280,7 @@
   function renderAgents() {
     const tbody = document.getElementById('agentsTable');
     if (!allAgents.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Sin agentes todavía</td></tr>';
+      tbody.innerHTML = '<tr class="pp-tbl__empty"><td colspan="8">Sin agentes todavía</td></tr>';
       return;
     }
     const codeToName = {};
@@ -813,13 +1288,13 @@
     tbody.innerHTML = allAgents.map(a => `
       <tr>
         <td><strong>${a.name}</strong></td>
-        <td><code style="background:#f3f4f6;padding:.15rem .4rem;border-radius:.25rem;font-size:.8rem">${a.code}</code></td>
-        <td style="font-size:.8rem;color:var(--muted)">${a.email}</td>
+        <td><code class="pp-code-chip">${a.code}</code></td>
+        <td style="font-size:13px;color:var(--pp-color-ink-muted)">${a.email}</td>
         <td>${a.commission_rate}%</td>
-        <td style="font-size:.8rem;color:var(--muted)">${a.parent_agent_id ? (codeToName[a.parent_agent_id] || a.parent_agent_id) : '—'}</td>
+        <td style="font-size:13px;color:var(--pp-color-ink-muted)">${a.parent_agent_id ? (codeToName[a.parent_agent_id] || a.parent_agent_id) : '—'}</td>
         <td>${a.sales_count}</td>
-        <td><span class="badge ${a.status === 'active' ? 'badge-green' : 'badge-muted'}">${a.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
-        <td><button class="filter-btn" onclick="openAgentModal('${a.id}')">Editar</button></td>
+        <td><span class="pp-agent-badge ${a.status === 'active' ? 'pp-agent-badge--active' : 'pp-agent-badge--muted'}">${a.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
+        <td><button class="pp-filter-btn" onclick="openAgentModal('${a.id}')">Editar</button></td>
       </tr>`).join('');
   }
 
@@ -853,11 +1328,11 @@
       document.getElementById('agentStatus').value = 'active';
       document.getElementById('agentStatusRow').style.display = 'none';
     }
-    document.getElementById('agentModal').style.display = 'flex';
+    document.getElementById('agentModal').classList.add('is-open');
   }
 
   function closeAgentModal() {
-    document.getElementById('agentModal').style.display = 'none';
+    document.getElementById('agentModal').classList.remove('is-open');
   }
 
   async function saveAgent() {
@@ -933,7 +1408,7 @@
         body: JSON.stringify({ slug }),
       });
       btn.textContent = '✓ Enviado';
-      btn.style.color = 'var(--green)';
+      btn.style.color = 'var(--pp-color-success)';
       btn.style.borderColor = '#bbf7d0';
       setTimeout(() => {
         btn.textContent = orig;
@@ -964,7 +1439,7 @@
   async function openCatModal(slug) {
     catModalSlug = slug;
     const overlay = document.getElementById('catModal');
-    overlay.classList.add('open');
+    overlay.classList.add('is-open');
     if (!_catListenerAdded) {
       overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCatModal(); });
       _catListenerAdded = true;
@@ -994,7 +1469,7 @@
   }
 
   function closeCatModal() {
-    document.getElementById('catModal')?.classList.remove('open');
+    document.getElementById('catModal')?.classList.remove('is-open');
     catModalSlug = null;
   }
 
@@ -1042,7 +1517,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
       btn.textContent = '✓ Enviada';
-      btn.style.color = 'var(--green)';
+      btn.style.color = 'var(--pp-color-success)';
       btn.style.borderColor = '#bbf7d0';
       setTimeout(() => {
         btn.textContent = orig;
@@ -1058,44 +1533,43 @@
   }
 </script>
 
-<!-- Modal de reembolso -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <h2>Reembolsar y desactivar</h2>
-    <p>Vas a reembolsar el pago de <strong id="refundNombre"></strong> y desactivar su tarjeta. Esta acción no se puede deshacer.</p>
+<!-- ══════════════════ Modal de reembolso ══════════════════ -->
+<div class="pp-modal-overlay" id="modalOverlay">
+  <div class="pp-modal">
+    <h2 class="pp-modal__title">Reembolsar y desactivar</h2>
+    <p class="pp-modal__text">Vas a reembolsar el pago de <strong id="refundNombre"></strong> y desactivar su tarjeta. Esta acción no se puede deshacer.</p>
     <div style="margin-bottom:1.25rem">
-      <label style="display:block;font-size:.8rem;font-weight:700;margin-bottom:.4rem;color:var(--muted)">MOTIVO DEL REEMBOLSO <span style="color:var(--red)">*</span></label>
-      <textarea id="refundReason" rows="3" placeholder="Ej: Doble pago, desistimiento en 48h, error técnico…" style="width:100%;padding:.65rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);resize:vertical;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--red)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      <label class="pp-modal__field-label">Motivo del reembolso <span style="color:var(--pp-color-danger)">*</span></label>
+      <textarea id="refundReason" rows="3" class="pp-modal__textarea" placeholder="Ej: Doble pago, desistimiento en 48h, error técnico…"></textarea>
     </div>
-    <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="modal-confirm c-red" onclick="confirmRefund()">Sí, reembolsar</button>
+    <div class="pp-modal__actions">
+      <button class="pp-modal__cancel" onclick="closeModal()">Cancelar</button>
+      <button class="pp-modal__confirm pp-modal__confirm--danger" onclick="confirmRefund()">Sí, reembolsar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Configurar categoría/ciudad -->
-<div class="modal-overlay" id="catModal">
-  <div class="modal" style="max-width:420px">
-    <h2>Configurar directorio</h2>
-    <p>Asigna sector, especialidad y ciudad para que este perfil pueda activarse en el directorio.</p>
-    <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
-      <select id="catSector" onchange="onCatSectorChange()" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+<!-- ══════════════════ Modal Configurar categoría/ciudad ══════════════════ -->
+<div class="pp-modal-overlay" id="catModal">
+  <div class="pp-modal" style="max-width:420px">
+    <h2 class="pp-modal__title">Configurar directorio</h2>
+    <p class="pp-modal__text">Asigna sector, especialidad y ciudad para que este perfil pueda activarse en el directorio.</p>
+    <div class="pp-cat-modal__stack">
+      <select id="catSector" class="pp-modal__select" onchange="onCatSectorChange()">
         <option value="">— Sector —</option>
       </select>
-      <select id="catSpecialty" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+      <select id="catSpecialty" class="pp-modal__select">
         <option value="">— Especialidad —</option>
       </select>
-      <select id="catCity" style="padding:.6rem .85rem;border:1px solid var(--border);border-radius:.5rem;font-size:.875rem;font-family:var(--ff-b);outline:none">
+      <select id="catCity" class="pp-modal__select">
         <option value="">— Ciudad —</option>
       </select>
     </div>
-    <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeCatModal()">Cancelar</button>
-      <button class="modal-confirm c-green" id="catSaveBtn" onclick="saveCatModal()">Guardar</button>
+    <div class="pp-modal__actions">
+      <button class="pp-modal__cancel" onclick="closeCatModal()">Cancelar</button>
+      <button class="pp-modal__confirm pp-modal__confirm--success" id="catSaveBtn" onclick="saveCatModal()">Guardar</button>
     </div>
   </div>
 </div>
-
 </body>
 </html>
