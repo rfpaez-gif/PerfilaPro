@@ -47,7 +47,7 @@ function makeHandler(deps) {
           title: 'Perfil no encontrado — PerfilaPro',
           desc: 'Este perfil no existe o no está activo.',
           canonical: `${siteUrl}/p/${slug}`,
-          body: `<div style="text-align:center;padding:4rem 1rem;color:var(--muted)"><h1 style="font-family:var(--ff-d);font-size:1.5rem;font-weight:400;margin-bottom:.5rem">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
+          body: `<div style="text-align:center;padding:4rem 1rem;color:var(--pp-ink-soft)"><h1 style="font-family:var(--pp-f-display);font-size:1.5rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:.5rem;color:var(--pp-ink)">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
           crumbs: null,
           siteUrl,
         }),
@@ -83,9 +83,9 @@ function makeHandler(deps) {
       const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
       const nombre = esc(m ? m[1].trim() : s);
       const precio = esc(m ? m[2].trim() : '');
-      return `<div class="prof-svc-item${i === 0 ? ' prof-svc-item--lead' : ''}">
-  <span class="prof-svc-name">${nombre}</span>
-  ${precio ? `<span class="prof-svc-price">${precio}</span>` : ''}
+      return `<div class="pp-prof-svc${i === 0 ? ' pp-prof-svc--lead' : ''}">
+  <span class="pp-prof-svc__name">${nombre}</span>
+  ${precio ? `<span class="pp-prof-svc__price">${precio}</span>` : ''}
 </div>`;
     }).join('');
 
@@ -112,58 +112,58 @@ function makeHandler(deps) {
     const metaTitle = `${esc(data.nombre)} — ${esc(data.tagline || sectorLabel || 'Profesional')} en ${esc(cityLabel || 'España')} | PerfilaPro`;
     const metaDesc  = `${data.tagline || ''} ${descFull ? '· ' + descFull.substring(0, 120) : ''} ${cityLabel ? '· ' + cityLabel : ''}`.trim().substring(0, 160);
 
-    const body = `<div class="prof-wrap">
-  <div class="prof-hero">
-    <div class="prof-av">
+    const body = `<div class="pp-prof">
+  <div class="pp-prof__hero">
+    <div class="pp-prof__av">
       ${isPaid && data.foto_url
         ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" width="80" height="80">`
-        : `<span class="prof-av-init">${avatarInitial}</span>`}
+        : `<span class="pp-prof__av-init">${avatarInitial}</span>`}
     </div>
     <div>
-      <h1 class="prof-name">${esc(data.nombre)}</h1>
-      ${data.tagline ? `<p class="prof-role">${esc(data.tagline)}</p>` : ''}
-      ${cityLabel ? `<p class="prof-loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(cityLabel)}</p>` : ''}
+      <h1 class="pp-prof__name">${esc(data.nombre)}</h1>
+      ${data.tagline ? `<p class="pp-prof__role">${esc(data.tagline)}</p>` : ''}
+      ${cityLabel ? `<p class="pp-prof__loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(cityLabel)}</p>` : ''}
     </div>
   </div>
 
-  ${descDisplay ? `<div class="prof-section">
-    <p class="prof-section-lbl">Sobre mí</p>
-    <p class="prof-desc">${esc(descDisplay)}</p>
+  ${descDisplay ? `<div class="pp-prof-section">
+    <p class="pp-prof-section__label">Sobre mí</p>
+    <p class="pp-prof-section__desc">${esc(descDisplay)}</p>
   </div>` : ''}
 
-  ${serviciosHTML ? `<div class="prof-section">
-    <p class="prof-section-lbl">Servicios</p>
-    <div class="prof-svc-list">${serviciosHTML}</div>
+  ${serviciosHTML ? `<div class="pp-prof-section">
+    <p class="pp-prof-section__label">Servicios</p>
+    <div class="pp-prof-svc-list">${serviciosHTML}</div>
   </div>` : ''}
 
-  ${isPaid && (waUrl || data.telefono) ? `<div class="prof-section">
-    <p class="prof-section-lbl">Contacto directo</p>
-    <div class="prof-contact">
-      ${waUrl ? `<a href="${esc(waUrl)}" target="_blank" rel="noopener" class="btn btn--wa">
+  ${isPaid && (waUrl || data.telefono) ? `<div class="pp-prof-section">
+    <p class="pp-prof-section__label">Contacto directo</p>
+    <div class="pp-prof-contact">
+      ${waUrl ? `<a href="${esc(waUrl)}" target="_blank" rel="noopener" class="pp-prof-cta pp-prof-cta--wa">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
         Contactar por WhatsApp
       </a>` : ''}
-      ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="btn btn--call">
+      ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="pp-prof-cta pp-prof-cta--call">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         Llamar
       </a>` : ''}
     </div>
   </div>` : ''}
 
-  ${!isPaid ? `<div class="prof-section">
-    <p class="prof-section-lbl">Contacto</p>
-    <div class="contact-locked">
+  ${!isPaid ? `<div class="pp-prof-section">
+    <p class="pp-prof-section__label">Contacto</p>
+    <div class="pp-prof-locked">
       <p>Este profesional aún no ha habilitado el contacto directo.</p>
       <p style="margin-top:.5rem;font-size:.8125rem">¿Eres ${esc(data.nombre)}? <a href="${esc(siteUrl)}/editar.html?slug=${esc(data.slug)}">Activa tu perfil</a> para que tus clientes puedan contactarte.</p>
     </div>
   </div>` : ''}
 
-  <a href="${esc(cardUrl)}" class="prof-card-link">
+  <a href="${esc(cardUrl)}" class="pp-prof-card-link">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/></svg>
     Ver tarjeta de contacto
   </a>
 
-  <div class="prof-cta">
+  <div class="pp-prof-banner">
     <p>¿Eres profesional? Aparece en el directorio y recibe clientes directamente.</p>
     <a href="${esc(siteUrl)}/#crear">Crea tu perfil gratis →</a>
   </div>

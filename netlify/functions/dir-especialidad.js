@@ -57,22 +57,22 @@ function makeHandler(deps) {
       })),
     };
 
-    const citiesHtml = cities.length ? `<div class="sub-section">
-  <p class="sub-section-label">Por ciudad</p>
-  <div class="sub-chips">
-    ${cities.slice(0, 24).map(c => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/${esc(specialty)}/${esc(c.city_slug)}" class="sub-chip">${esc(c.city_name)}</a>`).join('')}
+    const citiesHtml = cities.length ? `<div class="pp-sub-section">
+  <p class="pp-sub-section__label">Por ciudad</p>
+  <div class="pp-sub-chips">
+    ${cities.slice(0, 24).map(c => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/${esc(specialty)}/${esc(c.city_slug)}" class="pp-sub-chip">${esc(c.city_name)}</a>`).join('')}
   </div>
 </div>` : '';
 
     const cardsHtml = profiles.length
-      ? `<div class="dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
-      : `<div class="dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay ${esc(specialtyLabel.toLowerCase())} en el directorio.</p></div>`;
+      ? `<div class="pp-dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
+      : `<div class="pp-dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay ${esc(specialtyLabel.toLowerCase())} en el directorio.</p></div>`;
 
     const body = `
-<div class="dir-ph">
+<div class="pp-dir-ph">
   <h1>${esc(specialtyLabel)} en España</h1>
-  ${desc ? `<p class="dir-ph-desc">${esc(desc)}</p>` : ''}
-  ${total > 0 ? `<p class="dir-count">${total} profesionale${total !== 1 ? 's' : ''}</p>` : ''}
+  ${desc ? `<p class="pp-dir-ph__desc">${esc(desc)}</p>` : ''}
+  ${total > 0 ? `<p class="pp-dir-ph__count">${total} profesionale${total !== 1 ? 's' : ''}</p>` : ''}
 </div>
 ${citiesHtml}
 ${cardsHtml}

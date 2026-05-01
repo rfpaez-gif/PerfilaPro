@@ -108,7 +108,7 @@ describe('perfil-publico handler', () => {
     const res = await handler(buildEvent('/p/ana-abogada'));
     expect(res.statusCode).toBe(200);
     expect(res.body).not.toContain('wa.me');
-    expect(res.body).toContain('contact-locked');
+    expect(res.body).toContain('pp-prof-locked');
   });
 
   // ── Contenido ──
