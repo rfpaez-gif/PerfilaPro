@@ -19,6 +19,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const { createClient } = require('@supabase/supabase-js');
+const sharp = require('sharp');
 const archetypes = require('./archetypes.json');
 
 const { GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
@@ -27,6 +28,9 @@ if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('Faltan variables de entorno: GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY');
   process.exit(1);
 }
+
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent';
+const JPEG_QUALITY = 85;
 
 // ── Prompt base (parte común del prompt Banana) ──────────────────────────────
 const BASE_PROMPT =
@@ -89,18 +93,24 @@ function saveProgress(state) {
 }
 
 // ── Generación de imagen con backoff exponencial ─────────────────────────────
+// Llama a Gemini 2.5 Flash Image (Nano Banana) y recomprime a JPEG ~85
+// (las imágenes vienen en PNG/WebP de ~1.5-1.8 MB; salimos en ~200-300 KB).
 async function generateImage(prompt) {
-  const encoded = encodeURIComponent(prompt);
   // Hasta 6 reintentos: 5s, 10s, 20s, 40s, 80s, 160s (≈5 min total en el peor caso)
   const MAX_ATTEMPTS = 6;
+  const url = `${GEMINI_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+  });
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const seed = Math.floor(Math.random() * 999999);
-    const url = `https://image.pollinations.ai/prompt/${encoded}?width=600&height=800&model=flux&nologo=true&enhance=true&seed=${seed}`;
-
     let res;
     try {
-      res = await fetch(url);
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
     } catch (netErr) {
       if (attempt === MAX_ATTEMPTS) throw netErr;
       const wait = 5000 * Math.pow(2, attempt - 1);
@@ -109,15 +119,32 @@ async function generateImage(prompt) {
       continue;
     }
 
+    let data;
+    try { data = await res.json(); }
+    catch (parseErr) {
+      if (attempt === MAX_ATTEMPTS) throw new Error(`Gemini: respuesta no-JSON (HTTP ${res.status})`);
+      const wait = 5000 * Math.pow(2, attempt - 1);
+      process.stdout.write(`(json err, retry ${attempt}/${MAX_ATTEMPTS} en ${wait / 1000}s) `);
+      await sleep(wait);
+      continue;
+    }
+
     if (res.ok) {
-      const arrayBuffer = await res.arrayBuffer();
-      return Buffer.from(arrayBuffer);
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const imagePart = parts.find(p => p.inlineData?.data);
+      if (imagePart) {
+        const raw = Buffer.from(imagePart.inlineData.data, 'base64');
+        return await sharp(raw).jpeg({ quality: JPEG_QUALITY }).toBuffer();
+      }
+      // Sin imagen: el modelo devolvió texto rechazando el prompt — no reintentable
+      const textPart = parts.find(p => p.text);
+      throw new Error(`Gemini sin imagen${textPart ? `: ${textPart.text.slice(0, 120)}` : ''}`);
     }
 
     // 429 o 5xx → reintentar; otros códigos → fallar inmediatamente
     const retryable = res.status === 429 || (res.status >= 500 && res.status < 600);
     if (!retryable || attempt === MAX_ATTEMPTS) {
-      throw new Error(`Pollinations ${res.status}`);
+      throw new Error(`Gemini ${res.status}: ${data?.error?.message || 'sin detalle'}`);
     }
 
     const wait = 5000 * Math.pow(2, attempt - 1);
@@ -125,7 +152,7 @@ async function generateImage(prompt) {
     await sleep(wait);
   }
 
-  throw new Error('Pollinations: agotados los reintentos');
+  throw new Error('Gemini: agotados los reintentos');
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -249,7 +276,7 @@ async function run() {
       saveProgress({ lastCompleted: lastCompletedAbs, ok, skipped, errors });
     }
 
-    // Espaciar peticiones para no disparar el rate-limit de Pollinations
+    // Espaciar peticiones para no disparar el rate-limit de Gemini
     if (i < batch.length - 1) await sleep(2200);
   }
 

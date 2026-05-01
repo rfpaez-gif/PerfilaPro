@@ -73,7 +73,7 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 - [x] **Bloque 1** — entradas 1-25: Sanidad, Educación, Hostelería, Comercio, Oficios
 - [x] **Bloque 2** — entradas 26-50: Transporte, Automoción, Tecnología, Legal, Belleza
 - [x] **Bloque 3** — entradas 51-75: Fitness, Jardinería, Seguridad, Fotografía, Servicios oficina
-- [ ] **Bloque 4** — pipeline: refactor de `scripts/generate-seeds.js` para usar Gemini
+- [x] **Bloque 4** — pipeline: refactor de `scripts/generate-seeds.js` para usar Gemini
 
 ## 6 · Running totals — ACTUALIZAR al final de cada bloque
 
@@ -116,19 +116,24 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 | 49 | Manicurista (Rohan) | Hombre sur-asiático pintando uñas |
 | 65 | Técnica en emergencias sanitarias (Aitana) | Mujer europea en emergencias |
 
-## 7 · Bloque 4 — pipeline post-JSON
+## 7 · Bloque 4 — pipeline post-JSON  ✅ HECHO
 
-Al cerrar los 3 primeros bloques, refactorizar `scripts/generate-seeds.js`:
+Refactor aplicado en `scripts/generate-seeds.js`:
 
-1. **Sustituir `generateImage()`** Pollinations por llamada a Gemini REST API.
-   - Endpoint: `POST /v1beta/models/gemini-2.5-flash-image:generateContent?key=GEMINI_API_KEY`
-   - Body: `{ "contents": [{ "parts": [{ "text": "BASE_PROMPT descripcion_accion" }] }] }`
-   - Imagen en `candidates[0].content.parts[].inlineData.data` (base64) → `Buffer.from(b64, 'base64')`.
-2. **Recomprimir a JPEG** calidad ~85 antes de subir a Supabase Storage.
-   - Las imágenes vienen ~1.5-1.8 MB. Queremos ~200-300 KB.
-   - Añadir `sharp` a `package.json`. Cambiar `contentType` a `image/jpeg` y la extensión del path en Storage.
-3. **Mantener** el backoff exponencial y el checkpoint que ya están implementados (no se tocan).
-4. **Tests**: actualizar mocks que asuman Pollinations si los hay.
+1. ✅ `generateImage()` ahora llama a `gemini-2.5-flash-image:generateContent` con
+   POST + JSON body. Lee `candidates[0].content.parts[].inlineData.data` y lo
+   pasa por `sharp(...).jpeg({ quality: 85 })` antes de devolverlo.
+2. ✅ `sharp ^0.33.5` añadido a `devDependencies` del `package.json`.
+3. ✅ Backoff exponencial (6 reintentos) y checkpoint preservados — ahora
+   reintentan ante 429 / 5xx / errores de red / respuestas no-JSON. Sin imagen
+   (texto de rechazo del modelo) NO reintenta.
+4. ✅ Tests: no había mocks de Pollinations en `tests/`, así que no había nada
+   que actualizar.
+
+> **Acción manual del usuario antes de regenerar**: borrar los seeds antiguos
+> en Supabase (`Avatars/seeds/*` en Storage + `DELETE FROM cards WHERE
+> is_seed=true`) y luego ejecutar `node scripts/generate-seeds.js` para
+> generar las 75 nuevas.
 
 ## 8 · Cómo retomar en una sesión nueva
 

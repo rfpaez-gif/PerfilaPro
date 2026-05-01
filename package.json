@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
+    "sharp": "^0.33.5",
     "vitest": "^1.6.0"
   }
 }
