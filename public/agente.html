@@ -3,106 +3,286 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
   <title>Panel colaborador — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    :root {
-      --primary: #01696f; --phover: #0c4e54; --plight: #deeeed;
-      --bg: #f5f2ec; --text: #1e1b14; --muted: #6b6458; --faint: #a89f90;
-      --border: rgba(30,27,20,.10); --green: #16a34a; --red: #dc2626; --yellow: #ca8a04;
-      --ff-d: "Instrument Serif", Georgia, serif;
-      --ff-b: "Plus Jakarta Sans", system-ui, sans-serif;
+    /* ── Topbar (UI interna autenticada · accent-deep como
+       admin.html) ─────────────────────────────────────────── */
+    .pp-agent-topbar {
+      background: var(--pp-color-accent-deep);
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .75rem;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--ff-b); background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+    .pp-agent-topbar__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      margin: 0;
+    }
+    .pp-agent-topbar__right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 13px;
+      opacity: .92;
+    }
+    .pp-agent-topbar__name {
+      font-family: var(--pp-f-sans);
+      font-weight: 600;
+    }
+    .pp-agent-topbar__logout {
+      background: rgba(255,255,255,.2);
+      border: none;
+      color: #fff;
+      padding: .4rem .9rem;
+      border-radius: var(--pp-r-pill);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--pp-f-sans);
+      font-weight: 600;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-agent-topbar__logout:hover { background: rgba(255,255,255,.35); }
 
-    .topbar { background: var(--primary); color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-    .topbar h1 { font-family: var(--ff-d); font-size: 1.4rem; }
-    .topbar-right { display: flex; align-items: center; gap: 1rem; font-size: .85rem; opacity: .85; }
-    .logout-btn { background: rgba(255,255,255,.2); border: none; color: #fff; padding: .35rem .85rem; border-radius: 999px; cursor: pointer; font-size: .78rem; font-family: var(--ff-b); font-weight: 600; }
-    .logout-btn:hover { background: rgba(255,255,255,.35); }
+    /* ── Main ──────────────────────────────────────────────── */
+    .pp-agent-main {
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
 
-    .main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+    /* ── Ref box (enlace de referido) ──────────────────────── */
+    .pp-agent-ref {
+      background: var(--pp-color-accent-soft);
+      border: 1px solid var(--pp-color-accent);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .pp-agent-ref__label {
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-accent-deep);
+      white-space: nowrap;
+    }
+    .pp-agent-ref__url {
+      flex: 1;
+      min-width: 200px;
+      font-family: var(--pp-f-mono);
+      font-size: 13px;
+      color: var(--pp-color-ink);
+      font-weight: 500;
+      word-break: break-all;
+    }
+    .pp-agent-ref__copy {
+      background: var(--pp-color-accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--pp-r-md);
+      padding: .55rem 1.1rem;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--pp-f-sans);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-agent-ref__copy:hover { background: var(--pp-color-accent-deep); }
 
-    /* Stats */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: #fff; border: 1px solid var(--border); border-radius: .75rem; padding: 1.25rem 1.5rem; }
-    .stat-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem; }
-    .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
-    .stat-sub { font-size: .75rem; color: var(--faint); margin-top: .2rem; }
+    /* ── Stats ─────────────────────────────────────────────── */
+    .pp-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .pp-stat {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem;
+    }
+    .pp-stat__label {
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin-bottom: .5rem;
+    }
+    .pp-stat__value {
+      font-family: var(--pp-f-display);
+      font-size: 2.25rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      line-height: 1;
+      color: var(--pp-color-ink);
+    }
+    .pp-stat__value--primary { color: var(--pp-color-accent-deep); }
+    .pp-stat__value--success { color: var(--pp-color-success); }
+    .pp-stat__sub {
+      font-size: 12px;
+      color: var(--pp-color-ink-muted);
+      margin-top: .35rem;
+    }
 
-    /* Link de referido */
-    .ref-box { background: var(--plight); border-radius: .75rem; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    .ref-label { font-size: .78rem; font-weight: 700; color: var(--primary); white-space: nowrap; }
-    .ref-url { font-size: .875rem; color: var(--text); font-weight: 600; flex: 1; word-break: break-all; }
-    .copy-btn { background: var(--primary); color: #fff; border: none; border-radius: .4rem; padding: .45rem .9rem; font-size: .8rem; font-weight: 700; font-family: var(--ff-b); cursor: pointer; white-space: nowrap; }
-    .copy-btn:hover { background: var(--phover); }
+    /* ── Sections ──────────────────────────────────────────── */
+    .pp-agent-section { margin-bottom: 2.5rem; }
+    .pp-section-title {
+      font-family: var(--pp-f-display);
+      font-size: 1.35rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-heading);
+      color: var(--pp-color-ink);
+      margin: 0 0 1rem;
+    }
 
-    /* Sections */
-    .section-title { font-family: var(--ff-d); font-size: 1.2rem; margin-bottom: 1rem; }
-    .section { margin-bottom: 2.5rem; }
-    .table-wrap { background: #fff; border-radius: .75rem; border: 1px solid var(--border); overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-    th { background: var(--bg); padding: .75rem 1rem; text-align: left; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-    td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
-    .badge-green { background: #dcfce7; color: var(--green); }
-    .badge-yellow { background: #fef9c3; color: var(--yellow); }
-    .badge-gray { background: #f3f4f6; color: var(--muted); }
-    .empty { padding: 2rem; text-align: center; color: var(--faint); font-size: .875rem; }
+    /* ── Tables ────────────────────────────────────────────── */
+    .pp-tbl-wrap {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      overflow: hidden;
+    }
+    .pp-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .pp-tbl th {
+      text-align: left;
+      padding: .75rem 1rem;
+      font-family: var(--pp-f-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      border-bottom: 1px solid var(--pp-color-border);
+      background: var(--pp-color-bg);
+      white-space: nowrap;
+    }
+    .pp-tbl td {
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--pp-color-border);
+      vertical-align: middle;
+      color: var(--pp-color-ink);
+    }
+    .pp-tbl tr:last-child td { border-bottom: none; }
+    .pp-tbl__empty td {
+      text-align: center;
+      color: var(--pp-color-ink-muted);
+      padding: 2.5rem;
+      font-size: 14px;
+    }
+    .pp-tbl__strong { font-weight: 700; color: var(--pp-color-ink); }
+    .pp-tbl__link {
+      color: var(--pp-color-accent-deep);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .pp-tbl__link:hover { text-decoration: underline; }
 
+    /* ── Badges (estados de tarjeta y de liquidación) ──────── */
+    .pp-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .25rem .65rem;
+      border-radius: var(--pp-r-pill);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--pp-f-sans);
+      white-space: nowrap;
+    }
+    .pp-badge--ok      { background: #dcfce7; color: #15803d; }
+    .pp-badge--pending { background: #fef9c3; color: #854d0e; }
+    .pp-badge--neutral { background: #f3f4f6; color: #4b5563; }
+
+    /* ── Error state (carga fallida) ───────────────────────── */
+    .pp-agent-error {
+      padding: 2rem;
+      color: var(--pp-color-danger);
+      font-size: 14px;
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+    }
+
+    /* ── Visibility helper ─────────────────────────────────── */
+    .pp-agent-content { display: none; }
+    .pp-agent-content.is-visible { display: block; }
+
+    /* ── Responsive ────────────────────────────────────────── */
     @media (max-width: 600px) {
-      .main { padding: 1rem; }
-      .topbar { padding: .875rem 1rem; }
-      .ref-box { flex-direction: column; align-items: flex-start; }
+      .pp-agent-main { padding: 1rem; }
+      .pp-agent-topbar { padding: .875rem 1rem; }
+      .pp-agent-ref { flex-direction: column; align-items: flex-start; }
+      .pp-tbl { font-size: 13px; }
+      .pp-tbl th, .pp-tbl td { padding: .6rem .75rem; }
     }
   </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <h1>PerfilaPro · Colaboradores</h1>
-    <div class="topbar-right">
-      <span id="agentName"></span>
-      <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+  <header class="pp-agent-topbar">
+    <h1 class="pp-agent-topbar__title">PerfilaPro · Colaboradores</h1>
+    <div class="pp-agent-topbar__right">
+      <span class="pp-agent-topbar__name" id="agentName"></span>
+      <button class="pp-agent-topbar__logout" onclick="logout()">Cerrar sesión</button>
     </div>
-  </div>
+  </header>
 
-  <div class="main" id="mainContent" style="display:none">
+  <main class="pp-agent-main pp-agent-content" id="mainContent">
 
     <!-- Enlace de referido -->
-    <div class="ref-box">
-      <span class="ref-label">Tu enlace de referido</span>
-      <span class="ref-url" id="refUrl"></span>
-      <button class="copy-btn" onclick="copyRef()">Copiar</button>
+    <div class="pp-agent-ref">
+      <span class="pp-agent-ref__label">Tu enlace de referido</span>
+      <span class="pp-agent-ref__url" id="refUrl"></span>
+      <button class="pp-agent-ref__copy" id="copyBtn" onclick="copyRef()">Copiar</button>
     </div>
 
     <!-- Stats -->
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-label">Tarjetas vendidas</div>
-        <div class="stat-value" id="statTotal">—</div>
-        <div class="stat-sub">ventas directas</div>
+    <div class="pp-stats">
+      <div class="pp-stat">
+        <div class="pp-stat__label">Tarjetas vendidas</div>
+        <div class="pp-stat__value pp-stat__value--primary" id="statTotal">—</div>
+        <div class="pp-stat__sub">ventas directas</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Ventas red</div>
-        <div class="stat-value" id="statSub">—</div>
-        <div class="stat-sub">por tu red</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Ventas red</div>
+        <div class="pp-stat__value" id="statSub">—</div>
+        <div class="pp-stat__sub">por tu red</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Comisión pendiente</div>
-        <div class="stat-value" id="statPending">—</div>
-        <div class="stat-sub">por liquidar</div>
+      <div class="pp-stat">
+        <div class="pp-stat__label">Comisión pendiente</div>
+        <div class="pp-stat__value pp-stat__value--success" id="statPending">—</div>
+        <div class="pp-stat__sub">por liquidar</div>
       </div>
     </div>
 
     <!-- Resumen mensual -->
-    <div class="section">
-      <div class="section-title">Resumen mensual</div>
-      <div class="table-wrap">
-        <table>
+    <section class="pp-agent-section">
+      <h2 class="pp-section-title">Resumen mensual</h2>
+      <div class="pp-tbl-wrap">
+        <table class="pp-tbl">
           <thead>
             <tr>
               <th>Período</th>
@@ -116,13 +296,13 @@
           <tbody id="monthsBody"></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
     <!-- Últimas ventas -->
-    <div class="section">
-      <div class="section-title">Últimas tarjetas</div>
-      <div class="table-wrap">
-        <table>
+    <section class="pp-agent-section">
+      <h2 class="pp-section-title">Últimas tarjetas</h2>
+      <div class="pp-tbl-wrap">
+        <table class="pp-tbl">
           <thead>
             <tr>
               <th>Profesional</th>
@@ -134,13 +314,13 @@
           <tbody id="salesBody"></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
     <!-- Liquidaciones -->
-    <div class="section">
-      <div class="section-title">Historial de liquidaciones</div>
-      <div class="table-wrap">
-        <table>
+    <section class="pp-agent-section">
+      <h2 class="pp-section-title">Historial de liquidaciones</h2>
+      <div class="pp-tbl-wrap">
+        <table class="pp-tbl">
           <thead>
             <tr>
               <th>Período</th>
@@ -153,9 +333,9 @@
           <tbody id="liquidBody"></tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-  </div>
+  </main>
 
   <script>
     const token = localStorage.getItem('pp_agent_token');
@@ -166,6 +346,7 @@
     document.getElementById('agentName').textContent = localStorage.getItem('pp_agent_name') || '';
 
     async function loadData() {
+      const main = document.getElementById('mainContent');
       try {
         const res = await fetch('/api/agent-data', {
           headers: { 'Authorization': 'Bearer ' + token },
@@ -173,29 +354,26 @@
         if (res.status === 401) { logout(); return; }
         const data = await res.json();
         render(data);
-        document.getElementById('mainContent').style.display = '';
+        main.classList.add('is-visible');
       } catch {
-        document.getElementById('mainContent').innerHTML = '<p style="padding:2rem;color:#dc2626">Error al cargar los datos.</p>';
-        document.getElementById('mainContent').style.display = '';
+        main.innerHTML = '<div class="pp-agent-error">Error al cargar los datos.</div>';
+        main.classList.add('is-visible');
       }
     }
 
     function render(data) {
       const { agent, summary, months, recent_sales, liquidations } = data;
 
-      // Ref URL
       const refUrl = `${location.origin}/?ref=${agent.code}`;
       document.getElementById('refUrl').textContent = refUrl;
 
-      // Stats
       document.getElementById('statTotal').textContent = summary.total_sales;
       document.getElementById('statSub').textContent = summary.sub_sales;
       document.getElementById('statPending').textContent = fmt(summary.pending_commission) + '€';
 
-      // Monthly
       const mb = document.getElementById('monthsBody');
       if (!months.length) {
-        mb.innerHTML = '<tr><td colspan="6" class="empty">Sin ventas aún</td></tr>';
+        mb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="6">Sin ventas aún</td></tr>';
       } else {
         mb.innerHTML = months.map(m => `
           <tr>
@@ -203,38 +381,38 @@
             <td>${m.own_sales}</td>
             <td>${m.sub_sales}</td>
             <td>${fmt(m.gross)}€</td>
-            <td><strong>${fmt(m.commission)}€</strong></td>
+            <td><span class="pp-tbl__strong">${fmt(m.commission)}€</span></td>
             <td>${m.liquidated
-              ? '<span class="badge badge-green">Liquidado</span>'
-              : '<span class="badge badge-yellow">Pendiente</span>'}</td>
+              ? '<span class="pp-badge pp-badge--ok">Liquidado</span>'
+              : '<span class="pp-badge pp-badge--pending">Pendiente</span>'}</td>
           </tr>`).join('');
       }
 
-      // Recent sales
       const sb = document.getElementById('salesBody');
       if (!recent_sales.length) {
-        sb.innerHTML = '<tr><td colspan="4" class="empty">Sin ventas aún</td></tr>';
+        sb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="4">Sin ventas aún</td></tr>';
       } else {
         sb.innerHTML = recent_sales.map(c => `
           <tr>
-            <td><a href="/c/${c.slug}" target="_blank" style="color:var(--primary);font-weight:600">${c.nombre || c.slug}</a></td>
+            <td><a href="/c/${c.slug}" target="_blank" class="pp-tbl__link">${c.nombre || c.slug}</a></td>
             <td>${PLAN_LABELS[c.plan] || c.plan}</td>
-            <td><span class="badge ${c.status === 'active' ? 'badge-green' : 'badge-gray'}">${c.status === 'active' ? 'Activa' : c.status}</span></td>
+            <td>${c.status === 'active'
+              ? '<span class="pp-badge pp-badge--ok">Activa</span>'
+              : '<span class="pp-badge pp-badge--neutral">' + c.status + '</span>'}</td>
             <td>${fmtDate(c.created_at)}</td>
           </tr>`).join('');
       }
 
-      // Liquidations
       const lb = document.getElementById('liquidBody');
       if (!liquidations.length) {
-        lb.innerHTML = '<tr><td colspan="5" class="empty">Sin liquidaciones aún</td></tr>';
+        lb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Sin liquidaciones aún</td></tr>';
       } else {
         lb.innerHTML = liquidations.map(l => `
           <tr>
             <td>${fmtPeriod(l.period)}</td>
             <td>${l.sales_count}</td>
             <td>${fmt(l.gross_amount)}€</td>
-            <td><strong>${fmt(l.commission_amount)}€</strong></td>
+            <td><span class="pp-tbl__strong">${fmt(l.commission_amount)}€</span></td>
             <td>${fmtDate(l.paid_at)}</td>
           </tr>`).join('');
       }
@@ -243,7 +421,7 @@
     function copyRef() {
       const url = document.getElementById('refUrl').textContent;
       navigator.clipboard.writeText(url).then(() => {
-        const btn = document.querySelector('.copy-btn');
+        const btn = document.getElementById('copyBtn');
         btn.textContent = '¡Copiado!';
         setTimeout(() => btn.textContent = 'Copiar', 1500);
       });
