@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -22,85 +23,48 @@ function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl }) {
   });
 
   const urgency = daysLeft <= 7
-    ? { color: '#dc2626', label: '¡Quedan solo ' + daysLeft + ' días!' }
+    ? { color: '#dc2626', bg: '#fef2f2', label: '¡Quedan solo ' + daysLeft + ' días!' }
     : daysLeft <= 15
-    ? { color: '#ca8a04', label: 'Quedan ' + daysLeft + ' días' }
-    : { color: '#01696f', label: 'Quedan ' + daysLeft + ' días' };
+    ? { color: '#ca8a04', bg: '#fef9c3', label: 'Quedan ' + daysLeft + ' días' }
+    : { color: '#01696f', bg: COLORS.accentSoft, label: 'Quedan ' + daysLeft + ' días' };
 
-  return {
-    subject: `${firstName}, tu tarjeta PerfilaPro caduca en ${daysLeft} días`,
-    html: `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-</head>
-<body style="margin:0;padding:0;background:#f5f2ec;font-family:'Helvetica Neue',Arial,sans-serif;color:#1e1b14">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
-    <tr><td align="center">
-      <table width="100%" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid rgba(30,27,20,.10);overflow:hidden">
-
-        <tr>
-          <td style="background:#01696f;padding:32px 40px;text-align:center">
-            <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px">PerfilaPro</p>
-            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional en WhatsApp</p>
-          </td>
-        </tr>
-
-        <tr>
-          <td style="padding:40px">
-            <p style="margin:0 0 16px;font-size:22px;font-weight:700">Hola, ${firstName} 👋</p>
-
-            <div style="background:#fef9c3;border-left:3px solid ${urgency.color};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px">
+  const bodyHtml = `
+            <div style="background:${urgency.bg};border-left:3px solid ${urgency.color};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px">
               <p style="margin:0;font-size:15px;font-weight:700;color:${urgency.color}">${urgency.label} para que caduque tu tarjeta</p>
-              <p style="margin:4px 0 0;font-size:13px;color:#6b6458">Fecha de caducidad: ${expiraFecha}</p>
+              <p style="margin:4px 0 0;font-size:13px;color:${COLORS.inkSoft}">Fecha de caducidad: ${expiraFecha}</p>
             </div>
 
-            <p style="margin:0 0 12px;font-size:15px;color:#6b6458;line-height:1.7">
+            <p style="margin:0 0 12px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
               Tu tarjeta sigue activa y funcionando. Pero si no la renuevas antes del ${expiraFecha}, dejará de ser pública y tus clientes no podrán encontrarte.
             </p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.7">
+            <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
               Renovar es rápido — menos de 2 minutos y tu tarjeta sigue activa sin cambiar el enlace.
             </p>
 
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
-              <tr><td align="center">
-                <a href="${siteUrl}/#crear" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">
-                  Renovar mi tarjeta →
-                </a>
-              </td></tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#deeeed;border-radius:8px;margin-bottom:28px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.accentSoft};border-radius:8px;margin-bottom:28px">
               <tr>
                 <td style="padding:16px 20px">
-                  <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Tu tarjeta actual</p>
-                  <a href="${cardUrl}" style="font-size:13px;color:#01696f;text-decoration:none;font-weight:700">${cardUrl}</a>
+                  <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">Tu tarjeta actual</p>
+                  <a href="${cardUrl}" style="font-size:13px;color:${COLORS.accent};text-decoration:none;font-weight:700">${cardUrl}</a>
                 </td>
               </tr>
             </table>
 
-            <p style="margin:0;font-size:14px;color:#6b6458;line-height:1.6">
+            <p style="margin:0;font-size:14px;color:${COLORS.inkSoft};line-height:1.6">
               ¿Tienes alguna duda? Responde este email directamente.
-            </p>
-          </td>
-        </tr>
+            </p>`;
 
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid rgba(30,27,20,.08);text-align:center">
-            <p style="margin:0 0 6px;font-size:12px;color:#a89f90">PerfilaPro · Tu perfil profesional siempre a mano</p>
-            <p style="margin:0;font-size:11px;color:#c4bdb2">
-              <a href="${siteUrl}/terminos.html" style="color:#a89f90;text-decoration:none">Términos</a> ·
-              <a href="${siteUrl}/privacidad.html" style="color:#a89f90;text-decoration:none">Privacidad</a>
-            </p>
-          </td>
-        </tr>
+  const html = buildEmailLayout({
+    preheader: `Tu tarjeta caduca en ${daysLeft} días — renueva en menos de 2 minutos.`,
+    title: `Hola, ${firstName} 👋`,
+    bodyHtml,
+    cta: { text: 'Renovar mi tarjeta →', url: `${siteUrl}/#crear` },
+    siteUrl,
+  });
 
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`,
+  return {
+    subject: `${firstName}, tu tarjeta PerfilaPro caduca en ${daysLeft} días`,
+    html,
   };
 }
 

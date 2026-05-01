@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
+const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -26,107 +27,64 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
 
   const firstName = (nombre || '').split(' ')[0];
 
-  return {
-    subject: `${firstName}, tu perfil ya está en el mundo 🚀`,
-    html: `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-</head>
-<body style="margin:0;padding:0;background:#f5f2ec;font-family:'Helvetica Neue',Arial,sans-serif;color:#1e1b14">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
-    <tr><td align="center">
-      <table width="100%" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid rgba(30,27,20,.10);overflow:hidden">
-
-        <!-- Header -->
-        <tr>
-          <td style="background:#01696f;padding:32px 40px;text-align:center">
-            <p style="margin:0;font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px">PerfilaPro</p>
-            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu perfil profesional siempre a mano</p>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:40px">
-            <p style="margin:0 0 16px;font-size:24px;font-weight:700">¡Ya eres todo un profesional, ${firstName}! 💪</p>
-            <p style="margin:0 0 12px;font-size:15px;color:#6b6458;line-height:1.7">
+  const bodyHtml = `
+            <p style="margin:0 0 12px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
               Tu perfil profesional está activo y listo para conquistar clientes. A partir de ahora, cuando alguien te pida el contacto, en vez de deletrear tu número o buscar el papel ese que siempre se pierde… les mandas el enlace y listo.
             </p>
-            <p style="margin:0 0 28px;font-size:15px;color:#6b6458;line-height:1.7">
+            <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
               Guárdalo en favoritos, ponlo en tu bio de Instagram, compártelo en grupos de WhatsApp. Cuanto más lo uses, más trabaja por ti.
             </p>
 
-            <!-- CTAs -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
-              <tr><td align="center" style="padding-bottom:12px">
-                <a href="${cardUrl}" style="display:inline-block;background:#01696f;color:#fff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">
-                  Ver mi perfil →
-                </a>
+            ${editUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+              <tr><td align="center">
+                <a href="${editUrl}" style="display:inline-block;background:${COLORS.surface};color:${COLORS.accent};font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid ${COLORS.accent}">Editar mi perfil</a>
               </td></tr>
-              ${editUrl ? `<tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:#fff;color:#01696f;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid #01696f">
-                  Editar mi perfil
-                </a>
-              </td></tr>` : ''}
-            </table>
+            </table>` : ''}
 
             <!-- Plan info -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
               <tr>
-                <td style="background:#d9e8e7;border-radius:10px 10px 0 0;padding:12px 20px;border-left:3px solid #01696f">
-                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#01696f">Plan activo · ${planLabel}</p>
-                  <p style="margin:4px 0 0;font-size:13px;color:#1e1b14;font-weight:600">${planDuration} · hasta el ${expiraFecha}</p>
+                <td style="background:${COLORS.accentSoft};border-radius:10px 10px 0 0;padding:12px 20px;border-left:3px solid ${COLORS.accent}">
+                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">Plan activo · ${planLabel}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:${COLORS.ink};font-weight:600">${planDuration} · hasta el ${expiraFecha}</p>
                 </td>
               </tr>
               <tr>
-                <td style="background:#ece8e2;border-radius:0 0 10px 10px;padding:12px 20px;margin-bottom:28px">
-                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6b6458">Tu enlace</p>
-                  <a href="${cardUrl}" style="font-size:14px;font-weight:700;color:#01696f;text-decoration:none">${cardUrl}</a>
+                <td style="background:${COLORS.bg};border-radius:0 0 10px 10px;padding:12px 20px">
+                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">Tu enlace</p>
+                  <a href="${cardUrl}" style="font-size:14px;font-weight:700;color:${COLORS.accent};text-decoration:none">${cardUrl}</a>
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 28px"></p>
 
             <!-- Factura adjunta -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;border-left:3px solid rgba(1,105,111,.35);border-radius:0 8px 8px 0;margin-bottom:20px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.bg};border-left:3px solid ${COLORS.accent};border-radius:0 8px 8px 0;margin-bottom:20px">
               <tr>
                 <td style="padding:14px 18px">
-                  <p style="margin:0;font-size:13px;font-weight:700;color:#1e1b14">📎 Factura en PDF adjunta</p>
-                  <p style="margin:4px 0 0;font-size:12px;color:#6b6458">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
+                  <p style="margin:0;font-size:13px;font-weight:700;color:${COLORS.ink}">📎 Factura en PDF adjunta</p>
+                  <p style="margin:4px 0 0;font-size:12px;color:${COLORS.inkSoft}">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
+            <p style="margin:0 0 8px;font-size:14px;color:${COLORS.inkSoft};line-height:1.6">
               ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
-            <p style="margin:0 0 8px;font-size:14px;color:#6b6458;line-height:1.6">
+            <p style="margin:0;font-size:14px;color:${COLORS.inkSoft};line-height:1.6">
               ¡Mucho éxito, ${firstName}! 🙌
-            </p>
-            ${editUrl ? `<p style="margin:0;font-size:12px;color:#a89f90;line-height:1.6">
-              🔒 El botón "Editar mi perfil" es personal — no compartas este email con nadie.
-            </p>` : ''}
-          </td>
-        </tr>
+            </p>`;
 
-        <!-- Footer -->
-        <tr>
-          <td style="padding:20px 40px;border-top:1px solid rgba(30,27,20,.08);text-align:center">
-            <p style="margin:0 0 6px;font-size:12px;color:#a89f90">PerfilaPro · Tu perfil profesional siempre a mano</p>
-            <p style="margin:0;font-size:11px;color:#c4bdb2">
-              <a href="${siteUrl}/terminos.html" style="color:#a89f90;text-decoration:none">Términos</a> ·
-              <a href="${siteUrl}/privacidad.html" style="color:#a89f90;text-decoration:none">Privacidad</a> ·
-              <a href="${siteUrl}/legal.html" style="color:#a89f90;text-decoration:none">Aviso legal</a>
-            </p>
-          </td>
-        </tr>
+  const html = buildEmailLayout({
+    preheader: `Tu perfil ${planLabel} ya está activo. Compártelo donde quieras.`,
+    title: `¡Ya eres todo un profesional, ${firstName}! 💪`,
+    bodyHtml,
+    cta: { text: 'Ver mi perfil →', url: cardUrl },
+    footerNote: editUrl ? '🔒 El botón "Editar mi perfil" es personal — no compartas este email con nadie.' : '',
+    siteUrl,
+  });
 
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`,
+  return {
+    subject: `${firstName}, tu perfil ya está en el mundo 🚀`,
+    html,
   };
 }
 
