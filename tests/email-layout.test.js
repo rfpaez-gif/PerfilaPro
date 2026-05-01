@@ -62,7 +62,7 @@ describe('buildEmailLayout', () => {
     expect(out).toContain('href="https://perfilapro.es/c/ana"');
     expect(out).toContain('Ver mi perfil');
     expect(out).toContain('border-radius:100px');
-    expect(out).toContain(COLORS.primary);
+    expect(out).toContain(COLORS.accent);
   });
 
   it('omite el CTA si no se pasa', () => {
@@ -119,11 +119,12 @@ describe('buildEmailLayout', () => {
 
   it('usa hex codes (no var()) sincronizados con tokens.css', () => {
     const out = buildEmailLayout(baseOpts);
-    expect(out).toContain(COLORS.primary);   // #01696f
-    expect(out).toContain(COLORS.bg);        // #f5f2ec
-    expect(out).toContain(COLORS.bgCard);    // #ffffff
-    expect(out).toContain(COLORS.ink);       // #1e1b14
-    expect(out).toContain(COLORS.inkSubtle); // #a89f90 (footer)
+    expect(out).toContain(COLORS.accent);   // #01696F (warm-accent)
+    expect(out).toContain(COLORS.bg);       // #FAF3E6 (warm-bg, Piedra Cálida)
+    expect(out).toContain(COLORS.surface);  // #FFFFFF
+    expect(out).toContain(COLORS.ink);      // #1E1B14 (warm-ink)
+    expect(out).toContain(COLORS.inkSoft);  // #5C5246 (footer)
+    expect(out).toContain(COLORS.border);   // #D9D2C4 (separadores)
   });
 
   it('los enlaces del footer usan SITE_URL del entorno', () => {

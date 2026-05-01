@@ -1,11 +1,56 @@
 /* ============================================================
-   PerfilaPro · Design Tokens · v0.1
-   Paleta provisional basada en producción actual.
-   Pendiente decisión CEO entre opciones A/B/C (ver BRAND.md §6.1).
+   PerfilaPro · Design Tokens · v0.2
+   Paleta híbrida definitiva (decisión 6.1 = A).
+
+   Dos registros cromáticos coexistentes:
+     · Sistema general (--pp-color-*)         · UI web/admin/landing/agente
+     · Registro cálido (--pp-color-warm-*)    · emails y tarjeta profesional
+
+   Las variables legacy --pp-c-* se mantienen para que components.css siga
+   renderizando hasta que cada superficie se migre en Fase 1. Se retirarán
+   cuando todas las superficies usen las nuevas (--pp-color-*).
    ============================================================ */
 
 :root {
-  /* ---------- COLOR · MARCA ---------- */
+  /* ─────────────────────────────────────────────────────
+     SISTEMA GENERAL · UI web, admin, landing, agente
+     ───────────────────────────────────────────────────── */
+  --pp-color-ink:           #0A1F44;
+  --pp-color-ink-soft:      rgba(10, 31, 68, 0.7);
+  --pp-color-ink-muted:     rgba(10, 31, 68, 0.55);
+  --pp-color-accent:        #00C277;
+  --pp-color-accent-deep:   #00A866;
+  --pp-color-accent-soft:   rgba(0, 194, 119, 0.08);
+  --pp-color-bg:            #F5F2EC;
+  --pp-color-surface:       #FFFFFF;
+  --pp-color-border:        rgba(10, 31, 68, 0.12);
+  --pp-color-border-soft:   rgba(10, 31, 68, 0.06);
+
+  /* ─────────────────────────────────────────────────────
+     REGISTRO CÁLIDO · emails + tarjeta profesional
+     Uso EXCLUSIVO en componentes con modificador --warm
+     y en HTML de emails (mapa COLORS de lib/email-layout.js).
+     ───────────────────────────────────────────────────── */
+  --pp-color-warm-bg:          #FAF3E6;
+  --pp-color-warm-surface:     #FFFFFF;
+  --pp-color-warm-ink:         #1E1B14;
+  --pp-color-warm-ink-soft:    rgba(30, 27, 20, 0.7);
+  --pp-color-warm-accent:      #01696F;
+  --pp-color-warm-accent-deep: #014E52;
+  --pp-color-warm-accent-soft: rgba(1, 105, 111, 0.08);
+  --pp-color-warm-border:      rgba(1, 105, 111, 0.15);
+
+  /* ─────────────────────────────────────────────────────
+     ESTADOS (compartidos por ambos registros)
+     ───────────────────────────────────────────────────── */
+  --pp-color-success: #00A866;
+  --pp-color-warning: #B8860B;
+  --pp-color-danger:  #B23A48;
+
+  /* ─────────────────────────────────────────────────────
+     LEGACY (--pp-c-*) · transitorio · usado por components.css
+     hasta su migración en Fase 1. No introducir nuevos usos.
+     ───────────────────────────────────────────────────── */
   --pp-c-primary:        #01696f;   /* Verde petróleo · color principal */
   --pp-c-primary-deep:   #014a4f;   /* Hover/active sobre primary */
   --pp-c-primary-soft:   #d9e8e7;   /* Backgrounds suaves, badges */
@@ -14,7 +59,6 @@
   --pp-c-accent-deep:    #014a4f;
   --pp-c-accent-soft:    #d9e8e7;
 
-  /* ---------- COLOR · TINTA Y NEUTROS ---------- */
   --pp-c-ink:            #1e1b14;   /* Texto principal · negro cálido */
   --pp-c-ink-90:         #2d2920;
   --pp-c-ink-70:         #5a5345;
@@ -32,7 +76,6 @@
   --pp-c-gray-400:       #a8a195;
   --pp-c-gray-300:       #c8c1b3;
 
-  /* ---------- COLOR · SISTEMA (estados) ---------- */
   --pp-c-success:        #01696f;
   --pp-c-success-soft:   #d9e8e7;
 
