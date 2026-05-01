@@ -23,6 +23,7 @@ exports.handler = async (event) => {
   const today = new Date().toISOString().split('T')[0];
 
   const staticSitemaps = [
+    `${siteUrl}/sitemap-static.xml`,
     `${siteUrl}/sitemap-categorias.xml`,
   ];
 
