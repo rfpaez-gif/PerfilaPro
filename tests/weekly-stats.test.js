@@ -58,6 +58,14 @@ describe('weekly-stats handler', () => {
     mockEmailSend.mockRejectedValue(new Error('SMTP error'));
     await expect(handler()).resolves.toBeDefined();
   });
+
+  it('envía desde el dominio canónico hola@perfilapro.es', async () => {
+    setupDb([{ slug: 'ana-pro', nombre: 'Ana', email: 'ana@test.com' }]);
+    await handler();
+    expect(mockEmailSend).toHaveBeenCalledWith(
+      expect.objectContaining({ from: 'PerfilaPro <hola@perfilapro.es>' })
+    );
+  });
 });
 
 describe('buildStatsEmail', () => {
