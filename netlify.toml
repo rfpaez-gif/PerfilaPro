@@ -180,3 +180,8 @@
   from   = "/sitemap-categorias.xml"
   to     = "/.netlify/functions/sitemap-categorias"
   status = 200
+
+[[redirects]]
+  from   = "/sitemap-static.xml"
+  to     = "/.netlify/functions/sitemap-static"
+  status = 200
