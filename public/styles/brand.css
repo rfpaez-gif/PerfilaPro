@@ -1,0 +1,10 @@
+/* ============================================================
+   PerfilaPro · Brand · v0.1
+   Punto de entrada único del sistema de marca.
+   Cada HTML estático y cada función SSR enlaza SOLO este
+   archivo con <link rel="stylesheet" href="/styles/brand.css">.
+   ============================================================ */
+
+@import url('./tokens.css');
+@import url('./base.css');
+@import url('./components.css');

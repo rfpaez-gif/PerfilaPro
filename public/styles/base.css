@@ -1,0 +1,64 @@
+/* ============================================================
+   PerfilaPro · Base · v0.1
+   Reset mínimo y estilos base globales.
+   No define estilos para h1/h2/h3 — para titulares usar las
+   clases utilitarias pp-display-1, pp-display-2, pp-h2, pp-h3.
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: var(--pp-f-sans);
+  font-size: var(--pp-fs-body);
+  line-height: var(--pp-lh-body);
+  color: var(--pp-c-ink);
+  background: var(--pp-c-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--pp-c-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--pp-c-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--pp-c-accent-soft);
+  color: var(--pp-c-ink);
+}
