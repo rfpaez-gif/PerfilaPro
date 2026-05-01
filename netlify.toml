@@ -108,6 +108,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/admin-regenerate-seed"
+  to     = "/.netlify/functions/admin-regenerate-seed"
+  status = 200
+
+[[redirects]]
   from   = "/api/directory-options"
   to     = "/.netlify/functions/directory-options"
   status = 200

@@ -113,7 +113,18 @@
     .btn-refund:hover { background: #fee2e2; }
     .btn-invoice { color: #2563eb; border-color: #bfdbfe; }
     .btn-invoice:hover { background: #eff6ff; }
+    .btn-regen { color: var(--primary); border-color: var(--plight); }
+    .btn-regen:hover { background: var(--plight); }
+    .btn-regen[disabled] { opacity: .55; cursor: progress; }
+    .btn-regen .spin { display: inline-block; animation: ppSpin 1s linear infinite; }
+    @keyframes ppSpin { to { transform: rotate(360deg); } }
     .actions-cell { display: flex; gap: .35rem; flex-wrap: wrap; }
+
+    /* ── Seed thumbnail ── */
+    .seed-row { display: flex; align-items: center; gap: .65rem; }
+    .seed-thumb { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+    .seed-thumb.is-empty { background: var(--plight); }
+    .seed-flag { display: inline-block; padding: .1rem .45rem; border-radius: .3rem; background: var(--plight); color: var(--primary); font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; margin-left: .35rem; vertical-align: middle; }
 
     /* ── Directory toggles ── */
     .dir-toggle { display: inline-flex; align-items: center; gap: .2rem; padding: .2rem .55rem; border-radius: 999px; font-size: .68rem; font-weight: 700; cursor: pointer; border: none; font-family: var(--ff-b); transition: all .15s; white-space: nowrap; }
@@ -512,10 +523,21 @@
         ? `<button class="dir-config-btn" onclick="openCatModal('${card.slug}')">⚙ Configurar</button>`
         : `<small style="color:var(--muted);font-size:.68rem">${card.city_slug || ''}</small>`;
 
+      const isSeed = !!card.is_seed;
+      const thumbHtml = isSeed
+        ? `<img class="seed-thumb${card.foto_url ? '' : ' is-empty'}" alt="" loading="lazy" data-slug="${card.slug}" src="${card.foto_url || '/assets/icons/user.svg'}">`
+        : '';
+      const seedFlag = isSeed ? '<span class="seed-flag">seed</span>' : '';
+
       return `<tr>
         <td class="name-cell">
-          <strong>${card.nombre || '—'}</strong>
-          <small>${card.tagline || ''}</small>
+          <div class="seed-row">
+            ${thumbHtml}
+            <div>
+              <strong>${card.nombre || '—'}${seedFlag}</strong>
+              <small>${card.tagline || ''}</small>
+            </div>
+          </div>
         </td>
         <td class="col-md"><small style="color:var(--muted)">${card.email ? `<a href="mailto:${card.email}" style="color:var(--primary);text-decoration:none">${card.email}</a>` : '—'}</small></td>
         <td><span class="plan-badge plan-${plan}">${planLabel}</span></td>
@@ -533,6 +555,7 @@
         </td>
         <td>
           <div class="actions-cell">
+            ${isSeed ? `<button class="action-btn btn-regen" onclick="regenerateSeed('${card.slug}',this)" title="Regenerar foto"><span class="ico">↻</span> Foto</button>` : ''}
             <button class="action-btn btn-reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
             <button class="action-btn btn-extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
             ${card.email ? `<button class="action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:.7rem">✉ Enlace</button>` : ''}
@@ -616,6 +639,39 @@
       await loadData();
     } catch (err) {
       alert(`Error: ${err.message}`);
+    }
+  }
+
+  async function regenerateSeed(slug, btn) {
+    if (btn && btn.disabled) return;
+    const original = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="ico spin">↻</span> …';
+    }
+    try {
+      const res = await fetch('/.netlify/functions/admin-regenerate-seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      const idx = allCards.findIndex(c => c.slug === slug);
+      if (idx >= 0) allCards[idx] = { ...allCards[idx], foto_url: data.foto_url };
+      const img = document.querySelector(`img.seed-thumb[data-slug="${slug}"]`);
+      if (img && data.foto_url) {
+        img.src = data.foto_url;
+        img.classList.remove('is-empty');
+      }
+    } catch (err) {
+      alert(`Error regenerando foto: ${err.message}`);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
     }
   }
 
