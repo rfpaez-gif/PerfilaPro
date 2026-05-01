@@ -179,18 +179,28 @@ AGENT_JWT_SECRET      # signs agent JWT tokens
 - **UI** en admin: botón "Regenerar todas las semillas" + indicador de progreso (consulta periódica de `regen_status`).
 - **No programar cron**: la renovación se dispara siempre manualmente.
 
-### 3. Diversidad — refactor de arquetipos
-> **Trabajo en curso** — toda la información operativa (reglas, distribución, bloques, running totals, plan de retoma) vive en `scripts/archetypes-progress.md`. Lee ese archivo primero al retomar.
+### 3. Diversidad — refactor de arquetipos  ✅ COMPLETADO
+Hecho en commits `85da94d` (bloque 1), `f9b994c` (bloque 2), `d42182c`
+(bloque 3) y `ef96106` (bloque 4). Histórico de decisiones y running
+totals en `scripts/archetypes-progress.md`. Resumen:
 
-Resumen de alto nivel:
-- Reescribir las 75 `descripcion_accion` con un "acento" demográfico (origen, edad, género, expresión).
-- Distribución de origen ~70/13/8/4/3/3, edad ~20/45/25/10, género ~50/50 con disonancias estratégicas.
-- Modelo de imagen ya validado: `gemini-2.5-flash-image` (Nano Banana). `BASE_PROMPT` fijo (definido en el progress.md).
-- Trabajo dividido en 3 bloques de ~25 entradas + 1 bloque final de pipeline (refactor del generador para usar Gemini en vez de Pollinations).
-- **Acción manual del usuario al final**: borrar los seeds ya generados (`Avatars/seeds/*` en Supabase Storage + `DELETE FROM cards WHERE is_seed=true`) antes de regenerar los 75.
+- Las 75 entradas de `scripts/archetypes.json` reescritas con acento
+  demográfico. Cuotas finales cuadran exactamente con el target
+  (52/10/6/3/2/2 origen, 15/34/19/7 edad, 37F/38M).
+- 9 disonancias estratégicas, 11 cambios de nombre, 3 roles
+  neutralizados (Albañil→Albañilería, Peluquera→Peluquería,
+  Técnico→Técnica emergencias).
+- `scripts/generate-seeds.js` migrado de Pollinations a
+  `gemini-2.5-flash-image` con recompresión a JPEG ~85 vía `sharp`
+  (añadida a `devDependencies`). Backoff de 6 reintentos y checkpoint
+  preservados.
+- **Acción manual pendiente del usuario antes de ejecutar el script**:
+  borrar `Avatars/seeds/*` en Supabase Storage y
+  `DELETE FROM cards WHERE is_seed=true;`. Después: `node scripts/generate-seeds.js`.
 
 ### 4. Otros pendientes del kickoff
-- Reanudar generación de seeds → `node scripts/generate-seeds.js` (ya con checkpoint y backoff, retoma solo).
+- Tras la limpieza manual, ejecutar `node scripts/generate-seeds.js`
+  (checkpoint y backoff ya integrados, retoma solo si se corta).
 - Construir búsqueda Petri en home (`¿Qué necesitas?`).
 - Combobox de especialidad con sugerencias locales en `alta.html` y `editar.html`.
 

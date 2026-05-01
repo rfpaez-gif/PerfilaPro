@@ -1,8 +1,30 @@
 # Refactor de archetypes — diversidad y "acento"
 
-> **Lee este archivo primero** para retomar el trabajo en cualquier sesión nueva.
-> Toda la información necesaria está aquí + `scripts/archetypes.json` + sección "Pending work" de `CLAUDE.md`.
-> No hace falta releer el chat anterior.
+> ✅ **TRABAJO COMPLETADO** (rama `claude/resume-seed-generation-CWNDw`).
+> Los 4 bloques están cerrados. Este archivo se conserva como histórico
+> de las decisiones tomadas.
+
+## TL;DR del estado al cerrar
+
+- **Bloques 1-3** (commits `85da94d`, `f9b994c`, `d42182c`): las 75
+  entradas de `scripts/archetypes.json` reescritas con acento
+  demográfico. Cuotas finales cuadran exactamente con el target
+  (52/10/6/3/2/2 origen · 15/34/19/7 edad · 37F/38M).
+- **Bloque 4** (commit `ef96106`): `scripts/generate-seeds.js` migrado
+  de Pollinations a Gemini 2.5 Flash Image, con recompresión a JPEG ~85
+  vía `sharp`. Backoff y checkpoint preservados.
+- 9 disonancias estratégicas registradas (target 6-8, ligeramente sobre,
+  aceptable). 11 cambios de nombre. 3 roles neutralizados.
+- 189/189 tests verde tras cada bloque.
+
+## Acciones manuales pendientes para el usuario (antes de regenerar)
+
+1. Borrar los seeds antiguos en Supabase:
+   - Storage: `Avatars/seeds/*`
+   - DB: `DELETE FROM cards WHERE is_seed=true;`
+2. Ejecutar `node scripts/generate-seeds.js` (con `GEMINI_API_KEY`,
+   `SUPABASE_URL` y `SUPABASE_SERVICE_KEY` en `.env`). El checkpoint
+   permite reanudar si se corta.
 
 ---
 
