@@ -72,7 +72,7 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 
 - [x] **Bloque 1** — entradas 1-25: Sanidad, Educación, Hostelería, Comercio, Oficios
 - [x] **Bloque 2** — entradas 26-50: Transporte, Automoción, Tecnología, Legal, Belleza
-- [ ] **Bloque 3** — entradas 51-75: Fitness, Jardinería, Seguridad, Fotografía, Servicios oficina
+- [x] **Bloque 3** — entradas 51-75: Fitness, Jardinería, Seguridad, Fotografía, Servicios oficina
 - [ ] **Bloque 4** — pipeline: refactor de `scripts/generate-seeds.js` para usar Gemini
 
 ## 6 · Running totals — ACTUALIZAR al final de cada bloque
@@ -80,29 +80,28 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 ### Origen
 | Origen | Asignados | Target | Pendientes |
 |---|---|---|---|
-| Blanco europeo | 30 | 52 | 22 |
-| Latinoamericano | 8 | 10 | 2 |
+| Blanco europeo | 52 | 52 | 0 |
+| Latinoamericano | 10 | 10 | 0 |
 | Magrebí | 6 | 6 | 0 |
-| Negro africano | 2 | 3 | 1 |
+| Negro africano | 3 | 3 | 0 |
 | Asiático oriental | 2 | 2 | 0 |
 | Sur-asiático | 2 | 2 | 0 |
 
 ### Edad
 | Rango | Asignados | Target | Pendientes |
 |---|---|---|---|
-| 20-30 | 10 | 15 | 5 |
-| 30-45 | 20 | 34 | 14 |
-| 45-60 | 14 | 19 | 5 |
-| 60+ | 6 | 7 | 1 |
+| 20-30 | 15 | 15 | 0 |
+| 30-45 | 34 | 34 | 0 |
+| 45-60 | 19 | 19 | 0 |
+| 60+ | 7 | 7 | 0 |
 
 ### Género
 | Género | Asignados | Target | Pendientes |
 |---|---|---|---|
-| Femenino | 24 | 37 | 13 |
-| Masculino | 26 | 38 | 12 |
+| Femenino | 37 | 37 | 0 |
+| Masculino | 38 | 38 | 0 |
 
-> ✅ Bloque 2 compensa el desbalance del 1 (9F/16M). Restante para bloque 3: ~13F/12M, distribución limpia.
-> ⚠ Para bloque 3 todos los magrebíes, asiáticos y sur-asiáticos están cerrados — solo blanco europeo, 2 latinos y 1 negro africano.
+> ✅ Las 75 entradas reescritas. Cuotas de origen, edad y género cuadran exactamente con el target.
 
 ### Disonancias estratégicas registradas
 | # entrada | Rol | Disonancia |
@@ -115,6 +114,7 @@ Con **6-8 disonancias estratégicas** repartidas (rompen estereotipo de género 
 | 29 | Carretillera (Yasmine) | Mujer magrebí en logística pesada |
 | 47 | Esteticista (Adrián) | Hombre europeo en cabina de estética |
 | 49 | Manicurista (Rohan) | Hombre sur-asiático pintando uñas |
+| 65 | Técnica en emergencias sanitarias (Aitana) | Mujer europea en emergencias |
 
 ## 7 · Bloque 4 — pipeline post-JSON
 
