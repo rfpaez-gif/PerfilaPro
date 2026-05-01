@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.4",
@@ -16,6 +17,7 @@
     "stripe": "^14.18.0"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.0",
     "dotenv": "^17.4.2",
     "vitest": "^1.6.0"
   }
