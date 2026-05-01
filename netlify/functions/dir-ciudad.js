@@ -60,14 +60,14 @@ function makeHandler(deps) {
     };
 
     const cardsHtml = profiles.length
-      ? `<div class="dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
-      : `<div class="dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay ${esc(specialtyLabel.toLowerCase())} en ${esc(cityLabel)}.</p></div>`;
+      ? `<div class="pp-dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
+      : `<div class="pp-dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay ${esc(specialtyLabel.toLowerCase())} en ${esc(cityLabel)}.</p></div>`;
 
     const body = `
-<div class="dir-ph">
+<div class="pp-dir-ph">
   <h1>${esc(specialtyLabel)} en ${esc(cityLabel)}</h1>
-  <p class="dir-ph-desc">${esc(desc)}</p>
-  ${total > 0 ? `<p class="dir-count">${total} profesionale${total !== 1 ? 's' : ''}</p>` : ''}
+  <p class="pp-dir-ph__desc">${esc(desc)}</p>
+  ${total > 0 ? `<p class="pp-dir-ph__count">${total} profesionale${total !== 1 ? 's' : ''}</p>` : ''}
 </div>
 ${cardsHtml}
 ${paginationLinks(page, totalPages, canonicalBase)}`;

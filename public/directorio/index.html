@@ -23,252 +23,230 @@
   }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#f6f3ee;--surface:#fcfbf8;--surface-2:#f2eee8;
-      --text:#1f1a14;--muted:#6f675c;--faint:#aaa193;
-      --primary:#01696f;--primary-h:#0c4e54;--primary-bg:rgba(1,105,111,.08);
-      --line:rgba(31,26,20,.10);
-      --ff-d:"Instrument Serif",Georgia,serif;
-      --ff-b:"Plus Jakarta Sans",system-ui,sans-serif;
-      --r-full:999px;--shadow:0 4px 16px rgba(20,20,20,.07)
-    }
-    body{font-family:var(--ff-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
-    a{color:inherit;text-decoration:none}
-
-    /* ── Header ── */
-    .site-hd{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:20}
-    .site-logo{font-family:var(--ff-d);font-size:1.25rem;color:var(--primary)}
-    .hd-cta{padding:.5rem 1rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.8125rem;font-weight:700;transition:background .15s}
-    .hd-cta:hover{background:var(--primary-h)}
-
-    /* ── Hero + search ── */
-    .hero{background:linear-gradient(160deg,#e8f4f4 0%,var(--bg) 55%);padding:3rem 1.25rem 2.5rem;text-align:center}
-    .hero h1{font-family:var(--ff-d);font-size:clamp(2rem,5.5vw,3rem);line-height:1.15;font-weight:400;color:var(--text);margin-bottom:.75rem}
-    .hero h1 em{color:var(--primary);font-style:normal}
-    .hero-sub{font-size:1rem;color:var(--muted);max-width:48ch;margin:0 auto 2rem;line-height:1.65}
-
-    /* Search box */
-    .search-box{max-width:680px;margin:0 auto;background:var(--surface);border:1.5px solid var(--line);border-radius:1.25rem;box-shadow:0 8px 32px rgba(20,20,20,.10);overflow:hidden;transition:box-shadow .2s,border-color .2s}
-    .search-box:focus-within{box-shadow:0 12px 40px rgba(1,105,111,.18);border-color:rgba(1,105,111,.4)}
-    .search-fields{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:stretch}
-    .search-field{display:flex;align-items:center;gap:.625rem;padding:.875rem 1.125rem}
-    .search-field svg{flex-shrink:0;color:var(--primary)}
-    .search-field input{border:none;outline:none;background:transparent;font-family:var(--ff-b);font-size:.9375rem;color:var(--text);width:100%;min-width:0}
-    .search-field input::placeholder{color:var(--faint)}
-    .search-divider{width:1px;background:var(--line);margin:.75rem 0}
-    .search-btn{display:flex;align-items:center;gap:.5rem;padding:.875rem 1.375rem;background:var(--primary);color:#fff;border:none;font-family:var(--ff-b);font-size:.9375rem;font-weight:700;cursor:pointer;transition:background .15s;white-space:nowrap}
-    .search-btn:hover{background:var(--primary-h)}
-    .search-btn svg{flex-shrink:0}
-
-    /* Suggestions dropdown */
-    .search-suggestions{display:none;border-top:1px solid var(--line);padding:.5rem}
-    .search-suggestions.visible{display:block}
-    .sug-item{display:flex;align-items:center;gap:.625rem;padding:.5rem .625rem;border-radius:.5rem;cursor:pointer;font-size:.875rem;color:var(--text);transition:background .12s}
-    .sug-item:hover,.sug-item.active{background:var(--primary-bg)}
-    .sug-sector{font-size:.75rem;color:var(--muted);margin-left:auto}
-
-    /* Popular searches */
-    .popular{max-width:680px;margin:.875rem auto 0;text-align:left}
-    .popular-label{font-size:.75rem;color:var(--faint);margin-bottom:.4rem}
-    .popular-chips{display:flex;flex-wrap:wrap;gap:.375rem}
-    .popular-chip{font-size:.8125rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-full);padding:.3rem .75rem;cursor:pointer;transition:border-color .15s,color .15s}
-    .popular-chip:hover{border-color:var(--primary);color:var(--primary)}
-
-    /* ── Main content ── */
-    .breadcrumb{max-width:960px;margin:0 auto;padding:.75rem 1.25rem;font-size:.8125rem;color:var(--muted)}
-    .breadcrumb ol{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem}
-    .breadcrumb a{color:var(--primary)}
-    .bc-sep{color:var(--faint)}
-    main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:0 1.25rem 3rem}
-    .section-label{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin-bottom:1rem}
-
-    /* Sector grid */
-    .sectors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.625rem}
-    .sector-card{display:flex;align-items:center;gap:.75rem;padding:.875rem 1rem;background:var(--surface);border:1px solid var(--line);border-radius:.875rem;transition:box-shadow .18s,border-color .18s}
-    .sector-card:hover{box-shadow:var(--shadow);border-color:rgba(1,105,111,.25)}
-    .sector-card.hidden{display:none}
-    .sector-icon{width:36px;height:36px;border-radius:.5rem;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
-    .sector-name{font-size:.875rem;font-weight:700;line-height:1.25;color:var(--text)}
-    .sector-desc{font-size:.7rem;color:var(--muted);margin-top:.1rem;line-height:1.35}
-
-    /* No results */
-    .no-results{display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.9375rem}
-    .no-results.visible{display:block}
-
-    /* CTA banner */
-    .cta-banner{background:var(--primary-bg);border:1.5px solid rgba(1,105,111,.2);border-radius:1.25rem;padding:2rem 1.5rem;text-align:center;margin-top:2.5rem}
-    .cta-banner h2{font-family:var(--ff-d);font-size:1.5rem;font-weight:400;margin-bottom:.5rem}
-    .cta-banner p{font-size:.9375rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6}
-    .cta-btn{display:inline-flex;padding:.75rem 1.75rem;background:var(--primary);color:#fff;border-radius:var(--r-full);font-size:.9375rem;font-weight:700;transition:background .15s}
-    .cta-btn:hover{background:var(--primary-h)}
-
-    /* Footer */
-    .site-ft{border-top:1px solid var(--line);padding:1.5rem 1.25rem;text-align:center;font-size:.75rem;color:var(--faint)}
-    .site-ft a{color:var(--primary)}
-
-    :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-
+    /* Componentes específicos de la portada del directorio.
+       Tokens de --pp-color-* viven en /styles/brand.css. */
+    body{min-height:100dvh;display:flex;flex-direction:column}
+    main{flex:1}
+    .pp-dir-hero{background:linear-gradient(160deg,rgba(0,194,119,.08) 0%,var(--pp-color-bg) 55%);padding:3rem 1.25rem 2.5rem;text-align:center}
+    .pp-dir-hero__title{font-family:var(--pp-f-display);font-size:clamp(2rem,5.5vw,3rem);line-height:1.15;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--pp-color-ink);margin-bottom:.75rem}
+    .pp-dir-hero__title em{color:var(--pp-color-accent);font-style:italic}
+    .pp-dir-hero__sub{font-size:1rem;color:var(--pp-color-ink-soft);max-width:48ch;margin:0 auto 2rem;line-height:1.65}
+    .pp-dir-search{max-width:680px;margin:0 auto;background:var(--pp-color-surface);border:1.5px solid var(--pp-color-border);border-radius:var(--pp-r-xl);box-shadow:var(--pp-sh-md);overflow:hidden;transition:box-shadow .2s,border-color .2s}
+    .pp-dir-search:focus-within{box-shadow:var(--pp-sh-lg);border-color:var(--pp-color-accent)}
+    .pp-dir-search__fields{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:stretch}
+    .pp-dir-search__field{display:flex;align-items:center;gap:.625rem;padding:.875rem 1.125rem}
+    .pp-dir-search__field svg{flex-shrink:0;color:var(--pp-color-accent)}
+    .pp-dir-search__field input{border:none;outline:none;background:transparent;font-family:var(--pp-f-sans);font-size:.9375rem;color:var(--pp-color-ink);width:100%;min-width:0}
+    .pp-dir-search__field input::placeholder{color:var(--pp-color-ink-muted)}
+    .pp-dir-search__divider{width:1px;background:var(--pp-color-border);margin:.75rem 0}
+    .pp-dir-search__btn{display:flex;align-items:center;gap:.5rem;padding:.875rem 1.375rem;background:var(--pp-color-accent);color:#fff;border:none;font-family:var(--pp-f-sans);font-size:.9375rem;font-weight:700;cursor:pointer;transition:background .15s;white-space:nowrap}
+    .pp-dir-search__btn:hover{background:var(--pp-color-accent-deep)}
+    .pp-dir-search__btn svg{flex-shrink:0}
+    .pp-dir-search__suggestions{display:none;border-top:1px solid var(--pp-color-border);padding:.5rem}
+    .pp-dir-search__suggestions.is-visible{display:block}
+    .pp-dir-search__sug{display:flex;align-items:center;gap:.625rem;padding:.5rem .625rem;border-radius:var(--pp-r-sm);cursor:pointer;font-size:.875rem;color:var(--pp-color-ink);transition:background .12s}
+    .pp-dir-search__sug:hover,.pp-dir-search__sug.is-active{background:var(--pp-color-accent-soft)}
+    .pp-dir-popular{max-width:680px;margin:.875rem auto 0;text-align:left}
+    .pp-dir-popular__label{font-size:.75rem;color:var(--pp-color-ink-muted);margin-bottom:.4rem}
+    .pp-dir-popular__chips{display:flex;flex-wrap:wrap;gap:.375rem}
+    .pp-dir-popular__chip{font-family:var(--pp-f-sans);font-size:.8125rem;color:var(--pp-color-ink-soft);background:var(--pp-color-surface);border:1px solid var(--pp-color-border);border-radius:var(--pp-r-pill);padding:.3rem .75rem;cursor:pointer;transition:border-color .15s,color .15s}
+    .pp-dir-popular__chip:hover{border-color:var(--pp-color-accent);color:var(--pp-color-accent-deep)}
+    .pp-breadcrumb{max-width:960px;margin:0 auto;padding:.75rem 1.25rem;font-size:.8125rem;color:var(--pp-color-ink-soft)}
+    .pp-breadcrumb ol{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:.25rem}
+    .pp-breadcrumb a{color:var(--pp-color-accent-deep);font-weight:600}
+    .pp-breadcrumb__sep{color:var(--pp-color-ink-muted)}
+    .pp-dir-home{max-width:960px;margin:0 auto;padding:0 1.25rem 3rem}
+    .pp-dir-home__label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--pp-color-ink-muted);margin-bottom:1rem}
+    .pp-dir-home__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.625rem}
+    .pp-dir-home__sector{display:flex;align-items:center;gap:.75rem;padding:.875rem 1rem;background:var(--pp-color-surface);border:1px solid var(--pp-color-border);border-radius:14px;transition:box-shadow .18s,border-color .18s;color:var(--pp-color-ink);text-decoration:none}
+    .pp-dir-home__sector:hover{box-shadow:var(--pp-sh-md);border-color:var(--pp-color-accent)}
+    .pp-dir-home__sector.is-hidden{display:none}
+    .pp-dir-home__sector-icon{width:36px;height:36px;border-radius:8px;background:var(--pp-color-accent-soft);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+    .pp-dir-home__sector-name{font-size:.875rem;font-weight:700;line-height:1.25;color:var(--pp-color-ink)}
+    .pp-dir-home__sector-desc{font-size:.7rem;color:var(--pp-color-ink-soft);margin-top:.1rem;line-height:1.35}
+    .pp-dir-home__no-results{display:none;text-align:center;padding:2rem;color:var(--pp-color-ink-soft);font-size:.9375rem}
+    .pp-dir-home__no-results.is-visible{display:block}
+    .pp-dir-home__no-results a{color:var(--pp-color-accent-deep);font-weight:600}
+    .pp-dir-home__cta{background:var(--pp-color-accent-soft);border:1.5px solid var(--pp-color-accent);border-radius:var(--pp-r-xl);padding:2rem 1.5rem;text-align:center;margin-top:2.5rem}
+    .pp-dir-home__cta h2{font-family:var(--pp-f-display);font-size:1.5rem;letter-spacing:var(--pp-ls-heading);font-weight:400;margin-bottom:.5rem;color:var(--pp-color-ink)}
+    .pp-dir-home__cta p{font-size:.9375rem;color:var(--pp-color-ink-soft);margin-bottom:1.25rem;line-height:1.6}
+    .pp-dir-foot{border-top:1px solid var(--pp-color-border-soft);padding:1.5rem 1.25rem;text-align:center;font-size:.75rem;color:var(--pp-color-ink-muted)}
+    .pp-dir-foot a{color:var(--pp-color-accent-deep);font-weight:600;text-decoration:none}
     @media(max-width:600px){
-      .search-fields{grid-template-columns:1fr auto}
-      .search-field-city,.search-divider{display:none}
-      .search-btn span{display:none}
-      .search-btn{padding:.875rem 1rem}
-      .sectors-grid{grid-template-columns:1fr 1fr}
-      .sector-card{flex-direction:column;text-align:center;padding:.75rem .625rem;gap:.375rem}
-      .sector-icon{width:32px;height:32px}
+      .pp-dir-search__fields{grid-template-columns:1fr auto}
+      .pp-dir-search__field--city,.pp-dir-search__divider{display:none}
+      .pp-dir-search__btn span{display:none}
+      .pp-dir-search__btn{padding:.875rem 1rem}
+      .pp-dir-home__grid{grid-template-columns:1fr 1fr}
+      .pp-dir-home__sector{flex-direction:column;text-align:center;padding:.75rem .625rem;gap:.375rem}
+      .pp-dir-home__sector-icon{width:32px;height:32px}
     }
   </style>
 </head>
 <body>
-  <header class="site-hd">
-    <a href="/" class="site-logo">PerfilaPro</a>
-    <a href="/#crear" class="hd-cta">Crea tu perfil gratis →</a>
+  <header class="pp-site-header">
+    <div class="pp-wrap">
+      <nav class="pp-nav">
+        <a href="/" class="pp-nav__brand" aria-label="PerfilaPro inicio">
+          <span class="pp-nav__brand-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </span>
+          PerfilaPro
+        </a>
+        <div class="pp-nav__actions">
+          <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--sm pp-btn--pill">Crear mi perfil gratis</a>
+        </div>
+      </nav>
+    </div>
   </header>
 
-  <section class="hero">
-    <h1>Encuentra profesionales<br><em>de confianza</em> cerca de ti</h1>
-    <p class="hero-sub">Fontaneros, médicos, abogados, entrenadores… contacto directo, sin intermediarios.</p>
-
-    <div class="search-box" id="searchBox">
-      <div class="search-fields">
-        <div class="search-field">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input id="searchWhat" type="text" placeholder="¿Qué necesitas? fontanero, médico…" autocomplete="off" aria-label="Servicio o profesión">
-        </div>
-        <div class="search-divider"></div>
-        <div class="search-field search-field-city">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-          <input id="searchWhere" type="text" placeholder="Ciudad o provincia" autocomplete="off" aria-label="Ciudad">
-        </div>
-        <button class="search-btn" id="searchBtn" type="button" aria-label="Buscar profesionales">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <span>Buscar</span>
-        </button>
-      </div>
-      <div class="search-suggestions" id="suggestions" role="listbox" aria-label="Sugerencias"></div>
-    </div>
-
-    <div class="popular">
-      <p class="popular-label">Búsquedas frecuentes</p>
-      <div class="popular-chips">
-        <button class="popular-chip" data-q="fontanero">Fontanero</button>
-        <button class="popular-chip" data-q="electricista">Electricista</button>
-        <button class="popular-chip" data-q="fisioterapeuta">Fisioterapeuta</button>
-        <button class="popular-chip" data-q="abogado">Abogado</button>
-        <button class="popular-chip" data-q="profesor clases particulares">Clases particulares</button>
-        <button class="popular-chip" data-q="entrenador personal">Entrenador personal</button>
-        <button class="popular-chip" data-q="peluquero">Peluquero</button>
-        <button class="popular-chip" data-q="pintor">Pintor</button>
-      </div>
-    </div>
-  </section>
-
-  <nav class="breadcrumb" aria-label="Ruta de navegación">
-    <ol>
-      <li><a href="/">Inicio</a></li>
-      <li class="bc-sep" aria-hidden="true">›</li>
-      <li><span aria-current="page">Directorio</span></li>
-    </ol>
-  </nav>
-
   <main>
-    <p class="section-label" id="sectorsLabel">Explorar por categoría</p>
-    <div class="sectors-grid" id="sectorsGrid">
-      <a href="/directorio/oficios" class="sector-card" data-keywords="fontanero electricista cerrajero pintor albañil calefacción gas urgencias hogar reparación">
-        <div class="sector-icon">🔧</div>
-        <div><p class="sector-name">Oficios</p><p class="sector-desc">Fontaneros, electricistas…</p></div>
-      </a>
-      <a href="/directorio/salud" class="sector-card" data-keywords="médico fisioterapeuta nutricionista psicólogo podólogo osteópata masajista terapeuta salud bienestar">
-        <div class="sector-icon">🩺</div>
-        <div><p class="sector-name">Salud</p><p class="sector-desc">Médicos, fisioterapeutas…</p></div>
-      </a>
-      <a href="/directorio/reforma" class="sector-card" data-keywords="reformas albañil carpintero solador pintura obra construcción interiorismo reforma integral">
-        <div class="sector-icon">🏗️</div>
-        <div><p class="sector-name">Reforma</p><p class="sector-desc">Albañiles, carpinteros…</p></div>
-      </a>
-      <a href="/directorio/legal" class="sector-card" data-keywords="abogado asesor gestor fiscal notario derecho laboral herencias contratos asesoría gestoría">
-        <div class="sector-icon">⚖️</div>
-        <div><p class="sector-name">Legal</p><p class="sector-desc">Abogados, asesores…</p></div>
-      </a>
-      <a href="/directorio/educacion" class="sector-card" data-keywords="profesor tutor clases particulares inglés matemáticas apoyo escolar formación academia">
-        <div class="sector-icon">📚</div>
-        <div><p class="sector-name">Educación</p><p class="sector-desc">Profesores, tutores…</p></div>
-      </a>
-      <a href="/directorio/tech" class="sector-card" data-keywords="programador diseñador web developer informático IT soporte redes ciberseguridad app móvil">
-        <div class="sector-icon">💻</div>
-        <div><p class="sector-name">Tecnología</p><p class="sector-desc">Programadores, diseñadores…</p></div>
-      </a>
-      <a href="/directorio/belleza" class="sector-card" data-keywords="peluquero esteticista manicura depilación maquillaje extensiones coloración tratamiento facial belleza">
-        <div class="sector-icon">💇</div>
-        <div><p class="sector-name">Belleza</p><p class="sector-desc">Peluqueros, esteticistas…</p></div>
-      </a>
-      <a href="/directorio/fitness" class="sector-card" data-keywords="entrenador personal gimnasio pilates yoga crossfit nutrición deportiva personal trainer deporte">
-        <div class="sector-icon">🏋️</div>
-        <div><p class="sector-name">Fitness</p><p class="sector-desc">Entrenadores personales…</p></div>
-      </a>
-      <a href="/directorio/hosteleria" class="sector-card" data-keywords="camarero cocinero chef catering bar restaurante hostelería banquetes menú eventos gastronómicos">
-        <div class="sector-icon">🍽️</div>
-        <div><p class="sector-name">Hostelería</p><p class="sector-desc">Camareros, cocineros…</p></div>
-      </a>
-      <a href="/directorio/fotografia" class="sector-card" data-keywords="fotógrafo videógrafo boda retrato producto vídeo corporativo reportaje fotografía edición">
-        <div class="sector-icon">📷</div>
-        <div><p class="sector-name">Fotografía</p><p class="sector-desc">Fotógrafos, videógrafos…</p></div>
-      </a>
-      <a href="/directorio/eventos" class="sector-card" data-keywords="animador DJ música boda comunión catering decoración coordinador eventos celebraciones">
-        <div class="sector-icon">🎉</div>
-        <div><p class="sector-name">Eventos</p><p class="sector-desc">Animadores, DJ, catering…</p></div>
-      </a>
-      <a href="/directorio/automocion" class="sector-card" data-keywords="mecánico taller chapa pintura neumáticos diagnosis coche moto ITV revisión automóvil">
-        <div class="sector-icon">🚗</div>
-        <div><p class="sector-name">Automoción</p><p class="sector-desc">Mecánicos, talleres…</p></div>
-      </a>
-      <a href="/directorio/jardineria" class="sector-card" data-keywords="jardinero paisajista poda mantenimiento jardín césped riego terraza plantas exterior">
-        <div class="sector-icon">🌿</div>
-        <div><p class="sector-name">Jardinería</p><p class="sector-desc">Jardineros, paisajistas…</p></div>
-      </a>
-      <a href="/directorio/transporte" class="sector-card" data-keywords="mudanzas transporte portes mensajería furgoneta guardamuebles traslado carga logística">
-        <div class="sector-icon">🚚</div>
-        <div><p class="sector-name">Transporte</p><p class="sector-desc">Mudanzas, mensajería…</p></div>
-      </a>
-      <a href="/directorio/cuidados" class="sector-card" data-keywords="cuidador asistente doméstico limpieza hogar niños mayores acompañamiento auxiliar servicio doméstico">
-        <div class="sector-icon">🤝</div>
-        <div><p class="sector-name">Cuidados</p><p class="sector-desc">Cuidadores, auxiliares…</p></div>
-      </a>
-      <a href="/directorio/seguridad" class="sector-card" data-keywords="vigilante seguridad alarma videovigilancia control acceso cerrajería empresa seguridad">
-        <div class="sector-icon">🔒</div>
-        <div><p class="sector-name">Seguridad</p><p class="sector-desc">Vigilantes, instaladores…</p></div>
-      </a>
-      <a href="/directorio/comercial" class="sector-card" data-keywords="comercial vendedor agente representante marketing ventas captación delegado B2B">
-        <div class="sector-icon">💼</div>
-        <div><p class="sector-name">Comercial</p><p class="sector-desc">Agentes, representantes…</p></div>
-      </a>
-      <a href="/directorio/turismo" class="sector-card" data-keywords="guía turístico excursión ruta traslado aeropuerto tour agencia viaje experiencia local">
-        <div class="sector-icon">✈️</div>
-        <div><p class="sector-name">Turismo</p><p class="sector-desc">Guías, agencias…</p></div>
-      </a>
-      <a href="/directorio/comercio" class="sector-card" data-keywords="tienda comercio distribución venta local ferretería floristería alimentación regalos">
-        <div class="sector-icon">🏪</div>
-        <div><p class="sector-name">Comercio</p><p class="sector-desc">Tiendas, distribuidores…</p></div>
-      </a>
-      <a href="/directorio/otro" class="sector-card" data-keywords="otro profesional servicio especialista">
-        <div class="sector-icon">⭐</div>
-        <div><p class="sector-name">Otros</p><p class="sector-desc">Más profesionales…</p></div>
-      </a>
-    </div>
+    <section class="pp-dir-hero">
+      <h1 class="pp-dir-hero__title">Encuentra profesionales<br><em>de confianza</em> cerca de ti</h1>
+      <p class="pp-dir-hero__sub">Fontaneros, médicos, abogados, entrenadores… contacto directo, sin intermediarios.</p>
 
-    <p class="no-results" id="noResults">No encontramos "<strong id="noResultsQuery"></strong>". Prueba con otro término o, si eres ese profesional, <a href="/#crear" style="color:var(--primary)">crea tu perfil gratis →</a></p>
+      <div class="pp-dir-search" id="searchBox">
+        <div class="pp-dir-search__fields">
+          <div class="pp-dir-search__field">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="searchWhat" type="text" placeholder="¿Qué necesitas? fontanero, médico…" autocomplete="off" aria-label="Servicio o profesión">
+          </div>
+          <div class="pp-dir-search__divider"></div>
+          <div class="pp-dir-search__field pp-dir-search__field--city">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <input id="searchWhere" type="text" placeholder="Ciudad o provincia" autocomplete="off" aria-label="Ciudad">
+          </div>
+          <button class="pp-dir-search__btn" id="searchBtn" type="button" aria-label="Buscar profesionales">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span>Buscar</span>
+          </button>
+        </div>
+        <div class="pp-dir-search__suggestions" id="suggestions" role="listbox" aria-label="Sugerencias"></div>
+      </div>
 
-    <div class="cta-banner">
-      <h2>¿Eres profesional?</h2>
-      <p>Aparece en el directorio cuando tus clientes te busquen. Crea tu perfil en 2 minutos, gratis.</p>
-      <a href="/#crear" class="cta-btn">Crear mi perfil gratis →</a>
+      <div class="pp-dir-popular">
+        <p class="pp-dir-popular__label">Búsquedas frecuentes</p>
+        <div class="pp-dir-popular__chips">
+          <button class="pp-dir-popular__chip" data-q="fontanero">Fontanero</button>
+          <button class="pp-dir-popular__chip" data-q="electricista">Electricista</button>
+          <button class="pp-dir-popular__chip" data-q="fisioterapeuta">Fisioterapeuta</button>
+          <button class="pp-dir-popular__chip" data-q="abogado">Abogado</button>
+          <button class="pp-dir-popular__chip" data-q="profesor clases particulares">Clases particulares</button>
+          <button class="pp-dir-popular__chip" data-q="entrenador personal">Entrenador personal</button>
+          <button class="pp-dir-popular__chip" data-q="peluquero">Peluquero</button>
+          <button class="pp-dir-popular__chip" data-q="pintor">Pintor</button>
+        </div>
+      </div>
+    </section>
+
+    <nav class="pp-breadcrumb" aria-label="Ruta de navegación">
+      <ol>
+        <li><a href="/">Inicio</a></li>
+        <li class="pp-breadcrumb__sep" aria-hidden="true">›</li>
+        <li><span aria-current="page">Directorio</span></li>
+      </ol>
+    </nav>
+
+    <div class="pp-dir-home">
+      <p class="pp-dir-home__label" id="sectorsLabel">Explorar por categoría</p>
+      <div class="pp-dir-home__grid" id="sectorsGrid">
+        <a href="/directorio/oficios" class="pp-dir-home__sector" data-keywords="fontanero electricista cerrajero pintor albañil calefacción gas urgencias hogar reparación">
+          <div class="pp-dir-home__sector-icon">🔧</div>
+          <div><p class="pp-dir-home__sector-name">Oficios</p><p class="pp-dir-home__sector-desc">Fontaneros, electricistas…</p></div>
+        </a>
+        <a href="/directorio/salud" class="pp-dir-home__sector" data-keywords="médico fisioterapeuta nutricionista psicólogo podólogo osteópata masajista terapeuta salud bienestar">
+          <div class="pp-dir-home__sector-icon">🩺</div>
+          <div><p class="pp-dir-home__sector-name">Salud</p><p class="pp-dir-home__sector-desc">Médicos, fisioterapeutas…</p></div>
+        </a>
+        <a href="/directorio/reforma" class="pp-dir-home__sector" data-keywords="reformas albañil carpintero solador pintura obra construcción interiorismo reforma integral">
+          <div class="pp-dir-home__sector-icon">🏗️</div>
+          <div><p class="pp-dir-home__sector-name">Reforma</p><p class="pp-dir-home__sector-desc">Albañiles, carpinteros…</p></div>
+        </a>
+        <a href="/directorio/legal" class="pp-dir-home__sector" data-keywords="abogado asesor gestor fiscal notario derecho laboral herencias contratos asesoría gestoría">
+          <div class="pp-dir-home__sector-icon">⚖️</div>
+          <div><p class="pp-dir-home__sector-name">Legal</p><p class="pp-dir-home__sector-desc">Abogados, asesores…</p></div>
+        </a>
+        <a href="/directorio/educacion" class="pp-dir-home__sector" data-keywords="profesor tutor clases particulares inglés matemáticas apoyo escolar formación academia">
+          <div class="pp-dir-home__sector-icon">📚</div>
+          <div><p class="pp-dir-home__sector-name">Educación</p><p class="pp-dir-home__sector-desc">Profesores, tutores…</p></div>
+        </a>
+        <a href="/directorio/tech" class="pp-dir-home__sector" data-keywords="programador diseñador web developer informático IT soporte redes ciberseguridad app móvil">
+          <div class="pp-dir-home__sector-icon">💻</div>
+          <div><p class="pp-dir-home__sector-name">Tecnología</p><p class="pp-dir-home__sector-desc">Programadores, diseñadores…</p></div>
+        </a>
+        <a href="/directorio/belleza" class="pp-dir-home__sector" data-keywords="peluquero esteticista manicura depilación maquillaje extensiones coloración tratamiento facial belleza">
+          <div class="pp-dir-home__sector-icon">💇</div>
+          <div><p class="pp-dir-home__sector-name">Belleza</p><p class="pp-dir-home__sector-desc">Peluqueros, esteticistas…</p></div>
+        </a>
+        <a href="/directorio/fitness" class="pp-dir-home__sector" data-keywords="entrenador personal gimnasio pilates yoga crossfit nutrición deportiva personal trainer deporte">
+          <div class="pp-dir-home__sector-icon">🏋️</div>
+          <div><p class="pp-dir-home__sector-name">Fitness</p><p class="pp-dir-home__sector-desc">Entrenadores personales…</p></div>
+        </a>
+        <a href="/directorio/hosteleria" class="pp-dir-home__sector" data-keywords="camarero cocinero chef catering bar restaurante hostelería banquetes menú eventos gastronómicos">
+          <div class="pp-dir-home__sector-icon">🍽️</div>
+          <div><p class="pp-dir-home__sector-name">Hostelería</p><p class="pp-dir-home__sector-desc">Camareros, cocineros…</p></div>
+        </a>
+        <a href="/directorio/fotografia" class="pp-dir-home__sector" data-keywords="fotógrafo videógrafo boda retrato producto vídeo corporativo reportaje fotografía edición">
+          <div class="pp-dir-home__sector-icon">📷</div>
+          <div><p class="pp-dir-home__sector-name">Fotografía</p><p class="pp-dir-home__sector-desc">Fotógrafos, videógrafos…</p></div>
+        </a>
+        <a href="/directorio/eventos" class="pp-dir-home__sector" data-keywords="animador DJ música boda comunión catering decoración coordinador eventos celebraciones">
+          <div class="pp-dir-home__sector-icon">🎉</div>
+          <div><p class="pp-dir-home__sector-name">Eventos</p><p class="pp-dir-home__sector-desc">Animadores, DJ, catering…</p></div>
+        </a>
+        <a href="/directorio/automocion" class="pp-dir-home__sector" data-keywords="mecánico taller chapa pintura neumáticos diagnosis coche moto ITV revisión automóvil">
+          <div class="pp-dir-home__sector-icon">🚗</div>
+          <div><p class="pp-dir-home__sector-name">Automoción</p><p class="pp-dir-home__sector-desc">Mecánicos, talleres…</p></div>
+        </a>
+        <a href="/directorio/jardineria" class="pp-dir-home__sector" data-keywords="jardinero paisajista poda mantenimiento jardín césped riego terraza plantas exterior">
+          <div class="pp-dir-home__sector-icon">🌿</div>
+          <div><p class="pp-dir-home__sector-name">Jardinería</p><p class="pp-dir-home__sector-desc">Jardineros, paisajistas…</p></div>
+        </a>
+        <a href="/directorio/transporte" class="pp-dir-home__sector" data-keywords="mudanzas transporte portes mensajería furgoneta guardamuebles traslado carga logística">
+          <div class="pp-dir-home__sector-icon">🚚</div>
+          <div><p class="pp-dir-home__sector-name">Transporte</p><p class="pp-dir-home__sector-desc">Mudanzas, mensajería…</p></div>
+        </a>
+        <a href="/directorio/cuidados" class="pp-dir-home__sector" data-keywords="cuidador asistente doméstico limpieza hogar niños mayores acompañamiento auxiliar servicio doméstico">
+          <div class="pp-dir-home__sector-icon">🤝</div>
+          <div><p class="pp-dir-home__sector-name">Cuidados</p><p class="pp-dir-home__sector-desc">Cuidadores, auxiliares…</p></div>
+        </a>
+        <a href="/directorio/seguridad" class="pp-dir-home__sector" data-keywords="vigilante seguridad alarma videovigilancia control acceso cerrajería empresa seguridad">
+          <div class="pp-dir-home__sector-icon">🔒</div>
+          <div><p class="pp-dir-home__sector-name">Seguridad</p><p class="pp-dir-home__sector-desc">Vigilantes, instaladores…</p></div>
+        </a>
+        <a href="/directorio/comercial" class="pp-dir-home__sector" data-keywords="comercial vendedor agente representante marketing ventas captación delegado B2B">
+          <div class="pp-dir-home__sector-icon">💼</div>
+          <div><p class="pp-dir-home__sector-name">Comercial</p><p class="pp-dir-home__sector-desc">Agentes, representantes…</p></div>
+        </a>
+        <a href="/directorio/turismo" class="pp-dir-home__sector" data-keywords="guía turístico excursión ruta traslado aeropuerto tour agencia viaje experiencia local">
+          <div class="pp-dir-home__sector-icon">✈️</div>
+          <div><p class="pp-dir-home__sector-name">Turismo</p><p class="pp-dir-home__sector-desc">Guías, agencias…</p></div>
+        </a>
+        <a href="/directorio/comercio" class="pp-dir-home__sector" data-keywords="tienda comercio distribución venta local ferretería floristería alimentación regalos">
+          <div class="pp-dir-home__sector-icon">🏪</div>
+          <div><p class="pp-dir-home__sector-name">Comercio</p><p class="pp-dir-home__sector-desc">Tiendas, distribuidores…</p></div>
+        </a>
+        <a href="/directorio/otro" class="pp-dir-home__sector" data-keywords="otro profesional servicio especialista">
+          <div class="pp-dir-home__sector-icon">⭐</div>
+          <div><p class="pp-dir-home__sector-name">Otros</p><p class="pp-dir-home__sector-desc">Más profesionales…</p></div>
+        </a>
+      </div>
+
+      <p class="pp-dir-home__no-results" id="noResults">No encontramos "<strong id="noResultsQuery"></strong>". Prueba con otro término o, si eres ese profesional, <a href="/alta.html">crea tu perfil gratis →</a></p>
+
+      <div class="pp-dir-home__cta">
+        <h2>¿Eres profesional?</h2>
+        <p>Aparece en el directorio cuando tus clientes te busquen. Crea tu perfil en 2 minutos, gratis.</p>
+        <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--pill">Crear mi perfil gratis →</a>
+      </div>
     </div>
   </main>
 
-  <footer class="site-ft">
+  <footer class="pp-dir-foot">
     <p>© PerfilaPro &nbsp;·&nbsp; <a href="/terminos.html">Términos</a> &nbsp;·&nbsp; <a href="/privacidad.html">Privacidad</a> &nbsp;·&nbsp; <a href="/">Inicio</a></p>
   </footer>
 
@@ -281,9 +259,8 @@
     var grid       = document.getElementById('sectorsGrid');
     var noResults  = document.getElementById('noResults');
     var label      = document.getElementById('sectorsLabel');
-    var cards      = Array.from(grid.querySelectorAll('.sector-card'));
+    var cards      = Array.from(grid.querySelectorAll('.pp-dir-home__sector'));
 
-    // ── Keyword → sector map ────────────────────────────────────────────────
     var KEYWORD_MAP = [
       { terms: ['fontanero','fontanería','plomero','tuberías','calefacción','gas','sanitario','grifo','desagüe'], sector: 'oficios', label: 'Fontanería · Oficios' },
       { terms: ['electricista','electricidad','instalación eléctrica','cuadro eléctrico','cortocircuito'], sector: 'oficios', label: 'Electricista · Oficios' },
@@ -338,26 +315,25 @@
       return results.slice(0, 5);
     }
 
-    // ── Suggestions dropdown ────────────────────────────────────────────────
     var activeIdx = -1;
 
     function renderSuggestions(matches) {
       activeIdx = -1;
       if (!matches.length) { hideSuggestions(); return; }
       sugBox.innerHTML = '';
-      matches.forEach(function(m, i) {
+      matches.forEach(function(m) {
         var el = document.createElement('div');
-        el.className = 'sug-item';
+        el.className = 'pp-dir-search__sug';
         el.setAttribute('role', 'option');
         el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
           '<span>' + m.label + '</span>';
         el.addEventListener('mousedown', function(e) { e.preventDefault(); doSearch(m.sector); });
         sugBox.appendChild(el);
       });
-      sugBox.classList.add('visible');
+      sugBox.classList.add('is-visible');
     }
 
-    function hideSuggestions() { sugBox.classList.remove('visible'); sugBox.innerHTML = ''; activeIdx = -1; }
+    function hideSuggestions() { sugBox.classList.remove('is-visible'); sugBox.innerHTML = ''; activeIdx = -1; }
 
     whatInput.addEventListener('input', function() {
       var q = whatInput.value.trim();
@@ -368,7 +344,7 @@
     });
 
     whatInput.addEventListener('keydown', function(e) {
-      var items = sugBox.querySelectorAll('.sug-item');
+      var items = sugBox.querySelectorAll('.pp-dir-search__sug');
       if (!items.length) { if (e.key === 'Enter') { e.preventDefault(); performSearch(); } return; }
       if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); updateActive(items); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, -1); updateActive(items); }
@@ -377,27 +353,25 @@
     });
 
     function updateActive(items) {
-      items.forEach(function(el, i) { el.classList.toggle('active', i === activeIdx); });
+      items.forEach(function(el, i) { el.classList.toggle('is-active', i === activeIdx); });
     }
 
     document.addEventListener('click', function(e) { if (!document.getElementById('searchBox').contains(e.target)) hideSuggestions(); });
 
-    // ── Live filter of sector grid ──────────────────────────────────────────
     function filterGrid(query) {
       var q = normalize(query);
       var visible = 0;
       cards.forEach(function(card) {
         var kw = normalize(card.dataset.keywords || '');
-        var name = normalize(card.querySelector('.sector-name').textContent);
+        var name = normalize(card.querySelector('.pp-dir-home__sector-name').textContent);
         var show = !q || kw.indexOf(q) >= 0 || name.indexOf(q) >= 0;
-        card.classList.toggle('hidden', !show);
+        card.classList.toggle('is-hidden', !show);
         if (show) visible++;
       });
       label.textContent = q ? 'Categorías relacionadas' : 'Explorar por categoría';
-      noResults.classList.toggle('visible', visible === 0 && q.length > 0);
+      noResults.classList.toggle('is-visible', visible === 0 && q.length > 0);
     }
 
-    // ── Navigate to result ──────────────────────────────────────────────────
     function doSearch(sector) {
       var city = normalize(whereInput.value.trim()).replace(/\s+/g, '-');
       hideSuggestions();
@@ -409,15 +383,13 @@
       if (!q) return;
       var matches = findMatches(q);
       if (matches.length) { doSearch(matches[0].sector); return; }
-      // No match → go to /directorio/otro with query
       window.location.href = '/directorio/otro';
     }
 
     searchBtn.addEventListener('click', performSearch);
     whereInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') performSearch(); });
 
-    // ── Popular chips ────────────────────────────────────────────────────────
-    document.querySelectorAll('.popular-chip').forEach(function(chip) {
+    document.querySelectorAll('.pp-dir-popular__chip').forEach(function(chip) {
       chip.addEventListener('click', function() {
         whatInput.value = chip.dataset.q;
         whatInput.dispatchEvent(new Event('input'));

@@ -57,29 +57,29 @@ function makeHandler(deps) {
       })),
     };
 
-    const specialtiesHtml = specialties.length ? `<div class="sub-section">
-  <p class="sub-section-label">Especialidades</p>
-  <div class="sub-chips">
-    ${specialties.map(s => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/${esc(s.specialty)}" class="sub-chip">${esc(s.specialty_label)}</a>`).join('')}
+    const specialtiesHtml = specialties.length ? `<div class="pp-sub-section">
+  <p class="pp-sub-section__label">Especialidades</p>
+  <div class="pp-sub-chips">
+    ${specialties.map(s => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/${esc(s.specialty)}" class="pp-sub-chip">${esc(s.specialty_label)}</a>`).join('')}
   </div>
 </div>` : '';
 
-    const citiesHtml = cities.length ? `<div class="sub-section">
-  <p class="sub-section-label">Por ciudad</p>
-  <div class="sub-chips">
-    ${cities.slice(0, 20).map(c => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/_/${esc(c.city_slug)}" class="sub-chip">${esc(c.city_name)}</a>`).join('')}
+    const citiesHtml = cities.length ? `<div class="pp-sub-section">
+  <p class="pp-sub-section__label">Por ciudad</p>
+  <div class="pp-sub-chips">
+    ${cities.slice(0, 20).map(c => `<a href="${esc(siteUrl)}/directorio/${esc(sector)}/_/${esc(c.city_slug)}" class="pp-sub-chip">${esc(c.city_name)}</a>`).join('')}
   </div>
 </div>` : '';
 
     const cardsHtml = profiles.length
-      ? `<div class="dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
-      : `<div class="dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay profesionales de ${esc(sectorLabel)} en el directorio.<br>¡Sé el primero en aparecer!</p></div>`;
+      ? `<div class="pp-dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
+      : `<div class="pp-dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay profesionales de ${esc(sectorLabel)} en el directorio.<br>¡Sé el primero en aparecer!</p></div>`;
 
     const body = `
-<div class="dir-ph">
+<div class="pp-dir-ph">
   <h1>${esc(sectorLabel)} en España</h1>
-  ${desc ? `<p class="dir-ph-desc">${esc(desc)}</p>` : ''}
-  ${total > 0 ? `<p class="dir-count">${total} profesionale${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}</p>` : ''}
+  ${desc ? `<p class="pp-dir-ph__desc">${esc(desc)}</p>` : ''}
+  ${total > 0 ? `<p class="pp-dir-ph__count">${total} profesionale${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}</p>` : ''}
 </div>
 ${specialtiesHtml}
 ${citiesHtml}
