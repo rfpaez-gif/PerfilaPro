@@ -132,7 +132,7 @@ async function processWeeklyStats(db, emailClient) {
 
     try {
       await emailClient.emails.send({
-        from: 'PerfilaPro <hola@perfilapro.com>',
+        from: 'PerfilaPro <hola@perfilapro.es>',
         to: card.email,
         subject,
         html,
