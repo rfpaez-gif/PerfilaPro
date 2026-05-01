@@ -1,0 +1,124 @@
+/* ============================================================
+   PerfilaPro · Design Tokens · v0.1
+   Paleta provisional basada en producción actual.
+   Pendiente decisión CEO entre opciones A/B/C (ver BRAND.md §6.1).
+   ============================================================ */
+
+:root {
+  /* ---------- COLOR · MARCA ---------- */
+  --pp-c-primary:        #01696f;   /* Verde petróleo · color principal */
+  --pp-c-primary-deep:   #014a4f;   /* Hover/active sobre primary */
+  --pp-c-primary-soft:   #d9e8e7;   /* Backgrounds suaves, badges */
+
+  --pp-c-accent:         #01696f;   /* Acento de acción (provisional = primary) */
+  --pp-c-accent-deep:    #014a4f;
+  --pp-c-accent-soft:    #d9e8e7;
+
+  /* ---------- COLOR · TINTA Y NEUTROS ---------- */
+  --pp-c-ink:            #1e1b14;   /* Texto principal · negro cálido */
+  --pp-c-ink-90:         #2d2920;
+  --pp-c-ink-70:         #5a5345;
+  --pp-c-ink-40:         #9a9485;
+
+  --pp-c-bg:             #f5f2ec;   /* Fondo cálido (Piedra Cálida) */
+  --pp-c-bg-card:        #ffffff;   /* Fondo de tarjetas */
+  --pp-c-bg-soft:        #faf7f1;   /* Fondo intermedio */
+
+  --pp-c-line:           #e5ddd0;   /* Líneas y bordes */
+  --pp-c-line-soft:      #ede5d8;   /* Líneas sutiles */
+
+  --pp-c-gray-700:       #6b6458;
+  --pp-c-gray-500:       #8b8474;
+  --pp-c-gray-400:       #a8a195;
+  --pp-c-gray-300:       #c8c1b3;
+
+  /* ---------- COLOR · SISTEMA (estados) ---------- */
+  --pp-c-success:        #01696f;
+  --pp-c-success-soft:   #d9e8e7;
+
+  --pp-c-warn:           #d97706;
+  --pp-c-warn-soft:      #fef3c7;
+
+  --pp-c-error:          #b3261e;
+  --pp-c-error-soft:     #fdecec;
+
+  --pp-c-info:           #1e1b14;
+  --pp-c-info-soft:      #ede5d8;
+
+  /* ---------- TIPOGRAFÍA · FAMILIAS ---------- */
+  --pp-f-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --pp-f-sans:    'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pp-f-mono:    'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---------- TIPOGRAFÍA · ESCALA ---------- */
+  --pp-fs-display-1: clamp(48px, 7vw, 80px);
+  --pp-fs-display-2: clamp(40px, 5vw, 64px);
+  --pp-fs-h2:        clamp(32px, 4vw, 52px);
+  --pp-fs-h3:        18px;
+  --pp-fs-h4:        16px;
+  --pp-fs-body:      15px;
+  --pp-fs-body-lg:   17px;
+  --pp-fs-caption:   13px;
+  --pp-fs-mono:      12px;
+  --pp-fs-eyebrow:   11px;
+
+  /* ---------- TIPOGRAFÍA · LINE-HEIGHT ---------- */
+  --pp-lh-display:   1.02;
+  --pp-lh-heading:   1.15;
+  --pp-lh-body:      1.55;
+  --pp-lh-tight:     1.30;
+
+  /* ---------- TIPOGRAFÍA · LETTER-SPACING ---------- */
+  --pp-ls-display:   -0.025em;
+  --pp-ls-heading:   -0.02em;
+  --pp-ls-body:      0;
+  --pp-ls-eyebrow:   0.18em;
+  --pp-ls-mono:      0.05em;
+
+  /* ---------- ESPACIADO ---------- */
+  --pp-s-1:   4px;
+  --pp-s-2:   8px;
+  --pp-s-3:   12px;
+  --pp-s-4:   16px;
+  --pp-s-5:   20px;
+  --pp-s-6:   24px;
+  --pp-s-8:   32px;
+  --pp-s-10:  40px;
+  --pp-s-12:  48px;
+  --pp-s-16:  64px;
+  --pp-s-20:  80px;
+  --pp-s-24:  96px;
+
+  /* ---------- RADIOS ---------- */
+  --pp-r-sm:   6px;
+  --pp-r-md:   10px;
+  --pp-r-lg:   14px;
+  --pp-r-xl:   20px;
+  --pp-r-2xl:  28px;
+  --pp-r-pill: 999px;
+
+  /* ---------- SOMBRAS ---------- */
+  --pp-sh-sm:  0 1px 2px rgba(30, 27, 20, 0.04);
+  --pp-sh-md:  0 4px 12px rgba(30, 27, 20, 0.06);
+  --pp-sh-lg:  0 12px 32px rgba(30, 27, 20, 0.08);
+  --pp-sh-xl:  0 24px 48px rgba(30, 27, 20, 0.12);
+
+  /* ---------- TRANSICIONES ---------- */
+  --pp-t-fast:   0.12s ease;
+  --pp-t-base:   0.18s ease;
+  --pp-t-slow:   0.28s ease;
+
+  /* ---------- BREAKPOINTS (referencia, no usables en :root) ---------- */
+  /* Para usar en media queries directamente:
+     --pp-bp-sm: 600px
+     --pp-bp-md: 900px
+     --pp-bp-lg: 1100px
+     --pp-bp-xl: 1280px */
+
+  /* ---------- Z-INDEX ---------- */
+  --pp-z-base:     1;
+  --pp-z-dropdown: 100;
+  --pp-z-sticky:   200;
+  --pp-z-modal:    1000;
+  --pp-z-toast:    2000;
+}
