@@ -9,6 +9,50 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* ── Profesionales reales · rail de fotos ────────────────── */
+    .pp-photos-rail {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(180px, 1fr));
+      gap: var(--pp-s-4);
+      margin-top: var(--pp-s-4);
+      overflow-x: auto;
+      padding-bottom: var(--pp-s-2);
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .pp-photos-rail::-webkit-scrollbar { display: none; }
+
+    .pp-pro-photo {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0;
+      scroll-snap-align: start;
+    }
+    .pp-pro-photo__img {
+      aspect-ratio: 4 / 5;
+      border-radius: var(--pp-r-lg);
+      overflow: hidden;
+      background: var(--pp-color-accent-soft);
+    }
+    .pp-pro-photo__img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pp-pro-photo__cap {
+      font-family: var(--pp-f-sans);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+      text-align: center;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+  </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -129,103 +173,63 @@
 <section class="pp-rail-section pp-section--alt">
   <div class="pp-wrap">
     <p class="pp-section__kicker">Profesionales reales</p>
-    <div class="pp-profiles-rail" aria-label="Perfiles de ejemplo">
+    <div class="pp-photos-rail" aria-label="Profesionales en PerfilaPro">
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">BR</div>
-          <div>
-            <h3 class="pp-pro-card__name">Benjamín Rodríguez</h3>
-            <p class="pp-pro-card__role">Electricista · Huesca</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg" alt="Ana profe" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Instalaciones rurales y cuadros de mando en los Pirineos.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">Electricidad</span>
-          <span class="pp-chip pp-chip--static">Urgencias</span>
-        </div>
-        <p class="pp-pro-card__fun">Apicultor · Esquiador de backcountry</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Ana profe</figcaption>
+      </figure>
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">MG</div>
-          <div>
-            <h3 class="pp-pro-card__name">María García</h3>
-            <p class="pp-pro-card__role">Diseño gráfico · Madrid</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg" alt="Antonio cuidador" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Identidad visual y packaging para pequeños negocios.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">Branding</span>
-          <span class="pp-chip pp-chip--static">Web</span>
-        </div>
-        <p class="pp-pro-card__fun">Senderismo los fines de semana · Acuarela</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Antonio cuidador</figcaption>
+      </figure>
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">LP</div>
-          <div>
-            <h3 class="pp-pro-card__name">Luis Peña</h3>
-            <p class="pp-pro-card__role">Fontanería · Madrid</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg" alt="Isabel" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Reparaciones urgentes, sanitarios y calderas.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">Urgencias 24h</span>
-          <span class="pp-chip pp-chip--static">Calderas</span>
-        </div>
-        <p class="pp-pro-card__fun">Cocinero aficionado · Ciclismo de montaña</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Isabel</figcaption>
+      </figure>
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">AS</div>
-          <div>
-            <h3 class="pp-pro-card__name">Ana Soto</h3>
-            <p class="pp-pro-card__role">Fisioterapia · Barcelona</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/laura%20fisio.png" alt="Laura fisio" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Fisioterapia deportiva y rehabilitación postoperatoria.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">Deportiva</span>
-          <span class="pp-chip pp-chip--static">Domicilio</span>
-        </div>
-        <p class="pp-pro-card__fun">Corredora de montaña · Yoga</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Laura fisio</figcaption>
+      </figure>
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">JM</div>
-          <div>
-            <h3 class="pp-pro-card__name">Jorge Martín</h3>
-            <p class="pp-pro-card__role">Carpintería · Valencia</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg" alt="Mohamed fontanero" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Muebles a medida y restauración de piezas antiguas.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">A medida</span>
-          <span class="pp-chip pp-chip--static">Restauración</span>
-        </div>
-        <p class="pp-pro-card__fun">Apicultor urbano · Luthier los domingos</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Mohamed fontanero</figcaption>
+      </figure>
 
-      <article class="pp-pro-card">
-        <div class="pp-pro-card__top">
-          <div class="pp-avatar">CR</div>
-          <div>
-            <h3 class="pp-pro-card__name">Carmen Ruiz</h3>
-            <p class="pp-pro-card__role">Pintura · Sevilla</p>
-          </div>
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ruben%20Entrenador.jpg" alt="Ruben entrenador" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__line">Pintura de interiores, exteriores y decoración mural.</p>
-        <div class="pp-pro-card__tags">
-          <span class="pp-chip pp-chip--static">Interiores</span>
-          <span class="pp-chip pp-chip--static">Murales</span>
+        <figcaption class="pp-pro-photo__cap">Ruben entrenador</figcaption>
+      </figure>
+
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sergio%20comercial.png" alt="Sergio comercial" loading="lazy" width="240" height="300">
         </div>
-        <p class="pp-pro-card__fun">Flamenca · Cultivadora de tomates cherry</p>
-      </article>
+        <figcaption class="pp-pro-photo__cap">Sergio comercial</figcaption>
+      </figure>
+
+      <figure class="pp-pro-photo">
+        <div class="pp-pro-photo__img">
+          <img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg" alt="Sonia" loading="lazy" width="240" height="300">
+        </div>
+        <figcaption class="pp-pro-photo__cap">Sonia</figcaption>
+      </figure>
 
     </div>
     <div style="text-align:center;margin-top:var(--pp-s-6)">
