@@ -691,7 +691,16 @@
     var email    = document.getElementById('f_email').value.trim();
     clearError('f_zona'); clearError('f_whatsapp'); clearError('f_email');
     if (!zona)     { showError('f_zona', 'Indica tu ciudad o zona.'); ok = false; }
-    if (!whatsapp) { showError('f_whatsapp', 'El WhatsApp es obligatorio.'); ok = false; }
+    if (!whatsapp) {
+      showError('f_whatsapp', 'El WhatsApp es obligatorio.'); ok = false;
+    } else {
+      var waDigits = whatsapp.replace(/\D/g, '');
+      if (waDigits.length === 13 && waDigits.indexOf('0034') === 0) waDigits = waDigits.substring(4);
+      else if (waDigits.length === 11 && waDigits.indexOf('34') === 0) waDigits = waDigits.substring(2);
+      if (!/^[6-9]\d{8}$/.test(waDigits)) {
+        showError('f_whatsapp', 'Introduce un móvil español de 9 dígitos (ej: 612 345 678).'); ok = false;
+      }
+    }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showError('f_email', 'Introduce un email válido.'); ok = false;
     }

@@ -1,4 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { normalizeSpanishPhone } = require('./lib/phone-utils');
 
 const PRICES = {
   base: process.env.STRIPE_PRICE_BASE,
@@ -57,17 +58,17 @@ exports.handler = async (event) => {
     .substring(0, 40);
 
   const tagline  = SECTOR_LABELS[sector] || sector || '';
-  const rawDigits = whatsapp.replace(/\D/g, '');
-  const waNumber  = rawDigits.startsWith('34') && rawDigits.length > 9
-    ? rawDigits
-    : '34' + rawDigits;
+  const phone = normalizeSpanishPhone(whatsapp);
+  if (!phone.ok) {
+    return { statusCode: 400, body: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' };
+  }
+  const waNumber = phone.e164;
   const siteUrl  = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
-      phone_number_collection: { enabled: true },
       metadata: {
         slug,
         nombre,
