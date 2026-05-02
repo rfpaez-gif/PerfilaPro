@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { normalizeSpanishPhone } = require('./lib/phone-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -92,6 +93,27 @@ function makeHandler(db) {
         };
       }
 
+      const waNorm = normalizeSpanishPhone(whatsapp);
+      if (!waNorm.ok) {
+        return {
+          statusCode: 400,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' }),
+        };
+      }
+      let telefonoClean = null;
+      if (telefono) {
+        const tNorm = normalizeSpanishPhone(telefono);
+        if (!tNorm.ok) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Teléfono inválido (9 dígitos, móvil 6/7 o fijo 8/9)' }),
+          };
+        }
+        telefonoClean = tNorm.local;
+      }
+
       // Resolve category_id from sector + specialty slugs
       let category_id = null;
       if (sector && specialty) {
@@ -113,8 +135,8 @@ function makeHandler(db) {
           tagline:            tagline ? stripTags(tagline).substring(0, 100) : null,
           zona:               stripTags(zona).substring(0, 100),
           servicios:          servicios.map(s => stripTags(s).substring(0, 100)),
-          whatsapp:           whatsapp.replace(/\D/g, ''),
-          telefono:           telefono ? telefono.replace(/\D/g, '') : null,
+          whatsapp:           waNorm.e164,
+          telefono:           telefonoClean,
           foto_url:           fotoUrlClean,
           descripcion:        descripcion ? stripTags(descripcion).substring(0, 200) : null,
           direccion:          direccion ? stripTags(direccion).substring(0, 200) : null,

@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
+const { normalizeSpanishPhone } = require('./lib/phone-utils');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -120,10 +121,11 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Nombre inválido' }) };
     }
 
-    const rawDigits = whatsapp.replace(/\D/g, '');
-    const waNumber = rawDigits.startsWith('34') && rawDigits.length > 9
-      ? rawDigits
-      : '34' + rawDigits;
+    const phone = normalizeSpanishPhone(whatsapp);
+    if (!phone.ok) {
+      return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'WhatsApp inválido. Introduce un móvil español de 9 dígitos.' }) };
+    }
+    const waNumber = phone.e164;
 
     // Ensure slug uniqueness
     const { data: existing } = await db.from('cards').select('slug').eq('slug', slug).maybeSingle();

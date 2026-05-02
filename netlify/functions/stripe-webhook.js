@@ -150,8 +150,6 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const days = planDays[plan] || 90;
       const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
       const email = session.customer_details?.email || null;
-      // Teléfono capturado por Stripe en el checkout (phone_number_collection)
-      const telefono = session.customer_details?.phone || null;
       const editToken = crypto.randomBytes(32).toString('hex');
 
       const serviciosParsed = servicios ? JSON.parse(servicios).map(s => stripTags(s).substring(0, 100)) : [];
@@ -166,13 +164,11 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         foto_url:    foto || null,
         descripcion: desc ? stripTags(desc).substring(0, 200) : null,
         direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
-        telefono,
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,
         expires_at: expiresAt,
         email,
-        phone: session.customer_details?.phone || null,
         edit_token: editToken,
         agent_code: agent_code || null,
       }, { onConflict: 'slug' });

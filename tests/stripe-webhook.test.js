@@ -90,7 +90,8 @@ describe('stripe-webhook handler', () => {
     expect(upsertData.plan).toBe('pro');
     expect(upsertData.servicios).toEqual(['Instalación · 80€', 'Reparación · 50€']);
     expect(upsertData.email).toBeNull();
-    expect(upsertData.phone).toBeNull();
+    expect(upsertData.phone).toBeUndefined();
+    expect(upsertData.telefono).toBeUndefined();
   });
 
   it('usa [] como valor por defecto de servicios cuando no está en los metadatos', async () => {
@@ -144,7 +145,7 @@ describe('stripe-webhook handler', () => {
     expect(res.body).toBe('Database error');
   });
 
-  it('guarda email y phone de customer_details en Supabase', async () => {
+  it('guarda email de customer_details pero NO sobrescribe telefono/phone', async () => {
     mockConstructEvent.mockReturnValue(
       buildStripeEvent({
         metadata: { slug: 'test-slug' },
@@ -154,7 +155,10 @@ describe('stripe-webhook handler', () => {
     await handler(buildEvent());
     const [upsertData] = mockUpsert.mock.calls[0];
     expect(upsertData.email).toBe('cliente@email.com');
-    expect(upsertData.phone).toBe('+34666123456');
+    // El phone de Stripe ya no se persiste: confunde con cards.telefono (campo
+    // separado del usuario para "teléfono fijo opcional"). Ver phone-utils.
+    expect(upsertData.phone).toBeUndefined();
+    expect(upsertData.telefono).toBeUndefined();
   });
 
   it('envía email de confirmación tras activar la tarjeta', async () => {
