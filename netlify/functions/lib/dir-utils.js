@@ -237,7 +237,7 @@ function paginationLinks(page, totalPages, baseUrl) {
 </nav>`;
 }
 
-function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '' }) {
+function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '', ogImage = null, ogType = 'website' }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -248,6 +248,17 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
   <link rel="canonical" href="${esc(canonical)}">
   ${prevUrl ? `<link rel="prev" href="${esc(prevUrl)}">` : ''}
   ${nextUrl ? `<link rel="next" href="${esc(nextUrl)}">` : ''}
+  <meta property="og:type" content="${esc(ogType)}">
+  <meta property="og:site_name" content="PerfilaPro">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:url" content="${esc(canonical)}">
+  <meta property="og:title" content="${esc(title)}">
+  <meta property="og:description" content="${esc(desc)}">
+  ${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
+  <meta name="twitter:card" content="${ogImage ? 'summary_large_image' : 'summary'}">
+  <meta name="twitter:title" content="${esc(title)}">
+  <meta name="twitter:description" content="${esc(desc)}">
+  ${ogImage ? `<meta name="twitter:image" content="${esc(ogImage)}">` : ''}
   ${jsonLd ? `<script type="application/ld+json">${safeJson(jsonLd)}</script>` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
