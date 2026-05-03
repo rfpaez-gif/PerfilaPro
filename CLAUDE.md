@@ -36,7 +36,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - **All user data travels through Stripe metadata** — the checkout function serialises `servicios` as a JSON string because Stripe metadata values must be strings.
 - **Slug is derived from name** at checkout time (normalised, lowercased, max 40 chars) and is the primary key for cards.
 - **`card.js` renders HTML server-side** — no frontend framework, pure template string. The QR code is a base64 data URL generated with the `qrcode` package.
-- **Dependency injection for testability** — most functions export `makeHandler(deps)` so tests inject mocks without touching env vars or real clients. Functions that use this pattern: `stripe-webhook`, `admin-actions`, `admin-agents`, `agent-auth`, `agent-data`, `legal-settings`, `edit-card`, `send-edit-link`, `remind-expiry`, `weekly-stats`, `resend-invoice`.
+- **Dependency injection for testability** — most functions export `makeHandler(deps)` so tests inject mocks without touching env vars or real clients. Functions that use this pattern: `stripe-webhook`, `admin-actions`, `admin-agents`, `agent-auth`, `agent-data`, `legal-settings`, `edit-card`, `send-edit-link`, `remind-expiry`, `weekly-stats`, `resend-invoice`, `export-data`, `delete-account`.
 - **Edit tokens** — after payment, users receive a 32-byte hex token (64 chars) via email with a 7-day TTL. `send-edit-link` regenerates tokens on demand with a 10-minute rate limit and always returns HTTP 200 to prevent email enumeration.
 
 ### Supabase schema
@@ -86,6 +86,13 @@ Users land here from the edit link in their confirmation or reminder emails. The
 - `edit-card` GET — returns sanitised card data (strips token fields)
 - `edit-card` POST — updates allowed fields after sanitisation (`stripTags`, phone/email cleaning)
 - `upload-avatar` POST — accepts base64 PNG/JPG ≤2 MB, stores in Supabase `Avatars` bucket, returns public URL. Only Supabase storage URLs are accepted for `foto_url`.
+
+### GDPR endpoints
+
+Both endpoints reuse the same `edit_token` mechanism as `edit-card` (32-byte hex, 7-day TTL), so the user only needs the link in their confirmation/reminder email to exercise their rights.
+
+- `export-data` GET (`/api/export-data?slug=&token=`) — returns a JSON download (`Content-Disposition: attachment`) with the full card record (minus `edit_token*` fields), all `visits` rows for that slug, and all `facturas` metadata (number + date, no PDF binary).
+- `delete-account` POST (`/api/delete-account` with `{slug, token}`) — hard-deletes `visits`, then `facturas`, then the `cards` row, in that order. Returns `{ok: true}` on success or `500` on the first failing step (no partial state moves forward).
 
 ### Scheduled functions
 
@@ -141,6 +148,8 @@ AGENT_JWT_SECRET      # signs agent JWT tokens
 | `/api/agent-auth` | `agent-auth` |
 | `/api/agent-data` | `agent-data` |
 | `/api/resend-invoice` | `resend-invoice` |
+| `/api/export-data` | `export-data` |
+| `/api/delete-account` | `delete-account` |
 
 ### Testing conventions
 

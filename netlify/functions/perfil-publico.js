@@ -181,6 +181,8 @@ function makeHandler(deps) {
         siteUrl,
         jsonLd,
         extraCss: PROFILE_CSS,
+        ogImage: data.foto_url || null,
+        ogType: 'profile',
       }),
     };
   };

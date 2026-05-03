@@ -131,8 +131,17 @@ exports.handler = async (event) => {
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
   <link rel="canonical" href="${siteUrl}/p/${data.slug}">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="PerfilaPro">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:url" content="${siteUrl}/p/${data.slug}">
   <meta property="og:title" content="${esc(data.nombre)} — PerfilaPro">
   <meta property="og:description" content="${esc(data.tagline)}">
+  ${data.foto_url ? `<meta property="og:image" content="${esc(data.foto_url)}">` : ''}
+  <meta name="twitter:card" content="${data.foto_url ? 'summary_large_image' : 'summary'}">
+  <meta name="twitter:title" content="${esc(data.nombre)} — PerfilaPro">
+  <meta name="twitter:description" content="${esc(data.tagline)}">
+  ${data.foto_url ? `<meta name="twitter:image" content="${esc(data.foto_url)}">` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
