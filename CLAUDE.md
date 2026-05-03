@@ -44,6 +44,10 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 **`cards` table** — one row per professional card:
 - `slug` (PK), `nombre`, `tagline`, `whatsapp`, `zona`, `servicios` (jsonb), `foto_url`, `plan`, `status`, `stripe_session_id`, `expires_at`, `email`, `phone`, `refund_reason`, `refunded_at`
 - Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `edit_link_sent_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
+- Soft-delete + B2B defensive fields (Sprint 1, migration 007): `deleted_at`, `organization_id` (FK → `organizations.id`, NULL until phase 3 lands).
+
+**`organizations` table** — defensive scaffolding for phase 3 (B2B teams). Empty in phases 1-2:
+- `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at`
 
 **`settings` table** — key/value store for site config:
 - `key` (PK), `value`
@@ -113,6 +117,19 @@ Both endpoints reuse the same `edit_token` mechanism as `edit-card` (32-byte hex
 
 PDF generation is triggered non-blocking from `stripe-webhook` after card upsert. `resend-invoice` can regenerate and resend at any time.
 
+**Limitation**: PDFs generated here are NOT sent to AEAT (Verifactu). Valid for the demo phase; for live commercial operation, every invoice must be transmitted to the Spanish tax authority via a registered provider (Quipu / Holded / FacturaDirecta).
+
+### Quipu integration (Verifactu/AEAT)
+
+`netlify/functions/lib/quipu-client.js` is a **skeleton** with the contract (`createInvoice`, `voidInvoice`, `getInvoice`) but no real implementation — every method throws `not implemented`. It is intentionally unwired so that any accidental call fails loudly instead of silently emitting nothing to AEAT.
+
+The implementation lands in Sprint 3, after:
+- the provider is selected (Quipu preferred, plan B Holded, plan C FacturaDirecta) and the API validation week closes with a GO,
+- the issuer's autónomo registration is formalised (NIF active),
+- Stripe live and Stripe Subscription are activated.
+
+Env vars (see `.env.example`): `QUIPU_CLIENT_ID`, `QUIPU_CLIENT_SECRET`, `QUIPU_API_BASE`, `QUIPU_ENV`.
+
 ### Environment variables required
 
 ```
@@ -120,6 +137,8 @@ STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 STRIPE_PRICE_BASE
 STRIPE_PRICE_PRO
+STRIPE_PRICE_MONTHLY  # Sprint 3 — recurring price (subscription)
+STRIPE_PRICE_ANNUAL   # Sprint 3 — recurring price (subscription)
 SUPABASE_URL
 SUPABASE_SERVICE_KEY
 ADMIN_PASSWORD
@@ -127,6 +146,10 @@ ADMIN_TOTP_SECRET     # optional — enables TOTP 2FA for admin panel
 RESEND_API_KEY
 SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
+QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
+QUIPU_CLIENT_SECRET   # Sprint 3
+QUIPU_API_BASE        # Sprint 3 — default https://getquipu.com/api/v2
+QUIPU_ENV             # Sprint 3 — sandbox | production
 ```
 
 ### URL routing (netlify.toml)
