@@ -123,6 +123,16 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/export-data"
+  to     = "/.netlify/functions/export-data"
+  status = 200
+
+[[redirects]]
+  from   = "/api/delete-account"
+  to     = "/.netlify/functions/delete-account"
+  status = 200
+
+[[redirects]]
   from   = "/api/lab-gemini"
   to     = "/.netlify/functions/lab-gemini"
   status = 200
