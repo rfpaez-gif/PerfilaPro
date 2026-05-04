@@ -224,6 +224,8 @@ exports.handler = async (event) => {
     .pp-page-foot a{color:var(--pp-warm-accent);text-decoration:none}
     :focus-visible{outline:2px solid var(--pp-warm-accent);outline-offset:2px}
   </style>
+  <script src="/js/posthog-init.js" defer></script>
+  <script src="/js/privacy-banner.js" defer></script>
 </head>
 <body>
   <div class="pp-card">
@@ -414,6 +416,15 @@ exports.handler = async (event) => {
       ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h);
       ctx.lineTo(x,y+h); ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
     }
+
+    // Track click en boton WhatsApp principal (no en compartir)
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a.pp-cta--wa');
+      if (!a) return;
+      if (typeof window.ppEvent === 'function') {
+        window.ppEvent('whatsapp_click', { slug: CARD.slug });
+      }
+    });
   </script>
 </body>
 </html>`;

@@ -295,6 +295,7 @@
     .pp-city-osm a { color: inherit; text-decoration: none; }
     .pp-city-osm a:hover { text-decoration: underline; }
   </style>
+  <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
 </head>
 <body>
@@ -659,6 +660,7 @@
       else if (i < n) st.classList.add('is-done');
     });
     document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (typeof window.ppEvent === 'function') window.ppEvent('signup_step_view', { step: n });
   };
 
   /* ── Validation ── */
@@ -739,6 +741,8 @@
       email:    document.getElementById('f_email').value.trim(),
     };
 
+    if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
+
     fetch('/api/register-free', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -768,6 +772,9 @@
       document.getElementById('stepper').style.display  = 'none';
       document.getElementById('trustRow').style.display = 'none';
       document.getElementById('successPanel').classList.add('is-active');
+
+      if (typeof window.ppIdentify === 'function') window.ppIdentify(slug, { plan: 'free', sector: payload.sector });
+      if (typeof window.ppEvent === 'function')    window.ppEvent('signup_completed_free', { sector: payload.sector });
     })
     .catch(function () {
       document.getElementById('errText').textContent = 'Error de red. Comprueba tu conexión e inténtalo de nuevo.';
