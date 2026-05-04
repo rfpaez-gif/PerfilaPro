@@ -70,6 +70,82 @@
       margin: 1.5rem 0;
     }
 
+    /* ── Panel stats Pro ────────────────────────────────────── */
+    .pp-stats {
+      background: var(--pp-color-accent-soft);
+      border: 1px solid var(--pp-color-accent);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .pp-stats__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      margin-bottom: .875rem;
+    }
+    .pp-stats__title {
+      font-family: var(--pp-f-display);
+      font-size: 1.125rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--pp-color-accent-deep);
+      margin: 0;
+    }
+    .pp-stats__badge {
+      display: inline-block;
+      padding: .15rem .55rem;
+      background: var(--pp-color-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      border-radius: var(--pp-r-pill);
+    }
+    .pp-stats__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .5rem;
+      margin-bottom: 1rem;
+    }
+    .pp-stats__cell {
+      background: rgba(255, 255, 255, .55);
+      border-radius: var(--pp-r-md);
+      padding: .75rem .5rem;
+      text-align: center;
+      display: grid;
+      gap: .15rem;
+    }
+    .pp-stats__num {
+      font-family: var(--pp-f-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--pp-color-accent-deep);
+      line-height: 1;
+    }
+    .pp-stats__lbl {
+      font-size: 11px;
+      color: var(--pp-color-ink-soft);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .pp-stats__chart {
+      display: grid;
+      gap: .35rem;
+    }
+    .pp-stats__chart svg {
+      width: 100%;
+      height: 60px;
+      display: block;
+    }
+    .pp-stats__chart-lbl {
+      margin: 0;
+      font-size: 11px;
+      color: var(--pp-color-ink-soft);
+      text-align: center;
+    }
+
     /* ── Optional label suffix ──────────────────────────────── */
     .pp-field__optional {
       font-weight: 400;
@@ -448,6 +524,31 @@
         <p class="pp-edit-card__sub" id="editSubtitle">Actualiza tus datos profesionales.</p>
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
+        <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadísticas del perfil">
+          <header class="pp-stats__head">
+            <h2 class="pp-stats__title">Estadísticas</h2>
+            <span class="pp-stats__badge">Plan Pro</span>
+          </header>
+          <div class="pp-stats__grid">
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="statTotal">—</span>
+              <span class="pp-stats__lbl">Visitas totales</span>
+            </div>
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="stat30d">—</span>
+              <span class="pp-stats__lbl">Últimos 30 días</span>
+            </div>
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="stat7d">—</span>
+              <span class="pp-stats__lbl">Últimos 7 días</span>
+            </div>
+          </div>
+          <div class="pp-stats__chart" aria-hidden="true">
+            <svg id="statsSpark" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Visitas diarias últimos 30 días"></svg>
+            <p class="pp-stats__chart-lbl">Visitas por día · últimos 30 días</p>
+          </div>
+        </section>
+
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__title">Perfil básico · activa tu plan</p>
           <p class="pp-upgrade__sub">Desbloquea todo para que tus clientes te encuentren:</p>
@@ -781,6 +882,35 @@
     }
   }
 
+  async function loadProfileStats(slug, token) {
+    const res = await fetch('/api/profile-stats?slug=' + encodeURIComponent(slug) + '&token=' + encodeURIComponent(token));
+    if (!res.ok) return;
+    const stats = await res.json();
+    const panel = document.getElementById('statsPanel');
+    if (!panel) return;
+    panel.style.display = '';
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('stat30d').textContent  = stats.last30d;
+    document.getElementById('stat7d').textContent   = stats.last7d;
+
+    const svg = document.getElementById('statsSpark');
+    const series = stats.daily || [];
+    if (!svg || !series.length) return;
+    const max = Math.max(1, ...series.map(function(d) { return d.count; }));
+    const w   = 300;
+    const h   = 60;
+    const bw  = w / series.length;
+    let bars = '';
+    for (let i = 0; i < series.length; i++) {
+      const v  = series[i].count;
+      const bh = (v / max) * (h - 4);
+      const x  = i * bw;
+      const y  = h - bh;
+      bars += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' + (bw - 1) + '" height="' + bh + '" fill="#01696F" rx="1.5" ry="1.5"></rect>';
+    }
+    svg.innerHTML = bars;
+  }
+
   async function loadEditForm() {
     try {
       const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
@@ -824,6 +954,13 @@
       descEl.addEventListener('input', function() {
         document.getElementById('editDescCount').textContent = this.value.length;
       });
+
+      // Stats Pro
+      if (card.plan === 'pro') {
+        loadProfileStats(slug, token).catch(function(err) {
+          console.warn('No se pudieron cargar las estadísticas:', err.message);
+        });
+      }
 
       // Upgrade banner
       const freeBanner = document.getElementById('freeBanner');
