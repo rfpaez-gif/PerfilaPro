@@ -213,6 +213,8 @@ exports.handler = async (event) => {
     .pp-qr__meta a{font-size:.75rem;color:var(--pp-warm-accent);text-decoration:none;font-weight:600;line-height:1.4}
     .pp-qr__dl{display:inline-flex;align-items:center;gap:.3rem;margin-top:.375rem;padding:.3rem .7rem;background:var(--pp-warm-accent);color:#fff;border-radius:var(--pp-r-pill);font-size:.6875rem;font-weight:700;text-decoration:none}
     .pp-qr__dl:hover{background:var(--pp-warm-accent-deep)}
+    .pp-qr__dl--alt{background:transparent;color:var(--pp-warm-accent);border:1px solid var(--pp-warm-accent);margin-left:.3rem}
+    .pp-qr__dl--alt:hover{background:var(--pp-warm-accent-soft)}
     .pp-free-banner{background:var(--pp-warm-accent-soft);border:1px solid var(--pp-warm-border);border-radius:var(--pp-r-md);padding:.75rem 1rem;margin:.75rem 0;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
     .pp-free-banner p{font-size:.8125rem;color:var(--pp-warning);margin:0}
     .pp-free-banner__btn{font-size:.8125rem;font-weight:700;color:#fff;background:var(--pp-warm-accent);padding:.35rem .875rem;border-radius:var(--pp-r-pill);text-decoration:none;white-space:nowrap}
@@ -277,10 +279,16 @@ exports.handler = async (event) => {
           ${data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
           ${data.email ? `<p>${esc(data.email)}</p>` : ''}
           ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
-          <a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="pp-qr__dl">
+          ${isPro ? `<div>
+            <a href="/api/qr-download?slug=${esc(data.slug)}&format=svg" class="pp-qr__dl" title="SVG vectorial — escala infinita, ideal imprenta">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              SVG
+            </a>
+            <a href="/api/qr-download?slug=${esc(data.slug)}&format=png" class="pp-qr__dl pp-qr__dl--alt" title="PNG 1024×1024 — para web/redes">PNG</a>
+          </div>` : `<a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="pp-qr__dl">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Descargar QR
-          </a>
+          </a>`}
         </div>
       </div>` : ''}
       ${isFree ? `<div class="pp-free-banner">
