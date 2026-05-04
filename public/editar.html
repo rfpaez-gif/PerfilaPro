@@ -255,6 +255,47 @@
     .pp-services-list { display: flex; flex-direction: column; gap: .5rem; }
     .pp-svc-item { display: flex; gap: .5rem; align-items: center; }
     .pp-svc-item .pp-input { flex: 1; }
+
+    /* ── Detalles colapsables (directorio opcional) ─────────── */
+    .pp-detail {
+      background: var(--pp-color-bg);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      margin-top: 1.5rem;
+    }
+    .pp-detail[open] {
+      background: var(--pp-color-surface);
+    }
+    .pp-detail summary {
+      cursor: pointer;
+      padding: .9rem 1rem;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      list-style: none;
+      font-size: 14px;
+    }
+    .pp-detail summary::-webkit-details-marker { display: none; }
+    .pp-detail summary::before {
+      content: "▸";
+      color: var(--pp-color-ink-muted);
+      transition: transform .15s;
+      display: inline-block;
+      font-size: 11px;
+    }
+    .pp-detail[open] summary::before { transform: rotate(90deg); }
+    .pp-detail__body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--pp-color-border-soft);
+      padding-top: 1rem;
+    }
+    .pp-detail__hint {
+      color: var(--pp-color-ink-muted);
+      font-size: 13px;
+      margin: 0 0 1rem;
+    }
     .pp-svc-remove {
       width: 2.25rem;
       height: 2.25rem;
@@ -774,47 +815,47 @@
           <p class="pp-field__hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€".</p>
         </div>
 
-        <hr class="pp-divider">
-
-        <div class="pp-field">
-          <label class="pp-field__label">Directorio profesional</label>
-          <p class="pp-field__hint" style="margin-bottom:.75rem">Elige tu especialidad y ciudad para aparecer cuando los clientes te busquen en Google.</p>
-          <div class="pp-dir-box">
-            <div class="pp-field">
-              <label class="pp-field__label" for="sectorSel">Sector</label>
-              <select class="pp-input pp-input--select" id="sectorSel" onchange="onSectorChange()">
-                <option value="">Selecciona sector…</option>
-              </select>
-            </div>
-            <div class="pp-field" id="specialtyField" style="display:none">
-              <label class="pp-field__label" for="specialtySel">Especialidad</label>
-              <select class="pp-input pp-input--select" id="specialtySel" onchange="onSpecialtyChange()">
-                <option value="">Selecciona especialidad…</option>
-              </select>
-            </div>
-            <div class="pp-field" id="cityField" style="display:none">
-              <label class="pp-field__label" for="citySel">Ciudad</label>
-              <select class="pp-input pp-input--select" id="citySel" onchange="onCityChange()">
-                <option value="">Selecciona ciudad…</option>
-              </select>
-            </div>
-            <div class="pp-toggle-row" id="visibleRow" style="display:none">
-              <div class="pp-toggle-row__info">
-                <p class="pp-toggle-row__label">Visible en el directorio</p>
-                <p class="pp-toggle-row__hint">Tu perfil aparecerá en Google y en perfilapro.es/directorio.</p>
-              </div>
-              <label class="pp-toggle-sw">
-                <input type="checkbox" id="dirVisible">
-                <span class="pp-toggle-track"></span>
-              </label>
-            </div>
-            <a id="pubProfileLink" href="#" target="_blank" class="pp-public-link">
-              Ver mi perfil público →
-            </a>
-          </div>
-        </div>
-
         <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Guardar cambios</button>
+
+        <details class="pp-detail" id="dirDetail">
+          <summary>Aparecer también en el directorio público</summary>
+          <div class="pp-detail__body">
+            <p class="pp-detail__hint">Opcional. Confirma tu especialidad y tu ciudad para que tu perfil aparezca en <code>perfilapro.es/directorio</code>. Disponible con plan Pro.</p>
+            <div class="pp-dir-box">
+              <div class="pp-field">
+                <label class="pp-field__label" for="sectorSel">Sector</label>
+                <select class="pp-input pp-input--select" id="sectorSel" onchange="onSectorChange()">
+                  <option value="">Selecciona sector…</option>
+                </select>
+              </div>
+              <div class="pp-field" id="specialtyField" style="display:none">
+                <label class="pp-field__label" for="specialtySel">Especialidad</label>
+                <select class="pp-input pp-input--select" id="specialtySel" onchange="onSpecialtyChange()">
+                  <option value="">Selecciona especialidad…</option>
+                </select>
+              </div>
+              <div class="pp-field" id="cityField" style="display:none">
+                <label class="pp-field__label" for="citySel">Ciudad</label>
+                <select class="pp-input pp-input--select" id="citySel" onchange="onCityChange()">
+                  <option value="">Selecciona ciudad…</option>
+                </select>
+              </div>
+              <div class="pp-toggle-row" id="visibleRow" style="display:none">
+                <div class="pp-toggle-row__info">
+                  <p class="pp-toggle-row__label">Visible en el directorio</p>
+                  <p class="pp-toggle-row__hint">Tu perfil aparecerá en perfilapro.es/directorio.</p>
+                </div>
+                <label class="pp-toggle-sw">
+                  <input type="checkbox" id="dirVisible">
+                  <span class="pp-toggle-track"></span>
+                </label>
+              </div>
+              <a id="pubProfileLink" href="#" target="_blank" class="pp-public-link">
+                Ver mi perfil público →
+              </a>
+            </div>
+          </div>
+        </details>
 
         <div class="pp-edit-actions">
           <a id="viewCardLink" href="#" target="_blank">Ver mi tarjeta →</a>
@@ -1297,6 +1338,15 @@
       if (autoMatched) {
         const sectorField = sectorSel.closest('.pp-field');
         if (sectorField) sectorField.style.display = 'none';
+      }
+
+      // Abrir el panel de directorio sólo si el usuario ya tenía algo
+      // configurado (especialidad, ciudad o toggle visible). Si solo se
+      // auto-resolvió el sector pero el resto está vacío, lo dejamos
+      // colapsado — directorio es opcional, no estorba en el flujo principal.
+      const dirDetail = document.getElementById('dirDetail');
+      if (dirDetail && (currentSpecialty || currentCity || currentVisible)) {
+        dirDetail.open = true;
       }
 
       // Mostrar enlace perfil público si tiene sector+ciudad configurado
