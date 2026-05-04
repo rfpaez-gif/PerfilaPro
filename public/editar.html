@@ -181,6 +181,65 @@
     .pp-share__btn:hover {
       background: var(--pp-color-accent-soft);
     }
+    .pp-share__hint {
+      font-size: 12px;
+      color: var(--pp-color-ink-soft);
+      margin: -.25rem 0 .65rem;
+    }
+    .pp-share__row--icons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .4rem;
+    }
+    @media (max-width: 480px) {
+      .pp-share__row--icons { grid-template-columns: repeat(2, 1fr); }
+    }
+    .pp-share__row--icons .pp-share__btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: .75rem .5rem;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--pp-color-border);
+      color: var(--pp-color-ink);
+      background: var(--pp-color-surface);
+      transition: transform .12s, background .15s, border-color .15s;
+    }
+    .pp-share__row--icons .pp-share__btn:hover {
+      transform: translateY(-1px);
+      background: var(--pp-color-accent-soft);
+      border-color: var(--pp-color-accent);
+    }
+    .pp-share__row--icons .pp-share__btn svg { display: block; }
+    .pp-share__btn--wa svg { color: #25D366; }
+    .pp-share__btn--ig svg { color: #E1306C; }
+    .pp-share__btn--li svg { color: #0A66C2; }
+    .pp-share__btn--copy svg { color: var(--pp-color-ink-soft); }
+    .pp-share__row--icons .pp-share__btn.is-copied {
+      background: var(--pp-color-accent);
+      color: #fff;
+      border-color: var(--pp-color-accent);
+    }
+    .pp-share__row--icons .pp-share__btn.is-copied svg { color: #fff; }
+    .pp-share__footer-link {
+      margin-top: 1rem;
+      padding-top: .85rem;
+      border-top: 1px dashed var(--pp-color-border-soft);
+      font-size: 12px;
+      color: var(--pp-color-ink-muted);
+      text-align: center;
+    }
+    .pp-share__footer-link a {
+      color: var(--pp-color-ink-soft);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--pp-color-border);
+    }
+    .pp-share__footer-link a:hover {
+      color: var(--pp-color-accent-deep);
+      border-bottom-color: var(--pp-color-accent);
+    }
 
     /* ── Optional label suffix ──────────────────────────────── */
     .pp-field__optional {
@@ -585,6 +644,29 @@
           </div>
 
           <div class="pp-share">
+            <p class="pp-share__title">Compartir mi perfil</p>
+            <p class="pp-share__hint">Un toque y lo enseñas a quien quieras.</p>
+            <div class="pp-share__row pp-share__row--icons">
+              <a href="" id="shareWa" class="pp-share__btn pp-share__btn--wa" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                WhatsApp
+              </a>
+              <button type="button" id="shareIg" class="pp-share__btn pp-share__btn--ig" data-url="" aria-label="Copiar enlace y abrir Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                Instagram
+              </button>
+              <a href="" id="shareLi" class="pp-share__btn pp-share__btn--li" target="_blank" rel="noopener" aria-label="Compartir en LinkedIn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
+              <button type="button" id="shareCopy" class="pp-share__btn pp-share__btn--copy" data-url="" aria-label="Copiar URL del perfil">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copiar URL
+              </button>
+            </div>
+          </div>
+
+          <div class="pp-share">
             <p class="pp-share__title">Descargar imagen para compartir</p>
             <div class="pp-share__row">
               <a href="" id="shareDlSquare"   class="pp-share__btn" download>Instagram · 1080×1080</a>
@@ -593,12 +675,9 @@
             </div>
           </div>
 
-          <div class="pp-share">
-            <p class="pp-share__title">Visibilidad en Google</p>
-            <a href="" id="gbpAssistantLink" class="pp-share__btn" style="display:block;text-align:center;background:var(--pp-color-accent);color:#fff;border-color:var(--pp-color-accent)">
-              Preparar mi Google Business Profile →
-            </a>
-          </div>
+          <p class="pp-share__footer-link">
+            <a href="" id="gbpAssistantLink">¿Quieres aparecer también en Google? Asistente Google Business →</a>
+          </p>
         </section>
 
         <div class="pp-upgrade" id="freeBanner">
@@ -952,6 +1031,48 @@
     document.getElementById('shareDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
     document.getElementById('shareDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
     document.getElementById('gbpAssistantLink').href = '/asistente-gbp.html?slug=' + slugEnc + '&token=' + tokenEnc;
+
+    // Botones de compartir mi perfil (URL pública)
+    const profileUrl = window.location.origin + '/c/' + slug;
+    const shareText  = encodeURIComponent('Mira mi perfil profesional 👇 ' + profileUrl);
+    document.getElementById('shareWa').href = 'https://wa.me/?text=' + shareText;
+    document.getElementById('shareLi').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(profileUrl);
+    document.getElementById('shareIg').dataset.url   = profileUrl;
+    document.getElementById('shareCopy').dataset.url = profileUrl;
+
+    function flashCopied(btn, msg) {
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>' + (msg || 'Copiado');
+      btn.classList.add('is-copied');
+      setTimeout(function () {
+        btn.innerHTML = original;
+        btn.classList.remove('is-copied');
+      }, 1600);
+    }
+
+    async function copyUrl(url) {
+      try {
+        await navigator.clipboard.writeText(url);
+        return true;
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    document.getElementById('shareIg').addEventListener('click', async function () {
+      const ok = await copyUrl(this.dataset.url);
+      if (ok) flashCopied(this, 'Pega en tu bio');
+      window.open('https://www.instagram.com/', '_blank', 'noopener');
+    });
+    document.getElementById('shareCopy').addEventListener('click', async function () {
+      const ok = await copyUrl(this.dataset.url);
+      if (ok) flashCopied(this, 'Copiado');
+    });
 
     const svg = document.getElementById('statsSpark');
     const series = stats.daily || [];
