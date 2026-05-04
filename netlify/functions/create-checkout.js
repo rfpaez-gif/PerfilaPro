@@ -1,5 +1,8 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripeLib = require('stripe');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+
+const defaultStripe = stripeLib(process.env.STRIPE_SECRET_KEY);
 
 const PRICES = {
   base: process.env.STRIPE_PRICE_BASE,
@@ -29,74 +32,82 @@ const SECTOR_LABELS = {
   otro:       'Otro',
 };
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
+function makeHandler(stripe) {
+  return async (event) => {
+    if (event.httpMethod !== 'POST') {
+      return { statusCode: 405, body: 'Method Not Allowed' };
+    }
 
-  let body;
-  try {
-    body = JSON.parse(event.body);
-  } catch {
-    return { statusCode: 400, body: 'JSON inválido' };
-  }
+    const rl = checkRateLimit(event, { bucket: 'create-checkout', limit: 10, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
-  const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    let body;
+    try {
+      body = JSON.parse(event.body);
+    } catch {
+      return { statusCode: 400, body: 'JSON inválido' };
+    }
 
-  if (!nombre || !zona || !whatsapp || !plan) {
-    return { statusCode: 400, body: 'Faltan campos obligatorios' };
-  }
+    const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
-  const priceId = PRICES[plan];
-  if (!priceId) {
-    return { statusCode: 400, body: 'Plan no válido' };
-  }
+    if (!nombre || !zona || !whatsapp || !plan) {
+      return { statusCode: 400, body: 'Faltan campos obligatorios' };
+    }
 
-  const slug = slugOverride || nombre.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    .substring(0, 40);
+    const priceId = PRICES[plan];
+    if (!priceId) {
+      return { statusCode: 400, body: 'Plan no válido' };
+    }
 
-  const tagline  = SECTOR_LABELS[sector] || sector || '';
-  const phone = normalizeSpanishPhone(whatsapp);
-  if (!phone.ok) {
-    return { statusCode: 400, body: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' };
-  }
-  const waNumber = phone.e164;
-  const siteUrl  = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+    const slug = slugOverride || nombre.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      .substring(0, 40);
 
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
-      metadata: {
-        slug,
-        nombre,
-        tagline,
-        whatsapp: waNumber,
-        zona,
-        servicios: JSON.stringify(servicios),
-        desc: (desc || '').substring(0, 200),
-        direccion: (direccion || '').substring(0, 200),
-        foto: foto || '',
-        plan,
-        agent_code: agent_code || '',
-      },
-      success_url: `${siteUrl}/success.html?slug=${slug}`,
-      cancel_url:  cancelUrl || `${siteUrl}/#crear`,
-    });
+    const tagline  = SECTOR_LABELS[sector] || sector || '';
+    const phone = normalizeSpanishPhone(whatsapp);
+    if (!phone.ok) {
+      return { statusCode: 400, body: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' };
+    }
+    const waNumber = phone.e164;
+    const siteUrl  = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: session.url }),
-    };
-  } catch (err) {
-    console.error('Stripe error:', err.message);
-    return {
-      statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
-};
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [{ price: priceId, quantity: 1 }],
+        metadata: {
+          slug,
+          nombre,
+          tagline,
+          whatsapp: waNumber,
+          zona,
+          servicios: JSON.stringify(servicios),
+          desc: (desc || '').substring(0, 200),
+          direccion: (direccion || '').substring(0, 200),
+          foto: foto || '',
+          plan,
+          agent_code: agent_code || '',
+        },
+        success_url: `${siteUrl}/success.html?slug=${slug}`,
+        cancel_url:  cancelUrl || `${siteUrl}/#crear`,
+      });
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: session.url }),
+      };
+    } catch (err) {
+      console.error('Stripe error:', err.message);
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: err.message }),
+      };
+    }
+  };
+}
+
+exports.handler = makeHandler(defaultStripe);
+exports.makeHandler = makeHandler;

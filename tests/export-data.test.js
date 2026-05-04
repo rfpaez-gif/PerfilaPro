@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler } from '../netlify/functions/export-data.js';
+const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 const VALID_TOKEN = 'a'.repeat(64);
 const FUTURE = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -14,10 +15,11 @@ const baseCard = {
   edit_token_expires_at: FUTURE,
 };
 
-function buildEvent({ method = 'GET', slug = 'ana-electricista', token = VALID_TOKEN } = {}) {
+function buildEvent({ method = 'GET', slug = 'ana-electricista', token = VALID_TOKEN, ip = '1.2.3.4' } = {}) {
   return {
     httpMethod: method,
     queryStringParameters: { slug, token },
+    headers: { 'x-forwarded-for': ip },
   };
 }
 
@@ -47,7 +49,7 @@ function buildDb({ card = baseCard, cardError = null, visits = [], facturas = []
 
 describe('export-data handler', () => {
   let handler;
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); _resetRateLimit(); });
 
   it('devuelve 405 si method no es GET', async () => {
     handler = makeHandler(buildDb());
@@ -93,5 +95,17 @@ describe('export-data handler', () => {
     expect(payload.visits).toEqual(visits);
     expect(payload.facturas).toEqual(facturas);
     expect(payload.exported_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('devuelve 429 al superar el límite por IP (10 requests / 10 min)', async () => {
+    handler = makeHandler(buildDb());
+    const ip = '9.9.9.9';
+    for (let i = 0; i < 10; i++) {
+      const res = await handler(buildEvent({ ip }));
+      expect(res.statusCode).toBe(200);
+    }
+    const blocked = await handler(buildEvent({ ip }));
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.headers['Retry-After']).toBeDefined();
   });
 });

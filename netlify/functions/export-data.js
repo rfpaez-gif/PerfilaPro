@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -10,6 +11,9 @@ function makeHandler(db) {
     if (event.httpMethod !== 'GET') {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
+
+    const rl = checkRateLimit(event, { bucket: 'export-data', limit: 10, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
     const { slug, token } = event.queryStringParameters || {};
 
