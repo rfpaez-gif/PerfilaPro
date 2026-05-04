@@ -181,7 +181,7 @@ function makeHandler(deps) {
         siteUrl,
         jsonLd,
         extraCss: PROFILE_CSS,
-        ogImage: data.foto_url || null,
+        ogImage: `${siteUrl}/api/share-image?slug=${encodeURIComponent(data.slug)}&template=og`,
         ogType: 'profile',
       }),
     };

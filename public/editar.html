@@ -145,6 +145,42 @@
       color: var(--pp-color-ink-soft);
       text-align: center;
     }
+    .pp-share {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--pp-color-border-soft);
+    }
+    .pp-share__title {
+      font-size: 12px;
+      color: var(--pp-color-ink-soft);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin: 0 0 .5rem;
+      font-weight: 700;
+    }
+    .pp-share__row {
+      display: flex;
+      gap: .35rem;
+      flex-wrap: wrap;
+    }
+    .pp-share__btn {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: .5rem .65rem;
+      background: var(--pp-color-surface);
+      color: var(--pp-color-accent-deep);
+      border: 1px solid var(--pp-color-accent);
+      border-radius: var(--pp-r-md);
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .pp-share__btn:hover {
+      background: var(--pp-color-accent-soft);
+    }
 
     /* ── Optional label suffix ──────────────────────────────── */
     .pp-field__optional {
@@ -547,6 +583,15 @@
             <svg id="statsSpark" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Visitas diarias últimos 30 días"></svg>
             <p class="pp-stats__chart-lbl">Visitas por día · últimos 30 días</p>
           </div>
+
+          <div class="pp-share">
+            <p class="pp-share__title">Descargar imagen para compartir</p>
+            <div class="pp-share__row">
+              <a href="" id="shareDlSquare"   class="pp-share__btn" download>Instagram · 1080×1080</a>
+              <a href="" id="shareDlStory"    class="pp-share__btn" download>Story · 1080×1920</a>
+              <a href="" id="shareDlLinkedin" class="pp-share__btn" download>LinkedIn · 1200×627</a>
+            </div>
+          </div>
         </section>
 
         <div class="pp-upgrade" id="freeBanner">
@@ -892,6 +937,12 @@
     document.getElementById('statTotal').textContent = stats.total;
     document.getElementById('stat30d').textContent  = stats.last30d;
     document.getElementById('stat7d').textContent   = stats.last7d;
+
+    // Enlaces de descarga de imágenes shareables
+    const slugEnc = encodeURIComponent(slug);
+    document.getElementById('shareDlSquare').href   = '/api/share-image?slug=' + slugEnc + '&template=square';
+    document.getElementById('shareDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
+    document.getElementById('shareDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
 
     const svg = document.getElementById('statsSpark');
     const series = stats.daily || [];
