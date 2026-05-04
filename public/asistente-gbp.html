@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Asistente Google Business Profile — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    .pp-gbp-main { padding-block: clamp(32px, 5vw, 64px); display: flex; justify-content: center; }
+    .pp-gbp-wrap { width: 100%; max-width: 720px; padding-inline: clamp(1rem, 4vw, 2rem); }
+    .pp-gbp-card { background: var(--pp-color-surface); border: 1px solid var(--pp-color-border); border-radius: var(--pp-r-xl); box-shadow: var(--pp-sh-md); padding: clamp(1.75rem, 4vw, 2.25rem); }
+    .pp-gbp-card__title { font-family: var(--pp-f-display); font-size: clamp(1.75rem, .8rem + 2vw, 2.25rem); font-weight: 400; letter-spacing: var(--pp-ls-display); color: var(--pp-color-ink); margin: 0 0 .35rem; }
+    .pp-gbp-card__sub { color: var(--pp-color-ink-soft); font-size: 14px; margin: 0 0 1.5rem; }
+
+    .pp-gbp-step { padding: 1.25rem 1.25rem 1rem; border: 1px solid var(--pp-color-border-soft); border-radius: var(--pp-r-lg); margin-bottom: 1rem; background: var(--pp-color-bg); }
+    .pp-gbp-step__h { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+    .pp-gbp-step__num { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--pp-color-accent); color: #fff; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .pp-gbp-step__title { font-family: var(--pp-f-display); font-size: 1.125rem; font-weight: 400; color: var(--pp-color-ink); margin: 0; flex: 1; }
+    .pp-gbp-step__body { font-size: 14px; color: var(--pp-color-ink-soft); line-height: 1.6; margin: 0 0 .75rem; white-space: pre-line; }
+
+    .pp-gbp-snippet { background: var(--pp-color-surface); border: 1px solid var(--pp-color-border); border-radius: var(--pp-r-md); padding: .75rem; font-family: var(--pp-f-mono, ui-monospace, monospace); font-size: 13px; color: var(--pp-color-ink); white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+
+    .pp-gbp-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+    .pp-gbp-btn { padding: .5rem 1rem; background: var(--pp-color-accent); color: #fff; border: none; border-radius: var(--pp-r-pill); font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .35rem; }
+    .pp-gbp-btn:hover { background: var(--pp-color-accent-deep); }
+    .pp-gbp-btn--alt { background: transparent; color: var(--pp-color-accent-deep); border: 1px solid var(--pp-color-accent); }
+    .pp-gbp-btn--alt:hover { background: var(--pp-color-accent-soft); }
+    .pp-gbp-btn--copied { background: var(--pp-color-accent-deep); }
+
+    .pp-gbp-cats { display: grid; gap: .35rem; margin-top: .5rem; }
+    .pp-gbp-cats__item { padding: .5rem .75rem; background: var(--pp-color-surface); border: 1px solid var(--pp-color-border); border-radius: var(--pp-r-md); font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .pp-gbp-cats__primary { font-size: 11px; color: var(--pp-color-accent-deep); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+
+    .pp-gbp-photos { display: grid; gap: .5rem; margin-top: .5rem; }
+    .pp-gbp-photo { padding: .65rem .75rem; background: var(--pp-color-surface); border: 1px solid var(--pp-color-border); border-radius: var(--pp-r-md); }
+    .pp-gbp-photo__label { font-size: 14px; font-weight: 700; color: var(--pp-color-ink); }
+    .pp-gbp-photo__spec  { font-size: 11px; color: var(--pp-color-ink-soft); margin-top: .15rem; font-family: var(--pp-f-mono, ui-monospace, monospace); }
+    .pp-gbp-photo__tip   { font-size: 12px; color: var(--pp-color-accent-deep); margin-top: .35rem; line-height: 1.5; }
+
+    .pp-gbp-post { padding: .75rem; background: var(--pp-color-surface); border: 1px solid var(--pp-color-border); border-radius: var(--pp-r-md); margin-bottom: .5rem; }
+    .pp-gbp-post__title { font-size: 13px; font-weight: 700; color: var(--pp-color-accent-deep); margin: 0 0 .35rem; text-transform: uppercase; letter-spacing: .03em; }
+    .pp-gbp-post__body  { font-size: 14px; color: var(--pp-color-ink); line-height: 1.5; margin: 0 0 .5rem; }
+  </style>
+</head>
+<body>
+<header class="pp-site-header">
+  <div class="pp-wrap">
+    <nav class="pp-nav">
+      <a href="/" class="pp-nav__brand" aria-label="PerfilaPro inicio">
+        <span class="pp-nav__brand-mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        PerfilaPro
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="pp-gbp-main">
+  <div class="pp-gbp-wrap">
+    <div class="pp-gbp-card" id="loadingCard">
+      <h1 class="pp-gbp-card__title">Asistente Google Business Profile</h1>
+      <p class="pp-gbp-card__sub">Cargando datos de tu perfil…</p>
+    </div>
+
+    <div class="pp-gbp-card" id="errorCard" style="display:none">
+      <h1 class="pp-gbp-card__title">No podemos abrir el asistente</h1>
+      <p class="pp-gbp-card__sub" id="errorMsg">Enlace inválido o expirado.</p>
+      <a href="/" class="pp-gbp-btn">Volver al inicio</a>
+    </div>
+
+    <div class="pp-gbp-card" id="contentCard" style="display:none">
+      <h1 class="pp-gbp-card__title">Asistente Google Business Profile</h1>
+      <p class="pp-gbp-card__sub">Te preparamos los textos, fotos y QR para que copies en Google Business Profile en 5 minutos. Edita lo que quieras antes de pegar.</p>
+
+      <div id="steps"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function() {
+  var qs    = new URLSearchParams(window.location.search);
+  var slug  = qs.get('slug');
+  var token = qs.get('token');
+
+  if (!slug || !token) {
+    show('errorCard');
+    setText('errorMsg', 'Faltan parámetros. Vuelve desde el panel de edición de tu perfil.');
+    return;
+  }
+
+  fetch('/api/gbp-assistant?slug=' + encodeURIComponent(slug) + '&token=' + encodeURIComponent(token))
+    .then(function(res) {
+      if (!res.ok) {
+        return res.json().then(function(err) { throw new Error(err.error || 'Error ' + res.status); });
+      }
+      return res.json();
+    })
+    .then(render)
+    .catch(function(err) {
+      show('errorCard');
+      setText('errorMsg', err.message);
+    });
+
+  function render(data) {
+    var stepsEl = document.getElementById('steps');
+    stepsEl.innerHTML = '';
+    data.steps.forEach(function(step, i) {
+      stepsEl.appendChild(renderStep(step, i + 1, data));
+    });
+    show('contentCard');
+    document.getElementById('loadingCard').style.display = 'none';
+  }
+
+  function renderStep(step, num, data) {
+    var div = document.createElement('div');
+    div.className = 'pp-gbp-step';
+    div.id = 'step-' + step.id;
+
+    var head = document.createElement('div');
+    head.className = 'pp-gbp-step__h';
+    head.innerHTML = '<span class="pp-gbp-step__num">' + num + '</span><h2 class="pp-gbp-step__title">' + esc(step.title) + '</h2>';
+    div.appendChild(head);
+
+    var body = document.createElement('p');
+    body.className = 'pp-gbp-step__body';
+    body.textContent = step.body;
+    div.appendChild(body);
+
+    if (step.action && step.action.type === 'copy') {
+      var snippet = document.createElement('div');
+      snippet.className = 'pp-gbp-snippet';
+      snippet.textContent = step.action.value;
+      div.appendChild(snippet);
+
+      var actions = document.createElement('div');
+      actions.className = 'pp-gbp-actions';
+      var btn = makeCopyButton(step.action.value);
+      actions.appendChild(btn);
+      div.appendChild(actions);
+    }
+
+    if (step.id === 'category') {
+      var cats = document.createElement('div');
+      cats.className = 'pp-gbp-cats';
+      data.categories.forEach(function(cat, i) {
+        var item = document.createElement('div');
+        item.className = 'pp-gbp-cats__item';
+        item.innerHTML = '<span>' + esc(cat) + '</span>' + (i === 0 ? '<span class="pp-gbp-cats__primary">Primaria sugerida</span>' : '<span style="font-size:11px;color:var(--pp-color-ink-soft)">Secundaria opcional</span>');
+        cats.appendChild(item);
+      });
+      div.appendChild(cats);
+    }
+
+    if (step.id === 'photos') {
+      var photos = document.createElement('div');
+      photos.className = 'pp-gbp-photos';
+      data.photo_slots.forEach(function(slot) {
+        var p = document.createElement('div');
+        p.className = 'pp-gbp-photo';
+        p.innerHTML = '<div class="pp-gbp-photo__label">' + esc(slot.label) + '</div><div class="pp-gbp-photo__spec">' + esc(slot.spec) + '</div><div class="pp-gbp-photo__tip">💡 ' + esc(slot.tip) + '</div>';
+        photos.appendChild(p);
+      });
+      div.appendChild(photos);
+
+      var actions = document.createElement('div');
+      actions.className = 'pp-gbp-actions';
+      actions.innerHTML = '<a href="' + data.assets.cover_image + '" download="perfilapro-portada-' + esc(data.card.slug) + '.png" class="pp-gbp-btn">Descargar portada generada</a>';
+      div.appendChild(actions);
+    }
+
+    if (step.id === 'qr') {
+      var actions = document.createElement('div');
+      actions.className = 'pp-gbp-actions';
+      actions.innerHTML =
+        '<a href="' + data.assets.qr_svg + '" class="pp-gbp-btn" download>QR en SVG (vinilos)</a>' +
+        '<a href="' + data.assets.qr_png + '" class="pp-gbp-btn pp-gbp-btn--alt" download>QR en PNG 1024</a>';
+      div.appendChild(actions);
+    }
+
+    if (step.id === 'posts') {
+      data.posts.forEach(function(post, i) {
+        var p = document.createElement('div');
+        p.className = 'pp-gbp-post';
+
+        var tEl = document.createElement('p');
+        tEl.className = 'pp-gbp-post__title';
+        tEl.textContent = (i + 1) + '. ' + post.title;
+        p.appendChild(tEl);
+
+        var bEl = document.createElement('p');
+        bEl.className = 'pp-gbp-post__body';
+        bEl.textContent = post.body;
+        p.appendChild(bEl);
+
+        var actions = document.createElement('div');
+        actions.className = 'pp-gbp-actions';
+        actions.appendChild(makeCopyButton(post.body, 'Copiar texto'));
+        p.appendChild(actions);
+        div.appendChild(p);
+      });
+    }
+
+    return div;
+  }
+
+  function makeCopyButton(text, label) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pp-gbp-btn';
+    btn.textContent = label || 'Copiar';
+    btn.addEventListener('click', function() {
+      navigator.clipboard.writeText(text).then(function() {
+        btn.classList.add('pp-gbp-btn--copied');
+        var prev = btn.textContent;
+        btn.textContent = '✓ Copiado';
+        setTimeout(function() { btn.classList.remove('pp-gbp-btn--copied'); btn.textContent = prev; }, 1800);
+      });
+    });
+    return btn;
+  }
+
+  function show(id)             { document.getElementById(id).style.display = ''; }
+  function setText(id, text)    { document.getElementById(id).textContent = text; }
+  function esc(s)               { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+})();
+</script>
+</body>
+</html>

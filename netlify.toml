@@ -157,6 +157,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/gbp-assistant"
+  to     = "/.netlify/functions/gbp-assistant"
+  status = 200
+
+[[redirects]]
   from   = "/api/lab-gemini"
   to     = "/.netlify/functions/lab-gemini"
   status = 200
