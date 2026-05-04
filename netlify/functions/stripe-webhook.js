@@ -4,6 +4,7 @@ const { Resend } = require('resend');
 const crypto = require('crypto');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
+const { capture: captureEvent } = require('./lib/posthog-server');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -179,6 +180,9 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       }
 
       console.log(`Perfil activado: ${slug}`);
+
+      captureEvent(slug, 'signup_completed_paid', { plan: plan || 'base', agent_code: agent_code || null })
+        .catch(() => {});
 
       // Generación de factura (no bloquea el webhook si falla)
       let pdfAttachment = null;

@@ -133,6 +133,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/analytics-config"
+  to     = "/.netlify/functions/analytics-config"
+  status = 200
+
+[[redirects]]
   from   = "/api/lab-gemini"
   to     = "/.netlify/functions/lab-gemini"
   status = 200

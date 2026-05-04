@@ -119,6 +119,24 @@ PDF generation is triggered non-blocking from `stripe-webhook` after card upsert
 
 **Limitation**: PDFs generated here are NOT sent to AEAT (Verifactu). Valid for the demo phase; for live commercial operation, every invoice must be transmitted to the Spanish tax authority via a registered provider (Quipu / Holded / FacturaDirecta).
 
+### Observability (PostHog)
+
+Sprint 1: analítica de producto vía PostHog Cloud (región EU). Carga **solo tras consentimiento explícito** del usuario en el banner de privacidad.
+
+**Frontend** (`public/js/posthog-init.js`):
+- Define `window.ppLoadAnalytics`, que el banner (`privacy-banner.js`) invoca cuando el usuario acepta cookies. Si rechaza o `POSTHOG_API_KEY` no está configurada en backend, no se carga PostHog.
+- La key se obtiene vía `GET /api/analytics-config` (función `analytics-config.js`), no se hardcodea en HTML — permite cambiarla sin tocar código y desactivar la analítica con solo borrar la env var.
+- Helpers globales seguros de llamar (no-op si PostHog no está cargado): `window.ppEvent(name, props)`, `window.ppIdentify(id, traits)`, `window.ppReset()`.
+
+**Server-side** (`netlify/functions/lib/posthog-server.js`):
+- `capture(distinctId, event, properties)` hace `POST` a `${POSTHOG_HOST}/capture/`. No-op silencioso si la env var no está. Errores se loguean pero no se relanzan; el llamador hace `.catch(() => {})`.
+
+**Eventos emitidos hoy**:
+- Frontend: `signup_step_view` (alta paso 1/2/3), `signup_submit_started`, `signup_completed_free` (con `ppIdentify`), `whatsapp_click` (en `/c/:slug`).
+- Server: `signup_completed_free` desde `register-free`, `signup_completed_paid` desde `stripe-webhook`.
+
+**Banner consentimiento** (`public/js/privacy-banner.js`): refactor de informativo a consent gate con dos botones (Aceptar / Rechazar). Flag `pp_privacy_ack` en `localStorage` con valores `accepted` / `rejected` (compat con valor legacy `1` = `accepted`).
+
 ### Quipu integration (Verifactu/AEAT)
 
 `netlify/functions/lib/quipu-client.js` is a **skeleton** with the contract (`createInvoice`, `voidInvoice`, `getInvoice`) but no real implementation — every method throws `not implemented`. It is intentionally unwired so that any accidental call fails loudly instead of silently emitting nothing to AEAT.
@@ -146,6 +164,8 @@ ADMIN_TOTP_SECRET     # optional — enables TOTP 2FA for admin panel
 RESEND_API_KEY
 SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
+POSTHOG_API_KEY       # PostHog project key — empty disables analytics
+POSTHOG_HOST          # default https://eu.i.posthog.com
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3
 QUIPU_API_BASE        # Sprint 3 — default https://getquipu.com/api/v2
@@ -173,6 +193,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/resend-invoice` | `resend-invoice` |
 | `/api/export-data` | `export-data` |
 | `/api/delete-account` | `delete-account` |
+| `/api/analytics-config` | `analytics-config` |
 
 ### Testing conventions
 

@@ -3,6 +3,7 @@ const { Resend } = require('resend');
 const crypto = require('crypto');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
+const { capture: captureEvent } = require('./lib/posthog-server');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -174,6 +175,9 @@ function makeHandler(db, emailClient = resend) {
         html,
       }).catch(err => console.error('Email error:', err.message));
     }
+
+    captureEvent(slug, 'signup_completed_free', { sector: sector || null, plan: 'free' })
+      .catch(() => {});
 
     return {
       statusCode: 200,
