@@ -2,14 +2,37 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>PerfilaPro · Tu trabajo, tu negocio y tus planes, en un solo sitio</title>
+  <title>PerfilaPro · Tu trabajo merece verse</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Crea tu perfil profesional gratis en 2 minutos. URL propia, WhatsApp directo y presencia en el directorio. Sin tarjeta, sin cuenta.">
+  <meta name="description" content="Tu perfil profesional con URL propia y QR descargable. Para enseñarlo donde quieras: WhatsApp, redes, furgoneta, tarjeta de visita. En 2 minutos. Sin cuenta, sin diseñador, sin hosting.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/brand.css">
   <style>
+    /* ── Hero badges "Sin cuenta · Sin diseñador · Sin hosting" ─── */
+    .pp-hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--pp-s-3);
+      margin-top: var(--pp-s-5);
+    }
+    .pp-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--pp-r-pill);
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      font-family: var(--pp-f-sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+      box-shadow: var(--pp-sh-sm);
+    }
+    .pp-hero-badge svg { color: var(--pp-color-accent); }
+
     /* ── Profesionales reales · rail de fotos ────────────────── */
     .pp-photos-rail {
       display: grid;
@@ -23,7 +46,6 @@
       scrollbar-width: none;
     }
     .pp-photos-rail::-webkit-scrollbar { display: none; }
-
     .pp-pro-photo {
       display: flex;
       flex-direction: column;
@@ -38,8 +60,7 @@
       background: var(--pp-color-accent-soft);
     }
     .pp-pro-photo__img img {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
       display: block;
     }
@@ -51,6 +72,515 @@
       text-align: center;
       margin: 0;
       letter-spacing: -0.01em;
+    }
+
+    /* ── Sección omnicanal · URL central + 4 cards ───────────── */
+    .pp-omni {
+      display: grid;
+      gap: var(--pp-s-8);
+      margin-top: var(--pp-s-10);
+    }
+    .pp-omni__hub {
+      display: flex;
+      justify-content: center;
+    }
+    .pp-omni__url {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: var(--pp-color-ink);
+      color: #fff;
+      border-radius: var(--pp-r-pill);
+      font-family: var(--pp-f-mono);
+      font-size: 16px;
+      font-weight: 500;
+      box-shadow: var(--pp-sh-lg);
+    }
+    .pp-omni__url strong { color: var(--pp-color-accent); font-weight: 600; }
+    .pp-omni__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--pp-s-4);
+    }
+    @media (max-width: 900px) {
+      .pp-omni__grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .pp-omni-card {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: var(--pp-s-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--pp-s-3);
+      transition: transform var(--pp-t-base), box-shadow var(--pp-t-base);
+    }
+    .pp-omni-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--pp-sh-md);
+    }
+    .pp-omni-card__icon {
+      width: 44px; height: 44px;
+      border-radius: var(--pp-r-md);
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+      display: grid;
+      place-items: center;
+    }
+    .pp-omni-card__title {
+      font-family: var(--pp-f-sans);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--pp-color-ink);
+      margin: 0;
+    }
+    .pp-omni-card__text {
+      font-size: 14px;
+      color: var(--pp-color-ink-soft);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ── Sección anatomía · perfil + lista de piezas ────────── */
+    .pp-anatomy {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: var(--pp-s-12);
+      align-items: center;
+      margin-top: var(--pp-s-10);
+    }
+    @media (max-width: 900px) {
+      .pp-anatomy { grid-template-columns: 1fr; }
+    }
+    .pp-anatomy__visual {
+      display: flex;
+      justify-content: center;
+    }
+    .pp-anatomy__list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--pp-s-5);
+    }
+    @media (max-width: 600px) {
+      .pp-anatomy__list { grid-template-columns: 1fr; }
+    }
+    .pp-anatomy-item {
+      display: flex;
+      gap: var(--pp-s-3);
+      align-items: flex-start;
+    }
+    .pp-anatomy-item__icon {
+      width: 36px; height: 36px;
+      border-radius: var(--pp-r-md);
+      background: var(--pp-color-accent-soft);
+      color: var(--pp-color-accent-deep);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .pp-anatomy-item__title {
+      font-family: var(--pp-f-sans);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--pp-color-ink);
+      margin: 0 0 2px;
+    }
+    .pp-anatomy-item__text {
+      font-size: 13px;
+      color: var(--pp-color-ink-soft);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ── Sección precios · 2 cards + multi-perfil ───────────── */
+    .pp-pricing {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--pp-s-6);
+      max-width: 880px;
+      margin: var(--pp-s-10) auto 0;
+    }
+    @media (max-width: 720px) {
+      .pp-pricing { grid-template-columns: 1fr; }
+    }
+    .pp-price-card {
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-xl);
+      padding: var(--pp-s-8);
+      display: flex;
+      flex-direction: column;
+      gap: var(--pp-s-5);
+      position: relative;
+    }
+    .pp-price-card--featured {
+      border-color: var(--pp-color-accent);
+      box-shadow: 0 0 0 4px var(--pp-color-accent-soft);
+    }
+    .pp-price-card__badge {
+      position: absolute;
+      top: -12px; right: 20px;
+      background: var(--pp-color-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border-radius: var(--pp-r-pill);
+    }
+    .pp-price-card__name {
+      font-family: var(--pp-f-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-ink-muted);
+      margin: 0;
+    }
+    .pp-price-card__price {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 0;
+    }
+    .pp-price-card__amount {
+      font-family: var(--pp-f-display);
+      font-size: 56px;
+      font-weight: 400;
+      color: var(--pp-color-ink);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .pp-price-card__period {
+      font-size: 15px;
+      color: var(--pp-color-ink-soft);
+    }
+    .pp-price-card__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pp-price-card__list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 14px;
+      color: var(--pp-color-ink);
+      line-height: 1.5;
+    }
+    .pp-price-card__list svg { color: var(--pp-color-accent); flex-shrink: 0; margin-top: 2px; }
+    .pp-price-multi {
+      max-width: 880px;
+      margin: var(--pp-s-6) auto 0;
+      padding: var(--pp-s-5) var(--pp-s-6);
+      background: var(--pp-color-accent-soft);
+      border-radius: var(--pp-r-lg);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--pp-s-5);
+      align-items: center;
+      justify-content: center;
+    }
+    .pp-price-multi__label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--pp-color-ink);
+    }
+    .pp-price-multi__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-accent);
+      border-radius: var(--pp-r-pill);
+      font-family: var(--pp-f-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--pp-color-accent-deep);
+    }
+    .pp-price-note {
+      text-align: center;
+      font-size: 13px;
+      color: var(--pp-color-ink-muted);
+      margin-top: var(--pp-s-4);
+    }
+
+    /* ── Banda B2B · ¿Tu equipo? ────────────────────────────── */
+    .pp-b2b {
+      background: var(--pp-color-ink);
+      color: #fff;
+      border-radius: var(--pp-r-2xl);
+      padding: clamp(32px, 5vw, 64px);
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: var(--pp-s-10);
+      align-items: center;
+    }
+    @media (max-width: 860px) {
+      .pp-b2b { grid-template-columns: 1fr; }
+    }
+    .pp-b2b__kicker {
+      font-family: var(--pp-f-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--pp-color-accent);
+      margin: 0 0 var(--pp-s-3);
+    }
+    .pp-b2b__title {
+      font-family: var(--pp-f-display);
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: #fff;
+      margin: 0 0 var(--pp-s-4);
+    }
+    .pp-b2b__text {
+      font-size: 16px;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.75);
+      margin: 0 0 var(--pp-s-6);
+    }
+    .pp-b2b__bullets {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--pp-s-6);
+      display: grid;
+      gap: 10px;
+    }
+    .pp-b2b__bullets li {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+    }
+    .pp-b2b__bullets svg { color: var(--pp-color-accent); flex-shrink: 0; }
+    .pp-b2b__cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--pp-s-4);
+      padding: var(--pp-s-8);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--pp-r-xl);
+    }
+    .pp-b2b__cta-label {
+      font-family: var(--pp-f-mono);
+      font-size: 11px;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin: 0;
+    }
+    .pp-b2b__cta-amount {
+      font-family: var(--pp-f-display);
+      font-size: 44px;
+      color: #fff;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .pp-b2b__cta-amount small {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+      font-family: var(--pp-f-sans);
+      letter-spacing: 0;
+    }
+
+    /* ── Comparativa final ──────────────────────────────────── */
+    .pp-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--pp-s-6);
+      margin-top: var(--pp-s-10);
+    }
+    @media (max-width: 800px) {
+      .pp-compare { grid-template-columns: 1fr; }
+    }
+    .pp-compare__card {
+      padding: var(--pp-s-8);
+      border-radius: var(--pp-r-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--pp-s-4);
+    }
+    .pp-compare__card--bad {
+      background: rgba(178, 58, 72, 0.04);
+      border: 1px dashed rgba(178, 58, 72, 0.3);
+      color: var(--pp-color-ink-soft);
+    }
+    .pp-compare__card--good {
+      background: var(--pp-color-accent-soft);
+      border: 2px solid var(--pp-color-accent);
+    }
+    .pp-compare__title {
+      font-family: var(--pp-f-display);
+      font-size: 22px;
+      font-weight: 400;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+    .pp-compare__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .pp-compare__list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .pp-compare__list--bad li::before {
+      content: "✕";
+      color: var(--pp-color-danger);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .pp-compare__list--good li::before {
+      content: "✓";
+      color: var(--pp-color-accent-deep);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Hero visual: tarjeta perfil mockup ─────────────────── */
+    .pp-mock-card-list {
+      list-style: none;
+      padding: 0;
+      margin: var(--pp-s-3) 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pp-mock-card-list li {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--pp-color-ink-soft);
+    }
+    .pp-mock-card-list li::before {
+      content: "•";
+      color: var(--pp-color-accent);
+    }
+
+    /* ── Mock anatomía móvil grande ─────────────────────────── */
+    .pp-mock-phone {
+      width: 320px;
+      max-width: 100%;
+      background: var(--pp-color-warm-bg);
+      border-radius: 36px;
+      padding: 18px 14px;
+      box-shadow: var(--pp-sh-xl);
+      border: 1px solid var(--pp-color-warm-border);
+    }
+    .pp-mock-phone__head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 8px 16px;
+      border-bottom: 1px solid var(--pp-color-warm-border);
+    }
+    .pp-mock-phone__avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--pp-color-warm-accent-soft);
+      color: var(--pp-color-warm-accent);
+      display: grid;
+      place-items: center;
+      font-family: var(--pp-f-display);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .pp-mock-phone__name {
+      font-family: var(--pp-f-display);
+      font-size: 18px;
+      color: var(--pp-color-warm-ink);
+      margin: 0;
+      line-height: 1.2;
+    }
+    .pp-mock-phone__role {
+      font-size: 13px;
+      color: var(--pp-color-warm-ink-soft);
+      margin: 2px 0 0;
+    }
+    .pp-mock-phone__section {
+      padding: 14px 8px 6px;
+    }
+    .pp-mock-phone__section-label {
+      font-family: var(--pp-f-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pp-color-warm-ink-soft);
+      margin: 0 0 8px;
+    }
+    .pp-mock-phone__chip {
+      display: inline-block;
+      padding: 5px 10px;
+      background: var(--pp-color-warm-accent-soft);
+      color: var(--pp-color-warm-accent);
+      border-radius: var(--pp-r-pill);
+      font-size: 12px;
+      font-weight: 500;
+      margin: 0 4px 4px 0;
+    }
+    .pp-mock-phone__cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #25D366;
+      color: #fff;
+      border: none;
+      border-radius: var(--pp-r-md);
+      font-family: var(--pp-f-sans);
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .pp-mock-phone__qr {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      background: var(--pp-color-warm-surface);
+      border: 1px solid var(--pp-color-warm-border);
+      border-radius: var(--pp-r-md);
+      margin-top: 10px;
+    }
+    .pp-mock-phone__qr-grid {
+      width: 60px; height: 60px;
+      background-image:
+        linear-gradient(45deg, var(--pp-color-warm-ink) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--pp-color-warm-ink) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--pp-color-warm-ink) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--pp-color-warm-ink) 75%);
+      background-size: 8px 8px;
+      background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+      border-radius: 4px;
+    }
+    .pp-mock-phone__qr-text {
+      font-size: 11px;
+      color: var(--pp-color-warm-ink-soft);
+      line-height: 1.35;
     }
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
@@ -72,12 +602,12 @@
         PerfilaPro
       </a>
       <ul class="pp-nav__links" role="list">
-        <li><a href="/directorio">Directorio</a></li>
         <li><a href="#como-funciona">Cómo funciona</a></li>
-        <li><a href="#empresa">Para empresas</a></li>
+        <li><a href="#precios">Precios</a></li>
+        <li><a href="#equipos">Para empresas</a></li>
       </ul>
       <div class="pp-nav__actions">
-        <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--sm pp-btn--pill">Crear mi perfil gratis</a>
+        <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--sm pp-btn--pill">Crear mi perfil</a>
       </div>
     </nav>
   </div>
@@ -85,81 +615,71 @@
 
 <main id="main">
 
-<!-- ══════════════════ HERO ══════════════════ -->
+<!-- ══════════════════ 1 · HERO ══════════════════ -->
 <section class="pp-hero">
   <div class="pp-wrap">
     <div class="pp-hero__inner">
 
-      <!-- Left: copy + search -->
       <div class="pp-hero__text">
         <div class="pp-hero__eyebrow pp-reveal is-in">
           <span class="pp-hero__eyebrow-dot"></span>
-          Perfil profesional gratuito
+          Tu perfil profesional, en 2 minutos
         </div>
         <h1 class="pp-hero__h1 pp-reveal is-in">
-          Tu trabajo,<br>
-          <em>visible.</em><br>
-          Tu perfil,<br>
-          compartible.
+          Tu trabajo<br>
+          <em>merece</em><br>
+          verse.
         </h1>
         <p class="pp-hero__sub pp-reveal is-in">
-          Un enlace que lo dice todo: quién eres, qué haces, cómo contratar. Gratis, sin cuenta, en 2 minutos.
+          Una URL propia, un QR para llevar y una tarjeta digital pensada para enseñar. Sin web, sin app, sin complicaciones.
         </p>
 
-        <!-- Search -->
-        <form class="pp-hero-search pp-reveal is-in" onsubmit="heroSearch(event)" role="search" aria-label="Buscar profesionales">
-          <div class="pp-hero-search__row">
-            <div class="pp-hero-search__field">
-              <label class="pp-hero-search__label" for="hsWhat">¿Qué buscas?</label>
-              <input class="pp-hero-search__input" id="hsWhat" type="text" placeholder="Electricista, fontanero…" autocomplete="off">
-            </div>
-            <div class="pp-hero-search__field">
-              <label class="pp-hero-search__label" for="hsWhere">¿Dónde?</label>
-              <input class="pp-hero-search__input" id="hsWhere" type="text" placeholder="Ciudad o zona" autocomplete="off">
-            </div>
-            <button type="submit" class="pp-btn pp-btn--primary pp-btn--pill" style="align-self:flex-end">Buscar</button>
-          </div>
-          <div class="pp-hero-search__chips" aria-label="Búsquedas rápidas">
-            <button type="button" class="pp-chip" onclick="quickSearch('electricistas')">⚡ Electricistas</button>
-            <button type="button" class="pp-chip" onclick="quickSearch('fontaneros')">🔧 Fontaneros</button>
-            <button type="button" class="pp-chip" onclick="quickSearch('carpinteros')">🪚 Carpinteros</button>
-            <button type="button" class="pp-chip" onclick="quickSearch('pintores')">🖌 Pintores</button>
-            <button type="button" class="pp-chip" onclick="quickSearch('fisioterapeutas')">💆 Fisios</button>
-          </div>
-        </form>
+        <div class="pp-hero-badges pp-reveal is-in">
+          <span class="pp-hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin cuenta
+          </span>
+          <span class="pp-hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin diseñador
+          </span>
+          <span class="pp-hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin hosting
+          </span>
+        </div>
 
         <div class="pp-hero__actions pp-reveal is-in">
           <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Crear mi perfil gratis</a>
-          <a href="/directorio" class="pp-btn pp-btn--secondary pp-btn--lg pp-btn--pill">Ver el directorio</a>
+          <a href="#anatomia" class="pp-btn pp-btn--secondary pp-btn--lg pp-btn--pill">Ver cómo queda</a>
         </div>
-        <p class="pp-hero__micro">Sin tarjeta · Sin cuenta · Tu URL lista al instante</p>
+        <p class="pp-hero__micro">Pago único. Sin suscripciones. Sin sorpresas.</p>
       </div>
 
       <!-- Right: profile card preview -->
       <div class="pp-hero__visual pp-reveal is-in" aria-hidden="true">
         <div class="pp-profile-card">
           <div class="pp-profile-card__top">
-            <div class="pp-avatar pp-avatar--xl">B</div>
+            <div class="pp-avatar pp-avatar--xl">M</div>
             <div>
-              <p class="pp-profile-card__name">Benjamín Rodríguez</p>
-              <p class="pp-profile-card__sub">Electricista · Huesca</p>
+              <p class="pp-profile-card__name">María Cano</p>
+              <p class="pp-profile-card__sub">Fisioterapeuta · Zaragoza</p>
             </div>
           </div>
           <div class="pp-profile-card__bio">
-            Instalaciones eléctricas rurales, cuadros de mando y mantenimiento en los Pirineos. 20 años en el oficio.
+            Rehabilitación deportiva y dolor crónico. Consulta en centro y a domicilio.
           </div>
           <div class="pp-profile-card__role">
-            <span>Electricidad &amp; Apicultura</span>
+            <span>Fisioterapia</span>
             <span class="pp-profile-card__role-badge">Pro</span>
           </div>
           <div class="pp-profile-card__actions">
-            <button class="pp-btn pp-btn--wa pp-btn--pill" style="cursor:default;opacity:.7">
+            <button class="pp-btn pp-btn--wa pp-btn--pill" style="cursor:default;opacity:.85" type="button" aria-disabled="true">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
               WhatsApp directo
             </button>
-            <button class="pp-btn pp-btn--secondary pp-btn--pill" style="cursor:default;opacity:.7">Ver perfil</button>
+            <button class="pp-btn pp-btn--secondary pp-btn--pill" type="button" style="cursor:default;opacity:.85" aria-disabled="true">Llamar ahora</button>
           </div>
-          <p class="pp-pro-card__fun" style="margin-top:8px">Apicultor en Pirineos · Esquiador de backcountry · Guitarrista</p>
           <div class="pp-profile-card__meta">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             <span>perfilapro.es/c/<strong>tu-nombre</strong></span>
@@ -171,10 +691,193 @@
   </div>
 </section>
 
-<!-- ══════════════════ PROFILES RAIL ══════════════════ -->
-<section class="pp-rail-section pp-section--alt">
+<!-- ══════════════════ 2 · ANATOMÍA · LO QUE VEN ══════════════════ -->
+<section class="pp-section pp-section--alt" id="anatomia">
   <div class="pp-wrap">
-    <p class="pp-section__kicker">Profesionales reales</p>
+    <div class="pp-section__head">
+      <span class="pp-section__kicker">El producto</span>
+      <h2 class="pp-section__title pp-reveal is-in">Esto es lo que ven cuando se lo enseñas</h2>
+      <p class="pp-section__copy pp-reveal is-in">Una tarjeta que abre WhatsApp, que llama, que se imprime y que se escanea. Todo en un enlace.</p>
+    </div>
+
+    <div class="pp-anatomy">
+      <div class="pp-anatomy__visual pp-reveal is-in">
+        <div class="pp-mock-phone">
+          <div class="pp-mock-phone__head">
+            <div class="pp-mock-phone__avatar">P</div>
+            <div>
+              <p class="pp-mock-phone__name">Pastelería Sebastián</p>
+              <p class="pp-mock-phone__role">Hostelería · Alicante</p>
+            </div>
+          </div>
+          <div class="pp-mock-phone__section">
+            <p class="pp-mock-phone__section-label">Servicios</p>
+            <span class="pp-mock-phone__chip">Tartas a medida</span>
+            <span class="pp-mock-phone__chip">Eventos</span>
+            <span class="pp-mock-phone__chip">Sin gluten</span>
+          </div>
+          <div class="pp-mock-phone__section">
+            <p class="pp-mock-phone__section-label">Cobertura</p>
+            <span class="pp-mock-phone__chip">Alicante centro y playa</span>
+          </div>
+          <button class="pp-mock-phone__cta" type="button" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606z"/></svg>
+            Contactar por WhatsApp
+          </button>
+          <div class="pp-mock-phone__qr">
+            <div class="pp-mock-phone__qr-grid"></div>
+            <p class="pp-mock-phone__qr-text">Escanea para abrir este perfil<br><strong>Descargar QR</strong></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pp-anatomy__list">
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">Foto, nombre y a qué te dedicas</p>
+            <p class="pp-anatomy-item__text">Lo primero que ve quien entra. Tu cara y lo que haces, sin scroll.</p>
+          </div>
+        </div>
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">Servicios listados</p>
+            <p class="pp-anatomy-item__text">Hasta 3 cosas concretas que haces. Claras, leíbles, sin marketing.</p>
+          </div>
+        </div>
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">Zona de cobertura</p>
+            <p class="pp-anatomy-item__text">Dónde trabajas. Para que no te llamen de Cádiz si solo cubres Lleida.</p>
+          </div>
+        </div>
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">Botón de WhatsApp directo</p>
+            <p class="pp-anatomy-item__text">Un toque y abre la conversación contigo. Sin copiar números.</p>
+          </div>
+        </div>
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">QR descargable</p>
+            <p class="pp-anatomy-item__text">Imprímelo en la furgo, en un cartel, en tu tarjeta de visita.</p>
+          </div>
+        </div>
+        <div class="pp-anatomy-item pp-reveal">
+          <span class="pp-anatomy-item__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </span>
+          <div>
+            <p class="pp-anatomy-item__title">Añadir a contactos</p>
+            <p class="pp-anatomy-item__text">Quien te quiere recordar, te guarda en su teléfono con un toque.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 3 · OMNICANAL · DONDE LO ENSEÑAS ══════════════════ -->
+<section class="pp-section">
+  <div class="pp-wrap">
+    <div class="pp-section__head">
+      <span class="pp-section__kicker">Distribución</span>
+      <h2 class="pp-section__title pp-reveal is-in">Un enlace. Donde tú quieras.</h2>
+      <p class="pp-section__copy pp-reveal is-in">Tu URL vale para todo. Redes, mensajes, papel impreso o pegada en la furgo.</p>
+    </div>
+
+    <div class="pp-omni">
+      <div class="pp-omni__hub pp-reveal is-in">
+        <div class="pp-omni__url">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          perfilapro.es/c/<strong>tu-nombre</strong>
+        </div>
+      </div>
+
+      <div class="pp-omni__grid">
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Redes sociales</h3>
+          <p class="pp-omni-card__text">Una bio que abre tu perfil completo. Instagram, TikTok, LinkedIn, Facebook.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Mundo físico</h3>
+          <p class="pp-omni-card__text">El QR pegado en la furgo, en el escaparate, en un cartel de obra.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Conversaciones</h3>
+          <p class="pp-omni-card__text">Lo pegas en WhatsApp y va con foto, descripción y botón de contacto.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Tarjeta de visita</h3>
+          <p class="pp-omni-card__text">Imprímelo y entrégalo en mano. Quien lo escanee, te tiene en su teléfono.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 4 · CÓMO FUNCIONA ══════════════════ -->
+<section class="pp-section pp-section--alt" id="como-funciona">
+  <div class="pp-wrap">
+    <div class="pp-section__head">
+      <span class="pp-section__kicker">Cómo va</span>
+      <h2 class="pp-section__title pp-reveal is-in">Tres pasos. Cero fricción.</h2>
+      <p class="pp-section__copy pp-reveal is-in">De cero a tu URL en un café. Sin login, sin diseñador, sin saber qué es un dominio.</p>
+    </div>
+    <div class="pp-grid-4" style="grid-template-columns:repeat(3,1fr)">
+      <div class="pp-step pp-reveal">
+        <div class="pp-step__num">1</div>
+        <h3 class="pp-step__title">Rellenas lo importante</h3>
+        <p class="pp-step__text">Nombre, sector, zona, WhatsApp y tres servicios. Nada más.</p>
+      </div>
+      <div class="pp-step pp-reveal">
+        <div class="pp-step__num">2</div>
+        <h3 class="pp-step__title">Previsualizas y activas</h3>
+        <p class="pp-step__text">Ves cómo queda antes de pagar. Si te gusta, activas con un clic.</p>
+      </div>
+      <div class="pp-step pp-reveal">
+        <div class="pp-step__num">3</div>
+        <h3 class="pp-step__title">La enseñas a quien quieras</h3>
+        <p class="pp-step__text">Tu URL, tu QR, tu tarjeta. A clientes, amigos, familia o redes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 5 · PROFESIONALES REALES ══════════════════ -->
+<section class="pp-rail-section">
+  <div class="pp-wrap">
+    <p class="pp-section__kicker">Ya están dentro</p>
+    <h2 class="pp-section__title pp-reveal is-in" style="text-align:left;margin-bottom:var(--pp-s-3)">Profesionales que ya se ven</h2>
     <div class="pp-photos-rail" aria-label="Profesionales en PerfilaPro">
 
       <figure class="pp-pro-photo">
@@ -234,208 +937,138 @@
       </figure>
 
     </div>
-    <div style="text-align:center;margin-top:var(--pp-s-6)">
-      <a href="/directorio" class="pp-btn pp-btn--secondary pp-btn--pill">Ver todos los perfiles</a>
-    </div>
   </div>
 </section>
 
-<!-- ══════════════════ CÓMO FUNCIONA ══════════════════ -->
-<section class="pp-section" id="como-funciona">
+<!-- ══════════════════ 6 · PRECIOS ══════════════════ -->
+<section class="pp-section pp-section--alt" id="precios">
   <div class="pp-wrap">
     <div class="pp-section__head">
-      <span class="pp-section__kicker">Proceso</span>
-      <h2 class="pp-section__title pp-reveal is-in">Cuatro pasos, cero fricción</h2>
-      <p class="pp-section__copy pp-reveal is-in">Empieza gratis. Mejora solo si lo necesitas.</p>
+      <span class="pp-section__kicker">Tarifas</span>
+      <h2 class="pp-section__title pp-reveal is-in">Pago único. Sin sorpresas.</h2>
+      <p class="pp-section__copy pp-reveal is-in">Eliges plan, pagas una vez y te olvidas. Renovar es opcional y barato.</p>
     </div>
-    <div class="pp-grid-4">
-      <div class="pp-step pp-reveal">
-        <div class="pp-step__num">1</div>
-        <h3 class="pp-step__title">Crea tu perfil</h3>
-        <p class="pp-step__text">Nombre, sector, descripción y ciudad. Sin tarjeta, sin cuenta.</p>
-      </div>
-      <div class="pp-step pp-reveal">
-        <div class="pp-step__num">2</div>
-        <h3 class="pp-step__title">Tu URL al instante</h3>
-        <p class="pp-step__text">perfilapro.es/c/tu-nombre. Lista para compartir en segundos.</p>
-      </div>
-      <div class="pp-step pp-reveal">
-        <div class="pp-step__num">3</div>
-        <h3 class="pp-step__title">Compártela</h3>
-        <p class="pp-step__text">WhatsApp, Instagram, tarjeta de visita o código QR. Tú eliges.</p>
-      </div>
-      <div class="pp-step pp-reveal">
-        <div class="pp-step__num">4</div>
-        <h3 class="pp-step__title">Mejora cuando quieras</h3>
-        <p class="pp-step__text">Directorio público, estadísticas y QR premium. Solo si lo necesitas.</p>
-      </div>
+
+    <div class="pp-pricing">
+      <article class="pp-price-card pp-reveal">
+        <p class="pp-price-card__name">Plan Base</p>
+        <p class="pp-price-card__price">
+          <span class="pp-price-card__amount">9 €</span>
+          <span class="pp-price-card__period">/ 3 meses</span>
+        </p>
+        <ul class="pp-price-card__list">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 1 perfil profesional</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Foto, servicios y zona</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Botón de WhatsApp directo</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> QR descargable</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Sin marca de agua</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Analítica de 7 días</li>
+        </ul>
+        <a href="/alta.html?plan=base" class="pp-btn pp-btn--secondary pp-btn--pill" style="margin-top:auto">Empezar con Base</a>
+      </article>
+
+      <article class="pp-price-card pp-price-card--featured pp-reveal">
+        <span class="pp-price-card__badge">Más popular</span>
+        <p class="pp-price-card__name">Plan Pro</p>
+        <p class="pp-price-card__price">
+          <span class="pp-price-card__amount">19 €</span>
+          <span class="pp-price-card__period">/ 12 meses</span>
+        </p>
+        <ul class="pp-price-card__list">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Todo lo del plan Base</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Analítica completa con histórico</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Resumen semanal por email</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> QR alta calidad SVG y PNG</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Imágenes para redes (4 formatos)</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Asistente Google Business</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Perfiles adicionales con descuento</li>
+        </ul>
+        <a href="/alta.html?plan=pro" class="pp-btn pp-btn--primary pp-btn--pill" style="margin-top:auto">Empezar con Pro</a>
+      </article>
     </div>
+
+    <div class="pp-price-multi pp-reveal">
+      <span class="pp-price-multi__label">¿Más de un perfil? Descuento progresivo:</span>
+      <span class="pp-price-multi__chip">2º perfil +14 €/año</span>
+      <span class="pp-price-multi__chip">3º a 5º +9 €/año</span>
+      <span class="pp-price-multi__chip">6º o más +7 €/año</span>
+    </div>
+
+    <p class="pp-price-note">Al vencer el plan, renovar otros 12 meses cuesta 5 €. Sin permanencias. Sin domiciliaciones.</p>
   </div>
 </section>
 
-<!-- ══════════════════ QUÉ OBTIENES ══════════════════ -->
-<section class="pp-section pp-section--alt" id="que-obtienes">
+<!-- ══════════════════ 7 · BANDA B2B · EQUIPOS ══════════════════ -->
+<section class="pp-section" id="equipos">
   <div class="pp-wrap">
-    <div class="pp-section__head">
-      <span class="pp-section__kicker">Incluido gratis</span>
-      <h2 class="pp-section__title pp-reveal is-in">Lo que te da PerfilaPro</h2>
-    </div>
-    <div class="pp-grid-4">
-      <div class="pp-benefit-card pp-reveal">
-        <div class="pp-benefit-card__icon">
-          <svg width="20" height="20" data-lucide="globe"></svg>
-        </div>
-        <h3 class="pp-benefit-card__title">Perfil público</h3>
-        <p class="pp-benefit-card__text">Visible para cualquiera con tu enlace. Sin login, sin app.</p>
-      </div>
-      <div class="pp-benefit-card pp-reveal">
-        <div class="pp-benefit-card__icon">
-          <svg width="20" height="20" data-lucide="link"></svg>
-        </div>
-        <h3 class="pp-benefit-card__title">URL propia</h3>
-        <p class="pp-benefit-card__text">perfilapro.es/c/tu-nombre. Tuya para siempre.</p>
-      </div>
-      <div class="pp-benefit-card pp-reveal">
-        <div class="pp-benefit-card__icon">
-          <svg width="20" height="20" data-lucide="search"></svg>
-        </div>
-        <h3 class="pp-benefit-card__title">Directorio</h3>
-        <p class="pp-benefit-card__text">Aparece en búsquedas de tu sector y ciudad (plan Pro).</p>
-      </div>
-      <div class="pp-benefit-card pp-reveal">
-        <div class="pp-benefit-card__icon">
-          <svg width="20" height="20" data-lucide="message-circle"></svg>
-        </div>
-        <h3 class="pp-benefit-card__title">WhatsApp directo</h3>
-        <p class="pp-benefit-card__text">Botón que abre una conversación contigo sin copiar números.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ DIRECTORIO INLINE ══════════════════ -->
-<section class="pp-section" id="directorio">
-  <div class="pp-wrap">
-    <span class="pp-section__kicker">Directorio</span>
-    <h2 class="pp-section__title pp-reveal is-in" style="text-align:left;margin-bottom:8px">Encuentra al profesional que necesitas</h2>
-    <p class="pp-section__copy pp-reveal is-in" style="margin-inline:0;text-align:left">Busca por oficio o explora por sector.</p>
-
-    <form onsubmit="heroSearch(event)" role="search" aria-label="Buscar en el directorio" style="margin-top:var(--pp-s-6);max-width:560px">
-      <div class="pp-hero-search">
-        <div class="pp-hero-search__row" style="grid-template-columns:1fr auto">
-          <div class="pp-hero-search__field">
-            <input class="pp-hero-search__input" type="text" id="dirWhat" placeholder="¿Qué necesitas?" autocomplete="off">
-          </div>
-          <button type="submit" class="pp-btn pp-btn--primary pp-btn--pill">Buscar</button>
-        </div>
-      </div>
-    </form>
-
-    <div class="pp-dir-grid" id="dirGrid">
-      <a href="/directorio/electricistas" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">⚡</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Electricistas</h4><p>Instalaciones y averías</p></div>
-      </a>
-      <a href="/directorio/fontaneros" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">🔧</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Fontaneros</h4><p>Tuberías y sanitarios</p></div>
-      </a>
-      <a href="/directorio/carpinteros" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">🪚</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Carpinteros</h4><p>Muebles y restauración</p></div>
-      </a>
-      <a href="/directorio/pintores" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">🖌</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Pintores</h4><p>Interiores y exteriores</p></div>
-      </a>
-      <a href="/directorio/fisioterapeutas" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">💆</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Fisioterapeutas</h4><p>Rehabilitación y deporte</p></div>
-      </a>
-      <a href="/directorio/disenadores" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">🎨</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Diseñadores</h4><p>Gráfico, web e interiors</p></div>
-      </a>
-      <a href="/directorio/abogados" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">⚖️</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Abogados</h4><p>Asesoría y defensa</p></div>
-      </a>
-      <a href="/directorio/fotografos" class="pp-dir-card pp-reveal">
-        <span class="pp-dir-card__icon">📷</span>
-        <div class="pp-dir-card__text"><h4 class="pp-dir-card__title">Fotógrafos</h4><p>Bodas, producto y retrato</p></div>
-      </a>
-    </div>
-
-    <div style="text-align:center;margin-top:var(--pp-s-8)">
-      <a href="/directorio" class="pp-btn pp-btn--secondary pp-btn--pill">Ver todos los sectores</a>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ EMPRESA + FUN ZONE ══════════════════ -->
-<section class="pp-section pp-section--alt" id="empresa">
-  <div class="pp-wrap">
-    <div class="pp-grid-2">
-
-      <!-- Empresa card -->
-      <div class="pp-big-card pp-big-card--accent pp-reveal">
-        <span class="pp-section__kicker">Para empresas</span>
-        <h3 class="pp-big-card__title">Tu equipo, con cara y ojos</h3>
-        <p class="pp-big-card__text">Cada persona del equipo con su propio perfil: nombre, rol, WhatsApp. Sin centralitas, sin formularios.</p>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:var(--pp-s-6)">
-          <span class="pp-pro-card__fun">Benjamín R. — Electricidad</span>
-          <span class="pp-pro-card__fun">María G. — Diseño gráfico</span>
-          <span class="pp-pro-card__fun">Luis P. — Fontanería</span>
-        </div>
-        <div style="margin-top:auto">
-          <a href="https://wa.me/34600000000?text=Hola%2C%20me%20interesa%20PerfilaPro%20para%20mi%20equipo" class="pp-btn pp-btn--wa pp-btn--pill" target="_blank" rel="noopener">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-            Hablemos por WhatsApp
-          </a>
-        </div>
-      </div>
-
-      <!-- Fun Zone card -->
-      <div class="pp-big-card pp-fun-zone pp-reveal">
-        <span class="pp-section__kicker">Próximamente</span>
-        <h3 class="pp-big-card__title">Fun Zone</h3>
-        <p class="pp-big-card__text">Porque los mejores profesionales tienen vida más allá del trabajo. Pronto podrás mostrar tus hobbies, intereses y planes en tu perfil.</p>
-        <div class="pp-fun-chips">
-          <span class="pp-fun-chip">🐝 Apicultura</span>
-          <span class="pp-fun-chip">⛷ Esquí de travesía</span>
-          <span class="pp-fun-chip">🎸 Guitarra eléctrica</span>
-          <span class="pp-fun-chip">🍅 Huerto urbano</span>
-          <span class="pp-fun-chip">🎨 Acuarela</span>
-          <span class="pp-fun-chip">🚵 Bikepacking</span>
-        </div>
-        <div class="pp-big-card__quote">
-          "Llevo 20 años poniendo luz en los Pirineos, y los domingos cuido mis colmenas. ¿Tú qué haces cuando no trabajas?"
-          <br><strong>— Benjamín, electricista y apicultor</strong>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ CTA FINAL ══════════════════ -->
-<section class="pp-section" id="cta">
-  <div class="pp-wrap">
-    <div class="pp-cta-band pp-reveal">
+    <div class="pp-b2b pp-reveal">
       <div>
-        <h2 class="pp-cta-band__title">¿Listo para tener tu perfil?</h2>
-        <p class="pp-cta-band__text">Gratis, sin tarjeta. Tu URL propia en menos de 2 minutos.</p>
-        <div class="pp-cta-band__trust">
-          <span class="pp-cta-band__pill">Sin tarjeta de crédito</span>
-          <span class="pp-cta-band__pill">URL propia al instante</span>
-          <span class="pp-cta-band__pill">Editable siempre</span>
-          <span class="pp-cta-band__pill">Sin comisiones</span>
-        </div>
+        <p class="pp-b2b__kicker">Para empresas</p>
+        <h2 class="pp-b2b__title">¿10 personas o más en tu equipo?</h2>
+        <p class="pp-b2b__text">Damos de alta a todo tu equipo en 24 horas, con descuento por volumen y la imagen coherente que necesita tu marca. Sin subir 30 fotos a un panel: tú nos pasas la lista, nosotros lo dejamos listo.</p>
+        <ul class="pp-b2b__bullets">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Cada empleado con su URL y su QR
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Diseño consistente con tu marca
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Una factura, no 30
+          </li>
+        </ul>
       </div>
-      <div class="pp-cta-band__actions">
-        <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Crear mi perfil gratis</a>
-        <a href="/directorio" class="pp-btn pp-btn--secondary pp-btn--pill">Explorar el directorio</a>
+
+      <div class="pp-b2b__cta">
+        <p class="pp-b2b__cta-label">Equipo de 10</p>
+        <p class="pp-b2b__cta-amount">95 €<small> / año</small></p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.55);text-align:center;margin:0">≈ 80 cts / empleado / mes</p>
+        <a href="https://wa.me/34600000000?text=Hola%2C%20quiero%20PerfilaPro%20para%20mi%20equipo." class="pp-btn pp-btn--wa pp-btn--pill pp-btn--lg" target="_blank" rel="noopener" style="width:100%;justify-content:center">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Hablemos por WhatsApp
+        </a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 8 · COMPARATIVA + CTA FINAL ══════════════════ -->
+<section class="pp-section pp-section--alt" id="por-que">
+  <div class="pp-wrap">
+    <div class="pp-section__head">
+      <span class="pp-section__kicker">Por qué</span>
+      <h2 class="pp-section__title pp-reveal is-in">Más útil que una tarjeta. Más rápido que una web.</h2>
+    </div>
+
+    <div class="pp-compare">
+      <div class="pp-compare__card pp-compare__card--bad pp-reveal">
+        <h3 class="pp-compare__title">Tarjeta de papel + web cara</h3>
+        <ul class="pp-compare__list pp-compare__list--bad">
+          <li>Pagas dominio, hosting y diseñador</li>
+          <li>Tardas semanas en tenerla lista</li>
+          <li>La tarjeta se pierde, la web se queda obsoleta</li>
+          <li>No sabes quién la mira ni cuándo</li>
+          <li>Cambiar un dato implica volver al diseñador</li>
+        </ul>
+      </div>
+      <div class="pp-compare__card pp-compare__card--good pp-reveal">
+        <h3 class="pp-compare__title">Tu PerfilaPro</h3>
+        <ul class="pp-compare__list pp-compare__list--good">
+          <li>Pago único, 9 € o 19 €</li>
+          <li>Lista en 2 minutos</li>
+          <li>URL propia, QR descargable, tarjeta imprimible</li>
+          <li>Estadísticas de quién entra y cuándo</li>
+          <li>Editas cuando quieras, desde tu enlace privado</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:var(--pp-s-12)">
+      <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Crear mi perfil ahora</a>
+      <p style="font-size:13px;color:var(--pp-color-ink-muted);margin-top:var(--pp-s-3)">Sin tarjeta de crédito hasta que decidas activar.</p>
     </div>
   </div>
 </section>
@@ -453,13 +1086,14 @@
           </span>
           PerfilaPro
         </div>
-        <p class="pp-footer__tagline">Tu trabajo, tu negocio y tus planes, en un solo sitio.</p>
+        <p class="pp-footer__tagline">Tu trabajo merece verse.</p>
       </div>
       <div class="pp-footer__col">
         <h4>Producto</h4>
-        <a href="/directorio">Directorio</a>
         <a href="/alta.html">Crear perfil</a>
         <a href="#como-funciona">Cómo funciona</a>
+        <a href="#precios">Precios</a>
+        <a href="/directorio">Directorio</a>
       </div>
       <div class="pp-footer__col">
         <h4>Legal</h4>
@@ -471,6 +1105,7 @@
         <h4>Contacto</h4>
         <a href="https://wa.me/34600000000" target="_blank" rel="noopener">WhatsApp</a>
         <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a>
+        <a href="/agente-login.html">Acceso agentes</a>
       </div>
     </div>
     <div class="pp-footer__bottom">
@@ -481,31 +1116,11 @@
 </footer>
 
 <script>
-  /* Init Lucide icons */
   if (window.lucide) lucide.createIcons();
   document.addEventListener('DOMContentLoaded', function () {
     if (window.lucide) lucide.createIcons();
   });
 
-  /* Hero / directorio search */
-  function heroSearch(e) {
-    e.preventDefault();
-    var q = (document.getElementById('hsWhat') || document.getElementById('dirWhat') || {}).value || '';
-    q = q.trim();
-    var where = (document.getElementById('hsWhere') || {}).value || '';
-    where = where.trim();
-    if (!q && !where) { window.location.href = '/directorio'; return; }
-    var p = new URLSearchParams();
-    if (q) p.set('q', q);
-    if (where) p.set('ciudad', where);
-    window.location.href = '/directorio?' + p.toString();
-  }
-
-  function quickSearch(term) {
-    window.location.href = '/directorio?q=' + encodeURIComponent(term);
-  }
-
-  /* Scroll reveal */
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
