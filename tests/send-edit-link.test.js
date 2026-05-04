@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler, buildEditLinkEmail } from '../netlify/functions/send-edit-link.js';
+const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 // --- Mocks ---
 
@@ -17,21 +18,24 @@ function makeBuilder() {
   const b = {
     select: vi.fn(),
     eq: vi.fn(),
+    is: vi.fn(),
     single: mockSingle,
     update: vi.fn(),
   };
   b.select.mockReturnValue(b);
   b.eq.mockReturnValue(b);
+  b.is.mockReturnValue(b);
   b.update.mockReturnValue({ eq: mockEqUpdate });
   return b;
 }
 
 // --- Helpers ---
 
-function buildEvent({ method = 'POST', body = {} } = {}) {
+function buildEvent({ method = 'POST', body = {}, ip = '1.2.3.4' } = {}) {
   return {
     httpMethod: method,
-    body: JSON.stringify(body),
+    body:       typeof body === 'string' ? body : JSON.stringify(body),
+    headers:    { 'x-forwarded-for': ip },
   };
 }
 
@@ -44,6 +48,7 @@ describe('send-edit-link handler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
     mockSingle.mockResolvedValue({ data: baseCard, error: null });
@@ -134,6 +139,17 @@ describe('send-edit-link handler', () => {
     const eqCalls = builders[0].eq.mock.calls;
     const emailArg = eqCalls.find(([field]) => field === 'email')?.[1];
     expect(emailArg).toBe('ana@test.com');
+  });
+
+  it('devuelve 429 al superar el límite por IP (5 requests / 10 min)', async () => {
+    const ip = '9.9.9.9';
+    for (let i = 0; i < 5; i++) {
+      const res = await handler(buildEvent({ body: { email: 'ana@test.com' }, ip }));
+      expect(res.statusCode).toBe(200);
+    }
+    const blocked = await handler(buildEvent({ body: { email: 'ana@test.com' }, ip }));
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.headers['Retry-After']).toBeDefined();
   });
 });
 

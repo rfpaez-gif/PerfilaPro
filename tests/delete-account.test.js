@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler } from '../netlify/functions/delete-account.js';
+const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 const VALID_TOKEN = 'a'.repeat(64);
 const FUTURE = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -10,47 +11,43 @@ const baseCard = {
   edit_token_expires_at: FUTURE,
 };
 
-function buildEvent({ method = 'POST', body = { slug: 'ana-electricista', token: VALID_TOKEN } } = {}) {
+function buildEvent({ method = 'POST', body = { slug: 'ana-electricista', token: VALID_TOKEN }, ip = '1.2.3.4' } = {}) {
   return {
     httpMethod: method,
     body:       body === null ? null : (typeof body === 'string' ? body : JSON.stringify(body)),
+    headers:    { 'x-forwarded-for': ip },
   };
 }
 
-function buildDb({ card = baseCard, cardError = null, deleteErrors = {} } = {}) {
+function buildDb({ card = baseCard, cardError = null, updateError = null } = {}) {
+  // SELECT chain: from('cards').select().eq().eq().is().single()
   const cardSelectBuilder = {
     select: vi.fn().mockReturnThis(),
     eq:     vi.fn().mockReturnThis(),
+    is:     vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: card, error: cardError }),
   };
-  const deletes = {
-    visits:   vi.fn().mockResolvedValue({ error: deleteErrors.visits   || null }),
-    facturas: vi.fn().mockResolvedValue({ error: deleteErrors.facturas || null }),
-    cards:    vi.fn().mockResolvedValue({ error: deleteErrors.cards    || null }),
+
+  const updateEq = vi.fn().mockResolvedValue({ error: updateError });
+  const cardUpdateBuilder = {
+    update: vi.fn(() => ({ eq: updateEq })),
   };
-  function makeDeleteBuilder(table) {
-    return {
-      delete: vi.fn(() => ({ eq: deletes[table] })),
-    };
-  }
+
   return {
     from: vi.fn((table) => {
       if (table === 'cards') {
-        return {
-          ...cardSelectBuilder,
-          ...makeDeleteBuilder('cards'),
-        };
+        return { ...cardSelectBuilder, ...cardUpdateBuilder };
       }
-      if (table === 'visits')   return makeDeleteBuilder('visits');
-      if (table === 'facturas') return makeDeleteBuilder('facturas');
       throw new Error(`unexpected table: ${table}`);
     }),
-    _deletes: deletes,
+    _updateEq: updateEq,
+    _cardUpdate: cardUpdateBuilder,
+    _cardSelect: cardSelectBuilder,
   };
 }
 
-describe('delete-account handler', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+describe('delete-account handler (soft-delete)', () => {
+  beforeEach(() => { vi.clearAllMocks(); _resetRateLimit(); });
 
   it('devuelve 405 si method no es POST', async () => {
     const handler = makeHandler(buildDb());
@@ -88,38 +85,39 @@ describe('delete-account handler', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('borra visits, facturas y card en orden y devuelve 200', async () => {
+  it('select aplica filtro is(deleted_at, null) en el lookup', async () => {
     const db = buildDb();
-    const handler = makeHandler(db);
-    const res = await handler(buildEvent());
+    await makeHandler(db)(buildEvent());
+    expect(db._cardSelect.is).toHaveBeenCalledWith('deleted_at', null);
+  });
+
+  it('soft-deletea: hace UPDATE deleted_at, no DELETE', async () => {
+    const db = buildDb();
+    const res = await makeHandler(db)(buildEvent());
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body)).toEqual({ ok: true });
-    expect(db._deletes.visits).toHaveBeenCalledWith('slug', 'ana-electricista');
-    expect(db._deletes.facturas).toHaveBeenCalledWith('slug', 'ana-electricista');
-    expect(db._deletes.cards).toHaveBeenCalledWith('slug', 'ana-electricista');
+
+    // Verifica UPDATE { deleted_at: <ISO> } sobre cards
+    const updateArg = db._cardUpdate.update.mock.calls[0][0];
+    expect(updateArg.deleted_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(db._updateEq).toHaveBeenCalledWith('slug', 'ana-electricista');
   });
 
-  it('devuelve 500 si falla el borrado de visits y no continua', async () => {
-    const db = buildDb({ deleteErrors: { visits: { message: 'fail' } } });
-    const handler = makeHandler(db);
-    const res = await handler(buildEvent());
+  it('devuelve 500 si falla el UPDATE', async () => {
+    const db = buildDb({ updateError: { message: 'fail' } });
+    const res = await makeHandler(db)(buildEvent());
     expect(res.statusCode).toBe(500);
-    expect(db._deletes.facturas).not.toHaveBeenCalled();
-    expect(db._deletes.cards).not.toHaveBeenCalled();
   });
 
-  it('devuelve 500 si falla el borrado de facturas y no borra la card', async () => {
-    const db = buildDb({ deleteErrors: { facturas: { message: 'fail' } } });
-    const handler = makeHandler(db);
-    const res = await handler(buildEvent());
-    expect(res.statusCode).toBe(500);
-    expect(db._deletes.cards).not.toHaveBeenCalled();
-  });
-
-  it('devuelve 500 si falla el borrado de la card', async () => {
-    const db = buildDb({ deleteErrors: { cards: { message: 'fail' } } });
-    const handler = makeHandler(db);
-    const res = await handler(buildEvent());
-    expect(res.statusCode).toBe(500);
+  it('devuelve 429 al superar el límite por IP (10 requests / 10 min)', async () => {
+    const handler = makeHandler(buildDb());
+    const ip = '9.9.9.9';
+    for (let i = 0; i < 10; i++) {
+      const res = await handler(buildEvent({ ip }));
+      expect(res.statusCode).toBe(200);
+    }
+    const blocked = await handler(buildEvent({ ip }));
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.headers['Retry-After']).toBeDefined();
   });
 });

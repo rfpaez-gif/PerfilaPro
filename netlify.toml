@@ -14,6 +14,9 @@
 [functions."weekly-stats"]
   schedule = "0 9 * * 1"
 
+[functions."purge-deleted"]
+  schedule = "0 3 * * *"
+
 # Producción: rama main
 [context.production]
   command = "npm test"

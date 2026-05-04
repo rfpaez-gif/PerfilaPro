@@ -8,6 +8,7 @@ const mockEqUpdate = vi.fn();
 const mockSelect  = vi.fn();
 const mockEq      = vi.fn();
 const mockEq2     = vi.fn();
+const mockIs      = vi.fn();
 const mockGte     = vi.fn();
 const mockLte     = vi.fn();
 const mockEmailSend = vi.fn();
@@ -31,7 +32,8 @@ function cardExpiringInDays(days, overrides = {}) {
 function setupDbMock(cards = []) {
   mockLte.mockResolvedValue({ data: cards, error: null });
   mockGte.mockReturnValue({ lte: mockLte });
-  mockEq2.mockReturnValue({ gte: mockGte });
+  mockIs.mockReturnValue({ gte: mockGte });
+  mockEq2.mockReturnValue({ is: mockIs });
   mockEq.mockReturnValue({ eq: mockEq2 });
   mockSelect.mockReturnValue({ eq: mockEq });
   mockEqUpdate.mockResolvedValue({ error: null });

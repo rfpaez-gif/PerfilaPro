@@ -2,6 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -40,6 +41,9 @@ function makeHandler(db, emailClient) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
+    const rl = checkRateLimit(event, { bucket: 'send-edit-link', limit: 5, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
+
     let body;
     try {
       body = JSON.parse(event.body);
@@ -63,7 +67,7 @@ function makeHandler(db, emailClient) {
     }
 
     // Look up card by slug (from card footer link) or by email (manual form)
-    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active');
+    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active').is('deleted_at', null);
     const { data: card } = slugParam
       ? await query.eq('slug', slugParam).single()
       : await query.eq('email', email).single();

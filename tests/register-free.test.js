@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler, buildWelcomeEmail } from '../netlify/functions/register-free.js';
+const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 // --- Mocks ---
 
@@ -22,8 +23,12 @@ const mockDb = {
   from: mockFrom,
 };
 
-function buildEvent({ method = 'POST', body = {} } = {}) {
-  return { httpMethod: method, body: JSON.stringify(body) };
+function buildEvent({ method = 'POST', body = {}, ip = '1.2.3.4' } = {}) {
+  return {
+    httpMethod: method,
+    body:       typeof body === 'string' ? body : JSON.stringify(body),
+    headers:    { 'x-forwarded-for': ip },
+  };
 }
 
 const validBody = {
@@ -41,6 +46,7 @@ describe('register-free handler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
     // Default: no existing slug (no collision)
@@ -154,6 +160,25 @@ describe('register-free handler', () => {
     expect(res.statusCode).toBe(200);
     const insertCall = mockInsert.mock.calls[0][0];
     expect(insertCall.nombre).toBe('Paco García');
+  });
+
+  it('devuelve 429 al superar el límite por IP (5 requests / 10 min)', async () => {
+    const ip = '9.9.9.9';
+    for (let i = 0; i < 5; i++) {
+      const res = await handler(buildEvent({ body: { ...validBody, nombre: `Paco ${i}` }, ip }));
+      expect(res.statusCode).toBe(200);
+    }
+    const blocked = await handler(buildEvent({ body: validBody, ip }));
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.headers['Retry-After']).toBeDefined();
+  });
+
+  it('rate limit es por IP (otra IP pasa)', async () => {
+    for (let i = 0; i < 5; i++) {
+      await handler(buildEvent({ body: { ...validBody, nombre: `Paco ${i}` }, ip: '7.7.7.7' }));
+    }
+    const otherIp = await handler(buildEvent({ body: validBody, ip: '8.8.8.8' }));
+    expect(otherIp.statusCode).toBe(200);
   });
 });
 

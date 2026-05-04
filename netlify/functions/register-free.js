@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { capture: captureEvent } = require('./lib/posthog-server');
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -99,6 +100,9 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
+    const rl = checkRateLimit(event, { bucket: 'register-free', limit: 5, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
+
     let body;
     try {
       body = JSON.parse(event.body);
@@ -128,7 +132,8 @@ function makeHandler(db, emailClient = resend) {
     }
     const waNumber = phone.e164;
 
-    // Ensure slug uniqueness
+    // Ensure slug uniqueness — incluye soft-deleted (la PK sigue ocupada
+    // hasta que el job de purga limpie la fila a los 30 días).
     const { data: existing } = await db.from('cards').select('slug').eq('slug', slug).maybeSingle();
     if (existing) {
       slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}`;

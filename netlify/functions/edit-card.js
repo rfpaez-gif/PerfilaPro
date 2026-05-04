@@ -28,6 +28,7 @@ function makeHandler(db) {
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
+      .is('deleted_at', null)
       .single();
 
     if (error || !card) {

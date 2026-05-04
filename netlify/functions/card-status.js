@@ -16,6 +16,7 @@ exports.handler = async (event) => {
     .select('slug, nombre, plan')
     .eq('slug', slug)
     .eq('status', 'active')
+    .is('deleted_at', null)
     .single();
 
   return {

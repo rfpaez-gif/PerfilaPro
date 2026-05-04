@@ -68,6 +68,7 @@ async function processWeeklyStats(db, emailClient) {
     .select('slug, nombre, email')
     .eq('plan', 'pro')
     .eq('status', 'active')
+    .is('deleted_at', null)
     .not('email', 'is', null);
 
   if (error) {
