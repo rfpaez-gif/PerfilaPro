@@ -107,7 +107,18 @@ async function main() {
   const smoke = await apiGet('/numbering_series', token);
   if (!smoke.ok) fail('smoke', smoke);
   const numerations = smoke.body?.data || [];
-  console.log(`      OK · ${numerations.length} numeraciones disponibles\n`);
+  console.log(`      OK · ${numerations.length} numeraciones disponibles`);
+  if (numerations.length === 0) {
+    console.error('No hay numeraciones disponibles. Crea una en Quipu antes de continuar.');
+    process.exit(1);
+  }
+  const incomeNumeration = numerations.find(n =>
+    /income|ingreso|factura/i.test(n?.attributes?.kind || '') ||
+    /income|ingreso|factura/i.test(n?.attributes?.name || '')
+  ) || numerations[0];
+  const numerationId   = incomeNumeration.id;
+  const numerationName = incomeNumeration.attributes?.name || '(sin nombre)';
+  console.log(`      Usaremos numbering_series id=${numerationId} ("${numerationName}")\n`);
 
   // 3. Crear contacto demo
   console.log('[3/5] Creando contacto ficticio (NIF 12345678Z)...');
@@ -145,7 +156,8 @@ async function main() {
         payment_method: 'bank_card',
       },
       relationships: {
-        contact: { data: { id: contactId, type: 'contacts' } },
+        contact:    { data: { id: contactId,     type: 'contacts'         } },
+        numeration: { data: { id: numerationId,  type: 'numbering_series' } },
         items: {
           data: [{
             type: 'book_entry_items',
