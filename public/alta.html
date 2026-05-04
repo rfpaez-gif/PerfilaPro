@@ -34,7 +34,7 @@
       margin: 0 0 var(--pp-s-3);
     }
 
-    /* ── Stepper ────────────────────────────────────────────── */
+    /* ── Stepper (4 pasos) ──────────────────────────────────── */
     .pp-stepper {
       display: flex;
       align-items: center;
@@ -80,7 +80,11 @@
       height: 2px;
       background: var(--pp-color-border);
       margin: 0 .5rem;
-      min-width: 2rem;
+      min-width: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      .pp-stepper__label { display: none; }
+      .pp-stepper__line { min-width: 1rem; margin: 0 .25rem; }
     }
 
     /* ── Form card / steps / actions ────────────────────────── */
@@ -115,17 +119,199 @@
       gap: var(--pp-s-4);
     }
 
-    /* ── Estado error en pp-input (clase JS .is-error) ──────── */
-    .pp-input.is-error {
-      border-color: var(--pp-color-danger);
-    }
-    .pp-input.is-error:focus {
-      box-shadow: 0 0 0 3px rgba(178, 58, 72, .15);
-    }
-    .pp-field__help.is-error {
-      color: var(--pp-color-danger);
-    }
+    /* ── Estado error en pp-input ──────────────────────────── */
+    .pp-input.is-error { border-color: var(--pp-color-danger); }
+    .pp-input.is-error:focus { box-shadow: 0 0 0 3px rgba(178, 58, 72, .15); }
+    .pp-field__help.is-error { color: var(--pp-color-danger); }
     .pp-required { color: var(--pp-color-danger); }
+
+    /* ── Galería de arquetipos ──────────────────────────────── */
+    .pp-arch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--pp-s-3);
+      margin-bottom: var(--pp-s-6);
+    }
+    @media (max-width: 720px) {
+      .pp-arch-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pp-arch-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: var(--pp-s-3) var(--pp-s-2);
+      background: var(--pp-color-surface);
+      border: 1.5px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      cursor: pointer;
+      transition: transform .12s, border-color .15s, background .15s, box-shadow .15s;
+      text-align: center;
+      min-height: 96px;
+    }
+    .pp-arch-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--pp-color-accent);
+      background: var(--pp-color-accent-soft);
+    }
+    .pp-arch-card.is-selected {
+      border-color: var(--pp-color-accent);
+      background: var(--pp-color-accent);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 194, 119, .25);
+    }
+    .pp-arch-card__icon {
+      width: 32px; height: 32px;
+      display: grid;
+      place-items: center;
+      color: var(--pp-color-accent-deep);
+    }
+    .pp-arch-card.is-selected .pp-arch-card__icon { color: #fff; }
+    .pp-arch-card__label {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--pp-color-ink);
+    }
+    .pp-arch-card.is-selected .pp-arch-card__label { color: #fff; }
+    .pp-arch-card--other {
+      border-style: dashed;
+      background: var(--pp-color-bg);
+    }
+    .pp-arch-card--other .pp-arch-card__icon { color: var(--pp-color-ink-soft); }
+
+    /* ── Buscador de arquetipos ─────────────────────────────── */
+    .pp-arch-search {
+      position: relative;
+      margin-top: var(--pp-s-2);
+    }
+    .pp-arch-search__label {
+      display: block;
+      font-size: 13px;
+      color: var(--pp-color-ink-soft);
+      margin-bottom: 6px;
+    }
+    .pp-arch-search__results {
+      position: absolute;
+      z-index: var(--pp-z-dropdown);
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      box-shadow: var(--pp-sh-md);
+      list-style: none; margin: 0; padding: .25rem 0;
+      max-height: 260px; overflow-y: auto;
+    }
+    .pp-arch-search__item {
+      display: flex; gap: .6rem; align-items: center;
+      padding: .5rem .875rem; cursor: pointer; font-size: 14px;
+      color: var(--pp-color-ink);
+    }
+    .pp-arch-search__item:hover,
+    .pp-arch-search__item[data-sel] { background: var(--pp-color-accent-soft); }
+    .pp-arch-search__item-sector {
+      margin-left: auto; color: var(--pp-color-ink-muted); font-size: 12px;
+    }
+    .pp-arch-search__msg {
+      padding: .5rem .875rem; font-size: 14px;
+      color: var(--pp-color-ink-muted); font-style: italic;
+    }
+
+    /* ── Selección visible (estado actual) ──────────────────── */
+    .pp-arch-selected {
+      display: none;
+      align-items: center;
+      gap: var(--pp-s-3);
+      padding: var(--pp-s-3) var(--pp-s-4);
+      background: var(--pp-color-accent-soft);
+      border: 1px solid var(--pp-color-accent);
+      border-radius: var(--pp-r-md);
+      margin-bottom: var(--pp-s-4);
+    }
+    .pp-arch-selected.is-visible { display: flex; }
+    .pp-arch-selected__icon {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      color: var(--pp-color-accent-deep);
+      flex-shrink: 0;
+    }
+    .pp-arch-selected__text {
+      font-size: 14px; color: var(--pp-color-ink);
+      flex: 1;
+    }
+    .pp-arch-selected__text strong { color: var(--pp-color-accent-deep); }
+    .pp-arch-selected__change {
+      font-size: 12px;
+      background: none;
+      border: none;
+      color: var(--pp-color-accent-deep);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ── Chips de servicios ─────────────────────────────────── */
+    .pp-svc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .pp-svc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--pp-color-surface);
+      border: 1.5px solid var(--pp-color-border);
+      border-radius: var(--pp-r-pill);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--pp-color-ink);
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .pp-svc-chip:hover { border-color: var(--pp-color-accent); }
+    .pp-svc-chip.is-active {
+      background: var(--pp-color-accent);
+      border-color: var(--pp-color-accent);
+      color: #fff;
+    }
+    .pp-svc-chip__remove {
+      background: none; border: none; color: inherit;
+      font-size: 14px; line-height: 1; padding: 0; cursor: pointer;
+      opacity: .7;
+    }
+    .pp-svc-chip__remove:hover { opacity: 1; }
+    .pp-svc-add {
+      display: flex; gap: 6px; align-items: center;
+      margin-top: var(--pp-s-3);
+    }
+    .pp-svc-add input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .pp-svc-add input:focus {
+      outline: none;
+      border-color: var(--pp-color-accent);
+      box-shadow: 0 0 0 3px var(--pp-color-accent-soft);
+    }
+    .pp-svc-add button {
+      padding: 8px 14px;
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-accent);
+      color: var(--pp-color-accent-deep);
+      border-radius: var(--pp-r-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pp-svc-add button:hover { background: var(--pp-color-accent-soft); }
+    .pp-svc-add button:disabled { opacity: .4; cursor: not-allowed; }
 
     /* ── Review panel ───────────────────────────────────────── */
     .pp-review {
@@ -145,10 +331,7 @@
       align-items: baseline;
       gap: .5rem;
     }
-    .pp-review__key {
-      color: var(--pp-color-ink-muted);
-      font-size: 13px;
-    }
+    .pp-review__key { color: var(--pp-color-ink-muted); font-size: 13px; }
     .pp-review__val {
       color: var(--pp-color-ink);
       font-weight: 600;
@@ -157,20 +340,14 @@
     }
 
     /* ── Success panel ──────────────────────────────────────── */
-    .pp-success {
-      display: none;
-      text-align: center;
-      padding: var(--pp-s-12) var(--pp-s-8);
-    }
+    .pp-success { display: none; text-align: center; padding: var(--pp-s-12) var(--pp-s-8); }
     .pp-success.is-active { display: block; }
     .pp-success__icon {
-      width: 64px; height: 64px;
-      border-radius: 50%;
+      width: 64px; height: 64px; border-radius: 50%;
       background: var(--pp-color-accent-soft);
       border: 2px solid var(--pp-color-accent);
       color: var(--pp-color-accent-deep);
-      display: grid;
-      place-items: center;
+      display: grid; place-items: center;
       margin: 0 auto var(--pp-s-6);
     }
     .pp-success__title {
@@ -181,20 +358,10 @@
       color: var(--pp-color-ink);
       margin: 0 0 .5rem;
     }
-    .pp-success__lead {
-      color: var(--pp-color-ink-soft);
-      font-size: 14px;
-      margin: 0 0 var(--pp-s-4);
-    }
-    .pp-success__caption {
-      color: var(--pp-color-ink-muted);
-      font-size: 13px;
-      margin: 0 0 .4rem;
-    }
+    .pp-success__lead { color: var(--pp-color-ink-soft); font-size: 14px; margin: 0 0 var(--pp-s-4); }
+    .pp-success__caption { color: var(--pp-color-ink-muted); font-size: 13px; margin: 0 0 .4rem; }
     .pp-success__url {
-      display: inline-flex;
-      align-items: center;
-      gap: .5rem;
+      display: inline-flex; align-items: center; gap: .5rem;
       background: var(--pp-color-bg);
       border: 1px solid var(--pp-color-border);
       border-radius: var(--pp-r-md);
@@ -212,26 +379,15 @@
       background: var(--pp-color-accent-soft);
     }
     .pp-success__cta-row {
-      display: flex;
-      gap: .75rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: var(--pp-s-6);
+      display: flex; gap: .75rem; justify-content: center;
+      flex-wrap: wrap; margin-top: var(--pp-s-6);
     }
 
     /* ── Trust row debajo del form ──────────────────────────── */
-    .pp-trust-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: var(--pp-s-5);
-    }
+    .pp-trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--pp-s-5); }
     .pp-trust-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--pp-color-ink-soft);
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--pp-color-ink-soft);
     }
     .pp-trust-pill::before {
       content: '✓';
@@ -239,7 +395,7 @@
       font-weight: 700;
     }
 
-    /* ── Preview profile card (sidebar) ─────────────────────── */
+    /* ── Preview lateral ────────────────────────────────────── */
     .pp-alta-preview .pp-profile-card { margin: 0; }
     .pp-alta-preview__meta-prefix { opacity: .8; }
 
@@ -261,40 +417,18 @@
       color: var(--pp-color-ink);
     }
     .pp-city-ac__item:hover,
-    .pp-city-ac__item[data-sel] {
-      background: var(--pp-color-accent-soft);
-    }
+    .pp-city-ac__item[data-sel] { background: var(--pp-color-accent-soft); }
     .pp-city-ac__name { font-weight: 500; }
     .pp-city-ac__prov { color: var(--pp-color-ink-muted); font-size: 12px; white-space: nowrap; }
     .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--pp-color-ink-muted); font-style: italic; }
-    .pp-city-radius {
-      display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem;
-      margin-top: .5rem; padding: .5rem .75rem;
-      background: var(--pp-color-bg);
-      border: 1px solid var(--pp-color-border);
-      border-radius: var(--pp-r-md);
-      font-size: 13px;
-      color: var(--pp-color-ink);
-    }
-    .pp-city-radius__lbl {
-      color: var(--pp-color-ink-muted);
-      font-size: 12px;
-      flex: 0 0 100%;
-      margin-bottom: -.1rem;
-    }
-    .pp-city-radius label {
-      display: flex; align-items: center; gap: .3rem;
-      cursor: pointer; white-space: nowrap;
-    }
     .pp-city-osm {
-      font-size: 11px;
-      color: var(--pp-color-ink-muted);
-      margin: .3rem 0 0;
-      text-align: right;
+      font-size: 11px; color: var(--pp-color-ink-muted);
+      margin: .3rem 0 0; text-align: right;
     }
     .pp-city-osm a { color: inherit; text-decoration: none; }
     .pp-city-osm a:hover { text-decoration: underline; }
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
 </head>
@@ -325,20 +459,25 @@
 
       <!-- ── Left: form ── -->
       <div>
-        <!-- Stepper -->
+        <!-- Stepper (4 pasos) -->
         <div class="pp-stepper" id="stepper" aria-label="Progreso del formulario">
           <div class="pp-stepper__step is-active" id="st1">
             <span class="pp-stepper__num">1</span>
-            <span class="pp-stepper__label">Tu identidad</span>
+            <span class="pp-stepper__label">Quién eres</span>
           </div>
           <div class="pp-stepper__line"></div>
           <div class="pp-stepper__step" id="st2">
             <span class="pp-stepper__num">2</span>
-            <span class="pp-stepper__label">Contacto</span>
+            <span class="pp-stepper__label">Identidad</span>
           </div>
           <div class="pp-stepper__line"></div>
           <div class="pp-stepper__step" id="st3">
             <span class="pp-stepper__num">3</span>
+            <span class="pp-stepper__label">Contacto</span>
+          </div>
+          <div class="pp-stepper__line"></div>
+          <div class="pp-stepper__step" id="st4">
+            <span class="pp-stepper__num">4</span>
             <span class="pp-stepper__label">Confirmar</span>
           </div>
         </div>
@@ -346,72 +485,74 @@
         <!-- Form card -->
         <div class="pp-form-card" id="formCard">
 
-          <!-- Step 1: identidad -->
+          <!-- Step 1: galería de arquetipos -->
           <div class="pp-form-step is-active" id="step1">
-            <h1 class="pp-form-step__title">¿Cómo te llamas y qué haces?</h1>
-            <p class="pp-form-step__sub">El nombre y sector que verán quienes visiten tu perfil.</p>
-            <div class="pp-fields">
-              <div class="pp-field">
-                <label class="pp-field__label" for="f_nombre">Nombre profesional <span aria-hidden="true" class="pp-required">*</span></label>
-                <input class="pp-input" id="f_nombre" type="text" placeholder="Ej. Benjamín Rodríguez Electricista" maxlength="100" autocomplete="name" required>
-                <p class="pp-field__help">Puede ser tu nombre, tu marca o ambos.</p>
-              </div>
-              <div class="pp-field">
-                <label class="pp-field__label" for="f_sector">Sector <span aria-hidden="true" class="pp-required">*</span></label>
-                <select class="pp-input pp-input--select" id="f_sector" required>
-                  <option value="">Elige tu sector…</option>
-                  <option value="oficios">Oficios y servicios del hogar</option>
-                  <option value="salud">Salud y bienestar</option>
-                  <option value="educacion">Educación y formación</option>
-                  <option value="comercial">Comercial y ventas</option>
-                  <option value="belleza">Belleza y estética</option>
-                  <option value="reforma">Reforma y construcción</option>
-                  <option value="hosteleria">Hostelería y restauración</option>
-                  <option value="tech">Tecnología y digital</option>
-                  <option value="legal">Legal y asesoría</option>
-                  <option value="jardineria">Jardinería y paisajismo</option>
-                  <option value="transporte">Transporte y mudanzas</option>
-                  <option value="fotografia">Fotografía y vídeo</option>
-                  <option value="eventos">Eventos y celebraciones</option>
-                  <option value="automocion">Automoción y mecánica</option>
-                  <option value="seguridad">Seguridad y vigilancia</option>
-                  <option value="cuidados">Cuidados y asistencia</option>
-                  <option value="fitness">Fitness y deporte</option>
-                  <option value="turismo">Turismo y viajes</option>
-                  <option value="comercio">Comercio y tiendas</option>
-                  <option value="otro">Otro</option>
-                </select>
-                <p class="pp-field__help"></p>
-              </div>
-              <div class="pp-field">
-                <label class="pp-field__label" for="f_desc">¿Qué ofreces?</label>
-                <textarea class="pp-input pp-input--textarea" id="f_desc" rows="3" maxlength="300" placeholder="Cuéntanos qué servicios ofreces y qué te hace diferente…"></textarea>
-                <p class="pp-field__help" id="descCount">0 / 300 caracteres</p>
-              </div>
+            <h1 class="pp-form-step__title">¿Quién eres?</h1>
+            <p class="pp-form-step__sub">Elige el oficio que mejor te define. Lo demás te lo ponemos fácil después.</p>
+
+            <div class="pp-arch-grid" id="archGrid" role="listbox" aria-label="Elige tu oficio">
+              <!-- inyectado por JS -->
             </div>
+
+            <div class="pp-arch-search">
+              <label class="pp-arch-search__label" for="archSearch">¿No te ves arriba? Escribe tu profesión:</label>
+              <input class="pp-input" id="archSearch" type="text" placeholder="Ej. Abogada, Cocinera, Mecánico…" autocomplete="off" maxlength="80">
+              <ul class="pp-arch-search__results" id="archResults" role="listbox" hidden></ul>
+            </div>
+
             <div class="pp-form-actions">
               <span></span>
-              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(2)">Continuar →</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" id="step1Next" onclick="goStep(2)" disabled>Continuar →</button>
             </div>
           </div>
 
-          <!-- Step 2: contacto -->
+          <!-- Step 2: identidad + servicios -->
           <div class="pp-form-step" id="step2">
+            <div class="pp-arch-selected" id="archSelected">
+              <span class="pp-arch-selected__icon" id="archSelectedIcon"></span>
+              <span class="pp-arch-selected__text">Eres <strong id="archSelectedRol">—</strong></span>
+              <button type="button" class="pp-arch-selected__change" onclick="goStep(1)">Cambiar</button>
+            </div>
+
+            <h2 class="pp-form-step__title">¿Cómo te llamas?</h2>
+            <p class="pp-form-step__sub">Tu nombre, el de tu marca, o los dos. Lo podrás cambiar después.</p>
+
+            <div class="pp-fields">
+              <div class="pp-field">
+                <label class="pp-field__label" for="f_nombre">Nombre <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_nombre" type="text" placeholder="Ej. Yolanda Pérez" maxlength="100" autocomplete="name" required>
+                <p class="pp-field__help">Lo que aparecerá grande en tu perfil.</p>
+              </div>
+
+              <div class="pp-field">
+                <label class="pp-field__label">Tus servicios</label>
+                <div class="pp-svc-chips" id="svcChips" aria-live="polite">
+                  <!-- inyectado por JS -->
+                </div>
+                <div class="pp-svc-add">
+                  <input type="text" id="svcAddInput" placeholder="Añadir otro servicio…" maxlength="50">
+                  <button type="button" id="svcAddBtn" disabled>Añadir</button>
+                </div>
+                <p class="pp-field__help">Te hemos sugerido los típicos. Toca para activar/desactivar o añade los tuyos.</p>
+              </div>
+            </div>
+
+            <div class="pp-form-actions">
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(1)">← Atrás</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(3)">Continuar →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: contacto -->
+          <div class="pp-form-step" id="step3">
             <h2 class="pp-form-step__title">¿Cómo te contactan?</h2>
-            <p class="pp-form-step__sub">Dónde operas y cómo pueden escribirte.</p>
+            <p class="pp-form-step__sub">Dónde trabajas y cómo pueden escribirte.</p>
             <div class="pp-fields">
               <div class="pp-field">
                 <label class="pp-field__label" for="f_zona">Ciudad o zona <span aria-hidden="true" class="pp-required">*</span></label>
                 <div class="pp-city-ac">
                   <input class="pp-input" id="f_zona" type="text" placeholder="Escribe tu ciudad o municipio…" autocomplete="off" maxlength="100" required>
                   <ul class="pp-city-ac__list" id="f_zona_list" role="listbox" hidden></ul>
-                  <div class="pp-city-radius" id="f_zona_radius" hidden>
-                    <span class="pp-city-radius__lbl">Radio de cobertura:</span>
-                    <label><input type="radio" name="f_r" value="none" checked> Sin límite</label>
-                    <label><input type="radio" name="f_r" value="100km"> hasta 100 km</label>
-                    <label><input type="radio" name="f_r" value="50km"> hasta 50 km</label>
-                    <label><input type="radio" name="f_r" value="35km"> hasta 35 km</label>
-                  </div>
                   <p class="pp-city-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
                 </div>
                 <p class="pp-field__help"></p>
@@ -419,33 +560,37 @@
               <div class="pp-field">
                 <label class="pp-field__label" for="f_whatsapp">WhatsApp <span aria-hidden="true" class="pp-required">*</span></label>
                 <input class="pp-input" id="f_whatsapp" type="tel" placeholder="Ej. 612 345 678" autocomplete="tel" required>
-                <p class="pp-field__help">Solo tú lo controlas. Lo usarán para escribirte directamente.</p>
+                <p class="pp-field__help">Lo usarán tus clientes para escribirte directamente.</p>
               </div>
               <div class="pp-field">
                 <label class="pp-field__label" for="f_email">Email <span aria-hidden="true" class="pp-required">*</span></label>
                 <input class="pp-input" id="f_email" type="email" placeholder="tu@email.com" autocomplete="email" required>
-                <p class="pp-field__help">Te enviaremos el enlace para editar tu perfil. No aparece en público.</p>
+                <p class="pp-field__help">Para enviarte el enlace de edición y la factura. No aparece en público.</p>
               </div>
             </div>
             <div class="pp-form-actions">
-              <button class="pp-btn pp-btn--ghost" onclick="goStep(1)">← Atrás</button>
-              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(3)">Revisar perfil →</button>
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(2)">← Atrás</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(4)">Revisar perfil →</button>
             </div>
           </div>
 
-          <!-- Step 3: confirmar -->
-          <div class="pp-form-step" id="step3">
+          <!-- Step 4: confirmar -->
+          <div class="pp-form-step" id="step4">
             <h2 class="pp-form-step__title">¿Todo correcto?</h2>
             <p class="pp-form-step__sub">Revisa tu perfil antes de publicarlo. Podrás editarlo siempre.</p>
 
             <div class="pp-review">
               <div class="pp-review__row">
+                <span class="pp-review__key">Profesión</span>
+                <strong class="pp-review__val" id="rev_rol">—</strong>
+              </div>
+              <div class="pp-review__row">
                 <span class="pp-review__key">Nombre</span>
                 <strong class="pp-review__val" id="rev_nombre">—</strong>
               </div>
-              <div class="pp-review__row">
-                <span class="pp-review__key">Sector</span>
-                <strong class="pp-review__val" id="rev_sector">—</strong>
+              <div class="pp-review__row" id="rev_svc_row">
+                <span class="pp-review__key">Servicios</span>
+                <span class="pp-review__val" id="rev_svc" style="font-weight:400;max-width:26ch">—</span>
               </div>
               <div class="pp-review__row">
                 <span class="pp-review__key">Zona</span>
@@ -458,10 +603,6 @@
               <div class="pp-review__row">
                 <span class="pp-review__key">Email</span>
                 <strong class="pp-review__val" id="rev_email">—</strong>
-              </div>
-              <div class="pp-review__row" id="rev_desc_row" style="display:none">
-                <span class="pp-review__key">Descripción</span>
-                <span class="pp-review__val" id="rev_desc" style="font-weight:400;max-width:26ch">—</span>
               </div>
             </div>
 
@@ -480,7 +621,7 @@
             </div>
 
             <div class="pp-form-actions">
-              <button class="pp-btn pp-btn--ghost" onclick="goStep(2)">← Atrás</button>
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(3)">← Atrás</button>
               <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" id="submitBtn" onclick="submitForm()">
                 Publicar mi perfil gratis
               </button>
@@ -529,7 +670,7 @@
             <div class="pp-avatar pp-avatar--xl" id="prevAvatar">?</div>
             <div>
               <p class="pp-profile-card__name" id="prevNombre">Tu nombre</p>
-              <p class="pp-profile-card__sub" id="prevSub">Sector · Ciudad</p>
+              <p class="pp-profile-card__sub" id="prevSub">Profesión · Ciudad</p>
             </div>
           </div>
           <div class="pp-profile-card__bio" id="prevDesc" style="display:none"></div>
@@ -570,89 +711,301 @@
 
 <script>
 (function () {
-  /* ── City autocomplete state ── */
-  var _acCity = ''; var _acRadius = 'none';
-  var RADIUS_LABELS = { '100km': 'hasta 100 km', '50km': 'hasta 50 km', '35km': 'hasta 35 km' };
-  function getZonaFull() {
-    var city = _acCity || document.getElementById('f_zona').value.trim();
-    if (!city) return '';
-    return _acRadius !== 'none' ? city + ' · ' + RADIUS_LABELS[_acRadius] : city;
-  }
+  /* ════════════════════════════════════════════════════════════
+     STATE
+     ════════════════════════════════════════════════════════════ */
+  var ARCHETYPES = [];          // [{rol_profesional, sector, sector_slug, icon, diana, servicios_sugeridos, ...}]
+  var selectedArch = null;       // arquetipo elegido (objeto del JSON, o {custom:true, rol_profesional, sector_slug:'otro'})
+  var selectedServices = [];     // servicios elegidos (strings)
+  var _acCity = '';              // ciudad seleccionada del autocomplete OSM
+  var _acRadius = 'none';        // siempre 'none' (campo eliminado, default)
 
-  var SECTOR_LABELS = {
-    oficios:'Oficios y servicios del hogar', salud:'Salud y bienestar',
-    educacion:'Educación y formación', comercial:'Comercial y ventas',
-    belleza:'Belleza y estética', reforma:'Reforma y construcción',
-    hosteleria:'Hostelería y restauración', tech:'Tecnología y digital',
-    legal:'Legal y asesoría', jardineria:'Jardinería y paisajismo',
-    transporte:'Transporte y mudanzas', fotografia:'Fotografía y vídeo',
-    eventos:'Eventos y celebraciones', automocion:'Automoción y mecánica',
-    seguridad:'Seguridad y vigilancia', cuidados:'Cuidados y asistencia',
-    fitness:'Fitness y deporte', turismo:'Turismo y viajes',
-    comercio:'Comercio y tiendas', otro:'Otro',
-  };
-
-  /* ── Slug helper ── */
+  /* ════════════════════════════════════════════════════════════
+     UTILS
+     ════════════════════════════════════════════════════════════ */
   function toSlug(s) {
     return s.toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       .substring(0, 40);
   }
-
-  /* ── Initials ── */
   function initials(name) {
     var parts = name.trim().split(/\s+/);
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.substring(0, 2).toUpperCase();
   }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function getZonaFull() {
+    var city = _acCity || document.getElementById('f_zona').value.trim();
+    return city || '';
+  }
 
-  /* ── Live preview ── */
+  /* ════════════════════════════════════════════════════════════
+     CARGA DE ARQUETIPOS
+     ════════════════════════════════════════════════════════════ */
+  function loadArchetypes() {
+    return fetch('/data/archetypes.json')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        ARCHETYPES = data;
+        renderGallery();
+      })
+      .catch(function (err) {
+        console.error('No se pudo cargar archetypes.json', err);
+        // Fallback: el flow puede continuar con free-text en el buscador.
+      });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     GALERÍA DE ARQUETIPOS DIANA
+     ════════════════════════════════════════════════════════════ */
+  function renderGallery() {
+    var grid = document.getElementById('archGrid');
+    var diana = ARCHETYPES.filter(function (a) { return a.diana; });
+    var html = diana.map(function (a) {
+      return (
+        '<div class="pp-arch-card" role="option" tabindex="0"' +
+        ' data-rol="' + escapeHtml(a.rol_profesional) + '">' +
+          '<span class="pp-arch-card__icon"><i data-lucide="' + escapeHtml(a.icon) + '"></i></span>' +
+          '<span class="pp-arch-card__label">' + escapeHtml(a.rol_profesional) + '</span>' +
+        '</div>'
+      );
+    }).join('');
+    // Slot 15: "Otro / no me veo"
+    html +=
+      '<div class="pp-arch-card pp-arch-card--other" role="option" tabindex="0" id="archOther">' +
+        '<span class="pp-arch-card__icon"><i data-lucide="search"></i></span>' +
+        '<span class="pp-arch-card__label">No me veo</span>' +
+      '</div>';
+    grid.innerHTML = html;
+
+    // Click handlers en cada card
+    grid.querySelectorAll('.pp-arch-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        if (card.id === 'archOther') {
+          var inp = document.getElementById('archSearch');
+          inp.focus();
+          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        var rol = card.dataset.rol;
+        var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
+        if (arch) selectArchetype(arch);
+        // visual selection
+        grid.querySelectorAll('.pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+        card.classList.add('is-selected');
+      });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+      });
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     BUSCADOR DE ARQUETIPOS (autocomplete sobre los 77)
+     ════════════════════════════════════════════════════════════ */
+  (function () {
+    var inp = document.getElementById('archSearch');
+    var lst = document.getElementById('archResults');
+
+    function hide() { lst.hidden = true; lst.innerHTML = ''; }
+    function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+    function render(matches, query) {
+      if (!matches.length) {
+        lst.innerHTML =
+          '<li class="pp-arch-search__msg">' +
+            'No encontramos "' + escapeHtml(query) + '". Pulsa Enter para usarlo igualmente.' +
+          '</li>';
+        lst.hidden = false;
+        return;
+      }
+      lst.innerHTML = matches.slice(0, 12).map(function (a) {
+        return (
+          '<li class="pp-arch-search__item" role="option" data-rol="' + escapeHtml(a.rol_profesional) + '">' +
+            '<i data-lucide="' + escapeHtml(a.icon || 'briefcase') + '"></i>' +
+            '<span>' + escapeHtml(a.rol_profesional) + '</span>' +
+            '<span class="pp-arch-search__item-sector">' + escapeHtml(a.sector) + '</span>' +
+          '</li>'
+        );
+      }).join('');
+      lst.hidden = false;
+
+      lst.querySelectorAll('.pp-arch-search__item').forEach(function (item) {
+        item.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          var rol = item.dataset.rol;
+          var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
+          if (arch) {
+            selectArchetype(arch);
+            inp.value = arch.rol_profesional;
+            hide();
+            // limpiar selección visual del grid (porque eligió uno no diana)
+            document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+          }
+        });
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    inp.addEventListener('input', function () {
+      var q = inp.value.trim();
+      if (q.length < 2) { hide(); return; }
+      var nq = norm(q);
+      var matches = ARCHETYPES.filter(function (a) { return norm(a.rol_profesional).indexOf(nq) !== -1; });
+      render(matches, q);
+    });
+
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var q = inp.value.trim();
+        if (!q) return;
+        // Free text fallback: crear pseudo-arquetipo
+        var nq = norm(q);
+        var existing = ARCHETYPES.find(function (a) { return norm(a.rol_profesional) === nq; });
+        if (existing) {
+          selectArchetype(existing);
+        } else {
+          selectArchetype({
+            rol_profesional: q,
+            sector: 'Otro',
+            sector_slug: 'otro',
+            icon: 'briefcase',
+            servicios_sugeridos: [],
+            custom: true,
+          });
+        }
+        hide();
+        document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+      } else if (e.key === 'Escape') {
+        hide();
+      }
+    });
+
+    inp.addEventListener('blur', function () { setTimeout(hide, 150); });
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     SELECCIÓN DE ARQUETIPO (común a galería y buscador)
+     ════════════════════════════════════════════════════════════ */
+  function selectArchetype(arch) {
+    selectedArch = arch;
+    selectedServices = (arch.servicios_sugeridos || []).slice(0); // copia
+    document.getElementById('step1Next').disabled = false;
+    renderArchSelected();
+    renderServiceChips();
+    updatePreview();
+  }
+
+  function renderArchSelected() {
+    var box = document.getElementById('archSelected');
+    if (!selectedArch) { box.classList.remove('is-visible'); return; }
+    box.classList.add('is-visible');
+    document.getElementById('archSelectedRol').textContent = selectedArch.rol_profesional;
+    var iconHost = document.getElementById('archSelectedIcon');
+    iconHost.innerHTML = '<i data-lucide="' + escapeHtml(selectedArch.icon || 'briefcase') + '"></i>';
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     CHIPS DE SERVICIOS
+     ════════════════════════════════════════════════════════════ */
+  function renderServiceChips() {
+    var host = document.getElementById('svcChips');
+    host.innerHTML = selectedServices.map(function (s, i) {
+      return (
+        '<span class="pp-svc-chip is-active" data-idx="' + i + '">' +
+          escapeHtml(s) +
+          '<button type="button" class="pp-svc-chip__remove" aria-label="Quitar ' + escapeHtml(s) + '">×</button>' +
+        '</span>'
+      );
+    }).join('');
+    host.querySelectorAll('.pp-svc-chip__remove').forEach(function (btn, i) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var chip = btn.closest('.pp-svc-chip');
+        var idx = parseInt(chip.dataset.idx, 10);
+        selectedServices.splice(idx, 1);
+        renderServiceChips();
+        updatePreview();
+      });
+    });
+  }
+
+  (function () {
+    var inp = document.getElementById('svcAddInput');
+    var btn = document.getElementById('svcAddBtn');
+    function refreshBtn() { btn.disabled = !inp.value.trim() || selectedServices.length >= 5; }
+    inp.addEventListener('input', refreshBtn);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function () {
+      var v = inp.value.trim();
+      if (!v || selectedServices.length >= 5) return;
+      selectedServices.push(v);
+      inp.value = '';
+      refreshBtn();
+      renderServiceChips();
+      updatePreview();
+    });
+    refreshBtn();
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     PREVIEW LATERAL
+     ════════════════════════════════════════════════════════════ */
   function updatePreview() {
-    var nombre  = document.getElementById('f_nombre').value.trim();
-    var sector  = document.getElementById('f_sector').value;
-    var desc    = document.getElementById('f_desc').value.trim();
-    var zona    = getZonaFull();
+    var nombre = document.getElementById('f_nombre').value.trim();
+    var zona   = getZonaFull();
 
     document.getElementById('prevNombre').textContent = nombre || 'Tu nombre';
     document.getElementById('prevAvatar').textContent = nombre ? initials(nombre) : '?';
     document.getElementById('prevSlug').textContent   = nombre ? toSlug(nombre) : 'tu-nombre';
 
     var subParts = [];
-    if (SECTOR_LABELS[sector]) subParts.push(SECTOR_LABELS[sector].split(' y ')[0].split(' ')[0]);
+    if (selectedArch) subParts.push(selectedArch.rol_profesional);
     if (zona) subParts.push(zona);
-    document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Sector · Ciudad';
+    document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Profesión · Ciudad';
 
     var descEl = document.getElementById('prevDesc');
-    if (desc) { descEl.textContent = desc; descEl.style.display = ''; }
-    else { descEl.style.display = 'none'; }
+    if (selectedServices.length) {
+      descEl.textContent = selectedServices.join(' · ');
+      descEl.style.display = '';
+    } else {
+      descEl.style.display = 'none';
+    }
 
     var roleEl   = document.getElementById('prevRole');
     var roleText = document.getElementById('prevRoleText');
-    if (SECTOR_LABELS[sector]) {
-      roleText.textContent = SECTOR_LABELS[sector];
+    if (selectedArch) {
+      roleText.textContent = selectedArch.sector;
       roleEl.style.display = '';
     } else {
       roleEl.style.display = 'none';
     }
   }
 
-  /* ── Char counter ── */
-  document.getElementById('f_desc').addEventListener('input', function () {
-    document.getElementById('descCount').textContent = this.value.length + ' / 300 caracteres';
-    updatePreview();
-  });
-  ['f_nombre','f_sector','f_zona'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', updatePreview);
-  });
+  document.getElementById('f_nombre').addEventListener('input', updatePreview);
 
-  /* ── Stepper navigation ── */
+  /* ════════════════════════════════════════════════════════════
+     STEPPER NAVIGATION (4 pasos)
+     ════════════════════════════════════════════════════════════ */
   window.goStep = function (n) {
     if (n === 2 && !validateStep1()) return;
     if (n === 3 && !validateStep2()) return;
-    if (n === 3) fillReview();
+    if (n === 4 && !validateStep3()) return;
+    if (n === 4) fillReview();
 
-    [1,2,3].forEach(function (i) {
+    [1,2,3,4].forEach(function (i) {
       document.getElementById('step' + i).classList.toggle('is-active', i === n);
       var st = document.getElementById('st' + i);
       st.classList.remove('is-active','is-done');
@@ -663,7 +1016,9 @@
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_step_view', { step: n });
   };
 
-  /* ── Validation ── */
+  /* ════════════════════════════════════════════════════════════
+     VALIDACIONES
+     ════════════════════════════════════════════════════════════ */
   function showError(id, msg) {
     var el = document.getElementById(id);
     el.classList.add('is-error');
@@ -677,17 +1032,17 @@
     if (hint) hint.classList.remove('is-error');
   }
 
-  function validateStep1() {
+  function validateStep1() { return !!selectedArch; }
+
+  function validateStep2() {
     var ok = true;
     var nombre = document.getElementById('f_nombre').value.trim();
-    var sector = document.getElementById('f_sector').value;
-    clearError('f_nombre'); clearError('f_sector');
+    clearError('f_nombre');
     if (!nombre) { showError('f_nombre', 'El nombre es obligatorio.'); ok = false; }
-    if (!sector) { showError('f_sector', 'Elige un sector.'); ok = false; }
     return ok;
   }
 
-  function validateStep2() {
+  function validateStep3() {
     var ok = true;
     var zona     = getZonaFull();
     var whatsapp = document.getElementById('f_whatsapp').value.trim();
@@ -710,21 +1065,28 @@
     return ok;
   }
 
-  /* ── Review panel ── */
+  /* ════════════════════════════════════════════════════════════
+     REVIEW
+     ════════════════════════════════════════════════════════════ */
   function fillReview() {
-    var sectorKey = document.getElementById('f_sector').value;
+    document.getElementById('rev_rol').textContent      = selectedArch ? selectedArch.rol_profesional : '—';
     document.getElementById('rev_nombre').textContent   = document.getElementById('f_nombre').value.trim();
-    document.getElementById('rev_sector').textContent   = SECTOR_LABELS[sectorKey] || sectorKey;
     document.getElementById('rev_zona').textContent     = getZonaFull();
     document.getElementById('rev_whatsapp').textContent = document.getElementById('f_whatsapp').value.trim();
     document.getElementById('rev_email').textContent    = document.getElementById('f_email').value.trim();
-    var desc = document.getElementById('f_desc').value.trim();
-    var descRow = document.getElementById('rev_desc_row');
-    if (desc) { document.getElementById('rev_desc').textContent = desc; descRow.style.display = ''; }
-    else { descRow.style.display = 'none'; }
+
+    var svcRow = document.getElementById('rev_svc_row');
+    if (selectedServices.length) {
+      document.getElementById('rev_svc').textContent = selectedServices.join(' · ');
+      svcRow.style.display = '';
+    } else {
+      svcRow.style.display = 'none';
+    }
   }
 
-  /* ── Submit ── */
+  /* ════════════════════════════════════════════════════════════
+     SUBMIT
+     ════════════════════════════════════════════════════════════ */
   window.submitForm = function () {
     var btn = document.getElementById('submitBtn');
     var errMsg = document.getElementById('errMsg');
@@ -733,12 +1095,13 @@
     btn.textContent = 'Publicando…';
 
     var payload = {
-      nombre:   document.getElementById('f_nombre').value.trim(),
-      sector:   document.getElementById('f_sector').value,
-      desc:     document.getElementById('f_desc').value.trim(),
-      zona:     getZonaFull(),
-      whatsapp: document.getElementById('f_whatsapp').value.trim(),
-      email:    document.getElementById('f_email').value.trim(),
+      nombre:    document.getElementById('f_nombre').value.trim(),
+      sector:    selectedArch ? selectedArch.sector_slug : 'otro',
+      desc:      selectedArch ? selectedArch.rol_profesional : '',
+      servicios: selectedServices,
+      zona:      getZonaFull(),
+      whatsapp:  document.getElementById('f_whatsapp').value.trim(),
+      email:     document.getElementById('f_email').value.trim(),
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
@@ -767,8 +1130,7 @@
       document.getElementById('btnWaPerfil').href =
         'https://wa.me/?text=' + encodeURIComponent('Mi perfil profesional: ' + cardUrl);
 
-      /* Hide form, show success */
-      [1,2,3].forEach(function (i) { document.getElementById('step' + i).classList.remove('is-active'); });
+      [1,2,3,4].forEach(function (i) { document.getElementById('step' + i).classList.remove('is-active'); });
       document.getElementById('stepper').style.display  = 'none';
       document.getElementById('trustRow').style.display = 'none';
       document.getElementById('successPanel').classList.add('is-active');
@@ -784,7 +1146,9 @@
     });
   };
 
-  /* ── Copy URL ── */
+  /* ════════════════════════════════════════════════════════════
+     COPY URL en pantalla de éxito
+     ════════════════════════════════════════════════════════════ */
   window.copyUrl = function () {
     var url = document.getElementById('successUrlText').textContent;
     navigator.clipboard.writeText(url).then(function () {
@@ -795,11 +1159,12 @@
     });
   };
 
-  /* ── City autocomplete init ── */
+  /* ════════════════════════════════════════════════════════════
+     CITY AUTOCOMPLETE (OSM Nominatim)
+     ════════════════════════════════════════════════════════════ */
   (function () {
     var inp = document.getElementById('f_zona');
     var lst = document.getElementById('f_zona_list');
-    var rad = document.getElementById('f_zona_radius');
     var timer;
 
     function hide() { lst.hidden = true; }
@@ -808,7 +1173,6 @@
       _acCity = displayName;
       inp.value = displayName;
       hide();
-      rad.hidden = false;
       updatePreview();
     }
 
@@ -827,7 +1191,7 @@
         var li = document.createElement('li');
         li.className = 'pp-city-ac__item';
         li.setAttribute('role', 'option');
-        li.innerHTML = '<span class="pp-city-ac__name">' + name + '</span>' + (prov ? '<span class="pp-city-ac__prov">' + prov + '</span>' : '');
+        li.innerHTML = '<span class="pp-city-ac__name">' + escapeHtml(name) + '</span>' + (prov ? '<span class="pp-city-ac__prov">' + escapeHtml(prov) + '</span>' : '');
         li.addEventListener('mousedown', function (e) { e.preventDefault(); selectCity(display); });
         lst.appendChild(li);
       });
@@ -850,9 +1214,6 @@
 
     inp.addEventListener('input', function () {
       _acCity = '';
-      rad.hidden = true;
-      _acRadius = 'none';
-      rad.querySelector('input[value="none"]').checked = true;
       clearTimeout(timer);
       var q = inp.value.trim();
       if (q.length < 2) { hide(); updatePreview(); return; }
@@ -884,13 +1245,12 @@
         hide();
       }
     });
-
-    rad.querySelectorAll('input[type=radio]').forEach(function (r) {
-      r.addEventListener('change', function () { _acRadius = this.value; updatePreview(); });
-    });
   })();
 
-  /* Initial preview render */
+  /* ════════════════════════════════════════════════════════════
+     INIT
+     ════════════════════════════════════════════════════════════ */
+  loadArchetypes();
   updatePreview();
 })();
 </script>
