@@ -13,10 +13,11 @@ const mockSelectCards = vi.fn();
 const mockDb = { from: vi.fn() };
 
 function setupDb(proCards = [], weekCount = 5) {
-  // Chain para tarjetas Pro: .select().eq().eq().not()
+  // Chain para tarjetas Pro: .select().eq().eq().is().not()
   mockNot.mockResolvedValue({ data: proCards, error: null });
-  const mockEqStatus = vi.fn(() => ({ not: mockNot }));
-  const mockEqPlan   = vi.fn(() => ({ eq: mockEqStatus }));
+  const mockIsDeleted = vi.fn(() => ({ not: mockNot }));
+  const mockEqStatus  = vi.fn(() => ({ is: mockIsDeleted }));
+  const mockEqPlan    = vi.fn(() => ({ eq: mockEqStatus }));
   mockSelectCards.mockReturnValue({ eq: mockEqPlan });
 
   // Chain para conteo: .select('*', {head}).eq().gte()

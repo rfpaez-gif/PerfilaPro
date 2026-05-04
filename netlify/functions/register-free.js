@@ -132,7 +132,8 @@ function makeHandler(db, emailClient = resend) {
     }
     const waNumber = phone.e164;
 
-    // Ensure slug uniqueness
+    // Ensure slug uniqueness — incluye soft-deleted (la PK sigue ocupada
+    // hasta que el job de purga limpie la fila a los 30 días).
     const { data: existing } = await db.from('cards').select('slug').eq('slug', slug).maybeSingle();
     if (existing) {
       slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}`;

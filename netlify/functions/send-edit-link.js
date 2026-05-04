@@ -67,7 +67,7 @@ function makeHandler(db, emailClient) {
     }
 
     // Look up card by slug (from card footer link) or by email (manual form)
-    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active');
+    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active').is('deleted_at', null);
     const { data: card } = slugParam
       ? await query.eq('slug', slugParam).single()
       : await query.eq('email', email).single();

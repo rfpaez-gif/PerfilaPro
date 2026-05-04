@@ -25,6 +25,8 @@ function makeHandler(db) {
       };
     }
 
+    // Permitimos export incluso de cards soft-deleted dentro del periodo de
+    // gracia 30d (derecho de portabilidad GDPR vigente hasta la purga).
     const { data: card, error } = await db
       .from('cards')
       .select('*')

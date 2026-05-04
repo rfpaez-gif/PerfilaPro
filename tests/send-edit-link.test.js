@@ -18,11 +18,13 @@ function makeBuilder() {
   const b = {
     select: vi.fn(),
     eq: vi.fn(),
+    is: vi.fn(),
     single: mockSingle,
     update: vi.fn(),
   };
   b.select.mockReturnValue(b);
   b.eq.mockReturnValue(b);
+  b.is.mockReturnValue(b);
   b.update.mockReturnValue({ eq: mockEqUpdate });
   return b;
 }

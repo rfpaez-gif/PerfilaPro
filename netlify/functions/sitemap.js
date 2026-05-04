@@ -15,7 +15,8 @@ exports.handler = async (event) => {
     .from('cards')
     .select('slug', { count: 'exact', head: true })
     .eq('status', 'active')
-    .eq('directory_visible', true);
+    .eq('directory_visible', true)
+    .is('deleted_at', null);
 
   const totalProfiles = count || 0;
   const profilePages  = Math.max(1, Math.ceil(totalProfiles / SITEMAP_PAGE_SIZE));

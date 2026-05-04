@@ -41,6 +41,7 @@ exports.handler = async (event) => {
     .select('*')
     .eq('slug', slug)
     .in('status', ['active', 'free'])
+    .is('deleted_at', null)
     .single();
 
   if (error || !data) {

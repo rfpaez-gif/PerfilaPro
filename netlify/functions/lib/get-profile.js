@@ -8,6 +8,7 @@ async function getPublicProfile(db, slug) {
     .select('slug, nombre, tagline, foto_url, whatsapp, email, telefono, zona, descripcion, servicios, plan, stripe_session_id, status, profile_views, directory_featured, directory_visible, category_id, city_slug')
     .eq('slug', slug)
     .eq('status', 'active')
+    .is('deleted_at', null)
     .maybeSingle();
   if (error || !data) return null;
   return data;
@@ -105,6 +106,7 @@ async function getVisibleProfileSlugs(db, { page = 1, pageSize = 1000 } = {}) {
     .select('slug, created_at', { count: 'exact' })
     .eq('status', 'active')
     .eq('directory_visible', true)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(from, from + pageSize - 1);
   const slugs = (data || []).map(r => ({ slug: r.slug, lastmod: (r.created_at || '').split('T')[0] }));

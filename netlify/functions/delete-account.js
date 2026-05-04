@@ -36,11 +36,14 @@ function makeHandler(db) {
       };
     }
 
+    // Sólo se puede borrar una card no-borrada (deleted_at IS NULL).
+    // Si ya está soft-deleted, el token ya no aplica → 401 "enlace inválido".
     const { data: card, error } = await db
       .from('cards')
       .select('slug, edit_token_expires_at')
       .eq('slug', slug)
       .eq('edit_token', token)
+      .is('deleted_at', null)
       .single();
 
     if (error || !card) {
@@ -59,26 +62,15 @@ function makeHandler(db) {
       };
     }
 
-    const { error: visitsError } = await db.from('visits').delete().eq('slug', slug);
-    if (visitsError) {
-      return {
-        statusCode: 500,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'No se pudieron borrar las visitas' }),
-      };
-    }
+    // Soft-delete: marca deleted_at, deja visits y facturas intactas.
+    // Las facturas son de relevancia fiscal (AEAT) y nunca se borran físicamente
+    // hasta el job de purga a 30 días, que es el periodo de gracia GDPR.
+    const { error: updateError } = await db
+      .from('cards')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('slug', slug);
 
-    const { error: facturasError } = await db.from('facturas').delete().eq('slug', slug);
-    if (facturasError) {
-      return {
-        statusCode: 500,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'No se pudieron borrar las facturas' }),
-      };
-    }
-
-    const { error: cardError } = await db.from('cards').delete().eq('slug', slug);
-    if (cardError) {
+    if (updateError) {
       return {
         statusCode: 500,
         headers: { 'Content-Type': 'application/json' },

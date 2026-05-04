@@ -13,12 +13,14 @@ function makeBuilder() {
     select: vi.fn(),
     eq: vi.fn(),
     in: vi.fn(),
+    is: vi.fn(),
     single: mockSingle,
     update: vi.fn(),
   };
   b.select.mockReturnValue(b);
   b.eq.mockReturnValue(b);
   b.in.mockReturnValue(b);
+  b.is.mockReturnValue(b);
   b.update.mockReturnValue({ eq: mockEqUpdate });
   return b;
 }
