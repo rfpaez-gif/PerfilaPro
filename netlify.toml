@@ -6,7 +6,8 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["pdfkit"]
+  external_node_modules = ["pdfkit", "@resvg/resvg-js"]
+  included_files = ["netlify/functions/lib/fonts/**"]
 
 [functions."remind-expiry"]
   schedule = "0 9 * * *"
@@ -148,6 +149,11 @@
 [[redirects]]
   from   = "/api/profile-stats"
   to     = "/.netlify/functions/profile-stats"
+  status = 200
+
+[[redirects]]
+  from   = "/api/share-image"
+  to     = "/.netlify/functions/share-image"
   status = 200
 
 [[redirects]]
