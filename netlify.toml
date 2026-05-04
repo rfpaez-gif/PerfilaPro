@@ -141,6 +141,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/qr-download"
+  to     = "/.netlify/functions/qr-download"
+  status = 200
+
+[[redirects]]
   from   = "/api/lab-gemini"
   to     = "/.netlify/functions/lab-gemini"
   status = 200
