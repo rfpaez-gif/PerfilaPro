@@ -592,6 +592,13 @@
               <a href="" id="shareDlLinkedin" class="pp-share__btn" download>LinkedIn · 1200×627</a>
             </div>
           </div>
+
+          <div class="pp-share">
+            <p class="pp-share__title">Visibilidad en Google</p>
+            <a href="" id="gbpAssistantLink" class="pp-share__btn" style="display:block;text-align:center;background:var(--pp-color-accent);color:#fff;border-color:var(--pp-color-accent)">
+              Preparar mi Google Business Profile →
+            </a>
+          </div>
         </section>
 
         <div class="pp-upgrade" id="freeBanner">
@@ -939,10 +946,12 @@
     document.getElementById('stat7d').textContent   = stats.last7d;
 
     // Enlaces de descarga de imágenes shareables
-    const slugEnc = encodeURIComponent(slug);
+    const slugEnc  = encodeURIComponent(slug);
+    const tokenEnc = encodeURIComponent(token);
     document.getElementById('shareDlSquare').href   = '/api/share-image?slug=' + slugEnc + '&template=square';
     document.getElementById('shareDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
     document.getElementById('shareDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
+    document.getElementById('gbpAssistantLink').href = '/asistente-gbp.html?slug=' + slugEnc + '&token=' + tokenEnc;
 
     const svg = document.getElementById('statsSpark');
     const series = stats.daily || [];
