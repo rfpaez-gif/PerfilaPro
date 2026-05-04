@@ -1169,6 +1169,7 @@
                 body: JSON.stringify({
                   nombre: card.nombre, sector: card.tagline, zona: card.zona,
                   whatsapp: card.whatsapp, servicios: card.servicios || [],
+                  email: card.email,
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
                 }),
@@ -1192,7 +1193,11 @@
       if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
 
       // Cargar opciones del directorio y pre-seleccionar valores actuales
-      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible);
+      // Pasamos también card.sector (slug del arquetipo del alta) como
+      // fallback: si el usuario no ha configurado todavia category_sector,
+      // intentamos auto-seleccionarlo desde el sector del alta para no
+      // pedir de nuevo algo que ya se eligió en la galería de arquetipos.
+      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible, card.sector);
       const list = document.getElementById('servicesList');
       list.innerHTML = '';
       const services = card.servicios || [];
@@ -1234,7 +1239,7 @@
     btn.closest('.pp-svc-item').remove();
   }
 
-  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible) {
+  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible, archetypeSector) {
     try {
       const res = await fetch('/api/directory-options');
       if (!res.ok) return;
@@ -1257,9 +1262,23 @@
         citySel.appendChild(o);
       });
 
-      // Pre-seleccionar si hay valores guardados
-      if (currentSector) {
-        sectorSel.value = currentSector;
+      // Si el usuario ya configuró el directorio antes, prevalece eso.
+      // Si no, intentamos auto-seleccionar desde el sector del arquetipo
+      // del alta para no preguntar dos veces.
+      let resolvedSector = currentSector;
+      let autoMatched = false;
+      if (!resolvedSector && archetypeSector) {
+        const directKey  = archetypeSector;
+        const directMatch = !!sectorMap[directKey];
+        if (directMatch) {
+          resolvedSector = directKey;
+          autoMatched = true;
+        }
+      }
+
+      // Pre-seleccionar si hay valores guardados o auto-resueltos
+      if (resolvedSector) {
+        sectorSel.value = resolvedSector;
         onSectorChange();
         if (currentSpecialty) {
           document.getElementById('specialtySel').value = currentSpecialty;
@@ -1271,8 +1290,17 @@
         }
         if (currentVisible) document.getElementById('dirVisible').checked = true;
       }
+
+      // Si auto-resolvimos el sector desde el arquetipo, ocultamos el
+      // dropdown porque ya lo eligió el usuario en el alta. Si más
+      // adelante quiere cambiarlo, puede hacerlo desde "cambiar arquetipo".
+      if (autoMatched) {
+        const sectorField = sectorSel.closest('.pp-field');
+        if (sectorField) sectorField.style.display = 'none';
+      }
+
       // Mostrar enlace perfil público si tiene sector+ciudad configurado
-      if (currentSector && currentCity) {
+      if (resolvedSector && currentCity) {
         const lnk = document.getElementById('pubProfileLink');
         lnk.href = '/p/' + slug;
         lnk.classList.add('is-visible');

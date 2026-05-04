@@ -48,7 +48,7 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
     if (!nombre || !zona || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -73,7 +73,7 @@ function makeHandler(stripe) {
     const siteUrl  = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
     try {
-      const session = await stripe.checkout.sessions.create({
+      const sessionParams = {
         mode: 'payment',
         line_items: [{ price: priceId, quantity: 1 }],
         metadata: {
@@ -91,7 +91,16 @@ function makeHandler(stripe) {
         },
         success_url: `${siteUrl}/success.html?slug=${slug}`,
         cancel_url:  cancelUrl || `${siteUrl}/#crear`,
-      });
+      };
+
+      // Si tenemos el email del usuario (viene del alta o del card guardado),
+      // se lo pasamos a Stripe como customer_email para que NO se lo vuelva a
+      // pedir en el checkout. Stripe lo bloquea como readonly cuando llega así.
+      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        sessionParams.customer_email = email;
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
 
       return {
         statusCode: 200,
