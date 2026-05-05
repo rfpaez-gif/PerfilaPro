@@ -1233,12 +1233,11 @@
       const profileLink = document.getElementById('viewProfileLink');
       if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
 
-      // Cargar opciones del directorio y pre-seleccionar valores actuales
-      // Pasamos también card.sector (slug del arquetipo del alta) como
-      // fallback: si el usuario no ha configurado todavia category_sector,
-      // intentamos auto-seleccionarlo desde el sector del alta para no
-      // pedir de nuevo algo que ya se eligió en la galería de arquetipos.
-      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible, card.sector);
+      // Cargar opciones del directorio y pre-seleccionar valores actuales.
+      // Pasamos tagline + zona para que la función pueda resolver via
+      // archetypes.json: el archetype canónico aporta category_sector y
+      // category_specialty, y la zona se slugifica para matchear cities.
+      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible, card.sector, card.tagline, card.zona);
       const list = document.getElementById('servicesList');
       list.innerHTML = '';
       const services = card.servicios || [];
@@ -1280,11 +1279,26 @@
     btn.closest('.pp-svc-item').remove();
   }
 
-  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible, archetypeSector) {
+  // Slugify para matchear card.zona contra cities[].slug.
+  // Toma el primer token (antes de coma o paréntesis), normaliza acentos,
+  // baja a minúsculas y reemplaza no-alfanuméricos por guiones.
+  function zonaToCitySlug(zona) {
+    if (!zona) return '';
+    var first = String(zona).split(/[,(]/)[0].trim();
+    return first.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible, archetypeSector, taglineHint, zonaHint) {
     try {
-      const res = await fetch('/api/directory-options');
-      if (!res.ok) return;
-      directoryData = await res.json();
+      const [optsRes, archRes] = await Promise.all([
+        fetch('/api/directory-options'),
+        fetch('/data/archetypes.json'),
+      ]);
+      if (!optsRes.ok) return;
+      directoryData = await optsRes.json();
+      const archetypes = archRes.ok ? await archRes.json() : [];
 
       // Poblar sectores (únicos, preservando label)
       const sectorMap = {};
@@ -1297,36 +1311,64 @@
 
       // Poblar ciudades
       const citySel = document.getElementById('citySel');
+      const citySlugSet = new Set();
       directoryData.cities.forEach(c => {
         const o = document.createElement('option'); o.value = c.slug;
         o.textContent = c.province && c.province !== c.name ? c.name + ' (' + c.province + ')' : c.name;
         citySel.appendChild(o);
+        citySlugSet.add(c.slug);
       });
 
-      // Si el usuario ya configuró el directorio antes, prevalece eso.
-      // Si no, intentamos auto-seleccionar desde el sector del arquetipo
-      // del alta para no preguntar dos veces.
+      // Lookup del archetype canónico por tagline (= rol_profesional del alta).
+      // Aporta category_sector y category_specialty respaldados por el seed.
+      let archMatch = null;
+      if (taglineHint && archetypes.length) {
+        archMatch = archetypes.find(a => a.rol_profesional === taglineHint) || null;
+      }
+
+      // Resolver sector. Prioridad:
+      //   1. currentSector (lo que el usuario guardó explícitamente)
+      //   2. archetype.category_sector (canónico, post migración 010)
+      //   3. archetypeSector (sector_slug legacy, fallback compat)
       let resolvedSector = currentSector;
       let autoMatched = false;
-      if (!resolvedSector && archetypeSector) {
-        const directKey  = archetypeSector;
-        const directMatch = !!sectorMap[directKey];
-        if (directMatch) {
-          resolvedSector = directKey;
-          autoMatched = true;
+      if (!resolvedSector && archMatch && archMatch.category_sector && sectorMap[archMatch.category_sector]) {
+        resolvedSector = archMatch.category_sector;
+        autoMatched = true;
+      }
+      if (!resolvedSector && archetypeSector && sectorMap[archetypeSector]) {
+        resolvedSector = archetypeSector;
+        autoMatched = true;
+      }
+
+      // Resolver specialty. Solo si el sector resuelto coincide con el
+      // archetype canónico — evita prefillar con un specialty de otro sector.
+      let resolvedSpecialty = currentSpecialty;
+      if (!resolvedSpecialty && archMatch && resolvedSector === archMatch.category_sector) {
+        const specs = directoryData.categories.filter(c => c.sector === resolvedSector);
+        if (specs.some(s => s.specialty === archMatch.category_specialty)) {
+          resolvedSpecialty = archMatch.category_specialty;
         }
       }
 
-      // Pre-seleccionar si hay valores guardados o auto-resueltos
+      // Resolver city. Si no hay city_slug guardado, slugificamos la zona
+      // del card y validamos contra el catálogo de cities.
+      let resolvedCity = currentCity;
+      if (!resolvedCity && zonaHint) {
+        const guess = zonaToCitySlug(zonaHint);
+        if (guess && citySlugSet.has(guess)) resolvedCity = guess;
+      }
+
+      // Pre-seleccionar
       if (resolvedSector) {
         sectorSel.value = resolvedSector;
         onSectorChange();
-        if (currentSpecialty) {
-          document.getElementById('specialtySel').value = currentSpecialty;
+        if (resolvedSpecialty) {
+          document.getElementById('specialtySel').value = resolvedSpecialty;
           onSpecialtyChange();
         }
-        if (currentCity) {
-          document.getElementById('citySel').value = currentCity;
+        if (resolvedCity) {
+          document.getElementById('citySel').value = resolvedCity;
           onCityChange();
         }
         if (currentVisible) document.getElementById('dirVisible').checked = true;
@@ -1340,17 +1382,17 @@
         if (sectorField) sectorField.style.display = 'none';
       }
 
-      // Abrir el panel de directorio sólo si el usuario ya tenía algo
-      // configurado (especialidad, ciudad o toggle visible). Si solo se
-      // auto-resolvió el sector pero el resto está vacío, lo dejamos
-      // colapsado — directorio es opcional, no estorba en el flujo principal.
+      // Abrir el panel de directorio si el usuario ya tenía algo guardado
+      // o si el autofill lo dejó listo (specialty + city resueltos).
       const dirDetail = document.getElementById('dirDetail');
-      if (dirDetail && (currentSpecialty || currentCity || currentVisible)) {
+      const userHadConfig = currentSpecialty || currentCity || currentVisible;
+      const autofillReady = !userHadConfig && resolvedSpecialty && resolvedCity;
+      if (dirDetail && (userHadConfig || autofillReady)) {
         dirDetail.open = true;
       }
 
       // Mostrar enlace perfil público si tiene sector+ciudad configurado
-      if (resolvedSector && currentCity) {
+      if (resolvedSector && resolvedCity) {
         const lnk = document.getElementById('pubProfileLink');
         lnk.href = '/p/' + slug;
         lnk.classList.add('is-visible');
