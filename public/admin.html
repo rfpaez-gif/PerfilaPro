@@ -1005,6 +1005,14 @@
         : '';
       const seedFlag = isSeed ? '<span class="pp-seed-flag">seed</span>' : '';
 
+      let kitTitle = 'Re-enviar email post-pago con tarjeta + QR + factura';
+      if (card.kit_email_sent_at) {
+        const sentDate = new Date(card.kit_email_sent_at);
+        const days = Math.floor((Date.now() - sentDate.getTime()) / (1000 * 60 * 60 * 24));
+        const when = days === 0 ? 'hoy' : days === 1 ? 'ayer' : `hace ${days} días`;
+        kitTitle = `Último kit enviado ${when} (${sentDate.toLocaleDateString('es-ES')})`;
+      }
+
       return `<tr>
         <td class="pp-tbl__name">
           <div class="pp-seed-row">
@@ -1036,6 +1044,7 @@
             <button class="pp-action-btn pp-action-btn--extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
             ${card.email ? `<button class="pp-action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:11px">✉ Enlace</button>` : ''}
             ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
+            ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--invoice" onclick="resendKit('${card.slug}',this)" title="${kitTitle}">📦 Kit</button>` : ''}
             ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
           </div>
         </td>
@@ -1525,6 +1534,37 @@
         btn.style.color = '';
         btn.style.borderColor = '';
         btn.disabled = false;
+      }, 3000);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
+  }
+
+  // ── Reenviar kit completo (email post-pago con tarjeta + QR + factura) ──
+
+  async function resendKit(slug, btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    try {
+      const res = await fetch('/.netlify/functions/resend-kit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        body: JSON.stringify({ slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      btn.textContent = '✓ Enviado';
+      btn.style.color = 'var(--pp-color-success)';
+      btn.style.borderColor = '#bbf7d0';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+        loadData();
       }, 3000);
     } catch (err) {
       alert(`Error: ${err.message}`);

@@ -516,21 +516,79 @@
       transform: translateX(20px);
     }
 
-    /* ── Secondary action links bajo el botón guardar ───────── */
-    .pp-edit-actions {
-      margin-top: 1rem;
+    /* ── Kit físico (paid users): re-descarga de tarjeta + QR ── */
+    .pp-kit {
+      display: none;
+      background: var(--pp-color-surface);
+      border: 1px solid var(--pp-color-border);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .pp-kit.is-visible { display: block; }
+    .pp-kit__eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--pp-color-accent);
+      margin: 0 0 .35rem;
+    }
+    .pp-kit__title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--pp-color-ink);
+      margin: 0 0 .25rem;
+    }
+    .pp-kit__sub {
+      font-size: 13px;
+      color: var(--pp-color-ink-soft);
+      margin: 0 0 1rem;
+      line-height: 1.5;
+    }
+    .pp-kit__items { display: grid; gap: .625rem; }
+    .pp-kit__item {
+      background: var(--pp-color-warm-bg, #FAF3E6);
+      border-radius: var(--pp-r-md);
+      border-left: 3px solid var(--pp-color-accent);
+      padding: .75rem .875rem;
       display: flex;
-      gap: 1rem;
-      justify-content: center;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
       flex-wrap: wrap;
     }
-    .pp-edit-actions a {
-      font-size: 14px;
-      color: var(--pp-color-accent-deep);
+    .pp-kit__item-text { flex: 1; min-width: 180px; }
+    .pp-kit__item-name {
+      font-size: 13px;
       font-weight: 700;
-      text-decoration: none;
+      color: var(--pp-color-ink);
+      margin: 0 0 .15rem;
     }
-    .pp-edit-actions a:hover { text-decoration: underline; }
+    .pp-kit__item-desc {
+      font-size: 12px;
+      color: var(--pp-color-ink-soft);
+      line-height: 1.4;
+      margin: 0;
+    }
+    .pp-kit__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pp-color-accent);
+      text-decoration: none;
+      padding: .4rem .85rem;
+      border: 1.5px solid var(--pp-color-accent);
+      border-radius: 100px;
+      background: var(--pp-color-surface);
+      white-space: nowrap;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-kit__btn:hover {
+      background: var(--pp-color-accent-soft);
+    }
 
     .pp-public-link {
       display: none;
@@ -831,6 +889,28 @@
             </div>
           </div>
         </details>
+
+        <div class="pp-kit" id="kitBanner">
+          <p class="pp-kit__eyebrow">📦 Tu kit físico</p>
+          <p class="pp-kit__title">Llévate tu perfil al mundo real</p>
+          <p class="pp-kit__sub">Imprime la tarjeta para entregar en mano o pegar en la furgo. El QR sirve para Instagram, escaparates y carteles.</p>
+          <div class="pp-kit__items">
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">🃏 Tarjeta imprimible (PDF)</p>
+                <p class="pp-kit__item-desc">A6 vertical · imprímela tal cual o ampliada.</p>
+              </div>
+              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📱 Código QR (PNG 1024px)</p>
+                <p class="pp-kit__item-desc">Alta resolución · para web, redes y vinilos.</p>
+              </div>
+              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+          </div>
+        </div>
 
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__title">¿Listo para activar tu perfil?</p>
@@ -1210,6 +1290,16 @@
         loadProfileStats(slug, token).catch(function(err) {
           console.warn('No se pudieron cargar las estadísticas:', err.message);
         });
+      }
+
+      // Kit físico (paid users): re-descarga de tarjeta + QR.
+      const kitBanner = document.getElementById('kitBanner');
+      if (kitBanner && card.stripe_session_id) {
+        const slugEnc  = encodeURIComponent(slug);
+        const tokenEnc = encodeURIComponent(token);
+        document.getElementById('kitDlCard').href = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
+        document.getElementById('kitDlQr').href   = '/api/download-qr?slug='   + slugEnc + '&token=' + tokenEnc;
+        kitBanner.classList.add('is-visible');
       }
 
       // Upgrade banner

@@ -28,7 +28,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 1. **Landing page** (`public/index.html`) — user fills a form with professional data (name, sector, services, WhatsApp, zone) and selects a plan (Base 90 days / Pro 365 days).
 2. **`create-checkout`** — receives the form POST, builds a Stripe Checkout session with all user data packed into `session.metadata` (Stripe metadata values must be strings, so `servicios` is JSON-serialised), and returns the Checkout URL.
 3. **Stripe** processes payment and fires a webhook.
-4. **`stripe-webhook`** — verifies the Stripe signature, reads metadata from the session, upserts a row in Supabase `cards` table, generates a PDF invoice (non-blocking), and sends a confirmation email via Resend that includes the edit-card link.
+4. **`stripe-webhook`** — verifies the Stripe signature, reads metadata from the session, upserts a row in Supabase `cards` table, generates the printable card PDF + QR PNG + invoice PDF (all non-blocking), and sends a confirmation email via Resend with the three assets attached and the kit re-download links embedded.
 5. **`card`** — serves `/c/:slug` routes. Reads the card from Supabase, renders a self-contained HTML page (services list, WhatsApp button, QR code for paid plans), logs the visit, and provides client-side PNG export and vCard download.
 
 ### Key design decisions
@@ -36,7 +36,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - **All user data travels through Stripe metadata** — the checkout function serialises `servicios` as a JSON string because Stripe metadata values must be strings.
 - **Slug is derived from name** at checkout time (normalised, lowercased, max 40 chars) and is the primary key for cards.
 - **`card.js` renders HTML server-side** — no frontend framework, pure template string. The QR code is a base64 data URL generated with the `qrcode` package.
-- **Dependency injection for testability** — most functions export `makeHandler(deps)` so tests inject mocks without touching env vars or real clients. Functions that use this pattern: `stripe-webhook`, `admin-actions`, `admin-agents`, `agent-auth`, `agent-data`, `legal-settings`, `edit-card`, `send-edit-link`, `remind-expiry`, `weekly-stats`, `resend-invoice`, `export-data`, `delete-account`.
+- **Dependency injection for testability** — most functions export `makeHandler(deps)` so tests inject mocks without touching env vars or real clients. Functions that use this pattern: `stripe-webhook`, `admin-actions`, `admin-agents`, `agent-auth`, `agent-data`, `legal-settings`, `edit-card`, `send-edit-link`, `remind-expiry`, `weekly-stats`, `resend-invoice`, `export-data`, `delete-account`, `download-card`, `download-qr`.
 - **Edit tokens** — after payment, users receive a 32-byte hex token (64 chars) via email with a 7-day TTL. `send-edit-link` regenerates tokens on demand with a 10-minute rate limit and always returns HTTP 200 to prevent email enumeration.
 
 ### Supabase schema
@@ -45,6 +45,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - `slug` (PK), `nombre`, `tagline`, `whatsapp`, `zona`, `servicios` (jsonb), `foto_url`, `plan`, `status`, `stripe_session_id`, `expires_at`, `email`, `phone`, `refund_reason`, `refunded_at`
 - Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `edit_link_sent_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
 - Soft-delete + B2B defensive fields (Sprint 1, migration 007): `deleted_at`, `organization_id` (FK → `organizations.id`, NULL until phase 3 lands).
+- Kit tracking (migration 011): `kit_email_sent_at` — timestamp del último envío del welcome email post-pago con tarjeta + QR + factura. Lo setea `stripe-webhook` en el envío inicial; lo refresca `resend-kit` cuando un admin reenvía desde el panel.
 
 **`organizations` table** — defensive scaffolding for phase 3 (B2B teams). Empty in phases 1-2:
 - `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at`
@@ -76,6 +77,7 @@ Calls:
 - `legal-settings` (GET/POST) — read/write legal identity data
 - `admin-invoices` (GET) — list invoices or download a PDF by number
 - `resend-invoice` (POST) — re-send invoice PDF to card's email
+- `resend-kit` (POST) — re-send the full post-payment email (welcome + tarjeta PDF + QR PNG + factura). Updates `cards.kit_email_sent_at`. Same auth as `resend-invoice` (password + TOTP). Visible in the cards table as "📦 Kit" button with a tooltip showing how long ago the last kit was sent.
 - `admin-agents` (GET/POST) — manage agent accounts and liquidations
 
 ### Agent portal (`public/agente.html`, `public/agente-login.html`)
@@ -118,6 +120,37 @@ Both endpoints reuse the same `edit_token` mechanism as `edit-card` (32-byte hex
 PDF generation is triggered non-blocking from `stripe-webhook` after card upsert. `resend-invoice` can regenerate and resend at any time.
 
 **Limitation**: PDFs generated here are NOT sent to AEAT (Verifactu). Valid for the demo phase; for live commercial operation, every invoice must be transmitted to the Spanish tax authority via a registered provider (Quipu / Holded / FacturaDirecta).
+
+### Printable kit (post-payment delivery)
+
+`printable-card-utils.js` is a shared utility (not a Netlify Function) that materialises the digital product into tangible assets. Triggered non-blocking from `stripe-webhook` after card upsert; both files are attached to the post-payment email AND linked as direct re-downloads.
+
+Exports:
+- `buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl })` — A6 vertical PDF (105×148mm), no photo, with a prominent QR + identity (name, tagline, WhatsApp, URL). Helvetica only (no font loading). The PDF is vector + embedded high-res QR PNG, so it scales cleanly: print as-is for pocket size, ×2 for A5 wall poster, ×0.5 for ~A7 hand-out.
+- `generateQrPngBuffer(cardUrl, size)` — standalone QR PNG (default 1024px, max 2048px) for use in Instagram bios, escaparates, vinilos.
+- `formatSpanishPhone(phone)` — pretty-prints Spanish numbers (`34633816729` → `+34 633 81 67 29`).
+
+**Re-download endpoints** (auth via `edit_token`, same mechanism as `edit-card`):
+- `download-card.js` — `/api/download-card?slug=&token=` returns the PDF.
+- `download-qr.js` — `/api/download-qr?slug=&token=&size=` returns the PNG.
+
+Both are rate-limited (10 req / 10 min per IP) and cached as `private, no-store` to prevent leakage. Visible to paid users from the editor's "Tu kit físico" section (`#kitBanner` in `editar.html`, complementary to `#freeBanner` for free users).
+
+**Admin re-send** (`resend-kit.js`): cuando el usuario pierde el email completo o pide soporte, el admin puede regenerar y reenviar todo (welcome email + tarjeta + QR + factura) con un clic. Auth admin password + TOTP, mismo patrón que `resend-invoice`. Reusa la factura existente si la hay; si no, la regenera. Marca `cards.kit_email_sent_at` en éxito para visibilidad en el panel.
+
+**Difference vs `qr-download.js`**: that endpoint is public (anyone with a Pro slug can pull a QR), used from the public card page. The new `download-qr.js` requires the owner's token and works for Base too — both Base and Pro paid for and receive the kit.
+
+### Post-payment email structure ("caja de entrega")
+
+`stripe-webhook.js` → `buildEmail()` produces an email organised as 5 visual compartments rather than a flat receipt. Each section is a separate HTML email-defensive table (Outlook-safe, no rgba, no CSS variables). Order is intentional — the asset (live URL) comes first, downloads second:
+
+1. **Hero** — URL as a physical object in a bordered box + "Ver mi perfil →" CTA
+2. **Tu kit físico** — descriptive box with two re-download buttons (PDF + PNG); also notes the attachments are in the email
+3. **Lo que has contratado** — plan / fecha vence + secondary "Editar mi perfil" button
+4. **Dónde ponerlo** — three reinforcing use cases (redes / WhatsApp / furgo-escaparate)
+5. **Pie** — factura adjunta + reply-to-this-email + cierre personal
+
+Hex colors hardcoded in `lib/email-layout.js` (synchronised with `tokens.css`). Any palette change must touch both files in the same commit.
 
 ### Observability (PostHog)
 
@@ -194,6 +227,9 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/export-data` | `export-data` |
 | `/api/delete-account` | `delete-account` |
 | `/api/analytics-config` | `analytics-config` |
+| `/api/download-card` | `download-card` |
+| `/api/download-qr` | `download-qr` |
+| `/api/resend-kit` | `resend-kit` |
 
 ### Testing conventions
 

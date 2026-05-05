@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
+const { buildPrintableCardPDF, generateQrPngBuffer } = require('./printable-card-utils');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { capture: captureEvent } = require('./lib/posthog-server');
 
@@ -20,6 +21,8 @@ function stripTags(str) {
 function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   const cardUrl = `${siteUrl}/c/${slug}`;
   const editUrl = editToken ? `${siteUrl}/editar.html?slug=${slug}&token=${editToken}` : null;
+  const dlCardUrl = editToken ? `${siteUrl}/api/download-card?slug=${slug}&token=${editToken}` : null;
+  const dlQrUrl   = editToken ? `${siteUrl}/api/download-qr?slug=${slug}&token=${editToken}` : null;
   const planLabel = plan === 'pro' ? 'Premium' : 'Base';
   const planDuration = plan === 'pro' ? '365 días' : '90 días';
   const expiraFecha = new Date(expiresAt).toLocaleDateString('es-ES', {
@@ -28,45 +31,103 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
 
   const firstName = (nombre || '').split(' ')[0];
 
+  // Estructura "caja de entrega": el email se lee como abrir el paquete del
+  // producto, no como un albarán. Compartimentos visuales claros, jerarquía
+  // que pone el activo (URL viva) primero y los assets descargables segundo.
   const bodyHtml = `
-            <p style="margin:0 0 12px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
-              Tu perfil profesional está activo y listo para conquistar clientes. A partir de ahora, cuando alguien te pida el contacto, en vez de deletrear tu número o buscar el papel ese que siempre se pierde… les mandas el enlace y listo.
-            </p>
-            <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
-              Guárdalo en favoritos, ponlo en tu bio de Instagram, compártelo en grupos de WhatsApp. Cuanto más lo uses, más trabaja por ti.
+            <p style="margin:0 0 24px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              Tu perfil ya está vivo. Cuando alguien te pida el contacto, en vez de deletrear tu número, les mandas tu enlace y listo.
             </p>
 
-            ${editUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+            <!-- HERO · URL como objeto físico -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px">
+              <tr>
+                <td style="background:${COLORS.bg};border:1px solid ${COLORS.border};border-radius:12px;padding:18px 20px;text-align:center">
+                  <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">Tu enlace</p>
+                  <a href="${cardUrl}" style="font-size:16px;font-weight:700;color:${COLORS.accent};text-decoration:none;word-break:break-all">${cardUrl}</a>
+                </td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
               <tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:${COLORS.surface};color:${COLORS.accent};font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid ${COLORS.accent}">Editar mi perfil</a>
+                <a href="${cardUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Ver mi perfil →</a>
               </td></tr>
+            </table>
+
+            <!-- KIT FÍSICO · descargas tangibles -->
+            ${dlCardUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+              <tr>
+                <td style="background:${COLORS.surface};border:1px solid ${COLORS.border};border-radius:12px;padding:24px 22px">
+                  <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">📦 Tu kit físico</p>
+                  <p style="margin:0 0 18px;font-size:14px;color:${COLORS.inkSoft};line-height:1.6">Para imprimir, pegar en la furgo o compartir en redes. También los tienes adjuntos en este email.</p>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px">
+                    <tr>
+                      <td style="padding:12px 14px;background:${COLORS.bg};border-radius:8px;border-left:3px solid ${COLORS.accent}">
+                        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:${COLORS.ink}">🃏 Tarjeta imprimible (PDF)</p>
+                        <p style="margin:0 0 10px;font-size:12px;color:${COLORS.inkSoft};line-height:1.5">Imprímela tal cual o ampliada para escaparate, furgo o cartel.</p>
+                        <a href="${dlCardUrl}" style="display:inline-block;font-size:12px;font-weight:700;color:${COLORS.accent};text-decoration:none;padding:6px 14px;border:1.5px solid ${COLORS.accent};border-radius:100px">Descargar tarjeta ↓</a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:12px 14px;background:${COLORS.bg};border-radius:8px;border-left:3px solid ${COLORS.accent}">
+                        <p style="margin:0 0 2px;font-size:13px;font-weight:700;color:${COLORS.ink}">📱 Código QR (PNG alta resolución)</p>
+                        <p style="margin:0 0 10px;font-size:12px;color:${COLORS.inkSoft};line-height:1.5">Para Instagram, perfil de WhatsApp, vinilos, escaparate.</p>
+                        <a href="${dlQrUrl}" style="display:inline-block;font-size:12px;font-weight:700;color:${COLORS.accent};text-decoration:none;padding:6px 14px;border:1.5px solid ${COLORS.accent};border-radius:100px">Descargar QR ↓</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
             </table>` : ''}
 
-            <!-- Plan info -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+            <!-- LO QUE HAS CONTRATADO -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
               <tr>
-                <td style="background:${COLORS.accentSoft};border-radius:10px 10px 0 0;padding:12px 20px;border-left:3px solid ${COLORS.accent}">
-                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">Plan activo · ${planLabel}</p>
-                  <p style="margin:4px 0 0;font-size:13px;color:${COLORS.ink};font-weight:600">${planDuration} · hasta el ${expiraFecha}</p>
+                <td style="background:${COLORS.accentSoft};border-radius:10px 10px 0 0;padding:14px 20px;border-left:3px solid ${COLORS.accent}">
+                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">Lo que has contratado</p>
                 </td>
               </tr>
               <tr>
-                <td style="background:${COLORS.bg};border-radius:0 0 10px 10px;padding:12px 20px">
-                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">Tu enlace</p>
-                  <a href="${cardUrl}" style="font-size:14px;font-weight:700;color:${COLORS.accent};text-decoration:none">${cardUrl}</a>
+                <td style="background:${COLORS.bg};border-radius:0 0 10px 10px;padding:16px 20px">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:6px 0;font-size:13px;color:${COLORS.inkSoft};width:90px">Plan</td>
+                      <td style="padding:6px 0;font-size:13px;color:${COLORS.ink};font-weight:600">${planLabel} · ${planDuration}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:6px 0;font-size:13px;color:${COLORS.inkSoft};vertical-align:top">Activa hasta</td>
+                      <td style="padding:6px 0;font-size:13px;color:${COLORS.ink};font-weight:600">${expiraFecha}</td>
+                    </tr>
+                  </table>
+                  ${editUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px">
+                    <tr><td>
+                      <a href="${editUrl}" style="display:inline-block;background:${COLORS.surface};color:${COLORS.accent};font-size:13px;font-weight:700;text-decoration:none;padding:8px 18px;border-radius:100px;border:1.5px solid ${COLORS.accent}">Editar mi perfil</a>
+                    </td></tr>
+                  </table>` : ''}
                 </td>
               </tr>
             </table>
 
-            <!-- Factura adjunta -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.bg};border-left:3px solid ${COLORS.accent};border-radius:0 8px 8px 0;margin-bottom:20px">
+            <!-- DÓNDE PONERLO -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
               <tr>
-                <td style="padding:14px 18px">
-                  <p style="margin:0;font-size:13px;font-weight:700;color:${COLORS.ink}">📎 Factura en PDF adjunta</p>
-                  <p style="margin:4px 0 0;font-size:12px;color:${COLORS.inkSoft}">Búscala en los adjuntos de este email o descárgala desde tu gestor de correo.</p>
+                <td>
+                  <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">💡 Dónde ponerlo</p>
+                  <p style="margin:0 0 8px;font-size:14px;color:${COLORS.ink};line-height:1.6">▸ Tu bio de Instagram, TikTok o LinkedIn</p>
+                  <p style="margin:0 0 8px;font-size:14px;color:${COLORS.ink};line-height:1.6">▸ Conversaciones y grupos de WhatsApp</p>
+                  <p style="margin:0;font-size:14px;color:${COLORS.ink};line-height:1.6">▸ Pegado en tu furgo, escaparate o cartel de obra</p>
                 </td>
               </tr>
             </table>
+
+            <!-- PIE -->
+            <p style="margin:0 0 8px;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              📎 Adjuntamos la factura en PDF para tus registros.
+            </p>
             <p style="margin:0 0 8px;font-size:14px;color:${COLORS.inkSoft};line-height:1.6">
               ¿Algo no te cuadra o quieres cambiar algo? Responde este email directamente — somos personas reales y te contestamos.
             </p>
@@ -75,11 +136,11 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
             </p>`;
 
   const html = buildEmailLayout({
-    preheader: `Tu perfil ${planLabel} ya está activo. Compártelo donde quieras.`,
+    preheader: `Tu perfil ${planLabel} ya está activo. Tarjeta imprimible y QR adjuntos.`,
     title: `¡Ya eres todo un profesional, ${firstName}! 💪`,
     bodyHtml,
-    cta: { text: 'Ver mi perfil →', url: cardUrl },
-    footerNote: editUrl ? '🔒 El botón "Editar mi perfil" es personal — no compartas este email con nadie.' : '',
+    cta: null,
+    footerNote: editUrl ? '🔒 Los enlaces de descarga y edición son personales — no compartas este email con nadie.' : '',
     siteUrl,
   });
 
@@ -89,8 +150,11 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   };
 }
 
-async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, editToken, emailClient, pdfAttachment }) {
-  if (!email || !emailClient) return;
+async function sendConfirmationEmail({
+  email, nombre, slug, plan, expiresAt, editToken, emailClient,
+  pdfAttachment, cardPdfBuffer, qrPngBuffer, subjectPrefix,
+}) {
+  if (!email || !emailClient) return false;
 
   const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken });
@@ -98,22 +162,38 @@ async function sendConfirmationEmail({ email, nombre, slug, plan, expiresAt, edi
   const payload = {
     from: 'PerfilaPro <hola@perfilapro.es>',
     to: email,
-    subject,
+    subject: subjectPrefix ? `${subjectPrefix} ${subject}` : subject,
     html,
   };
 
+  const attachments = [];
+  if (cardPdfBuffer) {
+    attachments.push({
+      filename: `perfilapro-${slug}.pdf`,
+      content: cardPdfBuffer.toString('base64'),
+    });
+  }
+  if (qrPngBuffer) {
+    attachments.push({
+      filename: `perfilapro-${slug}-qr.png`,
+      content: qrPngBuffer.toString('base64'),
+    });
+  }
   if (pdfAttachment) {
-    payload.attachments = [{
+    attachments.push({
       filename: `factura-${pdfAttachment.numero}.pdf`,
       content: pdfAttachment.buffer.toString('base64'),
-    }];
+    });
   }
+  if (attachments.length) payload.attachments = attachments;
 
   try {
     await emailClient.emails.send(payload);
     console.log(`Email enviado a: ${email}`);
+    return true;
   } catch (err) {
     console.error('Error enviando email:', err.message);
+    return false;
   }
 }
 
@@ -184,6 +264,29 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       captureEvent(slug, 'signup_completed_paid', { plan: plan || 'base', agent_code: agent_code || null })
         .catch(() => {});
 
+      // Tarjeta imprimible + QR PNG (no bloquean el webhook si fallan; el
+      // usuario siempre puede re-descargarlos desde el editor)
+      const proto = (event.headers && event.headers['x-forwarded-proto']) || 'https';
+      const host  = (event.headers && event.headers.host) || (process.env.SITE_URL || 'https://perfilapro.es').replace(/^https?:\/\//, '');
+      const cardUrl = `${proto}://${host}/c/${slug}`;
+
+      let cardPdfBuffer = null;
+      let qrPngBuffer = null;
+      try {
+        cardPdfBuffer = await buildPrintableCardPDF({
+          nombre, tagline, whatsapp, slug, cardUrl,
+        });
+        console.log(`Tarjeta PDF generada: ${cardPdfBuffer.length} bytes`);
+      } catch (err) {
+        console.error('Error generando tarjeta PDF (no fatal):', err.message);
+      }
+      try {
+        qrPngBuffer = await generateQrPngBuffer(cardUrl, 1024);
+        console.log(`QR PNG generado: ${qrPngBuffer.length} bytes`);
+      } catch (err) {
+        console.error('Error generando QR PNG (no fatal):', err.message);
+      }
+
       // Generación de factura (no bloquea el webhook si falla)
       let pdfAttachment = null;
       try {
@@ -234,11 +337,20 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         console.error('Error generando factura (no fatal):', err.message, err.stack);
       }
 
-      await sendConfirmationEmail({
+      const emailSent = await sendConfirmationEmail({
         email, nombre, slug,
         plan: plan || 'base',
         expiresAt, editToken, emailClient, pdfAttachment,
+        cardPdfBuffer, qrPngBuffer,
       });
+
+      if (emailSent) {
+        const { error: tsErr } = await db
+          .from('cards')
+          .update({ kit_email_sent_at: new Date().toISOString() })
+          .eq('slug', slug);
+        if (tsErr) console.warn('No se pudo marcar kit_email_sent_at (no fatal):', tsErr.message);
+      }
     }
 
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
@@ -248,3 +360,4 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 exports.handler = makeHandler(stripe, supabase);
 exports.makeHandler = makeHandler;
 exports.buildEmail = buildEmail;
+exports.sendConfirmationEmail = sendConfirmationEmail;

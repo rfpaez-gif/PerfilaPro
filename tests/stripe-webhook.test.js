@@ -5,7 +5,9 @@ import { makeHandler, buildEmail } from '../netlify/functions/stripe-webhook.js'
 
 const mockConstructEvent = vi.fn();
 const mockUpsert = vi.fn();
-const mockFrom = vi.fn(() => ({ upsert: mockUpsert }));
+const mockUpdateEq = vi.fn();
+const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }));
+const mockFrom = vi.fn(() => ({ upsert: mockUpsert, update: mockUpdate }));
 const mockEmailSend = vi.fn();
 
 const mockStripe = { webhooks: { constructEvent: mockConstructEvent } };
@@ -30,7 +32,8 @@ describe('stripe-webhook handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
-    mockFrom.mockImplementation(() => ({ upsert: mockUpsert }));
+    mockUpdateEq.mockResolvedValue({ error: null });
+    mockFrom.mockImplementation(() => ({ upsert: mockUpsert, update: mockUpdate }));
     mockEmailSend.mockResolvedValue({ id: 'email-123' });
   });
 
@@ -220,6 +223,7 @@ describe('buildEmail', () => {
     plan: 'base',
     expiresAt: new Date('2026-07-20').toISOString(),
     siteUrl: 'https://perfilapro.com',
+    editToken: 'tok-abc-123',
   };
 
   it('incluye el enlace a la tarjeta', () => {
@@ -239,4 +243,107 @@ describe('buildEmail', () => {
     const { subject } = buildEmail(base);
     expect(subject).toContain('María');
   });
+
+  it('incluye los enlaces de re-descarga (kit físico) cuando hay editToken', () => {
+    const { html } = buildEmail(base);
+    expect(html).toContain('/api/download-card?slug=maria-electricista&token=tok-abc-123');
+    expect(html).toContain('/api/download-qr?slug=maria-electricista&token=tok-abc-123');
+  });
+
+  it('omite la sección kit cuando no hay editToken', () => {
+    const { html } = buildEmail({ ...base, editToken: null });
+    expect(html).not.toContain('Tu kit físico');
+    expect(html).not.toContain('/api/download-card');
+    expect(html).not.toContain('/api/download-qr');
+  });
+
+  it('incluye la sección "Dónde ponerlo" con los 3 lugares clave', () => {
+    const { html } = buildEmail(base);
+    expect(html).toContain('Dónde ponerlo');
+    expect(html).toContain('Instagram');
+    expect(html).toContain('WhatsApp');
+    expect(html).toContain('furgo');
+  });
+
+  it('renderiza la fecha de expiración en formato es-ES', () => {
+    const { html } = buildEmail(base);
+    expect(html).toMatch(/20 de julio de 2026/);
+  });
+
+  it('el botón principal "Ver mi perfil" apunta al cardUrl', () => {
+    const { html } = buildEmail(base);
+    expect(html).toMatch(/href="https:\/\/perfilapro\.com\/c\/maria-electricista"[^>]*>[^<]*Ver mi perfil/);
+  });
 });
+
+// --- Tests de adjuntos en sendConfirmationEmail (vía handler) ---
+
+describe('stripe-webhook adjuntos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUpsert.mockResolvedValue({ error: null });
+    mockUpdateEq.mockResolvedValue({ error: null });
+    mockFrom.mockImplementation((table) => {
+      if (table === 'cards')    return { upsert: mockUpsert, update: mockUpdate };
+      if (table === 'facturas') return {
+        select: vi.fn().mockReturnThis(),
+        like:   vi.fn().mockResolvedValue({ count: 0, error: null }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      };
+      return { upsert: mockUpsert, update: mockUpdate };
+    });
+    mockEmailSend.mockResolvedValue({ id: 'email-123' });
+  });
+
+  it('marca cards.kit_email_sent_at tras envío exitoso del email', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'ana-electricista', nombre: 'Ana', plan: 'base' },
+        customerDetails: { email: 'ana@email.com' },
+      })
+    );
+    await handler(buildEvent());
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ kit_email_sent_at: expect.any(String) })
+    );
+  }, 30000);
+
+  it('NO marca kit_email_sent_at si el envío falla', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'ana-fail', nombre: 'Ana', plan: 'base' },
+        customerDetails: { email: 'ana@email.com' },
+      })
+    );
+    mockEmailSend.mockRejectedValue(new Error('SMTP error'));
+    await handler(buildEvent());
+
+    expect(mockUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kit_email_sent_at: expect.anything() })
+    );
+  }, 30000);
+
+  it('adjunta tarjeta PDF y QR PNG en el email post-pago', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: {
+          slug: 'carlos-fontanero',
+          nombre: 'Carlos Pérez',
+          tagline: 'Fontanero',
+          whatsapp: '34633816729',
+          plan: 'base',
+        },
+        customerDetails: { email: 'carlos@email.com' },
+      })
+    );
+    await handler(buildEvent());
+
+    expect(mockEmailSend).toHaveBeenCalledOnce();
+    const [emailArgs] = mockEmailSend.mock.calls[0];
+    expect(emailArgs.attachments).toBeDefined();
+    const filenames = emailArgs.attachments.map(a => a.filename);
+    expect(filenames).toContain('perfilapro-carlos-fontanero.pdf');
+    expect(filenames).toContain('perfilapro-carlos-fontanero-qr.png');
+  });
+}, 30000);
