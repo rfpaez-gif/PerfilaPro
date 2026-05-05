@@ -2,7 +2,7 @@
 
 const { getDb } = require('./lib/supabase-client');
 const { getSectorMeta, getSectorSpecialties, getSectorCities, listProfiles, PAGE_SIZE } = require('./lib/get-profile');
-const { esc, labelOf, renderCard, paginationLinks, htmlPage, getPageRange, buildDirectoryMeta } = require('./lib/dir-utils');
+const { esc, labelOf, renderCard, paginationLinks, htmlPage, getPageRange, buildDirectoryMeta, SHOWCASE_INTRO, buildShowcaseCta } = require('./lib/dir-utils');
 
 function makeHandler(deps) {
   const _getSectorMeta        = deps.getSectorMeta;
@@ -73,18 +73,19 @@ function makeHandler(deps) {
 
     const cardsHtml = profiles.length
       ? `<div class="pp-dir-grid">${profiles.map(p => renderCard(p, siteUrl)).join('\n')}</div>`
-      : `<div class="pp-dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay profesionales de ${esc(sectorLabel)} en el directorio.<br>¡Sé el primero en aparecer!</p></div>`;
+      : `<div class="pp-dir-empty"><h2>Sin resultados aún</h2><p>Aún no hay profesionales de ${esc(sectorLabel)} con perfil PerfilaPro.<br>Si tu trabajo encaja aquí, sé tú quien empiece.</p></div>`;
 
     const body = `
 <div class="pp-dir-ph">
   <h1>${esc(sectorLabel)} en España</h1>
-  ${desc ? `<p class="pp-dir-ph__desc">${esc(desc)}</p>` : ''}
-  ${total > 0 ? `<p class="pp-dir-ph__count">${total} profesionale${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}</p>` : ''}
+  <p class="pp-dir-ph__desc">${SHOWCASE_INTRO}</p>
+  ${total > 0 ? `<p class="pp-dir-ph__count">${total} ${total === 1 ? 'profesional' : 'profesionales'} con perfil</p>` : ''}
 </div>
 ${specialtiesHtml}
 ${citiesHtml}
 ${cardsHtml}
-${paginationLinks(page, totalPages, canonicalBase)}`;
+${paginationLinks(page, totalPages, canonicalBase)}
+${buildShowcaseCta(siteUrl)}`;
 
     return {
       statusCode: 200,

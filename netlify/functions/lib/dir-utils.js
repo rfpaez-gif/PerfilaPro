@@ -110,6 +110,11 @@ main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 3rem
 .pp-dir-empty{text-align:center;padding:3rem 1rem;background:var(--pp-surface);border:1px solid var(--pp-border);border-radius:1rem}
 .pp-dir-empty h2{font-family:var(--pp-f-display);font-size:1.125rem;letter-spacing:-0.02em;font-weight:400;margin-bottom:.5rem;color:var(--pp-ink)}
 .pp-dir-empty p{color:var(--pp-ink-soft);font-size:.9375rem;line-height:1.6}
+.pp-dir-cta{margin-top:2.5rem;padding:1.875rem 1.5rem;background:var(--pp-accent-soft);border:1.5px solid var(--pp-accent-strong);border-radius:1.25rem;text-align:center}
+.pp-dir-cta h2{font-family:var(--pp-f-display);font-size:1.375rem;line-height:1.2;letter-spacing:-0.02em;font-weight:400;color:var(--pp-ink);margin-bottom:.5rem}
+.pp-dir-cta p{font-size:.9375rem;color:var(--pp-ink-soft);max-width:48ch;margin:0 auto 1.125rem;line-height:1.55}
+.pp-dir-cta__btn{display:inline-flex;align-items:center;padding:.75rem 1.5rem;background:var(--pp-accent);color:#fff;border-radius:var(--pp-r-pill);font-size:.9375rem;font-weight:700;transition:background .15s}
+.pp-dir-cta__btn:hover{background:var(--pp-accent-deep)}
 .pp-pagination{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--pp-border-soft)}
 .pp-pagination__btn{display:inline-flex;align-items:center;padding:.5rem 1.25rem;border-radius:var(--pp-r-pill);font-size:.875rem;font-weight:600;background:var(--pp-surface);border:1.5px solid var(--pp-border);color:var(--pp-ink);transition:background .15s,border-color .15s}
 a.pp-pagination__btn:hover{background:var(--pp-accent-soft);border-color:var(--pp-accent-strong)}
@@ -279,9 +284,26 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
 </html>`;
 }
 
+// Subtítulo visible compartido por las páginas internas del directorio.
+// Reemplaza al render del meta_desc ("Encuentra X cerca de ti"), que
+// es copy SEO orientado a marketplace y choca con el reposicionamiento
+// como escaparate.
+const SHOWCASE_INTRO = 'Cada uno con su URL, su QR y su WhatsApp en PerfilaPro.';
+
+// CTA showcase al pie de cada página del directorio. Misma promesa que
+// el bloque inferior de /directorio (index escaparate).
+function buildShowcaseCta(siteUrl) {
+  return `<aside class="pp-dir-cta">
+  <h2>¿Tu trabajo también merece verse?</h2>
+  <p>Crea tu perfil en 2 minutos. Tu URL propia, tu QR y un botón directo de WhatsApp.</p>
+  <a href="${esc(siteUrl)}/alta.html" class="pp-dir-cta__btn">Crear mi perfil gratis →</a>
+</aside>`;
+}
+
 module.exports = {
   esc, safeJson, SECTOR_LABELS, labelOf,
   DIR_CSS, PROFILE_CSS,
   renderCard, breadcrumb, paginationLinks, htmlPage,
   getPageRange, buildDirectoryMeta,
+  SHOWCASE_INTRO, buildShowcaseCta,
 };
