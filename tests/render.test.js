@@ -5,13 +5,13 @@ describe('renderHead', () => {
   it('renderiza un head válido con opts mínimos', () => {
     const out = renderHead({
       title: 'PerfilaPro',
-      description: 'Tu perfil profesional siempre a mano',
+      description: 'Tu trabajo merece verse.',
     });
 
     expect(out).toContain('<meta charset="utf-8">');
     expect(out).toContain('<meta name="viewport" content="width=device-width, initial-scale=1">');
     expect(out).toContain('<title>PerfilaPro</title>');
-    expect(out).toContain('<meta name="description" content="Tu perfil profesional siempre a mano">');
+    expect(out).toContain('<meta name="description" content="Tu trabajo merece verse.">');
     expect(out).toContain('<meta property="og:image"');
     expect(out).not.toContain('noindex');
     expect(out).not.toContain('rel="canonical"');

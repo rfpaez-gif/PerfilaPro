@@ -10,15 +10,18 @@
 // - story     1080×1920  Instagram/Facebook story
 // - linkedin  1200×627   post LinkedIn
 
+// Hex literales (Satori no soporta CSS vars). Sincronizado con
+// /styles/tokens-color.css. Sistema general (Tinta + Verde Match
+// sobre Crema), no se usa el especial Teal Documentos aquí.
 const COLORS = {
-  bg:        '#FAF3E6',
+  bg:        '#FAF7F0',  // --color-crema
   surface:   '#FFFFFF',
-  ink:       '#1E1B14',
-  inkSoft:   '#5C5246',
-  accent:    '#01696F',
-  accentDeep:'#024A4F',
-  accentSoft:'#E5F0F1',
-  border:    '#E8DDC9',
+  ink:       '#0A1F44',  // --color-tinta
+  inkSoft:   '#6B7280',  // --color-gris-500
+  accent:    '#00C277',  // --color-verde-match
+  accentDeep:'#00A865',  // --color-verde-dark
+  accentSoft:'#E6F9F0',  // --color-verde-light
+  border:    '#E5E7EB',  // --color-gris-200
 };
 
 const TEMPLATES = {

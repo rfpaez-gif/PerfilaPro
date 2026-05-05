@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>UrlPill · _dev · PerfilaPro</title>
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* Estilos solo de la página de prueba — no usar en producción. */
+    .pp-dev {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .pp-dev__header { border-bottom: 1px solid var(--color-gris-200); padding-bottom: 16px; }
+    .pp-dev__header p { margin-top: 8px; color: var(--color-gris-500); }
+    .pp-dev__section { display: flex; flex-direction: column; gap: 16px; }
+    .pp-dev__section h2 { font-size: 18px; }
+    .pp-dev__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--color-gris-200);
+      border-radius: 14px;
+      background: #FFFFFF;
+    }
+    .pp-dev__row--tinta { background: var(--color-tinta); border-color: var(--color-tinta); }
+    .pp-dev__label {
+      flex-basis: 120px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-gris-500);
+      text-transform: lowercase;
+    }
+    .pp-dev__row--tinta .pp-dev__label { color: rgba(255,255,255,0.55); }
+  </style>
+</head>
+<body class="pp-page">
+  <main class="pp-dev">
+
+    <header class="pp-dev__header">
+      <h1>UrlPill</h1>
+      <p>Pastilla de URL — el elemento más repetido del producto. Esta página vive en <code>/_dev/url-pill.html</code> y no se indexa.</p>
+    </header>
+
+    <!-- Tamaños -->
+    <section class="pp-dev__section">
+      <h2>Tamaños</h2>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">sm</span>
+        <span class="pp-url-pill pp-url-pill--sm pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">md (default)</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">lg</span>
+        <span class="pp-url-pill pp-url-pill--lg pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">xl</span>
+        <span class="pp-url-pill pp-url-pill--xl pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- Variantes -->
+    <section class="pp-dev__section">
+      <h2>Variantes</h2>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">default</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row pp-dev__row--tinta">
+        <span class="pp-dev__label">on-tinta</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--on-tinta">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+        <a class="pp-url-pill pp-url-pill--md pp-url-pill--on-tinta pp-url-pill--link" href="#">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">yolanda-peluquera</span>
+        </a>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">ghost</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--ghost">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">draft</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--draft">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">sin-handle-aun</span>
+          <span class="pp-url-pill__badge">borrador</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">error</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--error">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">handle-no-disponible</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- Combos: sello + copy + link -->
+    <section class="pp-dev__section">
+      <h2>Combos</h2>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">+ sello</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--default">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+
+        <span class="pp-url-pill pp-url-pill--lg pp-url-pill--default">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+
+        <span class="pp-url-pill pp-url-pill--xl pp-url-pill--default">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">+ copy</span>
+        <span class="pp-url-pill pp-url-pill--md pp-url-pill--default">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+          <button type="button" class="pp-url-pill__copy" data-pp-copy="https://perfilapro.es/mohamed-fontanero" aria-label="Copiar URL">Copiar</button>
+        </span>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">+ link (hover)</span>
+        <a class="pp-url-pill pp-url-pill--md pp-url-pill--default pp-url-pill--link" href="https://perfilapro.es/mohamed-fontanero">
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </a>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">+ sello + link</span>
+        <a class="pp-url-pill pp-url-pill--lg pp-url-pill--default pp-url-pill--link" href="https://perfilapro.es/mohamed-fontanero">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+        </a>
+      </div>
+
+      <div class="pp-dev__row">
+        <span class="pp-dev__label">+ sello + copy</span>
+        <span class="pp-url-pill pp-url-pill--lg pp-url-pill--default">
+          <span class="pp-url-pill__seal" aria-hidden="true">P</span>
+          <span class="pp-url-pill__domain">perfilapro.es</span>
+          <span class="pp-url-pill__slash" aria-hidden="true">/</span>
+          <span class="pp-url-pill__handle">mohamed-fontanero</span>
+          <button type="button" class="pp-url-pill__copy" data-pp-copy="https://perfilapro.es/mohamed-fontanero" aria-label="Copiar URL">Copiar</button>
+        </span>
+      </div>
+    </section>
+
+  </main>
+  <script src="/js/url-pill.js" defer></script>
+</body>
+</html>

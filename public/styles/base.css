@@ -21,8 +21,8 @@ body {
   font-family: var(--pp-f-sans);
   font-size: var(--pp-fs-body);
   line-height: var(--pp-lh-body);
-  color: var(--pp-c-ink);
-  background: var(--pp-c-bg);
+  color: var(--color-tinta);
+  background: var(--color-crema);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -45,7 +45,7 @@ textarea {
 }
 
 a {
-  color: var(--pp-c-accent);
+  color: var(--color-verde-match);
   text-decoration: none;
 }
 
@@ -54,11 +54,11 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--pp-c-accent);
+  outline: 2px solid var(--color-verde-match);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--pp-c-accent-soft);
-  color: var(--pp-c-ink);
+  background: var(--color-verde-light);
+  color: var(--color-tinta);
 }

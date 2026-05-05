@@ -162,6 +162,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/qr/*"
+  to     = "/.netlify/functions/qr/:splat"
+  status = 200
+
+[[redirects]]
   from   = "/api/profile-stats"
   to     = "/.netlify/functions/profile-stats"
   status = 200

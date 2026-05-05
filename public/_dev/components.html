@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Components · _dev · PerfilaPro</title>
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* Estilos solo de la página de prueba — no usar en producción. */
+    .pp-dev {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 56px;
+    }
+    .pp-dev__header { border-bottom: 1px solid var(--color-gris-200); padding-bottom: 16px; }
+    .pp-dev__header p { margin-top: 8px; color: var(--color-gris-500); max-width: 60ch; }
+    .pp-dev__section { display: flex; flex-direction: column; gap: 20px; }
+    .pp-dev__section > h2 { font-size: 22px; }
+    .pp-dev__section > p { color: var(--color-gris-500); margin-top: -8px; }
+    .pp-dev__panel {
+      padding: 24px;
+      border: 1px solid var(--color-gris-200);
+      border-radius: 14px;
+      background: #FFFFFF;
+    }
+    .pp-dev__panel--crema { background: var(--color-crema); }
+    .pp-dev__panel--tinta { background: var(--color-tinta); color: #FFFFFF; }
+    .pp-dev__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 24px;
+    }
+    .pp-dev__label {
+      flex-basis: 120px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-gris-500);
+      text-transform: lowercase;
+    }
+    .pp-dev__panel--tinta .pp-dev__label { color: rgba(255,255,255,0.55); }
+
+    /* Grid de iconos con etiqueta debajo */
+    .pp-dev__icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 12px;
+    }
+    .pp-dev__icon-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--color-gris-200);
+      background: #FFFFFF;
+    }
+    .pp-dev__icon-name {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-gris-500);
+    }
+
+    /* Grid de procards */
+    .pp-dev__cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+      gap: 24px;
+    }
+  </style>
+</head>
+<body class="pp-page">
+  <main class="pp-dev">
+
+    <header class="pp-dev__header">
+      <h1>Sistema visual del directorio</h1>
+      <p>Iconos, avatares y ProCards. Esta página vive en <code>/_dev/components.html</code> y no se indexa. Los iconos se cargan vía sprite externo en <code>/sprite.svg</code>.</p>
+    </header>
+
+    <!-- ============== ICONOS ============== -->
+    <section class="pp-dev__section">
+      <h2>Iconos · sprite</h2>
+      <p>16 iconos en estilo Lucide stroke 2px. Color heredado vía <code>currentColor</code>.</p>
+
+      <h3 style="font-size:16px">Default 24px</h3>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__icon-grid" style="color:var(--color-tinta)">
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-fontaneria"/></svg><span class="pp-dev__icon-name">fontaneria</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-electricidad"/></svg><span class="pp-dev__icon-name">electricidad</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-carpinteria"/></svg><span class="pp-dev__icon-name">carpinteria</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-mecanica"/></svg><span class="pp-dev__icon-name">mecanica</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-hosteleria"/></svg><span class="pp-dev__icon-name">hosteleria</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-peluqueria"/></svg><span class="pp-dev__icon-name">peluqueria</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-editar"/></svg><span class="pp-dev__icon-name">editar</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-copiar"/></svg><span class="pp-dev__icon-name">copiar</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-descargar"/></svg><span class="pp-dev__icon-name">descargar</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-compartir"/></svg><span class="pp-dev__icon-name">compartir</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-ojo"/></svg><span class="pp-dev__icon-name">ojo</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-tilde"/></svg><span class="pp-dev__icon-name">tilde</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-reloj"/></svg><span class="pp-dev__icon-name">reloj</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-candado"/></svg><span class="pp-dev__icon-name">candado</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-telefono"/></svg><span class="pp-dev__icon-name">telefono</span></div>
+          <div class="pp-dev__icon-cell"><svg class="pp-icon"><use href="/sprite.svg#icon-email"/></svg><span class="pp-dev__icon-name">email</span></div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px">Tamaños · stroke compensado</h3>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__row" style="color:var(--color-tinta)">
+          <span class="pp-dev__label">sm 16</span>
+          <svg class="pp-icon pp-icon--sm"><use href="/sprite.svg#icon-fontaneria"/></svg>
+          <svg class="pp-icon pp-icon--sm"><use href="/sprite.svg#icon-electricidad"/></svg>
+          <svg class="pp-icon pp-icon--sm"><use href="/sprite.svg#icon-mecanica"/></svg>
+          <svg class="pp-icon pp-icon--sm"><use href="/sprite.svg#icon-peluqueria"/></svg>
+        </div>
+        <div class="pp-dev__row" style="color:var(--color-tinta);margin-top:16px">
+          <span class="pp-dev__label">md 20</span>
+          <svg class="pp-icon pp-icon--md"><use href="/sprite.svg#icon-fontaneria"/></svg>
+          <svg class="pp-icon pp-icon--md"><use href="/sprite.svg#icon-electricidad"/></svg>
+          <svg class="pp-icon pp-icon--md"><use href="/sprite.svg#icon-mecanica"/></svg>
+          <svg class="pp-icon pp-icon--md"><use href="/sprite.svg#icon-peluqueria"/></svg>
+        </div>
+        <div class="pp-dev__row" style="color:var(--color-tinta);margin-top:16px">
+          <span class="pp-dev__label">default 24</span>
+          <svg class="pp-icon pp-icon--default"><use href="/sprite.svg#icon-fontaneria"/></svg>
+          <svg class="pp-icon pp-icon--default"><use href="/sprite.svg#icon-electricidad"/></svg>
+          <svg class="pp-icon pp-icon--default"><use href="/sprite.svg#icon-mecanica"/></svg>
+          <svg class="pp-icon pp-icon--default"><use href="/sprite.svg#icon-peluqueria"/></svg>
+        </div>
+        <div class="pp-dev__row" style="color:var(--color-tinta);margin-top:16px">
+          <span class="pp-dev__label">lg 32 · 1.75</span>
+          <svg class="pp-icon pp-icon--lg"><use href="/sprite.svg#icon-fontaneria"/></svg>
+          <svg class="pp-icon pp-icon--lg"><use href="/sprite.svg#icon-electricidad"/></svg>
+          <svg class="pp-icon pp-icon--lg"><use href="/sprite.svg#icon-mecanica"/></svg>
+          <svg class="pp-icon pp-icon--lg"><use href="/sprite.svg#icon-peluqueria"/></svg>
+        </div>
+        <div class="pp-dev__row" style="color:var(--color-tinta);margin-top:16px">
+          <span class="pp-dev__label">xl 48 · 1.5</span>
+          <svg class="pp-icon pp-icon--xl"><use href="/sprite.svg#icon-fontaneria"/></svg>
+          <svg class="pp-icon pp-icon--xl"><use href="/sprite.svg#icon-electricidad"/></svg>
+          <svg class="pp-icon pp-icon--xl"><use href="/sprite.svg#icon-mecanica"/></svg>
+          <svg class="pp-icon pp-icon--xl"><use href="/sprite.svg#icon-peluqueria"/></svg>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px">Sobre Tinta · color hereda</h3>
+      <div class="pp-dev__panel pp-dev__panel--tinta">
+        <div class="pp-dev__row" style="color:var(--color-verde-match)">
+          <span class="pp-dev__label">verde match</span>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-tilde"/></svg>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-candado"/></svg>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-ojo"/></svg>
+        </div>
+        <div class="pp-dev__row" style="color:#FFFFFF;margin-top:16px">
+          <span class="pp-dev__label">blanco</span>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-tilde"/></svg>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-candado"/></svg>
+          <svg class="pp-icon"><use href="/sprite.svg#icon-ojo"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== AVATARES ============== -->
+    <section class="pp-dev__section">
+      <h2>Avatar</h2>
+      <p>Cuadrado redondeado siempre. 4 tamaños. Fallback: iniciales serif italic verde-match sobre Tinta.</p>
+
+      <div class="pp-dev__panel">
+        <h3 style="font-size:16px;margin-bottom:16px">Con foto</h3>
+        <div class="pp-dev__row">
+          <span class="pp-dev__label">xs 32</span>
+          <span class="pp-avatar pp-avatar--xs"><img class="pp-avatar__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&amp;h=160&amp;fit=crop&amp;auto=format" alt="Yolanda"></span>
+          <span class="pp-dev__label">sm 40</span>
+          <span class="pp-avatar pp-avatar--sm"><img class="pp-avatar__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&amp;h=160&amp;fit=crop&amp;auto=format" alt="Yolanda"></span>
+          <span class="pp-dev__label">md 56</span>
+          <span class="pp-avatar pp-avatar--md"><img class="pp-avatar__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&amp;h=160&amp;fit=crop&amp;auto=format" alt="Yolanda"></span>
+        </div>
+        <div class="pp-dev__row" style="margin-top:24px">
+          <span class="pp-dev__label">hero 160</span>
+          <span class="pp-avatar pp-avatar--hero"><img class="pp-avatar__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=320&amp;h=320&amp;fit=crop&amp;auto=format" alt="Yolanda"></span>
+          <span class="pp-dev__label">hero · status</span>
+          <span class="pp-avatar pp-avatar--hero">
+            <img class="pp-avatar__img" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=320&amp;h=320&amp;fit=crop&amp;auto=format" alt="Mohamed">
+            <span class="pp-avatar__status" aria-hidden="true"></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="pp-dev__panel">
+        <h3 style="font-size:16px;margin-bottom:16px">Iniciales (sin foto)</h3>
+        <div class="pp-dev__row">
+          <span class="pp-avatar pp-avatar--xs" role="img" aria-label="Yolanda Pérez"><span class="pp-avatar__init" aria-hidden="true">YP</span></span>
+          <span class="pp-avatar pp-avatar--sm" role="img" aria-label="Mohamed Fontanero"><span class="pp-avatar__init" aria-hidden="true">MF</span></span>
+          <span class="pp-avatar pp-avatar--md" role="img" aria-label="Carlos Pérez"><span class="pp-avatar__init" aria-hidden="true">CP</span></span>
+          <span class="pp-avatar pp-avatar--hero" role="img" aria-label="Yolanda Pérez">
+            <span class="pp-avatar__init" aria-hidden="true">YP</span>
+            <span class="pp-avatar__status" aria-hidden="true"></span>
+          </span>
+        </div>
+      </div>
+
+      <div class="pp-dev__panel">
+        <h3 style="font-size:16px;margin-bottom:16px">Sin foto ni iniciales · fallback "P"</h3>
+        <div class="pp-dev__row">
+          <span class="pp-avatar pp-avatar--xs" role="img" aria-label="Profesional"><span class="pp-avatar__init" aria-hidden="true">P</span></span>
+          <span class="pp-avatar pp-avatar--sm" role="img" aria-label="Profesional"><span class="pp-avatar__init" aria-hidden="true">P</span></span>
+          <span class="pp-avatar pp-avatar--md" role="img" aria-label="Profesional"><span class="pp-avatar__init" aria-hidden="true">P</span></span>
+          <span class="pp-avatar pp-avatar--hero" role="img" aria-label="Profesional"><span class="pp-avatar__init" aria-hidden="true">P</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== PROCARDS ============== -->
+    <section class="pp-dev__section">
+      <h2>ProCard</h2>
+      <p>Card del directorio. Foto vertical 4/5 con pastilla nombre+oficio superpuesta. Pie con handle (mono) + location (sans).</p>
+
+      <h3 style="font-size:16px">Default · sobre fondo blanco</h3>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__cards">
+          <a class="pp-pro-card pp-pro-card--default pp-pro-card--link" href="#">
+            <div class="pp-pro-card__photo">
+              <img class="pp-pro-card__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=560&amp;h=700&amp;fit=crop&amp;auto=format" alt="" loading="lazy">
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Yolanda Pérez</p>
+                <p class="pp-pro-card__trade">Peluquera a domicilio</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">yolanda-peluquera</span></span>
+              <span class="pp-pro-card__location">Madrid</span>
+            </div>
+          </a>
+
+          <a class="pp-pro-card pp-pro-card--default pp-pro-card--link" href="#">
+            <div class="pp-pro-card__photo">
+              <img class="pp-pro-card__img" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=560&amp;h=700&amp;fit=crop&amp;auto=format" alt="" loading="lazy">
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Mohamed Fontanero</p>
+                <p class="pp-pro-card__trade">Fontanería 24h · urgencias</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">mohamed-fontanero</span></span>
+              <span class="pp-pro-card__location">Alicante</span>
+            </div>
+          </a>
+
+          <article class="pp-pro-card pp-pro-card--default">
+            <div class="pp-pro-card__photo">
+              <span class="pp-pro-card__fallback" aria-hidden="true">P</span>
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Carlos Pérez</p>
+                <p class="pp-pro-card__trade">Mecánico de coches</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">carlos-mecanico</span></span>
+              <span class="pp-pro-card__location">Murcia</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px">Variant · on-crema</h3>
+      <div class="pp-dev__panel pp-dev__panel--crema">
+        <div class="pp-dev__cards">
+          <a class="pp-pro-card pp-pro-card--on-crema pp-pro-card--link" href="#">
+            <div class="pp-pro-card__photo">
+              <img class="pp-pro-card__img" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=560&amp;h=700&amp;fit=crop&amp;auto=format" alt="" loading="lazy">
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Yolanda Pérez</p>
+                <p class="pp-pro-card__trade">Peluquera a domicilio</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">yolanda-peluquera</span></span>
+              <span class="pp-pro-card__location">Madrid</span>
+            </div>
+          </a>
+
+          <article class="pp-pro-card pp-pro-card--on-crema">
+            <div class="pp-pro-card__photo">
+              <img class="pp-pro-card__img" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=560&amp;h=700&amp;fit=crop&amp;auto=format" alt="" loading="lazy">
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Mohamed Fontanero</p>
+                <p class="pp-pro-card__trade">Fontanería 24h · urgencias</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">mohamed-fontanero</span></span>
+              <span class="pp-pro-card__location">Alicante</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px">Variant · placeholder</h3>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__cards">
+          <a class="pp-pro-card pp-pro-card--placeholder pp-pro-card--link" href="#">
+            <div class="pp-pro-card__photo">
+              <span class="pp-pro-card__fallback" aria-hidden="true">P</span>
+              <div class="pp-pro-card__overlay">
+                <p class="pp-pro-card__name">Tu oficio</p>
+                <p class="pp-pro-card__trade">Aquí podría ir tu perfil</p>
+              </div>
+            </div>
+            <div class="pp-pro-card__foot">
+              <span class="pp-pro-card__handle"><span class="pp-pro-card__handle-domain">perfilapro.es</span><span class="pp-pro-card__handle-slash" aria-hidden="true">/</span><span class="pp-pro-card__handle-name">tu-handle</span></span>
+              <span class="pp-pro-card__cta">¿Eres tú?</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

@@ -19,8 +19,8 @@
     .pp-edit-card {
       width: 100%;
       max-width: 520px;
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-xl);
       box-shadow: var(--pp-sh-md);
       padding: clamp(1.75rem, 4vw, 2.25rem);
@@ -30,11 +30,11 @@
       font-size: clamp(1.5rem, .8rem + 1.6vw, 1.875rem);
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .25rem;
     }
     .pp-edit-card__sub {
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       font-size: 14px;
       margin: 0 0 var(--pp-s-6);
     }
@@ -49,31 +49,31 @@
       border: 1px solid;
     }
     .pp-msg--ok {
-      background: var(--pp-color-accent-soft);
-      border-color: var(--pp-color-accent);
-      color: var(--pp-color-accent-deep);
+      background: var(--color-verde-light);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
     }
     .pp-msg--err {
       background: rgba(178, 58, 72, 0.08);
-      border-color: var(--pp-color-danger);
-      color: var(--pp-color-danger);
+      border-color: var(--color-coral);
+      color: var(--color-coral);
     }
     .pp-msg a {
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       font-weight: 700;
     }
 
     /* ── Divider ────────────────────────────────────────────── */
     .pp-divider {
       border: none;
-      border-top: 1px solid var(--pp-color-border-soft);
+      border-top: 1px solid var(--color-gris-200);
       margin: 1.5rem 0;
     }
 
     /* ── Panel stats Pro ────────────────────────────────────── */
     .pp-stats {
-      background: var(--pp-color-accent-soft);
-      border: 1px solid var(--pp-color-accent);
+      background: var(--color-verde-light);
+      border: 1px solid var(--color-verde-match);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem 1.25rem 1rem;
       margin-bottom: 1.5rem;
@@ -90,13 +90,13 @@
       font-size: 1.125rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       margin: 0;
     }
     .pp-stats__badge {
       display: inline-block;
       padding: .15rem .55rem;
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
       font-size: 11px;
       font-weight: 700;
@@ -121,12 +121,12 @@
       font-family: var(--pp-f-display);
       font-size: 1.5rem;
       font-weight: 600;
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       line-height: 1;
     }
     .pp-stats__lbl {
       font-size: 11px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       text-transform: uppercase;
       letter-spacing: .05em;
     }
@@ -142,17 +142,17 @@
     .pp-stats__chart-lbl {
       margin: 0;
       font-size: 11px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       text-align: center;
     }
     .pp-share {
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid var(--pp-color-border-soft);
+      border-top: 1px solid var(--color-gris-200);
     }
     .pp-share__title {
       font-size: 12px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       text-transform: uppercase;
       letter-spacing: .05em;
       margin: 0 0 .5rem;
@@ -167,9 +167,9 @@
       flex: 1 1 auto;
       min-width: 0;
       padding: .5rem .65rem;
-      background: var(--pp-color-surface);
-      color: var(--pp-color-accent-deep);
-      border: 1px solid var(--pp-color-accent);
+      background: #FFFFFF;
+      color: var(--color-verde-dark);
+      border: 1px solid var(--color-verde-match);
       border-radius: var(--pp-r-md);
       font-size: 11px;
       font-weight: 700;
@@ -179,11 +179,11 @@
       transition: background .15s;
     }
     .pp-share__btn:hover {
-      background: var(--pp-color-accent-soft);
+      background: var(--color-verde-light);
     }
     .pp-share__hint {
       font-size: 12px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       margin: -.25rem 0 .65rem;
     }
     .pp-share__row--icons {
@@ -202,43 +202,43 @@
       padding: .75rem .5rem;
       font-size: 12px;
       cursor: pointer;
-      border: 1px solid var(--pp-color-border);
-      color: var(--pp-color-ink);
-      background: var(--pp-color-surface);
+      border: 1px solid var(--color-gris-200);
+      color: var(--color-tinta);
+      background: #FFFFFF;
       transition: transform .12s, background .15s, border-color .15s;
     }
     .pp-share__row--icons .pp-share__btn:hover {
       transform: translateY(-1px);
-      background: var(--pp-color-accent-soft);
-      border-color: var(--pp-color-accent);
+      background: var(--color-verde-light);
+      border-color: var(--color-verde-match);
     }
     .pp-share__row--icons .pp-share__btn svg { display: block; }
     .pp-share__btn--wa svg { color: #25D366; }
     .pp-share__btn--ig svg { color: #E1306C; }
     .pp-share__btn--li svg { color: #0A66C2; }
-    .pp-share__btn--copy svg { color: var(--pp-color-ink-soft); }
+    .pp-share__btn--copy svg { color: var(--color-gris-500); }
     .pp-share__row--icons .pp-share__btn.is-copied {
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
-      border-color: var(--pp-color-accent);
+      border-color: var(--color-verde-match);
     }
     .pp-share__row--icons .pp-share__btn.is-copied svg { color: #fff; }
     .pp-share__footer-link {
       margin-top: 1rem;
       padding-top: .85rem;
-      border-top: 1px dashed var(--pp-color-border-soft);
+      border-top: 1px dashed var(--color-gris-200);
       font-size: 12px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       text-align: center;
     }
     .pp-share__footer-link a {
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       text-decoration: none;
-      border-bottom: 1px dotted var(--pp-color-border);
+      border-bottom: 1px dotted var(--color-gris-200);
     }
     .pp-share__footer-link a:hover {
-      color: var(--pp-color-accent-deep);
-      border-bottom-color: var(--pp-color-accent);
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-match);
     }
 
     /* ── Optional label suffix ──────────────────────────────── */
@@ -246,7 +246,7 @@
       font-weight: 400;
       text-transform: none;
       letter-spacing: 0;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-left: .25rem;
       font-size: 12px;
     }
@@ -258,19 +258,19 @@
 
     /* ── Detalles colapsables (directorio opcional) ─────────── */
     .pp-detail {
-      background: var(--pp-color-bg);
-      border: 1px solid var(--pp-color-border);
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       margin-top: 1.5rem;
     }
     .pp-detail[open] {
-      background: var(--pp-color-surface);
+      background: #FFFFFF;
     }
     .pp-detail summary {
       cursor: pointer;
       padding: .9rem 1rem;
       font-weight: 600;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       display: flex;
       align-items: center;
       gap: .5rem;
@@ -280,7 +280,7 @@
     .pp-detail summary::-webkit-details-marker { display: none; }
     .pp-detail summary::before {
       content: "▸";
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       transition: transform .15s;
       display: inline-block;
       font-size: 11px;
@@ -288,23 +288,23 @@
     .pp-detail[open] summary::before { transform: rotate(90deg); }
     .pp-detail__body {
       padding: 0 1rem 1rem;
-      border-top: 1px solid var(--pp-color-border-soft);
+      border-top: 1px solid var(--color-gris-200);
       padding-top: 1rem;
     }
     .pp-detail__hint {
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       font-size: 13px;
       margin: 0 0 1rem;
     }
     .pp-svc-remove {
       width: 2.25rem;
       height: 2.25rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-sm);
-      background: var(--pp-color-surface);
+      background: #FFFFFF;
       cursor: pointer;
       font-size: 1.1rem;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -313,8 +313,8 @@
       line-height: 1;
     }
     .pp-svc-remove:hover {
-      border-color: var(--pp-color-danger);
-      color: var(--pp-color-danger);
+      border-color: var(--color-coral);
+      color: var(--color-coral);
     }
     .pp-svc-add {
       display: inline-flex;
@@ -322,18 +322,18 @@
       gap: .4rem;
       margin-top: .5rem;
       padding: .45rem .875rem;
-      border: 1px dashed var(--pp-color-border);
+      border: 1px dashed var(--color-gris-200);
       border-radius: var(--pp-r-sm);
       background: none;
       font-family: var(--pp-f-sans);
       font-size: 14px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       cursor: pointer;
       transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
     }
     .pp-svc-add:hover {
-      border-color: var(--pp-color-accent);
-      color: var(--pp-color-accent-deep);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
     }
 
     /* ── Foto upload ────────────────────────────────────────── */
@@ -342,9 +342,9 @@
       width: 72px; height: 72px;
       border-radius: 50%;
       overflow: hidden;
-      border: 1px solid var(--pp-color-border);
-      background: var(--pp-color-accent-soft);
-      color: var(--pp-color-accent-deep);
+      border: 1px solid var(--color-gris-200);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -357,25 +357,25 @@
       align-items: center;
       gap: .4rem;
       padding: .55rem 1rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
       font-weight: 600;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       cursor: pointer;
-      background: var(--pp-color-surface);
+      background: #FFFFFF;
       transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
     }
     .pp-foto__btn:hover {
-      border-color: var(--pp-color-accent);
-      color: var(--pp-color-accent-deep);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
     }
 
     /* ── Banner upgrade (free → plan) ───────────────────────── */
     .pp-upgrade {
       display: none;
-      background: #fffbeb;
-      border: 1px solid #fde68a;
+      background: var(--color-warning-light);
+      border: 1px solid var(--color-warning);
       border-radius: var(--pp-r-lg);
       padding: 1rem 1.25rem;
       margin-bottom: 1.25rem;
@@ -384,12 +384,12 @@
     .pp-upgrade__title {
       font-size: 15px;
       font-weight: 700;
-      color: #92400e;
+      color: var(--color-warning);
       margin: 0 0 .2rem;
     }
     .pp-upgrade__sub {
       font-size: 13px;
-      color: #b45309;
+      color: var(--color-warning);
       margin: 0 0 .75rem;
     }
     .pp-upgrade__perks {
@@ -400,19 +400,19 @@
       margin: 0 0 .875rem;
       padding: 0;
     }
-    .pp-upgrade__perks li { font-size: 13px; color: #b45309; }
+    .pp-upgrade__perks li { font-size: 13px; color: var(--color-warning); }
     .pp-upgrade__perks li::before { content: "✓ "; font-weight: 700; }
 
     .pp-plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
     .pp-plan-btn {
       flex: 1;
       padding: .5rem .75rem;
-      border: 1px solid #fde68a;
+      border: 1px solid var(--color-warning);
       border-radius: var(--pp-r-md);
       background: transparent;
       font-family: var(--pp-f-sans);
       font-size: 13px;
-      color: #92400e;
+      color: var(--color-warning);
       cursor: pointer;
       transition: border-color var(--pp-t-fast),
                   background var(--pp-t-fast),
@@ -420,18 +420,18 @@
       text-align: left;
       line-height: 1.3;
     }
-    .pp-plan-btn:hover { border-color: #f59e0b; background: #fef9e7; }
+    .pp-plan-btn:hover { border-color: var(--color-warning); background: var(--color-warning-light); }
     .pp-plan-btn.is-selected {
-      border-color: var(--pp-color-accent);
-      background: var(--pp-color-accent-soft);
-      color: var(--pp-color-accent-deep);
+      border-color: var(--color-verde-match);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
     }
     .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; }
     .pp-plan-btn span { font-size: 12px; opacity: .75; }
 
     .pp-upgrade__cta {
       width: 100%;
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
       border: none;
       border-radius: var(--pp-r-md);
@@ -445,11 +445,11 @@
       text-align: center;
       transition: background var(--pp-t-fast);
     }
-    .pp-upgrade__cta:hover { background: var(--pp-color-accent-deep); }
+    .pp-upgrade__cta:hover { background: var(--color-verde-dark); }
 
     /* ── Directorio box + toggle ───────────────────────────── */
     .pp-dir-box {
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1rem;
     }
@@ -460,20 +460,20 @@
       justify-content: space-between;
       gap: 1rem;
       padding: .875rem 1rem;
-      background: var(--pp-color-bg);
+      background: var(--color-crema);
       border-radius: var(--pp-r-md);
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       margin-top: .875rem;
     }
     .pp-toggle-row__info { flex: 1; }
     .pp-toggle-row__label {
       font-size: 15px;
       font-weight: 600;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-toggle-row__hint {
       font-size: 12px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-top: .2rem;
     }
     .pp-toggle-sw {
@@ -493,7 +493,7 @@
       position: absolute;
       cursor: pointer;
       inset: 0;
-      background: var(--pp-color-border);
+      background: var(--color-gris-200);
       border-radius: 12px;
       transition: background var(--pp-t-base);
     }
@@ -510,7 +510,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.2);
     }
     .pp-toggle-sw input:checked ~ .pp-toggle-track {
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
     }
     .pp-toggle-sw input:checked ~ .pp-toggle-track::before {
       transform: translateX(20px);
@@ -519,8 +519,8 @@
     /* ── Kit físico (paid users): re-descarga de tarjeta + QR ── */
     .pp-kit {
       display: none;
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem;
       margin-bottom: 1.25rem;
@@ -531,26 +531,26 @@
       font-weight: 700;
       letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--pp-color-accent);
+      color: var(--color-verde-match);
       margin: 0 0 .35rem;
     }
     .pp-kit__title {
       font-size: 16px;
       font-weight: 700;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .25rem;
     }
     .pp-kit__sub {
       font-size: 13px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       margin: 0 0 1rem;
       line-height: 1.5;
     }
     .pp-kit__items { display: grid; gap: .625rem; }
     .pp-kit__item {
-      background: var(--pp-color-warm-bg, #FAF3E6);
+      background: var(--color-crema, #FAF7F0);
       border-radius: var(--pp-r-md);
-      border-left: 3px solid var(--pp-color-accent);
+      border-left: 3px solid var(--color-verde-match);
       padding: .75rem .875rem;
       display: flex;
       align-items: center;
@@ -562,12 +562,12 @@
     .pp-kit__item-name {
       font-size: 13px;
       font-weight: 700;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .15rem;
     }
     .pp-kit__item-desc {
       font-size: 12px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       line-height: 1.4;
       margin: 0;
     }
@@ -577,24 +577,24 @@
       gap: .35rem;
       font-size: 12px;
       font-weight: 700;
-      color: var(--pp-color-accent);
+      color: var(--color-verde-match);
       text-decoration: none;
       padding: .4rem .85rem;
-      border: 1.5px solid var(--pp-color-accent);
+      border: 1.5px solid var(--color-verde-match);
       border-radius: 100px;
-      background: var(--pp-color-surface);
+      background: #FFFFFF;
       white-space: nowrap;
       transition: background var(--pp-t-fast);
     }
     .pp-kit__btn:hover {
-      background: var(--pp-color-accent-soft);
+      background: var(--color-verde-light);
     }
 
     .pp-public-link {
       display: none;
       margin-top: .875rem;
       font-size: 13px;
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       font-weight: 600;
       text-decoration: none;
     }
@@ -605,8 +605,8 @@
     .pp-city-ac__list {
       position: absolute; z-index: var(--pp-z-dropdown);
       left: 0; right: 0; top: calc(100% + 4px);
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       box-shadow: var(--pp-sh-md);
       list-style: none; margin: 0; padding: .25rem 0;
@@ -615,24 +615,24 @@
     .pp-city-ac__item {
       display: flex; justify-content: space-between; align-items: center; gap: .5rem;
       padding: .5rem .875rem; cursor: pointer; font-size: 14px;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-city-ac__item:hover,
-    .pp-city-ac__item[data-sel] { background: var(--pp-color-accent-soft); }
+    .pp-city-ac__item[data-sel] { background: var(--color-verde-light); }
     .pp-city-ac__name { font-weight: 500; }
-    .pp-city-ac__prov { color: var(--pp-color-ink-muted); font-size: 12px; white-space: nowrap; }
-    .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--pp-color-ink-muted); font-style: italic; }
+    .pp-city-ac__prov { color: var(--color-gris-500); font-size: 12px; white-space: nowrap; }
+    .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--color-gris-500); font-style: italic; }
     .pp-city-radius {
       display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem;
       margin-top: .5rem; padding: .5rem .75rem;
-      background: var(--pp-color-bg);
-      border: 1px solid var(--pp-color-border);
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 13px;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-city-radius__lbl {
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       font-size: 12px;
       flex: 0 0 100%;
       margin-bottom: -.1rem;
@@ -643,7 +643,7 @@
     }
     .pp-city-osm {
       font-size: 11px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin: .3rem 0 0;
       text-align: right;
     }
@@ -653,7 +653,7 @@
     /* ── Hint dentro de .pp-field ───────────────────────────── */
     .pp-field__hint {
       font-size: 12px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin: .35rem 0 0;
     }
   </style>
@@ -687,12 +687,12 @@
         <h1 class="pp-edit-card__title">Editar mi perfil</h1>
         <p class="pp-edit-card__sub">Te enviamos el enlace de acceso.</p>
         <div id="slugMsg" style="display:none" class="pp-msg"></div>
-        <p style="font-size:14px;color:var(--pp-color-ink-soft);margin-bottom:1.5rem;line-height:1.6">
+        <p style="font-size:14px;color:var(--color-gris-500);margin-bottom:1.5rem;line-height:1.6">
           Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
         </p>
         <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
-        <p style="margin-top:1rem;text-align:center;font-size:13px;color:var(--pp-color-ink-muted)">
-          ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--pp-color-accent-deep);font-weight:600">Accede con tu email</a>
+        <p style="margin-top:1rem;text-align:center;font-size:13px;color:var(--color-gris-500)">
+          ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--color-verde-dark);font-weight:600">Accede con tu email</a>
         </p>
       </div>
 
@@ -1236,7 +1236,7 @@
       const bh = (v / max) * (h - 4);
       const x  = i * bw;
       const y  = h - bh;
-      bars += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' + (bw - 1) + '" height="' + bh + '" fill="#01696F" rx="1.5" ry="1.5"></rect>';
+      bars += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' + (bw - 1) + '" height="' + bh + '" fill="#00C277" rx="1.5" ry="1.5"></rect>';
     }
     svg.innerHTML = bars;
   }
