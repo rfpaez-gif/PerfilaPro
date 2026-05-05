@@ -987,20 +987,55 @@
     document.getElementById('slugPhase').style.display = '';
   }
 
-  // Foto preview
+  // Foto preview con compresión cliente-side.
+  // Las fotos de móvil pueden ser 5-10 MB en base64, lo que supera el
+  // límite de 6 MB de body de Netlify Functions y satura la memoria de
+  // Safari mobile. Redimensionamos a max 1200px y re-encodeamos como
+  // JPEG 0.85 antes de almacenar en memoria. Resultado típico < 400 KB.
   var pendingFotoDataUrl = null;
   var directoryData = null;
-  document.getElementById('fotoFileInput').addEventListener('change', function() {
+
+  function compressImage(file, maxDim, quality) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function() { reject(new Error('No se pudo leer la imagen.')); };
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onerror = function() { reject(new Error('Formato de imagen no soportado.')); };
+        img.onload = function() {
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+            else        { w = Math.round(w * (maxDim / h)); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('fotoFileInput').addEventListener('change', async function() {
     var file = this.files[0];
     if (!file) return;
-    document.getElementById('fotoFileName').textContent = file.name;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      pendingFotoDataUrl = e.target.result;
+    var fileNameEl = document.getElementById('fotoFileName');
+    fileNameEl.textContent = file.name + ' · procesando…';
+    try {
+      var dataUrl = await compressImage(file, 1200, 0.85);
+      pendingFotoDataUrl = dataUrl;
       var preview = document.getElementById('fotoPreview');
-      preview.innerHTML = '<img src="' + pendingFotoDataUrl + '" alt="preview">';
-    };
-    reader.readAsDataURL(file);
+      preview.innerHTML = '<img src="' + dataUrl + '" alt="preview">';
+      var sizeKb = Math.round((dataUrl.length * 3 / 4) / 1024);
+      fileNameEl.textContent = file.name + ' · ' + sizeKb + ' KB';
+    } catch (err) {
+      pendingFotoDataUrl = null;
+      fileNameEl.textContent = '';
+      alert('No se pudo procesar la imagen: ' + err.message);
+    }
   });
 
   async function sendLinkBySlug() {
