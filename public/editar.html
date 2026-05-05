@@ -854,10 +854,6 @@
           <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
         </div>
 
-        <div class="pp-edit-actions">
-          <a id="viewCardLink" href="#" target="_blank">Ver mi tarjeta →</a>
-          <a id="viewProfileLink" href="#" target="_blank" style="display:none">Ver perfil público →</a>
-        </div>
       </div>
 
     </div><!-- /pp-edit-main -->
@@ -1225,11 +1221,6 @@
       }
 
       // Enlace a la tarjeta y al perfil público
-      const cardLink = document.getElementById('viewCardLink');
-      if (cardLink) cardLink.href = '/c/' + slug;
-      const profileLink = document.getElementById('viewProfileLink');
-      if (profileLink) { profileLink.href = '/p/' + slug; profileLink.style.display = ''; }
-
       // Cargar opciones del directorio y pre-seleccionar valores actuales.
       // Pasamos tagline + zona para que la función pueda resolver via
       // archetypes.json: el archetype canónico aporta category_sector y

@@ -13,7 +13,11 @@ function esc(str) {
 function normalizePhone(tel) {
   if (!tel) return null;
   const digits = String(tel).replace(/\D/g, '');
-  return tel.trim().startsWith('+') ? '+' + digits : '+34' + digits;
+  if (!digits) return null;
+  if (digits.length === 11 && digits.startsWith('34')) return '+' + digits;
+  if (digits.length === 9) return '+34' + digits;
+  if (digits.length === 13 && digits.startsWith('0034')) return '+' + digits.substring(2);
+  return '+' + digits;
 }
 
 function safeJson(obj) {
@@ -336,7 +340,11 @@ exports.handler = async (event) => {
     function downloadVCard() {
       var lines = ['BEGIN:VCARD','VERSION:3.0','FN:' + CARD.nombre];
       if (CARD.whatsapp) lines.push('TEL;TYPE=CELL:+' + CARD.whatsapp);
-      if (CARD.telefono) lines.push('TEL;TYPE=WORK:+34' + CARD.telefono.replace(/\\D/g,''));
+      if (CARD.telefono) {
+        var telDigits = CARD.telefono.replace(/\\D/g,'');
+        var telE164 = (telDigits.length === 11 && telDigits.indexOf('34') === 0) ? '+' + telDigits : '+34' + telDigits;
+        lines.push('TEL;TYPE=WORK:' + telE164);
+      }
       if (CARD.tagline)  lines.push('TITLE:' + CARD.tagline);
       if (CARD.zona)     lines.push('NOTE:' + CARD.zona);
       lines.push('URL:' + CARD.cardUrl);
