@@ -47,7 +47,7 @@ function makeHandler(deps) {
           title: 'Perfil no encontrado — PerfilaPro',
           desc: 'Este perfil no existe o no está activo.',
           canonical: `${siteUrl}/p/${slug}`,
-          body: `<div style="text-align:center;padding:4rem 1rem;color:var(--pp-ink-soft)"><h1 style="font-family:var(--pp-f-display);font-size:1.5rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:.5rem;color:var(--pp-ink)">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
+          body: `<div style="text-align:center;padding:4rem 1rem;color:var(--color-gris-500)"><h1 style="font-family:var(--pp-f-display);font-size:1.5rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:.5rem;color:var(--color-tinta)">Perfil no encontrado</h1><p>Este perfil no existe o no está activo.</p></div>`,
           crumbs: null,
           siteUrl,
         }),

@@ -19,8 +19,8 @@
       padding: 1rem;
     }
     .pp-admin-login__box {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-xl);
       box-shadow: var(--pp-sh-md);
       padding: 2.5rem 2rem;
@@ -33,16 +33,16 @@
       font-size: 1.75rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .25rem;
     }
     .pp-admin-login__sub {
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       font-size: 14px;
       margin: 0 0 1.75rem;
     }
     .pp-admin-login__error {
-      color: var(--pp-color-danger);
+      color: var(--color-coral);
       font-size: 13px;
       margin-top: .75rem;
       display: none;
@@ -56,7 +56,7 @@
     /* ── Topbar ───────────────────────────────────────────── */
     .pp-admin-dash { display: none; }
     .pp-admin-topbar {
-      background: var(--pp-color-accent-deep);
+      background: var(--color-verde-dark);
       color: #fff;
       padding: 1rem 2rem;
       display: flex;
@@ -107,8 +107,8 @@
       margin-bottom: 2rem;
     }
     .pp-stat {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem;
     }
@@ -118,7 +118,7 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-bottom: .5rem;
     }
     .pp-stat__value {
@@ -127,15 +127,15 @@
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
       line-height: 1;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
-    .pp-stat__value--primary { color: var(--pp-color-accent-deep); }
-    .pp-stat__value--success { color: var(--pp-color-success); }
-    .pp-stat__value--warning { color: var(--pp-color-warning); }
-    .pp-stat__value--danger  { color: var(--pp-color-danger); }
+    .pp-stat__value--primary { color: var(--color-verde-dark); }
+    .pp-stat__value--success { color: var(--color-verde-dark); }
+    .pp-stat__value--warning { color: var(--color-warning); }
+    .pp-stat__value--danger  { color: var(--color-coral); }
     .pp-stat__sub {
       font-size: 12px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-top: .3rem;
     }
 
@@ -153,7 +153,7 @@
       font-size: 1.25rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-heading);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-admin-filters {
       display: flex;
@@ -163,59 +163,59 @@
     }
     .pp-admin-search {
       padding: .5rem .9rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
       font-family: var(--pp-f-sans);
-      background: var(--pp-color-surface);
-      color: var(--pp-color-ink);
+      background: #FFFFFF;
+      color: var(--color-tinta);
       outline: none;
       min-width: 200px;
       transition: border-color var(--pp-t-fast),
                   box-shadow var(--pp-t-fast);
     }
     .pp-admin-search:focus {
-      border-color: var(--pp-color-accent);
-      box-shadow: 0 0 0 3px var(--pp-color-accent-soft);
+      border-color: var(--color-verde-match);
+      box-shadow: 0 0 0 3px var(--color-verde-light);
     }
     .pp-filter-btn {
       padding: .4rem .9rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-pill);
-      background: var(--pp-color-surface);
+      background: #FFFFFF;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       font-family: var(--pp-f-sans);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       transition: border-color var(--pp-t-fast),
                   color var(--pp-t-fast),
                   background var(--pp-t-fast);
     }
     .pp-filter-btn:hover {
-      border-color: var(--pp-color-accent);
-      color: var(--pp-color-accent-deep);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
     }
     .pp-filter-btn.is-active {
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
-      border-color: var(--pp-color-accent);
+      border-color: var(--color-verde-match);
     }
     .pp-filter-btn--primary {
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
-      border-color: var(--pp-color-accent);
+      border-color: var(--color-verde-match);
     }
     .pp-filter-btn--primary:hover {
-      background: var(--pp-color-accent-deep);
-      border-color: var(--pp-color-accent-deep);
+      background: var(--color-verde-dark);
+      border-color: var(--color-verde-dark);
       color: #fff;
     }
 
     /* ── Table ────────────────────────────────────────────── */
     .pp-tbl-wrap {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       overflow: hidden;
     }
@@ -232,39 +232,39 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-ink-muted);
-      border-bottom: 1px solid var(--pp-color-border);
-      background: var(--pp-color-bg);
+      color: var(--color-gris-500);
+      border-bottom: 1px solid var(--color-gris-200);
+      background: var(--color-crema);
       white-space: nowrap;
     }
     .pp-tbl td {
       padding: .75rem 1rem;
-      border-bottom: 1px solid var(--pp-color-border);
+      border-bottom: 1px solid var(--color-gris-200);
       vertical-align: middle;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-tbl tr:last-child td { border-bottom: none; }
     .pp-tbl tr:hover td {
-      background: color-mix(in srgb, var(--pp-color-bg) 60%, var(--pp-color-surface));
+      background: color-mix(in srgb, var(--color-crema) 60%, #FFFFFF);
     }
     .pp-tbl__empty td {
       text-align: center;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       padding: 3rem;
       font-size: 14px;
     }
-    .pp-tbl__name strong { display: block; color: var(--pp-color-ink); }
+    .pp-tbl__name strong { display: block; color: var(--color-tinta); }
     .pp-tbl__name small {
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       font-size: 12px;
       font-family: var(--pp-f-mono);
     }
     .pp-tbl__email a {
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       text-decoration: none;
     }
     .pp-tbl__card-link {
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       text-decoration: none;
       font-weight: 600;
       font-size: 13px;
@@ -285,7 +285,7 @@
     }
     .pp-status-badge--active  { background: #dcfce7; color: #15803d; }
     .pp-status-badge--expired { background: #fee2e2; color: #b91c1c; }
-    .pp-status-badge--soon    { background: #fef9c3; color: #854d0e; }
+    .pp-status-badge--soon    { background: var(--color-warning-light); color: var(--color-warning); }
     .pp-status-badge--free    { background: #f3f4f6; color: #4b5563; }
 
     .pp-plan-badge {
@@ -297,8 +297,8 @@
       font-family: var(--pp-f-sans);
     }
     .pp-plan-badge--pro        { background: #ede9fe; color: #5b21b6; }
-    .pp-plan-badge--base       { background: var(--pp-color-accent-soft); color: var(--pp-color-accent-deep); }
-    .pp-plan-badge--renovacion { background: #fef3c7; color: #92400e; }
+    .pp-plan-badge--base       { background: var(--color-verde-light); color: var(--color-verde-dark); }
+    .pp-plan-badge--renovacion { background: var(--color-warning-light); color: var(--color-warning); }
     .pp-plan-badge--none       { background: #f3f4f6; color: #9ca3af; }
 
     .pp-agent-badge {
@@ -317,31 +317,31 @@
     .pp-action-btn {
       padding: .28rem .65rem;
       border-radius: var(--pp-r-sm);
-      border: 1px solid var(--pp-color-border);
-      background: var(--pp-color-surface);
+      border: 1px solid var(--color-gris-200);
+      background: #FFFFFF;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       font-family: var(--pp-f-sans);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       transition: background var(--pp-t-fast),
                   border-color var(--pp-t-fast),
                   opacity var(--pp-t-fast);
     }
     .pp-action-btn:hover { opacity: .85; }
-    .pp-action-btn--reactivate { color: var(--pp-color-success); border-color: #bbf7d0; }
+    .pp-action-btn--reactivate { color: var(--color-verde-dark); border-color: #bbf7d0; }
     .pp-action-btn--reactivate:hover { background: #dcfce7; }
-    .pp-action-btn--extend { color: var(--pp-color-warning); border-color: #fde68a; }
-    .pp-action-btn--extend:hover { background: #fef9c3; }
-    .pp-action-btn--refund { color: var(--pp-color-danger); border-color: #fecaca; }
+    .pp-action-btn--extend { color: var(--color-warning); border-color: var(--color-warning); }
+    .pp-action-btn--extend:hover { background: var(--color-warning-light); }
+    .pp-action-btn--refund { color: var(--color-coral); border-color: #fecaca; }
     .pp-action-btn--refund:hover { background: #fee2e2; }
     .pp-action-btn--invoice { color: #2563eb; border-color: #bfdbfe; }
     .pp-action-btn--invoice:hover { background: #eff6ff; }
     .pp-action-btn--regen {
-      color: var(--pp-color-accent-deep);
-      border-color: var(--pp-color-accent);
+      color: var(--color-verde-dark);
+      border-color: var(--color-verde-match);
     }
-    .pp-action-btn--regen:hover { background: var(--pp-color-accent-soft); }
+    .pp-action-btn--regen:hover { background: var(--color-verde-light); }
     .pp-action-btn--regen[disabled] { opacity: .55; cursor: progress; }
     .pp-action-btn--regen .pp-spin { display: inline-block; animation: ppSpin 1s linear infinite; }
     @keyframes ppSpin { to { transform: rotate(360deg); } }
@@ -362,17 +362,17 @@
       height: 36px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       flex-shrink: 0;
-      background: var(--pp-color-bg);
+      background: var(--color-crema);
     }
-    .pp-seed-thumb.is-empty { background: var(--pp-color-accent-soft); }
+    .pp-seed-thumb.is-empty { background: var(--color-verde-light); }
     .pp-seed-flag {
       display: inline-block;
       padding: .1rem .45rem;
       border-radius: var(--pp-r-sm);
-      background: var(--pp-color-accent-soft);
-      color: var(--pp-color-accent-deep);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
       font-family: var(--pp-f-mono);
       font-size: 10px;
       font-weight: 700;
@@ -402,19 +402,19 @@
     .pp-dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
     .pp-dir-config-btn {
       background: none;
-      border: 1px dashed var(--pp-color-border);
+      border: 1px dashed var(--color-gris-200);
       border-radius: var(--pp-r-sm);
       padding: .15rem .5rem;
       font-size: 11px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       cursor: pointer;
       font-family: var(--pp-f-sans);
       transition: background var(--pp-t-fast), border-color var(--pp-t-fast), color var(--pp-t-fast);
     }
     .pp-dir-config-btn:hover {
-      background: var(--pp-color-accent-soft);
-      color: var(--pp-color-accent-deep);
-      border-color: var(--pp-color-accent);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
+      border-color: var(--color-verde-match);
       border-style: solid;
     }
     .pp-dir-meta {
@@ -428,7 +428,7 @@
       flex-wrap: wrap;
     }
     .pp-dir-meta__city {
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       font-size: 11px;
       font-family: var(--pp-f-mono);
     }
@@ -446,8 +446,8 @@
     }
     .pp-modal-overlay.is-open { display: flex; }
     .pp-modal {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-xl);
       box-shadow: var(--pp-sh-xl);
       padding: 2rem;
@@ -459,12 +459,12 @@
       font-size: 1.25rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-heading);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .5rem;
     }
     .pp-modal__text {
       font-size: 14px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       margin: 0 0 1.5rem;
       line-height: 1.5;
     }
@@ -475,16 +475,16 @@
     }
     .pp-modal__cancel {
       padding: .6rem 1.2rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
-      background: var(--pp-color-surface);
-      color: var(--pp-color-ink);
+      background: #FFFFFF;
+      color: var(--color-tinta);
       font-family: var(--pp-f-sans);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
     }
-    .pp-modal__cancel:hover { border-color: var(--pp-color-ink); }
+    .pp-modal__cancel:hover { border-color: var(--color-tinta); }
     .pp-modal__confirm {
       padding: .6rem 1.2rem;
       border: none;
@@ -495,41 +495,41 @@
       color: #fff;
       cursor: pointer;
     }
-    .pp-modal__confirm--success { background: var(--pp-color-success); }
-    .pp-modal__confirm--warning { background: var(--pp-color-warning); }
-    .pp-modal__confirm--danger  { background: var(--pp-color-danger); }
+    .pp-modal__confirm--success { background: var(--color-verde-dark); }
+    .pp-modal__confirm--warning { background: var(--color-warning); }
+    .pp-modal__confirm--danger  { background: var(--color-coral); }
     .pp-modal__select {
       padding: .6rem .85rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
       font-family: var(--pp-f-sans);
-      background: var(--pp-color-surface);
-      color: var(--pp-color-ink);
+      background: #FFFFFF;
+      color: var(--color-tinta);
       outline: none;
       transition: border-color var(--pp-t-fast),
                   box-shadow var(--pp-t-fast);
     }
     .pp-modal__select:focus {
-      border-color: var(--pp-color-accent);
-      box-shadow: 0 0 0 3px var(--pp-color-accent-soft);
+      border-color: var(--color-verde-match);
+      box-shadow: 0 0 0 3px var(--color-verde-light);
     }
     .pp-modal__textarea {
       width: 100%;
       padding: .65rem .85rem;
-      border: 1px solid var(--pp-color-border);
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
       font-family: var(--pp-f-sans);
-      color: var(--pp-color-ink);
-      background: var(--pp-color-surface);
+      color: var(--color-tinta);
+      background: #FFFFFF;
       resize: vertical;
       outline: none;
       transition: border-color var(--pp-t-fast),
                   box-shadow var(--pp-t-fast);
     }
     .pp-modal__textarea:focus {
-      border-color: var(--pp-color-danger);
+      border-color: var(--color-coral);
       box-shadow: 0 0 0 3px rgba(178, 58, 72, .15);
     }
     .pp-modal__field-label {
@@ -539,14 +539,14 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-bottom: .4rem;
     }
 
     /* ── Legal panel ──────────────────────────────────────── */
     .pp-legal-panel {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1.5rem;
       margin-bottom: 1.5rem;
@@ -584,7 +584,7 @@
     }
     .pp-agent-modal__grid > .pp-agent-modal__full { grid-column: 1 / -1; }
     .pp-agent-modal__err {
-      color: var(--pp-color-danger);
+      color: var(--color-coral);
       font-size: 13px;
       margin-top: .75rem;
       min-height: 1rem;
@@ -605,7 +605,7 @@
       border-radius: var(--pp-r-sm);
       font-family: var(--pp-f-mono);
       font-size: 13px;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
 
     /* ── Responsive ───────────────────────────────────────── */
@@ -1026,7 +1026,7 @@
         <td class="pp-tbl__col-md pp-tbl__email"><small>${card.email ? `<a href="mailto:${card.email}">${card.email}</a>` : '—'}</small></td>
         <td><span class="pp-plan-badge pp-plan-badge--${plan}">${planLabel}</span></td>
         <td>${BADGE[status]}</td>
-        <td class="pp-tbl__col-md"><small style="color:var(--pp-color-ink-muted)">${expira}</small></td>
+        <td class="pp-tbl__col-md"><small style="color:var(--color-gris-500)">${expira}</small></td>
         <td><a href="/c/${card.slug}" target="_blank" class="pp-tbl__card-link">Ver →</a></td>
         <td class="pp-tbl__col-md">
           <div class="pp-dir-meta">
@@ -1086,7 +1086,7 @@
 
   async function saveLegal() {
     const msg = document.getElementById('legalMsg');
-    msg.style.color = 'var(--pp-color-ink-muted)';
+    msg.style.color = 'var(--color-gris-500)';
     msg.textContent = 'Guardando…';
 
     try {
@@ -1102,10 +1102,10 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
-      msg.style.color = 'var(--pp-color-success)';
+      msg.style.color = 'var(--color-verde-dark)';
       msg.textContent = '✓ Guardado correctamente';
     } catch (err) {
-      msg.style.color = 'var(--pp-color-danger)';
+      msg.style.color = 'var(--color-coral)';
       msg.textContent = `Error: ${err.message}`;
     }
   }
@@ -1227,8 +1227,8 @@
       const plan  = f.plan ? f.plan.charAt(0).toUpperCase() + f.plan.slice(1) : '—';
       return `<tr>
         <td><strong style="font-size:13px;font-family:var(--pp-f-mono)">${f.numero_factura}</strong></td>
-        <td><small style="color:var(--pp-color-ink-muted)">${fecha}</small></td>
-        <td class="pp-tbl__col-md"><small style="color:var(--pp-color-ink-muted)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--pp-color-ink-muted);opacity:.7">${f.email_cliente}</span>` : ''}</small></td>
+        <td><small style="color:var(--color-gris-500)">${fecha}</small></td>
+        <td class="pp-tbl__col-md"><small style="color:var(--color-gris-500)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--color-gris-500);opacity:.7">${f.email_cliente}</span>` : ''}</small></td>
         <td><span class="pp-plan-badge pp-plan-badge--${f.plan || 'none'}">${plan}</span></td>
         <td><small>${(+f.base_imponible).toFixed(2)} €</small></td>
         <td><small>${(+f.iva).toFixed(2)} €</small></td>
@@ -1299,9 +1299,9 @@
       <tr>
         <td><strong>${a.name}</strong></td>
         <td><code class="pp-code-chip">${a.code}</code></td>
-        <td style="font-size:13px;color:var(--pp-color-ink-muted)">${a.email}</td>
+        <td style="font-size:13px;color:var(--color-gris-500)">${a.email}</td>
         <td>${a.commission_rate}%</td>
-        <td style="font-size:13px;color:var(--pp-color-ink-muted)">${a.parent_agent_id ? (codeToName[a.parent_agent_id] || a.parent_agent_id) : '—'}</td>
+        <td style="font-size:13px;color:var(--color-gris-500)">${a.parent_agent_id ? (codeToName[a.parent_agent_id] || a.parent_agent_id) : '—'}</td>
         <td>${a.sales_count}</td>
         <td><span class="pp-agent-badge ${a.status === 'active' ? 'pp-agent-badge--active' : 'pp-agent-badge--muted'}">${a.status === 'active' ? 'Activo' : 'Inactivo'}</span></td>
         <td><button class="pp-filter-btn" onclick="openAgentModal('${a.id}')">Editar</button></td>
@@ -1418,7 +1418,7 @@
         body: JSON.stringify({ slug }),
       });
       btn.textContent = '✓ Enviado';
-      btn.style.color = 'var(--pp-color-success)';
+      btn.style.color = 'var(--color-verde-dark)';
       btn.style.borderColor = '#bbf7d0';
       setTimeout(() => {
         btn.textContent = orig;
@@ -1527,7 +1527,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
       btn.textContent = '✓ Enviada';
-      btn.style.color = 'var(--pp-color-success)';
+      btn.style.color = 'var(--color-verde-dark)';
       btn.style.borderColor = '#bbf7d0';
       setTimeout(() => {
         btn.textContent = orig;
@@ -1557,7 +1557,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
       btn.textContent = '✓ Enviado';
-      btn.style.color = 'var(--pp-color-success)';
+      btn.style.color = 'var(--color-verde-dark)';
       btn.style.borderColor = '#bbf7d0';
       setTimeout(() => {
         btn.textContent = orig;
@@ -1580,7 +1580,7 @@
     <h2 class="pp-modal__title">Reembolsar y desactivar</h2>
     <p class="pp-modal__text">Vas a reembolsar el pago de <strong id="refundNombre"></strong> y desactivar su tarjeta. Esta acción no se puede deshacer.</p>
     <div style="margin-bottom:1.25rem">
-      <label class="pp-modal__field-label">Motivo del reembolso <span style="color:var(--pp-color-danger)">*</span></label>
+      <label class="pp-modal__field-label">Motivo del reembolso <span style="color:var(--color-coral)">*</span></label>
       <textarea id="refundReason" rows="3" class="pp-modal__textarea" placeholder="Ej: Doble pago, desistimiento en 48h, error técnico…"></textarea>
     </div>
     <div class="pp-modal__actions">

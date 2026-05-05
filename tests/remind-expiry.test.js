@@ -107,18 +107,18 @@ describe('buildReminderEmail', () => {
     expect(html).toContain('https://perfilapro.com/c/carlos-electricista');
   });
 
-  it('usa color rojo para urgencia de 7 días', () => {
+  it('usa color coral para urgencia de 7 días', () => {
     const { html } = buildReminderEmail({ ...base, daysLeft: 7 });
-    expect(html).toContain('#dc2626');
+    expect(html).toContain('#E5484D');
   });
 
-  it('usa color amarillo para urgencia de 15 días', () => {
+  it('usa color warning para urgencia de 15 días', () => {
     const { html } = buildReminderEmail({ ...base, daysLeft: 15 });
-    expect(html).toContain('#ca8a04');
+    expect(html).toContain('#D97706');
   });
 
-  it('usa color verde para 30 días', () => {
+  it('usa verde match para 30 días', () => {
     const { html } = buildReminderEmail({ ...base, daysLeft: 30 });
-    expect(html).toContain('#01696f');
+    expect(html).toContain('#00C277');
   });
 });

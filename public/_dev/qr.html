@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>QR · _dev · PerfilaPro</title>
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* Estilos solo de la página de prueba — no usar en producción. */
+    .pp-dev {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 56px;
+    }
+    .pp-dev__header { border-bottom: 1px solid var(--color-gris-200); padding-bottom: 16px; }
+    .pp-dev__header p { margin-top: 8px; color: var(--color-gris-500); max-width: 60ch; }
+    .pp-dev__header strong { color: var(--color-coral); }
+    .pp-dev__section { display: flex; flex-direction: column; gap: 20px; }
+    .pp-dev__section > h2 { font-size: 22px; }
+    .pp-dev__section > p { color: var(--color-gris-500); margin-top: -8px; }
+    .pp-dev__panel {
+      padding: 32px;
+      border: 1px solid var(--color-gris-200);
+      border-radius: 14px;
+      background: #FFFFFF;
+    }
+    .pp-dev__panel--crema { background: var(--color-crema); }
+    .pp-dev__panel--tinta { background: var(--color-tinta); color: #FFFFFF; border-color: var(--color-tinta); }
+    .pp-dev__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 32px;
+    }
+    .pp-dev__cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .pp-dev__caption {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-gris-500);
+    }
+    .pp-dev__panel--tinta .pp-dev__caption { color: rgba(255,255,255,0.55); }
+    .pp-dev__protocol {
+      background: var(--color-warning-light);
+      border: 1px solid var(--color-warning);
+      color: var(--color-warning);
+      padding: 16px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .pp-dev__protocol h3 { margin: 0 0 8px; font-size: 15px; color: var(--color-warning); }
+    .pp-dev__protocol code { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body class="pp-page">
+  <main class="pp-dev">
+
+    <header class="pp-dev__header">
+      <h1>QR · validación de escaneo</h1>
+      <p>Cuatro tamaños del QR vectorial servido por <code>/api/qr/:slug</code>. Slug de prueba: <code>paco-fontanero-alicante</code> (demo Pro). Esta página vive en <code>/_dev/qr.html</code> y no se indexa.</p>
+      <p><strong>Tu trabajo:</strong> escanear cada tamaño con iPhone + Android, dos lectores distintos (cámara nativa + algún scanner tipo Google Lens), bajo luz buena y bajo luz mala. Anotar cuál tarda más de 1.5 s en ser detectado.</p>
+    </header>
+
+    <section class="pp-dev__section">
+      <h2>Protocolo de validación</h2>
+      <div class="pp-dev__protocol">
+        <h3>Si algún tamaño falla o tarda &gt; 1.5 s</h3>
+        Avísame y reduzco el sello al 12 % del lado del QR. Hoy va al ~24 % en size 200 (sello 48 px sobre QR 200 px). El gate del Encargo 5 es esta validación; sin ella no migro <code>card.js</code>, <code>editar.html</code> ni <code>printable-card-utils.js</code> ni borro los endpoints viejos.
+      </div>
+    </section>
+
+    <!-- Cuatro tamaños con marco + sello (caso por defecto) -->
+    <section class="pp-dev__section">
+      <h2>Tamaños · framed + sello (caso por defecto)</h2>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__row">
+
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-120 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=120" alt="QR 120">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 120 · sello 24 px</span>
+          </div>
+
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-160 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=160" alt="QR 160">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 160 · sello 36 px</span>
+          </div>
+
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-200 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=200" alt="QR 200">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 200 · sello 48 px (default)</span>
+          </div>
+
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-280 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=280" alt="QR 280">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 280 · sello 64 px</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Sin sello (control de escaneo limpio) -->
+    <section class="pp-dev__section">
+      <h2>Sin sello · control</h2>
+      <p>Para comparar el tiempo de escaneo: el mismo QR sin nada que tape el centro debería ir instantáneo.</p>
+      <div class="pp-dev__panel">
+        <div class="pp-dev__row">
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-200 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=200" alt="QR 200 sin sello">
+            </div>
+            <span class="pp-dev__caption">size 200 · sin sello</span>
+          </div>
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-280 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=280" alt="QR 280 sin sello">
+            </div>
+            <span class="pp-dev__caption">size 280 · sin sello</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sin marco -->
+    <section class="pp-dev__section">
+      <h2>Sin marco</h2>
+      <p>El QR se sirve siempre con fondo blanco propio; quitar el marco solo elimina el padding y el borde gris-200.</p>
+      <div class="pp-dev__panel pp-dev__panel--crema">
+        <div class="pp-dev__row">
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-200">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=200" alt="QR 200 sin marco">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 200 · sobre crema</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sobre fondo Tinta con marco blanco -->
+    <section class="pp-dev__section">
+      <h2>Sobre Tinta · marco blanco protector</h2>
+      <p>Caso de la página pública del perfil cuando el QR vive en una banda oscura.</p>
+      <div class="pp-dev__panel pp-dev__panel--tinta">
+        <div class="pp-dev__row">
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-160 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=160" alt="QR 160 sobre tinta">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 160 · framed · sobre tinta</span>
+          </div>
+          <div class="pp-dev__cell">
+            <div class="pp-qr pp-qr--size-200 pp-qr--framed">
+              <img class="pp-qr__img" src="/api/qr/paco-fontanero-alicante?size=200" alt="QR 200 sobre tinta">
+              <div class="pp-qr__seal" aria-hidden="true">
+                <div class="pp-qr__seal-inner">P</div>
+              </div>
+            </div>
+            <span class="pp-dev__caption">size 200 · framed · sobre tinta</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>

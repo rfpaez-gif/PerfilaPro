@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PerfilaPro · Icon Sprite · v1
+  16 iconos en estilo Lucide/Phosphor, stroke 2px (set por la clase .pp-icon
+  del wrapper, no por el sprite). viewBox 24×24, sin fill/stroke en los
+  símbolos para que hereden de currentColor + size modifier del wrapper.
+
+  Uso:
+    <svg class="pp-icon pp-icon--md" aria-hidden="true">
+      <use href="/sprite.svg#icon-fontaneria"/>
+    </svg>
+
+  Helper SSR: netlify/functions/lib/icon-sprite.js
+  Demo:       public/_dev/components.html
+
+  No incluye iconos de marca (WhatsApp, LinkedIn, Instagram). Esos van como
+  ficheros independientes con su brand color.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+
+  <!-- Oficios -->
+
+  <symbol id="icon-fontaneria" viewBox="0 0 24 24">
+    <path d="M5 5h14"/>
+    <path d="M9 5v4"/>
+    <path d="M15 5v4"/>
+    <path d="M5 9h14"/>
+    <path d="M12 9v5"/>
+    <path d="M10 14h4"/>
+    <path d="M12 17v4"/>
+  </symbol>
+
+  <symbol id="icon-electricidad" viewBox="0 0 24 24">
+    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+  </symbol>
+
+  <symbol id="icon-carpinteria" viewBox="0 0 24 24">
+    <path d="m15 12-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9"/>
+    <path d="M17.64 15 22 10.64"/>
+    <path d="M20.91 11.7l-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l4.44 4.44"/>
+  </symbol>
+
+  <symbol id="icon-mecanica" viewBox="0 0 24 24">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+  </symbol>
+
+  <symbol id="icon-hosteleria" viewBox="0 0 24 24">
+    <path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2"/>
+    <path d="M7 2v20"/>
+    <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z"/>
+    <path d="M21 15v7"/>
+  </symbol>
+
+  <symbol id="icon-peluqueria" viewBox="0 0 24 24">
+    <circle cx="6" cy="6" r="3"/>
+    <path d="M8.12 8.12 12 12"/>
+    <path d="M20 4 8.12 15.88"/>
+    <circle cx="6" cy="18" r="3"/>
+    <path d="M14.8 14.8 20 20"/>
+  </symbol>
+
+  <!-- Acciones -->
+
+  <symbol id="icon-editar" viewBox="0 0 24 24">
+    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+    <path d="m15 5 4 4"/>
+  </symbol>
+
+  <symbol id="icon-copiar" viewBox="0 0 24 24">
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+  </symbol>
+
+  <symbol id="icon-descargar" viewBox="0 0 24 24">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" x2="12" y1="15" y2="3"/>
+  </symbol>
+
+  <symbol id="icon-compartir" viewBox="0 0 24 24">
+    <circle cx="18" cy="5" r="3"/>
+    <circle cx="6" cy="12" r="3"/>
+    <circle cx="18" cy="19" r="3"/>
+    <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/>
+    <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>
+  </symbol>
+
+  <symbol id="icon-ojo" viewBox="0 0 24 24">
+    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+
+  <!-- Estados -->
+
+  <symbol id="icon-tilde" viewBox="0 0 24 24">
+    <path d="M21.801 10A10 10 0 1 1 17 3.335"/>
+    <path d="m9 11 3 3L22 4"/>
+  </symbol>
+
+  <symbol id="icon-reloj" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </symbol>
+
+  <symbol id="icon-candado" viewBox="0 0 24 24">
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </symbol>
+
+  <!-- Comunicación -->
+
+  <symbol id="icon-telefono" viewBox="0 0 24 24">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </symbol>
+
+  <symbol id="icon-email" viewBox="0 0 24 24">
+    <rect width="20" height="16" x="2" y="4" rx="2"/>
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+  </symbol>
+
+</svg>

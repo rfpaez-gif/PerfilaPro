@@ -13,7 +13,7 @@
     /* ── Topbar (UI interna autenticada · accent-deep como
        admin.html) ─────────────────────────────────────────── */
     .pp-agent-topbar {
-      background: var(--pp-color-accent-deep);
+      background: var(--color-verde-dark);
       color: #fff;
       padding: 1rem 2rem;
       display: flex;
@@ -63,8 +63,8 @@
 
     /* ── Ref box (enlace de referido) ──────────────────────── */
     .pp-agent-ref {
-      background: var(--pp-color-accent-soft);
-      border: 1px solid var(--pp-color-accent);
+      background: var(--color-verde-light);
+      border: 1px solid var(--color-verde-match);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem 1.5rem;
       margin-bottom: 2rem;
@@ -79,7 +79,7 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       white-space: nowrap;
     }
     .pp-agent-ref__url {
@@ -87,12 +87,12 @@
       min-width: 200px;
       font-family: var(--pp-f-mono);
       font-size: 13px;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       font-weight: 500;
       word-break: break-all;
     }
     .pp-agent-ref__copy {
-      background: var(--pp-color-accent);
+      background: var(--color-verde-match);
       color: #fff;
       border: none;
       border-radius: var(--pp-r-md);
@@ -104,7 +104,7 @@
       white-space: nowrap;
       transition: background var(--pp-t-fast);
     }
-    .pp-agent-ref__copy:hover { background: var(--pp-color-accent-deep); }
+    .pp-agent-ref__copy:hover { background: var(--color-verde-dark); }
 
     /* ── Stats ─────────────────────────────────────────────── */
     .pp-stats {
@@ -114,8 +114,8 @@
       margin-bottom: 2rem;
     }
     .pp-stat {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem;
     }
@@ -125,7 +125,7 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-bottom: .5rem;
     }
     .pp-stat__value {
@@ -134,13 +134,13 @@
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
       line-height: 1;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
-    .pp-stat__value--primary { color: var(--pp-color-accent-deep); }
-    .pp-stat__value--success { color: var(--pp-color-success); }
+    .pp-stat__value--primary { color: var(--color-verde-dark); }
+    .pp-stat__value--success { color: var(--color-verde-dark); }
     .pp-stat__sub {
       font-size: 12px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-top: .35rem;
     }
 
@@ -151,14 +151,14 @@
       font-size: 1.35rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-heading);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 1rem;
     }
 
     /* ── Tables ────────────────────────────────────────────── */
     .pp-tbl-wrap {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       overflow: hidden;
     }
@@ -175,27 +175,27 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-ink-muted);
-      border-bottom: 1px solid var(--pp-color-border);
-      background: var(--pp-color-bg);
+      color: var(--color-gris-500);
+      border-bottom: 1px solid var(--color-gris-200);
+      background: var(--color-crema);
       white-space: nowrap;
     }
     .pp-tbl td {
       padding: .75rem 1rem;
-      border-bottom: 1px solid var(--pp-color-border);
+      border-bottom: 1px solid var(--color-gris-200);
       vertical-align: middle;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
     }
     .pp-tbl tr:last-child td { border-bottom: none; }
     .pp-tbl__empty td {
       text-align: center;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       padding: 2.5rem;
       font-size: 14px;
     }
-    .pp-tbl__strong { font-weight: 700; color: var(--pp-color-ink); }
+    .pp-tbl__strong { font-weight: 700; color: var(--color-tinta); }
     .pp-tbl__link {
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       text-decoration: none;
       font-weight: 600;
     }
@@ -213,16 +213,16 @@
       white-space: nowrap;
     }
     .pp-badge--ok      { background: #dcfce7; color: #15803d; }
-    .pp-badge--pending { background: #fef9c3; color: #854d0e; }
+    .pp-badge--pending { background: var(--color-warning-light); color: var(--color-warning); }
     .pp-badge--neutral { background: #f3f4f6; color: #4b5563; }
 
     /* ── Error state (carga fallida) ───────────────────────── */
     .pp-agent-error {
       padding: 2rem;
-      color: var(--pp-color-danger);
+      color: var(--color-coral);
       font-size: 14px;
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
     }
 

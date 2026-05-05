@@ -23,10 +23,10 @@ function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl }) {
   });
 
   const urgency = daysLeft <= 7
-    ? { color: '#dc2626', bg: '#fef2f2', label: '¡Quedan solo ' + daysLeft + ' días!' }
+    ? { color: '#E5484D', bg: '#FEE7E9', label: '¡Quedan solo ' + daysLeft + ' días!' }
     : daysLeft <= 15
-    ? { color: '#ca8a04', bg: '#fef9c3', label: 'Quedan ' + daysLeft + ' días' }
-    : { color: '#01696f', bg: COLORS.accentSoft, label: 'Quedan ' + daysLeft + ' días' };
+    ? { color: '#D97706', bg: '#FEF3C7', label: 'Quedan ' + daysLeft + ' días' }
+    : { color: '#00C277', bg: COLORS.accentSoft, label: 'Quedan ' + daysLeft + ' días' };
 
   const bodyHtml = `
             <div style="background:${urgency.bg};border-left:3px solid ${urgency.color};border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px">

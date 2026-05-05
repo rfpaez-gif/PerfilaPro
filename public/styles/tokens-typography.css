@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Familias */
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* Escala (clamp para mobile-first fluido) */
+  --type-display-size: clamp(2.75rem, 6vw + 1rem, 4.5rem);
+  --type-display-leading: 1.05;
+  --type-display-tracking: -0.025em;
+
+  --type-h1-size: clamp(2rem, 3.5vw + 1rem, 3rem);
+  --type-h1-leading: 1.1;
+  --type-h1-tracking: -0.02em;
+
+  --type-h2-size: clamp(1.5rem, 2vw + 0.75rem, 2rem);
+  --type-h2-leading: 1.2;
+  --type-h2-tracking: -0.015em;
+
+  --type-h3-size: 1.25rem;
+  --type-h3-leading: 1.3;
+  --type-h3-tracking: -0.01em;
+
+  --type-lead-size: clamp(1.125rem, 1vw + 0.875rem, 1.375rem);
+  --type-lead-leading: 1.45;
+
+  --type-body-size: 1rem;
+  --type-body-leading: 1.6;
+
+  --type-ui-size: 0.9375rem;
+  --type-ui-leading: 1.4;
+
+  --type-caption-size: 0.75rem;
+  --type-caption-leading: 1.4;
+  --type-caption-tracking: 0.01em;
+
+  --type-eyebrow-size: 0.75rem;
+  --type-eyebrow-leading: 1.2;
+  --type-eyebrow-tracking: 0.08em;
+
+  /* Pesos */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+}
+
+/* Reglas base */
+html { font-size: 16px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
+  color: var(--color-tinta);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-serif);
+  font-weight: var(--weight-semibold);
+  color: var(--color-tinta);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.display { font-size: var(--type-display-size); line-height: var(--type-display-leading); letter-spacing: var(--type-display-tracking); }
+h1 { font-size: var(--type-h1-size); line-height: var(--type-h1-leading); letter-spacing: var(--type-h1-tracking); }
+h2 { font-size: var(--type-h2-size); line-height: var(--type-h2-leading); letter-spacing: var(--type-h2-tracking); }
+h3 { font-size: var(--type-h3-size); line-height: var(--type-h3-leading); letter-spacing: var(--type-h3-tracking); }
+
+/* Truco editorial: italic dentro de párrafos salta a serif */
+p em, p i, li em, li i {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+}
+
+.lead { font-size: var(--type-lead-size); line-height: var(--type-lead-leading); color: var(--color-gris-500); }
+.eyebrow {
+  font-size: var(--type-eyebrow-size);
+  letter-spacing: var(--type-eyebrow-tracking);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  color: var(--color-verde-match);
+}
+.caption { font-size: var(--type-caption-size); color: var(--color-gris-500); }

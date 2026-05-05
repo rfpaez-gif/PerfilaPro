@@ -53,16 +53,16 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     const usableW = pageW - 2 * margin;
 
     // Header band
-    doc.rect(0, 0, pageW, 80).fill('#01696f');
+    doc.rect(0, 0, pageW, 80).fill('#0F6B6B');
     doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(20).text('PerfilaPro', margin, 22);
     doc.font('Helvetica').fontSize(9).fillColor('rgba(255,255,255,0.75)')
-      .text('Tu perfil profesional siempre a mano', margin, 46);
+      .text('Tu trabajo merece verse.', margin, 46);
     doc.font('Helvetica-Bold').fontSize(11).fillColor('#ffffff')
       .text('FACTURA SIMPLIFICADA', 0, 32, { align: 'right', width: pageW - margin });
 
     // Número y fecha
     const refY = 100;
-    doc.fillColor('#1e1b14');
+    doc.fillColor('#0A1F44');
     doc.font('Helvetica-Bold').fontSize(9).text('NÚMERO', margin, refY);
     doc.font('Helvetica').fontSize(11).text(numero, margin, refY + 12);
     doc.font('Helvetica-Bold').fontSize(9).text('FECHA', 0, refY, { align: 'right' });
@@ -76,17 +76,17 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     const blockY = 152;
 
     doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('EMISOR', margin, blockY);
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1e1b14').text(ISSUER.name, margin, blockY + 12);
-    doc.font('Helvetica').fontSize(9).fillColor('#6b6458')
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0A1F44').text(ISSUER.name, margin, blockY + 12);
+    doc.font('Helvetica').fontSize(9).fillColor('#6B7280')
       .text(`NIF: ${ISSUER.nif}`, margin, blockY + 26)
       .text(ISSUER.address, margin, blockY + 38)
       .text(ISSUER.email, margin, blockY + 50)
       .text(ISSUER.web, margin, blockY + 62);
 
     doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CLIENTE', colMid, blockY);
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1e1b14')
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0A1F44')
       .text(nombreCliente || '—', colMid, blockY + 12, { width: pageW - colMid - margin });
-    doc.font('Helvetica').fontSize(9).fillColor('#6b6458')
+    doc.font('Helvetica').fontSize(9).fillColor('#6B7280')
       .text(emailCliente || '—', colMid, blockY + 26, { width: pageW - colMid - margin });
 
     // Divider
@@ -94,10 +94,10 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
 
     // Concepto — warm sand card
     const descY = blockY + 96;
-    doc.roundedRect(margin, descY - 4, usableW, 52, 6).fill('#f5f2ec');
-    doc.rect(margin, descY - 4, 3, 52).fill('#01696f');
+    doc.roundedRect(margin, descY - 4, usableW, 52, 6).fill('#FAF7F0');
+    doc.rect(margin, descY - 4, 3, 52).fill('#0F6B6B');
     doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CONCEPTO', margin + 12, descY + 2);
-    doc.font('Helvetica').fontSize(10).fillColor('#1e1b14')
+    doc.font('Helvetica').fontSize(10).fillColor('#0A1F44')
       .text(
         `Activación plan ${planInfo.label} — Perfil profesional PerfilaPro — ${planInfo.duration}`,
         margin + 12, descY + 15, { width: usableW - 16 }
@@ -109,21 +109,22 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     const amtX   = pageW - 110;
     const amtW   = 50;
 
-    doc.font('Helvetica').fontSize(10).fillColor('#6b6458');
+    doc.font('Helvetica').fontSize(10).fillColor('#6B7280');
     doc.text('Base imponible:', lblX, totY, { width: 120 });
     doc.text(`${base.toFixed(2)} €`, amtX, totY, { width: amtW, align: 'right' });
     doc.text('IVA (21%):', lblX, totY + 20, { width: 120 });
     doc.text(`${iva.toFixed(2)} €`, amtX, totY + 20, { width: amtW, align: 'right' });
 
     // Total row — teal accent
-    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#d9e8e7');
-    doc.font('Helvetica-Bold').fontSize(13).fillColor('#01696f');
+    // TODO: '#d9e8e7' era teal-soft del antiguo verde petróleo. La paleta nueva no define teal-soft. Sustituido por crema neutra para no romper contraste; decidir si añadir un teal-soft al sistema o usar gris-200.
+    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#FAF7F0');
+    doc.font('Helvetica-Bold').fontSize(13).fillColor('#0F6B6B');
     doc.text('TOTAL:', lblX, totY + 53, { width: 120 });
     doc.text(`${total.toFixed(2)} €`, amtX, totY + 53, { width: amtW, align: 'right' });
 
     // Footer
     const footY = doc.page.height - 70;
-    doc.font('Helvetica').fontSize(8).fillColor('#a89f90')
+    doc.font('Helvetica').fontSize(8).fillColor('#6B7280')
       .text('Factura simplificada. IVA incluido en el precio (art. 7.1 RD 1619/2012).', margin, footY, { align: 'center', width: usableW })
       .text(`PerfilaPro · ${ISSUER.web} · ${ISSUER.email}`, margin, footY + 14, { align: 'center', width: usableW });
 

@@ -1,93 +1,43 @@
 /* ============================================================
-   PerfilaPro · Design Tokens · v0.2
-   Paleta híbrida definitiva (decisión 6.1 = A).
+   PerfilaPro · Design Tokens · v0.4
+   Tras el rebrand: la paleta y la tipografía viven en sus
+   propios archivos:
+     · /styles/tokens-color.css        · paleta (--color-*)
+     · /styles/tokens-typography.css   · tipografía (--font-*, --type-*)
 
-   Dos registros cromáticos coexistentes:
-     · Sistema general (--pp-color-*)         · UI web/admin/landing/agente
-     · Registro cálido (--pp-color-warm-*)    · emails y tarjeta profesional
+   Este archivo conserva tokens que NO son color (espaciado,
+   radios, sombras, transiciones, z-index, breakpoints,
+   tipografía legacy --pp-f-* / --pp-fs-* — pendiente de
+   migración en Encargo 6).
 
-   Las variables legacy --pp-c-* se mantienen para que components.css siga
-   renderizando hasta que cada superficie se migre en Fase 1. Se retirarán
-   cuando todas las superficies usen las nuevas (--pp-color-*).
+   ─────────────────────────────────────────────────────
+   TODO · pendientes del rebrand (decisiones de paleta)
+   ─────────────────────────────────────────────────────
+   1) WARNING · ✅ resuelto. Tokens --color-warning #D97706
+      y --color-warning-light #FEF3C7 añadidos a
+      tokens-color.css. Migrados todos los usos.
+
+   2) CORAL-SOFT · ✅ resuelto. Token --color-coral-light
+      #FEE7E9 añadido a tokens-color.css.
+
+   3) BRAND COLORS · ✅ resuelto. WhatsApp / LinkedIn /
+      Instagram conservan brand original como icono
+      independiente. Si el icono va dentro de un botón con
+      texto, hereda currentColor del botón.
+
+   4) STATUS PILLS ADMIN · ✅ resuelto. Tres estados unificados:
+      Activo → verde-match + verde-light
+      Pendiente/borrador → gris-500 + piedra
+      Atención → warning + warning-light
+      Pendiente: migrar admin.html a estos tres pares (los
+      Tailwind reds y violetas hardcoded siguen ahí).
+
+   5) TEAL DOCUMENTOS · ✅ resuelto. Sin variante soft. La
+      pastilla del total de la factura usa --color-piedra.
+      Teal queda solo para acentos puntuales en documentos.
    ============================================================ */
 
 :root {
-  /* ─────────────────────────────────────────────────────
-     SISTEMA GENERAL · UI web, admin, landing, agente
-     ───────────────────────────────────────────────────── */
-  --pp-color-ink:           #0A1F44;
-  --pp-color-ink-soft:      rgba(10, 31, 68, 0.7);
-  --pp-color-ink-muted:     rgba(10, 31, 68, 0.55);
-  --pp-color-accent:        #00C277;
-  --pp-color-accent-deep:   #00A866;
-  --pp-color-accent-soft:   rgba(0, 194, 119, 0.08);
-  --pp-color-bg:            #F5F2EC;
-  --pp-color-surface:       #FFFFFF;
-  --pp-color-border:        rgba(10, 31, 68, 0.12);
-  --pp-color-border-soft:   rgba(10, 31, 68, 0.06);
-
-  /* ─────────────────────────────────────────────────────
-     REGISTRO CÁLIDO · emails + tarjeta profesional
-     Uso EXCLUSIVO en componentes con modificador --warm
-     y en HTML de emails (mapa COLORS de lib/email-layout.js).
-     ───────────────────────────────────────────────────── */
-  --pp-color-warm-bg:          #FAF3E6;
-  --pp-color-warm-surface:     #FFFFFF;
-  --pp-color-warm-ink:         #1E1B14;
-  --pp-color-warm-ink-soft:    rgba(30, 27, 20, 0.7);
-  --pp-color-warm-accent:      #01696F;
-  --pp-color-warm-accent-deep: #014E52;
-  --pp-color-warm-accent-soft: rgba(1, 105, 111, 0.08);
-  --pp-color-warm-border:      rgba(1, 105, 111, 0.15);
-
-  /* ─────────────────────────────────────────────────────
-     ESTADOS (compartidos por ambos registros)
-     ───────────────────────────────────────────────────── */
-  --pp-color-success: #00A866;
-  --pp-color-warning: #B8860B;
-  --pp-color-danger:  #B23A48;
-
-  /* ─────────────────────────────────────────────────────
-     LEGACY (--pp-c-*) · transitorio · usado por components.css
-     hasta su migración en Fase 1. No introducir nuevos usos.
-     ───────────────────────────────────────────────────── */
-  --pp-c-primary:        #01696f;   /* Verde petróleo · color principal */
-  --pp-c-primary-deep:   #014a4f;   /* Hover/active sobre primary */
-  --pp-c-primary-soft:   #d9e8e7;   /* Backgrounds suaves, badges */
-
-  --pp-c-accent:         #01696f;   /* Acento de acción (provisional = primary) */
-  --pp-c-accent-deep:    #014a4f;
-  --pp-c-accent-soft:    #d9e8e7;
-
-  --pp-c-ink:            #1e1b14;   /* Texto principal · negro cálido */
-  --pp-c-ink-90:         #2d2920;
-  --pp-c-ink-70:         #5a5345;
-  --pp-c-ink-40:         #9a9485;
-
-  --pp-c-bg:             #f5f2ec;   /* Fondo cálido (Piedra Cálida) */
-  --pp-c-bg-card:        #ffffff;   /* Fondo de tarjetas */
-  --pp-c-bg-soft:        #faf7f1;   /* Fondo intermedio */
-
-  --pp-c-line:           #e5ddd0;   /* Líneas y bordes */
-  --pp-c-line-soft:      #ede5d8;   /* Líneas sutiles */
-
-  --pp-c-gray-700:       #6b6458;
-  --pp-c-gray-500:       #8b8474;
-  --pp-c-gray-400:       #a8a195;
-  --pp-c-gray-300:       #c8c1b3;
-
-  --pp-c-success:        #01696f;
-  --pp-c-success-soft:   #d9e8e7;
-
-  --pp-c-warn:           #d97706;
-  --pp-c-warn-soft:      #fef3c7;
-
-  --pp-c-error:          #b3261e;
-  --pp-c-error-soft:     #fdecec;
-
-  --pp-c-info:           #1e1b14;
-  --pp-c-info-soft:      #ede5d8;
-
   /* ---------- TIPOGRAFÍA · FAMILIAS ---------- */
   --pp-f-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --pp-f-sans:    'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

@@ -35,7 +35,7 @@
       font-weight: 600;
       font-size: 17px;
       letter-spacing: -0.02em;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       text-decoration: none;
       margin-bottom: 1.25rem;
     }
@@ -43,11 +43,11 @@
       width: 32px;
       height: 32px;
       border-radius: 10px;
-      background: var(--pp-color-accent-soft);
-      color: var(--pp-color-accent);
+      background: var(--color-verde-light);
+      color: var(--color-verde-match);
       display: grid;
       place-items: center;
-      border: 1px solid var(--pp-color-accent);
+      border: 1px solid var(--color-verde-match);
     }
     .pp-feedback-hd h1 {
       font-family: var(--pp-f-display);
@@ -55,20 +55,20 @@
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
       line-height: var(--pp-lh-heading);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .5rem;
     }
     .pp-feedback-hd p {
       font-size: 14px;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       line-height: 1.6;
       margin: 0;
     }
 
     /* ── Question block ────────────────────────────────────── */
     .pp-feedback-q {
-      background: var(--pp-color-surface);
-      border: 1px solid var(--pp-color-border);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
       padding: 1.25rem 1.5rem;
       margin-bottom: .75rem;
@@ -79,7 +79,7 @@
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
       text-transform: uppercase;
-      color: var(--pp-color-accent-deep);
+      color: var(--color-verde-dark);
       margin-bottom: .5rem;
     }
     .pp-feedback-q__text {
@@ -87,7 +87,7 @@
       font-size: 15px;
       font-weight: 600;
       line-height: 1.4;
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin-bottom: .9rem;
     }
 
@@ -108,7 +108,7 @@
     }
     .pp-feedback-stars input:checked ~ label,
     .pp-feedback-stars label:hover,
-    .pp-feedback-stars label:hover ~ label { color: #f59e0b; }
+    .pp-feedback-stars label:hover ~ label { color: var(--color-warning); }
 
     /* ── Chips ─────────────────────────────────────────────── */
     .pp-feedback-chips {
@@ -119,20 +119,20 @@
     .pp-feedback-chips input { display: none; }
     .pp-feedback-chips label {
       padding: .5rem 1rem;
-      border: 1.5px solid var(--pp-color-border);
+      border: 1.5px solid var(--color-gris-200);
       border-radius: var(--pp-r-pill);
       font-family: var(--pp-f-sans);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       transition: background var(--pp-t-fast),
                   border-color var(--pp-t-fast),
                   color var(--pp-t-fast);
     }
     .pp-feedback-chips input:checked + label {
-      background: var(--pp-color-accent);
-      border-color: var(--pp-color-accent);
+      background: var(--color-verde-match);
+      border-color: var(--color-verde-match);
       color: #fff;
     }
 
@@ -140,7 +140,7 @@
     .pp-feedback-note {
       text-align: center;
       font-size: 13px;
-      color: var(--pp-color-ink-muted);
+      color: var(--color-gris-500);
       margin-top: .75rem;
       line-height: 1.5;
     }
@@ -161,11 +161,11 @@
       font-size: 1.75rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
-      color: var(--pp-color-ink);
+      color: var(--color-tinta);
       margin: 0 0 .5rem;
     }
     .pp-feedback-thanks__text {
-      color: var(--pp-color-ink-soft);
+      color: var(--color-gris-500);
       font-size: 15px;
       line-height: 1.6;
       margin: 0;
