@@ -296,7 +296,6 @@ exports.handler = async (event) => {
       </div>` : ''}
       ${isFree ? `<div class="pp-free-banner">
         <p><strong>Perfil básico</strong> · Sin foto, QR ni directorio</p>
-        <a href="${esc(siteUrl)}/editar.html?slug=${esc(data.slug)}" class="pp-free-banner__btn">Activar →</a>
       </div>` : ''}
       <div class="pp-card__pw">
         Creado con <strong>PerfilaPro</strong><br>

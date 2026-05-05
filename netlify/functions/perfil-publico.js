@@ -154,7 +154,7 @@ function makeHandler(deps) {
     <p class="pp-prof-section__label">Contacto</p>
     <div class="pp-prof-locked">
       <p>Este profesional aún no ha habilitado el contacto directo.</p>
-      <p style="margin-top:.5rem;font-size:.8125rem">¿Eres ${esc(data.nombre)}? <a href="${esc(siteUrl)}/editar.html?slug=${esc(data.slug)}">Activa tu perfil</a> para que tus clientes puedan contactarte.</p>
+      <p style="margin-top:.5rem;font-size:.8125rem">¿Eres ${esc(data.nombre)}? Activa tu perfil desde el enlace de edición que te enviamos por email.</p>
     </div>
   </div>` : ''}
 
