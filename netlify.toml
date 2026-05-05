@@ -147,6 +147,16 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/download-card"
+  to     = "/.netlify/functions/download-card"
+  status = 200
+
+[[redirects]]
+  from   = "/api/download-qr"
+  to     = "/.netlify/functions/download-qr"
+  status = 200
+
+[[redirects]]
   from   = "/api/profile-stats"
   to     = "/.netlify/functions/profile-stats"
   status = 200
