@@ -46,12 +46,24 @@
 
     .pp-dir-home{max-width:960px;margin:0 auto;padding:.75rem 1.25rem 4rem}
     .pp-dir-home__label{font-family:var(--pp-f-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--pp-color-ink-muted);margin:1.5rem 0 1rem;font-weight:500}
-    .pp-dir-home__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.625rem}
-    .pp-dir-home__sector{display:flex;align-items:center;gap:.875rem;padding:1rem;background:var(--pp-color-surface);border:1px solid var(--pp-color-border);border-radius:var(--pp-r-md);text-decoration:none;color:var(--pp-color-ink);transition:border-color .15s,transform .12s,box-shadow .15s}
+
+    /* Rail de caras reales — copiado del home (index.html) */
+    .pp-dir-rail{max-width:1080px;margin:1.5rem auto 0;padding:0 1.25rem}
+    .pp-dir-rail__kicker{font-family:var(--pp-f-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--pp-color-ink-muted);margin:0 0 .375rem;font-weight:500}
+    .pp-dir-rail__title{font-family:var(--pp-f-display);font-size:clamp(1.375rem,3vw,1.75rem);line-height:1.2;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--pp-color-ink);margin:0 0 1rem}
+    .pp-photos-rail{display:grid;grid-template-columns:repeat(8,minmax(160px,1fr));gap:1rem;overflow-x:auto;padding-bottom:.5rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .pp-photos-rail::-webkit-scrollbar{display:none}
+    .pp-pro-photo{display:flex;flex-direction:column;gap:.625rem;margin:0;scroll-snap-align:start}
+    .pp-pro-photo__img{aspect-ratio:4/5;border-radius:var(--pp-r-lg);overflow:hidden;background:var(--pp-color-accent-soft)}
+    .pp-pro-photo__img img{width:100%;height:100%;object-fit:cover;display:block}
+    .pp-pro-photo__cap{font-family:var(--pp-f-sans);font-size:.875rem;font-weight:600;color:var(--pp-color-ink);text-align:center;margin:0;letter-spacing:-0.01em}
+
+    .pp-dir-home__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem}
+    .pp-dir-home__sector{display:flex;align-items:center;gap:.75rem;padding:.75rem .875rem;background:var(--pp-color-surface);border:1px solid var(--pp-color-border);border-radius:var(--pp-r-md);text-decoration:none;color:var(--pp-color-ink);transition:border-color .15s,transform .12s,box-shadow .15s}
     .pp-dir-home__sector:hover{border-color:var(--pp-color-accent);transform:translateY(-1px);box-shadow:var(--pp-sh-sm)}
-    .pp-dir-home__sector-icon{width:36px;height:36px;display:grid;place-items:center;background:var(--pp-color-accent-soft);border-radius:var(--pp-r-sm);font-size:1.125rem;flex-shrink:0}
-    .pp-dir-home__sector-name{font-weight:600;font-size:.9375rem;margin:0}
-    .pp-dir-home__sector-desc{font-size:.8125rem;color:var(--pp-color-ink-soft);margin:.125rem 0 0}
+    .pp-dir-home__sector-icon{width:32px;height:32px;display:grid;place-items:center;background:var(--pp-color-accent-soft);border-radius:var(--pp-r-sm);font-size:1rem;flex-shrink:0}
+    .pp-dir-home__sector-name{font-weight:600;font-size:.875rem;margin:0}
+    .pp-dir-home__sector-desc{font-size:.75rem;color:var(--pp-color-ink-soft);margin:.125rem 0 0}
     .pp-dir-home__cta{margin-top:3rem;padding:2rem;background:var(--pp-color-accent-soft);border-radius:var(--pp-r-xl);text-align:center}
     .pp-dir-home__cta h2{font-family:var(--pp-f-display);font-size:1.5rem;font-weight:400;letter-spacing:var(--pp-ls-heading);color:var(--pp-color-ink);margin:0 0 .5rem}
     .pp-dir-home__cta p{font-size:.9375rem;color:var(--pp-color-ink-soft);max-width:48ch;margin:0 auto 1rem}
@@ -103,8 +115,47 @@
       </ol>
     </nav>
 
+    <section class="pp-dir-rail" aria-label="Profesionales en PerfilaPro">
+      <p class="pp-dir-rail__kicker">Ya están dentro</p>
+      <h2 class="pp-dir-rail__title">Caras reales con perfil PerfilaPro</h2>
+      <div class="pp-photos-rail">
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ana%20profe.jpg" alt="Ana profe" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Ana profe</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Antonio%20Cuidador.jpg" alt="Antonio cuidador" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Antonio cuidador</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Isabel.jpg" alt="Isabel" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Isabel</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/laura%20fisio.png" alt="Laura fisio" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Laura fisio</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Mohamed%20fontanero.jpg" alt="Mohamed fontanero" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Mohamed fontanero</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Ruben%20Entrenador.jpg" alt="Ruben entrenador" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Ruben entrenador</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sergio%20comercial.png" alt="Sergio comercial" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Sergio comercial</figcaption>
+        </figure>
+        <figure class="pp-pro-photo">
+          <div class="pp-pro-photo__img"><img src="https://keurfqxfhbvchvmtegni.supabase.co/storage/v1/object/public/fotos/Sonia.jpg" alt="Sonia" loading="lazy" width="240" height="300"></div>
+          <figcaption class="pp-pro-photo__cap">Sonia</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <div class="pp-dir-home" id="sectores">
-      <p class="pp-dir-home__label">Por sector</p>
+      <p class="pp-dir-home__label">Explorar por sector</p>
       <div class="pp-dir-home__grid">
         <a href="/directorio/oficios" class="pp-dir-home__sector">
           <div class="pp-dir-home__sector-icon">🔧</div>
