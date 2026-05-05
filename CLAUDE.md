@@ -45,6 +45,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - `slug` (PK), `nombre`, `tagline`, `whatsapp`, `zona`, `servicios` (jsonb), `foto_url`, `plan`, `status`, `stripe_session_id`, `expires_at`, `email`, `phone`, `refund_reason`, `refunded_at`
 - Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `edit_link_sent_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
 - Soft-delete + B2B defensive fields (Sprint 1, migration 007): `deleted_at`, `organization_id` (FK → `organizations.id`, NULL until phase 3 lands).
+- Kit tracking (migration 011): `kit_email_sent_at` — timestamp del último envío del welcome email post-pago con tarjeta + QR + factura. Lo setea `stripe-webhook` en el envío inicial; lo refresca `resend-kit` cuando un admin reenvía desde el panel.
 
 **`organizations` table** — defensive scaffolding for phase 3 (B2B teams). Empty in phases 1-2:
 - `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at`
@@ -76,6 +77,7 @@ Calls:
 - `legal-settings` (GET/POST) — read/write legal identity data
 - `admin-invoices` (GET) — list invoices or download a PDF by number
 - `resend-invoice` (POST) — re-send invoice PDF to card's email
+- `resend-kit` (POST) — re-send the full post-payment email (welcome + tarjeta PDF + QR PNG + factura). Updates `cards.kit_email_sent_at`. Same auth as `resend-invoice` (password + TOTP). Visible in the cards table as "📦 Kit" button with a tooltip showing how long ago the last kit was sent.
 - `admin-agents` (GET/POST) — manage agent accounts and liquidations
 
 ### Agent portal (`public/agente.html`, `public/agente-login.html`)
@@ -133,6 +135,8 @@ Exports:
 - `download-qr.js` — `/api/download-qr?slug=&token=&size=` returns the PNG.
 
 Both are rate-limited (10 req / 10 min per IP) and cached as `private, no-store` to prevent leakage. Visible to paid users from the editor's "Tu kit físico" section (`#kitBanner` in `editar.html`, complementary to `#freeBanner` for free users).
+
+**Admin re-send** (`resend-kit.js`): cuando el usuario pierde el email completo o pide soporte, el admin puede regenerar y reenviar todo (welcome email + tarjeta + QR + factura) con un clic. Auth admin password + TOTP, mismo patrón que `resend-invoice`. Reusa la factura existente si la hay; si no, la regenera. Marca `cards.kit_email_sent_at` en éxito para visibilidad en el panel.
 
 **Difference vs `qr-download.js`**: that endpoint is public (anyone with a Pro slug can pull a QR), used from the public card page. The new `download-qr.js` requires the owner's token and works for Base too — both Base and Pro paid for and receive the kit.
 
@@ -225,6 +229,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/analytics-config` | `analytics-config` |
 | `/api/download-card` | `download-card` |
 | `/api/download-qr` | `download-qr` |
+| `/api/resend-kit` | `resend-kit` |
 
 ### Testing conventions
 

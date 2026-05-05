@@ -5,7 +5,9 @@ import { makeHandler, buildEmail } from '../netlify/functions/stripe-webhook.js'
 
 const mockConstructEvent = vi.fn();
 const mockUpsert = vi.fn();
-const mockFrom = vi.fn(() => ({ upsert: mockUpsert }));
+const mockUpdateEq = vi.fn();
+const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }));
+const mockFrom = vi.fn(() => ({ upsert: mockUpsert, update: mockUpdate }));
 const mockEmailSend = vi.fn();
 
 const mockStripe = { webhooks: { constructEvent: mockConstructEvent } };
@@ -30,7 +32,8 @@ describe('stripe-webhook handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
-    mockFrom.mockImplementation(() => ({ upsert: mockUpsert }));
+    mockUpdateEq.mockResolvedValue({ error: null });
+    mockFrom.mockImplementation(() => ({ upsert: mockUpsert, update: mockUpdate }));
     mockEmailSend.mockResolvedValue({ id: 'email-123' });
   });
 
@@ -279,17 +282,47 @@ describe('stripe-webhook adjuntos', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
+    mockUpdateEq.mockResolvedValue({ error: null });
     mockFrom.mockImplementation((table) => {
-      if (table === 'cards')    return { upsert: mockUpsert };
+      if (table === 'cards')    return { upsert: mockUpsert, update: mockUpdate };
       if (table === 'facturas') return {
         select: vi.fn().mockReturnThis(),
         like:   vi.fn().mockResolvedValue({ count: 0, error: null }),
         insert: vi.fn().mockResolvedValue({ error: null }),
       };
-      return { upsert: mockUpsert };
+      return { upsert: mockUpsert, update: mockUpdate };
     });
     mockEmailSend.mockResolvedValue({ id: 'email-123' });
   });
+
+  it('marca cards.kit_email_sent_at tras envío exitoso del email', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'ana-electricista', nombre: 'Ana', plan: 'base' },
+        customerDetails: { email: 'ana@email.com' },
+      })
+    );
+    await handler(buildEvent());
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ kit_email_sent_at: expect.any(String) })
+    );
+  }, 30000);
+
+  it('NO marca kit_email_sent_at si el envío falla', async () => {
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'ana-fail', nombre: 'Ana', plan: 'base' },
+        customerDetails: { email: 'ana@email.com' },
+      })
+    );
+    mockEmailSend.mockRejectedValue(new Error('SMTP error'));
+    await handler(buildEvent());
+
+    expect(mockUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kit_email_sent_at: expect.anything() })
+    );
+  }, 30000);
 
   it('adjunta tarjeta PDF y QR PNG en el email post-pago', async () => {
     mockConstructEvent.mockReturnValue(

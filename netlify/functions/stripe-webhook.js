@@ -152,9 +152,9 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
 
 async function sendConfirmationEmail({
   email, nombre, slug, plan, expiresAt, editToken, emailClient,
-  pdfAttachment, cardPdfBuffer, qrPngBuffer,
+  pdfAttachment, cardPdfBuffer, qrPngBuffer, subjectPrefix,
 }) {
-  if (!email || !emailClient) return;
+  if (!email || !emailClient) return false;
 
   const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const { subject, html } = buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken });
@@ -162,7 +162,7 @@ async function sendConfirmationEmail({
   const payload = {
     from: 'PerfilaPro <hola@perfilapro.es>',
     to: email,
-    subject,
+    subject: subjectPrefix ? `${subjectPrefix} ${subject}` : subject,
     html,
   };
 
@@ -190,8 +190,10 @@ async function sendConfirmationEmail({
   try {
     await emailClient.emails.send(payload);
     console.log(`Email enviado a: ${email}`);
+    return true;
   } catch (err) {
     console.error('Error enviando email:', err.message);
+    return false;
   }
 }
 
@@ -335,12 +337,20 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         console.error('Error generando factura (no fatal):', err.message, err.stack);
       }
 
-      await sendConfirmationEmail({
+      const emailSent = await sendConfirmationEmail({
         email, nombre, slug,
         plan: plan || 'base',
         expiresAt, editToken, emailClient, pdfAttachment,
         cardPdfBuffer, qrPngBuffer,
       });
+
+      if (emailSent) {
+        const { error: tsErr } = await db
+          .from('cards')
+          .update({ kit_email_sent_at: new Date().toISOString() })
+          .eq('slug', slug);
+        if (tsErr) console.warn('No se pudo marcar kit_email_sent_at (no fatal):', tsErr.message);
+      }
     }
 
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
@@ -350,3 +360,4 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 exports.handler = makeHandler(stripe, supabase);
 exports.makeHandler = makeHandler;
 exports.buildEmail = buildEmail;
+exports.sendConfirmationEmail = sendConfirmationEmail;

@@ -112,6 +112,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/resend-kit"
+  to     = "/.netlify/functions/resend-kit"
+  status = 200
+
+[[redirects]]
   from   = "/api/admin-regenerate-seed"
   to     = "/.netlify/functions/admin-regenerate-seed"
   status = 200
@@ -182,6 +187,10 @@
 
 [[edge_functions]]
   path     = "/api/resend-invoice"
+  function = "rate-limiter"
+
+[[edge_functions]]
+  path     = "/api/resend-kit"
   function = "rate-limiter"
 
 [[edge_functions]]
