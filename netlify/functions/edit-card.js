@@ -24,7 +24,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, email, edit_token_expires_at, category_id, city_slug, directory_visible, plan, status, stripe_session_id')
+      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -78,7 +78,7 @@ function makeHandler(db) {
       }
 
       const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion,
-              sector, specialty, city_slug, directory_visible } = body;
+              sector, specialty, specialty_custom, city_slug, directory_visible } = body;
 
       const ALLOWED_FOTO_HOSTS = [
         'supabase.co/storage',
@@ -127,6 +127,13 @@ function makeHandler(db) {
         category_id = cat?.id || null;
       }
 
+      // specialty_custom solo se persiste cuando specialty es 'otro-oficio'.
+      // Para cualquier otra specialty se limpia a null para que el PDF no
+      // muestre un texto libre obsoleto sobre la specialty_label canonica.
+      const specialtyCustomClean = (specialty === 'otro-oficio' && specialty_custom)
+        ? stripTags(specialty_custom).substring(0, 60)
+        : null;
+
       const dirVisible = category_id && city_slug ? !!directory_visible : false;
 
       const { error: updateError } = await db
@@ -142,6 +149,7 @@ function makeHandler(db) {
           descripcion:        descripcion ? stripTags(descripcion).substring(0, 200) : null,
           direccion:          direccion ? stripTags(direccion).substring(0, 200) : null,
           category_id:        category_id,
+          specialty_custom:   specialtyCustomClean,
           city_slug:          city_slug ? stripTags(city_slug).substring(0, 80) : null,
           directory_visible:  dirVisible,
         })

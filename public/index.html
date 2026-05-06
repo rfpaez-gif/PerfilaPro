@@ -582,6 +582,65 @@
       color: var(--color-gris-500);
       line-height: 1.35;
     }
+
+    /* ── Sección "Pensado para estos oficios" · grid 17 + CTA ── */
+    .pp-roles {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: var(--pp-s-3);
+      margin-top: var(--pp-s-10);
+    }
+    @media (max-width: 1024px) { .pp-roles { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 640px)  { .pp-roles { grid-template-columns: repeat(3, 1fr); } }
+    .pp-roles-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-lg);
+      padding: var(--pp-s-4) var(--pp-s-3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--pp-s-2);
+      text-align: center;
+      transition: transform var(--pp-t-base), border-color var(--pp-t-base), box-shadow var(--pp-t-base);
+    }
+    .pp-roles-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--color-verde-match);
+      box-shadow: var(--pp-sh-md);
+    }
+    .pp-roles-card__icon {
+      width: 44px; height: 44px;
+      border-radius: var(--pp-r-md);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .pp-roles-card__icon svg { width: 22px; height: 22px; }
+    .pp-roles-card__label {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-tinta);
+      line-height: 1.3;
+      hyphens: auto;
+    }
+    .pp-roles__foot {
+      text-align: center;
+      margin-top: var(--pp-s-8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--pp-s-3);
+    }
+    .pp-roles__foot-note {
+      font-size: 14px;
+      color: var(--color-gris-500);
+      max-width: 540px;
+      line-height: 1.5;
+    }
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
   <script src="/js/posthog-init.js" defer></script>
@@ -864,6 +923,96 @@
         <h3 class="pp-step__title">La enseñas a quien quieras</h3>
         <p class="pp-step__text">Tu URL, tu QR, tu tarjeta. A clientes, amigos, familia o redes.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 4.5 · PENSADO PARA ESTOS OFICIOS ══════════════════
+     17 tarjetas alineadas con el picker de /alta.html (public/data/archetypes.json
+     filtrado por diana:true y ordenado por diana_order). Si cambias el set diana,
+     actualiza también esta sección — son la misma promesa visual al usuario. -->
+<section class="pp-section">
+  <div class="pp-wrap">
+    <div class="pp-section__head">
+      <span class="pp-section__kicker">Mercado</span>
+      <h2 class="pp-section__title pp-reveal is-in">Pensado para estos oficios</h2>
+      <p class="pp-section__copy pp-reveal is-in">17 perfiles para empezar. Si tu oficio no aparece, lo escribes tú.</p>
+    </div>
+
+    <div class="pp-roles" role="list">
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="wrench"></i></span>
+        <span class="pp-roles-card__label">Fontanero</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="zap"></i></span>
+        <span class="pp-roles-card__label">Electricista</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="shopping-bag"></i></span>
+        <span class="pp-roles-card__label">Tienda / Comercio</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="hard-hat"></i></span>
+        <span class="pp-roles-card__label">Reformista / Pintor</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="dumbbell"></i></span>
+        <span class="pp-roles-card__label">Entrenador/a personal</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="activity"></i></span>
+        <span class="pp-roles-card__label">Fisioterapeuta</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="truck"></i></span>
+        <span class="pp-roles-card__label">Transportista / Reparto</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="coffee"></i></span>
+        <span class="pp-roles-card__label">Hostelería / Bar</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="snowflake"></i></span>
+        <span class="pp-roles-card__label">Instalador / Clima</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="scissors"></i></span>
+        <span class="pp-roles-card__label">Peluquera / Esteticista</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="book-open"></i></span>
+        <span class="pp-roles-card__label">Profesor/a particular</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="car"></i></span>
+        <span class="pp-roles-card__label">Mecánico / Taller</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="camera"></i></span>
+        <span class="pp-roles-card__label">Fotógrafo/a</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="heart-handshake"></i></span>
+        <span class="pp-roles-card__label">Cuidador/a</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="home"></i></span>
+        <span class="pp-roles-card__label">Empleada de hogar</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="apple"></i></span>
+        <span class="pp-roles-card__label">Nutricionista / Coach</span>
+      </div>
+      <div class="pp-roles-card pp-reveal" role="listitem">
+        <span class="pp-roles-card__icon"><i data-lucide="monitor"></i></span>
+        <span class="pp-roles-card__label">Asesor / Consultor</span>
+      </div>
+    </div>
+
+    <div class="pp-roles__foot">
+      <p class="pp-roles__foot-note">¿No te ves en ninguno? Hay un campo libre para escribir tu oficio en cualquier momento.</p>
+      <a href="/alta.html" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Empezar mi alta gratis →</a>
     </div>
   </div>
 </section>

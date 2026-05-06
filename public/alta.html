@@ -757,13 +757,16 @@
      ════════════════════════════════════════════════════════════ */
   function renderGallery() {
     var grid = document.getElementById('archGrid');
-    var diana = ARCHETYPES.filter(function (a) { return a.diana; });
+    var diana = ARCHETYPES
+      .filter(function (a) { return a.diana; })
+      .sort(function (a, b) { return (a.diana_order || 99) - (b.diana_order || 99); });
     var html = diana.map(function (a) {
+      var label = a.diana_label || a.rol_profesional;
       return (
         '<div class="pp-arch-card" role="option" tabindex="0"' +
         ' data-rol="' + escapeHtml(a.rol_profesional) + '">' +
           '<span class="pp-arch-card__icon"><i data-lucide="' + escapeHtml(a.icon) + '"></i></span>' +
-          '<span class="pp-arch-card__label">' + escapeHtml(a.rol_profesional) + '</span>' +
+          '<span class="pp-arch-card__label">' + escapeHtml(label) + '</span>' +
         '</div>'
       );
     }).join('');
@@ -867,12 +870,14 @@
           selectArchetype(existing);
         } else {
           selectArchetype({
-            rol_profesional: q,
-            sector: 'Otro',
-            sector_slug: 'otro',
-            icon: 'briefcase',
+            rol_profesional:    q,
+            sector:             'Otros oficios',
+            sector_slug:        'otro',
+            icon:               'briefcase',
+            category_sector:    'otros',
+            category_specialty: 'otro-oficio',
             servicios_sugeridos: [],
-            custom: true,
+            custom:             true,
           });
         }
         hide();
@@ -901,7 +906,7 @@
     var box = document.getElementById('archSelected');
     if (!selectedArch) { box.classList.remove('is-visible'); return; }
     box.classList.add('is-visible');
-    document.getElementById('archSelectedRol').textContent = selectedArch.rol_profesional;
+    document.getElementById('archSelectedRol').textContent = selectedArch.diana_label || selectedArch.rol_profesional;
     var iconHost = document.getElementById('archSelectedIcon');
     iconHost.innerHTML = '<i data-lucide="' + escapeHtml(selectedArch.icon || 'briefcase') + '"></i>';
     if (window.lucide) window.lucide.createIcons();
@@ -964,7 +969,7 @@
     document.getElementById('prevSlug').textContent   = nombre ? toSlug(nombre) : 'tu-nombre';
 
     var subParts = [];
-    if (selectedArch) subParts.push(selectedArch.rol_profesional);
+    if (selectedArch) subParts.push(selectedArch.diana_label || selectedArch.rol_profesional);
     if (zona) subParts.push(zona);
     document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Profesión · Ciudad';
 
@@ -1061,7 +1066,7 @@
      REVIEW
      ════════════════════════════════════════════════════════════ */
   function fillReview() {
-    document.getElementById('rev_rol').textContent      = selectedArch ? selectedArch.rol_profesional : '—';
+    document.getElementById('rev_rol').textContent      = selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '—';
     document.getElementById('rev_nombre').textContent   = document.getElementById('f_nombre').value.trim();
     document.getElementById('rev_zona').textContent     = getZonaFull();
     document.getElementById('rev_whatsapp').textContent = document.getElementById('f_whatsapp').value.trim();
@@ -1086,12 +1091,17 @@
     btn.disabled = true;
     btn.textContent = 'Publicando…';
 
+    // desc se queda con la diana_label cuando existe (ej: "Reformista / Pintor")
+    // para que la tagline de la tarjeta coincida con lo que el usuario eligio.
+    // Cuando el archetype es custom (flujo "No me veo aqui"), rol_profesional
+    // ES el texto libre del usuario y va tambien como specialty_custom.
     var payload = {
       nombre:             document.getElementById('f_nombre').value.trim(),
-      sector:             selectedArch ? selectedArch.sector_slug : 'otro',
+      sector:             selectedArch ? (selectedArch.sector_slug || 'otro') : 'otro',
       category_sector:    selectedArch ? (selectedArch.category_sector    || null) : null,
       category_specialty: selectedArch ? (selectedArch.category_specialty || null) : null,
-      desc:               selectedArch ? selectedArch.rol_profesional : '',
+      specialty_custom:   selectedArch && selectedArch.custom ? selectedArch.rol_profesional : null,
+      desc:               selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '',
       servicios:          selectedServices,
       zona:               getZonaFull(),
       whatsapp:           document.getElementById('f_whatsapp').value.trim(),

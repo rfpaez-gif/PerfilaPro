@@ -196,6 +196,49 @@ describe('register-free handler', () => {
     expect(insertCall.category_id).toBeNull();
   });
 
+  it('persists specialty_custom only when category_specialty is otro-oficio', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 99 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'otros',
+      category_specialty: 'otro-oficio',
+      specialty_custom:   'Limpiacristales en altura',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBe('Limpiacristales en altura');
+    expect(insertCall.category_id).toBe(99);
+  });
+
+  it('ignores specialty_custom when category_specialty is canonical', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 1 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'oficios',
+      category_specialty: 'fontanero',
+      specialty_custom:   'Fontanero <script>alert(1)</script>',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBeNull();
+  });
+
+  it('strips HTML tags from specialty_custom', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 99 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'otros',
+      category_specialty: 'otro-oficio',
+      specialty_custom:   '<b>Pulidor</b> de suelos',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBe('Pulidor de suelos');
+  });
+
   it('devuelve 429 al superar el límite por IP (5 requests / 10 min)', async () => {
     const ip = '9.9.9.9';
     for (let i = 0; i < 5; i++) {

@@ -110,7 +110,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty } = body;
+    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom } = body;
 
     if (!nombre || !whatsapp || !zona || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, zona, email' }) };
@@ -161,18 +161,26 @@ function makeHandler(db, emailClient = resend) {
       category_id = cat?.id || null;
     }
 
+    // specialty_custom solo se persiste cuando la specialty es 'otro-oficio'
+    // (flujo "No me veo aqui"). El PDF imprimible y el chip publico lo
+    // prefieren sobre specialty_label para mostrar el oficio real.
+    const specialtyCustomClean = (category_specialty === 'otro-oficio' && specialty_custom)
+      ? stripTags(specialty_custom).substring(0, 60)
+      : null;
+
     const row = {
       slug,
-      nombre:      cleanNombre,
+      nombre:           cleanNombre,
       tagline,
-      whatsapp:    waNumber,
-      zona:        stripTags(zona).substring(0, 100),
-      servicios:   serviciosParsed,
+      whatsapp:         waNumber,
+      zona:             stripTags(zona).substring(0, 100),
+      servicios:        serviciosParsed,
       email,
-      plan:        'base',
-      status:      'active',
+      plan:             'base',
+      status:           'active',
       category_id,
-      edit_token:  editToken,
+      specialty_custom: specialtyCustomClean,
+      edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };
 
