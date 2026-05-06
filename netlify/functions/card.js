@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const QRCode = require('qrcode');
+const { buildQrSvg } = require('./lib/qr-svg.js');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -95,14 +95,10 @@ exports.handler = async (event) => {
   const siteUrl = `${proto}://${host}`;
   const cardUrl = `${siteUrl}/c/${data.slug}`;
 
-  let qrDataUrl = null;
+  let qrSvg = null;
   if (isPaid) {
     try {
-      qrDataUrl = await QRCode.toDataURL(cardUrl, {
-        width: 200,
-        margin: 2,
-        color: { dark: '#0A1F44', light: '#FFFFFF' },
-      });
+      qrSvg = buildQrSvg(cardUrl, { size: 200 });
     } catch (qrErr) {
       console.error('Error generando QR:', qrErr.message);
     }
@@ -212,7 +208,10 @@ exports.handler = async (event) => {
     .pp-icon-btn:hover{background:var(--color-crema)}
     .pp-icon-btn:active{transform:scale(.9)}
     .pp-qr{display:flex;align-items:center;gap:.875rem;padding:.875rem 1rem;background:var(--color-crema);border-radius:var(--pp-r-md);border:1px solid var(--color-gris-200)}
-    .pp-qr img{border-radius:.5rem;flex-shrink:0}
+    .pp-qr__code{position:relative;width:80px;height:80px;flex-shrink:0;border-radius:.5rem;overflow:hidden;background:#FFF}
+    .pp-qr__code svg{width:80px;height:80px;display:block}
+    .pp-qr__seal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#FFF;padding:2px;border-radius:4px;box-shadow:0 0 0 2px #FFF}
+    .pp-qr__seal-inner{display:flex;align-items:center;justify-content:center;background:var(--color-tinta);color:var(--color-verde-match);font-family:var(--font-serif);font-style:italic;font-weight:600;line-height:1;width:18px;height:18px;font-size:13px;border-radius:3px}
     .pp-qr__meta{display:grid;gap:.2rem;min-width:0}
     .pp-qr__meta p{font-size:.75rem;color:var(--color-gris-500);line-height:1.4}
     .pp-qr__strong{font-size:.8125rem;font-weight:600;color:var(--color-tinta)}
@@ -278,20 +277,23 @@ exports.handler = async (event) => {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
-      ${qrDataUrl ? `<div class="pp-qr">
-        <img src="${qrDataUrl}" alt="QR ${esc(data.nombre)}" width="80" height="80">
+      ${qrSvg ? `<div class="pp-qr">
+        <div class="pp-qr__code" aria-label="Código QR para ${esc(data.nombre)}">
+          ${qrSvg}
+          <span class="pp-qr__seal" aria-hidden="true"><span class="pp-qr__seal-inner">P</span></span>
+        </div>
         <div class="pp-qr__meta">
           <p>Escanea para abrir este perfil</p>
           ${data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
           ${data.email ? `<p>${esc(data.email)}</p>` : ''}
           ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
           ${isPro ? `<div>
-            <a href="/api/qr-download?slug=${esc(data.slug)}&format=svg" class="pp-qr__dl" title="SVG vectorial — escala infinita, ideal imprenta">
+            <a href="/api/qr/${esc(data.slug)}" download="perfilapro-${esc(data.slug)}.svg" class="pp-qr__dl" title="SVG vectorial — escala infinita, ideal imprenta">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               SVG
             </a>
-            <a href="/api/qr-download?slug=${esc(data.slug)}&format=png" class="pp-qr__dl pp-qr__dl--alt" title="PNG 1024×1024 — para web/redes">PNG</a>
-          </div>` : `<a href="${qrDataUrl}" download="perfilapro-${data.slug}.png" class="pp-qr__dl">
+            <a href="/api/qr/${esc(data.slug)}?format=png&size=1024" download="perfilapro-${esc(data.slug)}.png" class="pp-qr__dl pp-qr__dl--alt" title="PNG 1024×1024 — para web/redes">PNG</a>
+          </div>` : `<a href="/api/qr/${esc(data.slug)}?format=png&size=1024" download="perfilapro-${esc(data.slug)}.png" class="pp-qr__dl">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Descargar QR
           </a>`}

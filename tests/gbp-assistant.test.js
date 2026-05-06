@@ -80,7 +80,7 @@ describe('gbp-assistant handler', () => {
     expect(json.posts).toHaveLength(5);
     expect(json.photo_slots).toHaveLength(5);
     expect(json.steps.length).toBeGreaterThan(5);
-    expect(json.assets.qr_svg).toContain('/api/qr-download');
+    expect(json.assets.qr_svg).toContain('/api/qr/');
     expect(json.assets.cover_image).toContain('/api/share-image');
     expect(json.website_url).toBe('https://perfilapro.es/c/ana-pro');
   });

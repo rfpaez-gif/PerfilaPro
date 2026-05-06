@@ -247,14 +247,14 @@ describe('buildEmail', () => {
   it('incluye los enlaces de re-descarga (kit físico) cuando hay editToken', () => {
     const { html } = buildEmail(base);
     expect(html).toContain('/api/download-card?slug=maria-electricista&token=tok-abc-123');
-    expect(html).toContain('/api/download-qr?slug=maria-electricista&token=tok-abc-123');
+    expect(html).toContain('/api/qr/maria-electricista?format=png&size=1024');
   });
 
   it('omite la sección kit cuando no hay editToken', () => {
     const { html } = buildEmail({ ...base, editToken: null });
     expect(html).not.toContain('Tu kit físico');
     expect(html).not.toContain('/api/download-card');
-    expect(html).not.toContain('/api/download-qr');
+    expect(html).not.toContain('/api/qr/');
   });
 
   it('incluye la sección "Dónde ponerlo" con los 3 lugares clave', () => {
