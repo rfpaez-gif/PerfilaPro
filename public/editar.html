@@ -421,12 +421,27 @@
       margin: 0 0 1.25rem;
       text-align: center;
     }
-    .pp-showcase__img {
+    .pp-showcase__stage {
+      position: relative;
       display: block;
       width: 100%;
       max-width: 360px;
-      height: auto;
       margin: 0 auto;
+    }
+    .pp-showcase__img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .pp-showcase__qr {
+      position: absolute;
+      /* % calibrados sobre el rectángulo discontinuo de furgoneta_base
+         (medido por análisis de píxeles: 42.78%→54.90% X, 20.97%→49.83% Y) */
+      left: 42.8%;
+      top: 23.3%;
+      width: 12.1%;
+      aspect-ratio: 1 / 1;
+      height: auto;
     }
     .pp-showcase__pill {
       display: inline-block;
@@ -811,10 +826,13 @@
           <p class="pp-upgrade__sub">Imprime tu tarjeta, comparte tu QR, pégalo en la furgo. Tu kit completo te llega al activar.</p>
 
           <div class="pp-showcase">
-            <picture>
-              <source srcset="/assets/showroom/furgo-960.webp" type="image/webp">
-              <img src="/assets/showroom/furgo-960.png" alt="Furgoneta con el QR de PerfilaPro pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="720">
-            </picture>
+            <div class="pp-showcase__stage">
+              <picture>
+                <source srcset="/images/furgoneta-960.webp" type="image/webp">
+                <img src="/images/furgoneta-960.png" alt="Furgoneta con tu QR pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
+              </picture>
+              <img id="upgradeQr" class="pp-showcase__qr" src="" alt="" loading="lazy">
+            </div>
             <span class="pp-showcase__pill">Mundo físico</span>
             <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
           </div>
@@ -1170,6 +1188,8 @@
       // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
       document.getElementById('upgradeName').textContent = 'Pedro';
       document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
+      // En preview servimos un QR sample estático (sin backend disponible).
+      document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       freeBanner.classList.add('is-visible');
@@ -1402,6 +1422,7 @@
         const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
         document.getElementById('upgradeName').textContent = firstName;
         document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
+        document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
         freeBanner.classList.add('is-visible');
         let selectedPlan = 'base';
         freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
