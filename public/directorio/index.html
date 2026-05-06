@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/brand.css">
   <style>
     /* Componentes específicos de la portada del directorio.
@@ -32,7 +32,7 @@
     body{min-height:100dvh;display:flex;flex-direction:column}
     main{flex:1}
     .pp-dir-hero{background:linear-gradient(160deg,rgba(0,194,119,.08) 0%,var(--color-crema) 55%);padding:3rem 1.25rem 2.5rem;text-align:center}
-    .pp-dir-hero__title{font-family:var(--pp-f-display);font-size:clamp(2rem,5.5vw,3rem);line-height:1.15;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--color-tinta);margin-bottom:.75rem}
+    .pp-dir-hero__title{font-family:var(--font-serif);font-size:clamp(2rem,5.5vw,3rem);line-height:1.15;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--color-tinta);margin-bottom:.75rem}
     .pp-dir-hero__title em{color:var(--color-verde-match);font-style:italic}
     .pp-dir-hero__sub{font-size:1rem;color:var(--color-gris-500);max-width:54ch;margin:0 auto 1.75rem;line-height:1.65}
     .pp-dir-hero__cta-row{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;align-items:center}
@@ -45,18 +45,18 @@
     .pp-breadcrumb__sep{color:var(--color-gris-500);margin:0 .25rem}
 
     .pp-dir-home{max-width:960px;margin:0 auto;padding:.75rem 1.25rem 4rem}
-    .pp-dir-home__label{font-family:var(--pp-f-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--color-gris-500);margin:1.5rem 0 1rem;font-weight:500}
+    .pp-dir-home__label{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--color-gris-500);margin:1.5rem 0 1rem;font-weight:500}
 
     /* Rail de caras reales — copiado del home (index.html) */
     .pp-dir-rail{max-width:1080px;margin:1.5rem auto 0;padding:0 1.25rem}
-    .pp-dir-rail__kicker{font-family:var(--pp-f-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--color-gris-500);margin:0 0 .375rem;font-weight:500}
-    .pp-dir-rail__title{font-family:var(--pp-f-display);font-size:clamp(1.375rem,3vw,1.75rem);line-height:1.2;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--color-tinta);margin:0 0 1rem}
+    .pp-dir-rail__kicker{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--color-gris-500);margin:0 0 .375rem;font-weight:500}
+    .pp-dir-rail__title{font-family:var(--font-serif);font-size:clamp(1.375rem,3vw,1.75rem);line-height:1.2;letter-spacing:var(--pp-ls-heading);font-weight:400;color:var(--color-tinta);margin:0 0 1rem}
     .pp-photos-rail{display:grid;grid-template-columns:repeat(8,minmax(160px,1fr));gap:1rem;overflow-x:auto;padding-bottom:.5rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .pp-photos-rail::-webkit-scrollbar{display:none}
     .pp-pro-photo{display:flex;flex-direction:column;gap:.625rem;margin:0;scroll-snap-align:start}
     .pp-pro-photo__img{aspect-ratio:4/5;border-radius:var(--pp-r-lg);overflow:hidden;background:var(--color-verde-light)}
     .pp-pro-photo__img img{width:100%;height:100%;object-fit:cover;display:block}
-    .pp-pro-photo__cap{font-family:var(--pp-f-sans);font-size:.875rem;font-weight:600;color:var(--color-tinta);text-align:center;margin:0;letter-spacing:-0.01em}
+    .pp-pro-photo__cap{font-family:var(--font-sans);font-size:.875rem;font-weight:600;color:var(--color-tinta);text-align:center;margin:0;letter-spacing:-0.01em}
 
     .pp-dir-home__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.5rem}
     .pp-dir-home__sector{display:flex;align-items:center;gap:.75rem;padding:.75rem .875rem;background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-md);text-decoration:none;color:var(--color-tinta);transition:border-color .15s,transform .12s,box-shadow .15s}
@@ -65,7 +65,7 @@
     .pp-dir-home__sector-name{font-weight:600;font-size:.875rem;margin:0}
     .pp-dir-home__sector-desc{font-size:.75rem;color:var(--color-gris-500);margin:.125rem 0 0}
     .pp-dir-home__cta{margin-top:3rem;padding:2rem;background:var(--color-verde-light);border-radius:var(--pp-r-xl);text-align:center}
-    .pp-dir-home__cta h2{font-family:var(--pp-f-display);font-size:1.5rem;font-weight:400;letter-spacing:var(--pp-ls-heading);color:var(--color-tinta);margin:0 0 .5rem}
+    .pp-dir-home__cta h2{font-family:var(--font-serif);font-size:1.5rem;font-weight:400;letter-spacing:var(--pp-ls-heading);color:var(--color-tinta);margin:0 0 .5rem}
     .pp-dir-home__cta p{font-size:.9375rem;color:var(--color-gris-500);max-width:48ch;margin:0 auto 1rem}
 
     .pp-dir-foot{padding:2rem 1.25rem 3rem;text-align:center;font-size:.8125rem;color:var(--color-gris-500)}

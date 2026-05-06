@@ -1,47 +1,22 @@
 /* ============================================================
-   PerfilaPro · Design Tokens · v0.4
+   PerfilaPro · Design Tokens · v0.5
    Tras el rebrand: la paleta y la tipografía viven en sus
    propios archivos:
      · /styles/tokens-color.css        · paleta (--color-*)
      · /styles/tokens-typography.css   · tipografía (--font-*, --type-*)
 
    Este archivo conserva tokens que NO son color (espaciado,
-   radios, sombras, transiciones, z-index, breakpoints,
-   tipografía legacy --pp-f-* / --pp-fs-* — pendiente de
-   migración en Encargo 6).
-
-   ─────────────────────────────────────────────────────
-   TODO · pendientes del rebrand (decisiones de paleta)
-   ─────────────────────────────────────────────────────
-   1) WARNING · ✅ resuelto. Tokens --color-warning #D97706
-      y --color-warning-light #FEF3C7 añadidos a
-      tokens-color.css. Migrados todos los usos.
-
-   2) CORAL-SOFT · ✅ resuelto. Token --color-coral-light
-      #FEE7E9 añadido a tokens-color.css.
-
-   3) BRAND COLORS · ✅ resuelto. WhatsApp / LinkedIn /
-      Instagram conservan brand original como icono
-      independiente. Si el icono va dentro de un botón con
-      texto, hereda currentColor del botón.
-
-   4) STATUS PILLS ADMIN · ✅ resuelto. Tres estados unificados:
-      Activo → verde-match + verde-light
-      Pendiente/borrador → gris-500 + piedra
-      Atención → warning + warning-light
-      Pendiente: migrar admin.html a estos tres pares (los
-      Tailwind reds y violetas hardcoded siguen ahí).
-
-   5) TEAL DOCUMENTOS · ✅ resuelto. Sin variante soft. La
-      pastilla del total de la factura usa --color-piedra.
-      Teal queda solo para acentos puntuales en documentos.
+   radios, sombras, transiciones, z-index, breakpoints) y los
+   alias legacy de tipografía (--pp-f-*, --pp-fs-*, --pp-lh-*,
+   --pp-ls-*) que se mantienen apuntando al sistema nuevo
+   para no romper SSR inline ni componentes en migración.
    ============================================================ */
 
 :root {
-  /* ---------- TIPOGRAFÍA · FAMILIAS ---------- */
-  --pp-f-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --pp-f-sans:    'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --pp-f-mono:    'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* ---------- TIPOGRAFÍA · FAMILIAS (alias legacy → nuevo sistema) ---------- */
+  --pp-f-display: var(--font-serif);
+  --pp-f-sans:    var(--font-sans);
+  --pp-f-mono:    var(--font-mono);
 
   /* ---------- TIPOGRAFÍA · ESCALA ---------- */
   --pp-fs-display-1: clamp(48px, 7vw, 80px);

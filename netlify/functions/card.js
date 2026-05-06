@@ -152,7 +152,7 @@ exports.handler = async (event) => {
   ${data.foto_url ? `<link rel="preload" as="image" href="${esc(data.foto_url)}">` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     /* ─────────────────────────────────────────────────────
        PerfilaPro · Tarjeta digital · REGISTRO CÁLIDO
@@ -177,16 +177,16 @@ exports.handler = async (event) => {
       --pp-r-lg:1.5rem;
       --pp-r-pill:999px;
       --pp-shadow:0 12px 32px rgba(30,27,20,.08);
-      --pp-f-display:'Fraunces',Georgia,'Times New Roman',serif;
-      --pp-f-sans:'Geist',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+      --font-serif:'Source Serif 4',Georgia,serif;
+      --font-sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
     }
-    body{font-family:var(--pp-f-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
+    body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
     .pp-card{width:min(100%,420px);background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-lg);overflow:hidden;box-shadow:var(--pp-shadow)}
     .pp-card__header{display:grid;grid-template-columns:72px 1fr;gap:1rem;align-items:center;padding:1.25rem;border-bottom:1px solid var(--color-gris-200)}
     .pp-card__avatar{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--color-verde-light);border:2px solid var(--color-gris-200);flex-shrink:0;display:flex;align-items:center;justify-content:center}
     .pp-card__avatar img{width:100%;height:100%;object-fit:cover}
-    .pp-card__avatar-init{font-family:var(--pp-f-display);font-size:1.75rem;color:var(--color-verde-match);line-height:1}
-    .pp-card__name{font-family:var(--pp-f-display);font-size:1.55rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
+    .pp-card__avatar-init{font-family:var(--font-serif);font-size:1.75rem;color:var(--color-verde-match);line-height:1}
+    .pp-card__name{font-family:var(--font-serif);font-size:1.55rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
     .pp-card__role{font-size:.8125rem;color:var(--color-gris-500);margin-top:.25rem;line-height:1.4}
     .pp-card__body{display:grid;gap:.875rem;padding:1.1rem 1.25rem 1.25rem}
     .pp-chips{display:flex;flex-wrap:wrap;gap:.375rem}
@@ -201,7 +201,7 @@ exports.handler = async (event) => {
     .pp-svc__price{font-size:.8125rem;font-weight:700;color:var(--color-verde-match);white-space:nowrap}
     .pp-cta-group{display:grid;gap:.625rem}
     .pp-cta-group--dual{grid-template-columns:1fr auto}
-    .pp-cta{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.9375rem 1.25rem;border-radius:var(--pp-r-pill);font-family:var(--pp-f-sans);font-weight:700;text-decoration:none;cursor:pointer;border:none;min-height:52px;transition:background .18s,opacity .18s;-webkit-tap-highlight-color:transparent}
+    .pp-cta{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.9375rem 1.25rem;border-radius:var(--pp-r-pill);font-family:var(--font-sans);font-weight:700;text-decoration:none;cursor:pointer;border:none;min-height:52px;transition:background .18s,opacity .18s;-webkit-tap-highlight-color:transparent}
     .pp-cta:active{opacity:.82;transform:scale(.98)}
     .pp-cta--wa{background:var(--pp-wa);color:#fff;font-size:1rem}
     .pp-cta--wa:hover{background:var(--pp-wa-deep)}

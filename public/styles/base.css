@@ -18,9 +18,9 @@ html {
 
 body {
   margin: 0;
-  font-family: var(--pp-f-sans);
-  font-size: var(--pp-fs-body);
-  line-height: var(--pp-lh-body);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
   color: var(--color-tinta);
   background: var(--color-crema);
   -webkit-font-smoothing: antialiased;
