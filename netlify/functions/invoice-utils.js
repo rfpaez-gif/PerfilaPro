@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { registerFonts, drawWordmark } = require('./lib/pdf-fonts');
 
 const ISSUER = {
   name: 'Rafael Páez Manso',
@@ -39,6 +40,7 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
       size: 'A4', margin: 60,
       info: { Title: `Factura ${numero} - PerfilaPro` },
     });
+    registerFonts(doc);
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -52,52 +54,69 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     const margin = 60;
     const usableW = pageW - 2 * margin;
 
-    // Header band
-    doc.rect(0, 0, pageW, 80).fill('#0F6B6B');
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(20).text('PerfilaPro', margin, 22);
-    doc.font('Helvetica').fontSize(9).fillColor('rgba(255,255,255,0.75)')
-      .text('Tu trabajo merece verse.', margin, 46);
-    doc.font('Helvetica-Bold').fontSize(11).fillColor('#ffffff')
-      .text('FACTURA SIMPLIFICADA', 0, 32, { align: 'right', width: pageW - margin });
+    // Header band: Teal Documentos #0F6B6B (uso restringido a factura
+    // según brief). Wordmark "Perfila/Pro" en blanco/blanco como manda
+    // el brief para fondo verde — aquí teal mantiene la misma regla.
+    doc.rect(0, 0, pageW, 96).fill('#0F6B6B');
+
+    // Wordmark izquierdo + tagline
+    const charSp = -28 * 0.02;
+    doc.font('PP-Serif').fontSize(28).fillColor('#FFFFFF');
+    const wPerfila = doc.widthOfString('Perfila', { characterSpacing: charSp });
+    doc.text('Perfila', margin, 32, { lineBreak: false, characterSpacing: charSp });
+    doc.font('PP-Serif-Italic').fontSize(28).fillColor('#FFFFFF')
+      .text('Pro', margin + wPerfila, 32, { lineBreak: false, characterSpacing: charSp });
+    doc.font('PP-Serif-Italic').fontSize(10).fillColor('rgba(255,255,255,0.85)')
+      .text('Tu trabajo merece verse.', margin, 68, { lineBreak: false });
+
+    // Etiqueta derecha "FACTURA SIMPLIFICADA"
+    doc.font('PP-Sans-Bold').fontSize(10).fillColor('#FFFFFF')
+      .text('FACTURA SIMPLIFICADA', 0, 44, { align: 'right', width: pageW - margin, characterSpacing: 0.8 });
 
     // Número y fecha
-    const refY = 100;
-    doc.fillColor('#0A1F44');
-    doc.font('Helvetica-Bold').fontSize(9).text('NÚMERO', margin, refY);
-    doc.font('Helvetica').fontSize(11).text(numero, margin, refY + 12);
-    doc.font('Helvetica-Bold').fontSize(9).text('FECHA', 0, refY, { align: 'right' });
-    doc.font('Helvetica').fontSize(11).text(fechaStr, 0, refY + 12, { align: 'right' });
+    const refY = 116;
+    doc.font('PP-Sans-Bold').fontSize(8).fillColor('#6B7280')
+      .text('NÚMERO', margin, refY, { characterSpacing: 0.5 });
+    doc.font('PP-Sans').fontSize(11).fillColor('#0A1F44').text(numero, margin, refY + 12);
+    doc.font('PP-Sans-Bold').fontSize(8).fillColor('#6B7280')
+      .text('FECHA', 0, refY, { align: 'right', characterSpacing: 0.5 });
+    doc.font('PP-Sans').fontSize(11).fillColor('#0A1F44')
+      .text(fechaStr, 0, refY + 12, { align: 'right' });
 
     // Divider
-    doc.moveTo(margin, 138).lineTo(pageW - margin, 138).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+    doc.moveTo(margin, 154).lineTo(pageW - margin, 154).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
 
     // Emisor / Cliente
     const colMid = pageW / 2 + 10;
-    const blockY = 152;
+    const blockY = 168;
 
-    doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('EMISOR', margin, blockY);
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0A1F44').text(ISSUER.name, margin, blockY + 12);
-    doc.font('Helvetica').fontSize(9).fillColor('#6B7280')
+    doc.font('PP-Sans-Bold').fontSize(7).fillColor('#6B7280')
+      .text('EMISOR', margin, blockY, { characterSpacing: 0.6 });
+    doc.font('PP-Sans-SemiBold').fontSize(10).fillColor('#0A1F44')
+      .text(ISSUER.name, margin, blockY + 12);
+    doc.font('PP-Sans').fontSize(9).fillColor('#6B7280')
       .text(`NIF: ${ISSUER.nif}`, margin, blockY + 26)
-      .text(ISSUER.address, margin, blockY + 38)
-      .text(ISSUER.email, margin, blockY + 50)
-      .text(ISSUER.web, margin, blockY + 62);
+      .text(ISSUER.address,        margin, blockY + 38)
+      .text(ISSUER.email,          margin, blockY + 50)
+      .text(ISSUER.web,            margin, blockY + 62);
 
-    doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CLIENTE', colMid, blockY);
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#0A1F44')
+    doc.font('PP-Sans-Bold').fontSize(7).fillColor('#6B7280')
+      .text('CLIENTE', colMid, blockY, { characterSpacing: 0.6 });
+    doc.font('PP-Sans-SemiBold').fontSize(10).fillColor('#0A1F44')
       .text(nombreCliente || '—', colMid, blockY + 12, { width: pageW - colMid - margin });
-    doc.font('Helvetica').fontSize(9).fillColor('#6B7280')
-      .text(emailCliente || '—', colMid, blockY + 26, { width: pageW - colMid - margin });
+    doc.font('PP-Sans').fontSize(9).fillColor('#6B7280')
+      .text(emailCliente || '—',  colMid, blockY + 26, { width: pageW - colMid - margin });
 
     // Divider
-    doc.moveTo(margin, blockY + 82).lineTo(pageW - margin, blockY + 82).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+    doc.moveTo(margin, blockY + 82).lineTo(pageW - margin, blockY + 82).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
 
-    // Concepto — warm sand card
+    // Concepto — card crema con borde lateral teal
     const descY = blockY + 96;
     doc.roundedRect(margin, descY - 4, usableW, 52, 6).fill('#FAF7F0');
     doc.rect(margin, descY - 4, 3, 52).fill('#0F6B6B');
-    doc.font('Helvetica-Bold').fontSize(7).fillColor('#6b7280').text('CONCEPTO', margin + 12, descY + 2);
-    doc.font('Helvetica').fontSize(10).fillColor('#0A1F44')
+    doc.font('PP-Sans-Bold').fontSize(7).fillColor('#6B7280')
+      .text('CONCEPTO', margin + 12, descY + 2, { characterSpacing: 0.6 });
+    doc.font('PP-Sans').fontSize(10).fillColor('#0A1F44')
       .text(
         `Activación plan ${planInfo.label} — Perfil profesional PerfilaPro — ${planInfo.duration}`,
         margin + 12, descY + 15, { width: usableW - 16 }
@@ -109,24 +128,33 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     const amtX   = pageW - 110;
     const amtW   = 50;
 
-    doc.font('Helvetica').fontSize(10).fillColor('#6B7280');
+    doc.font('PP-Sans').fontSize(10).fillColor('#6B7280');
     doc.text('Base imponible:', lblX, totY, { width: 120 });
     doc.text(`${base.toFixed(2)} €`, amtX, totY, { width: amtW, align: 'right' });
     doc.text('IVA (21%):', lblX, totY + 20, { width: 120 });
     doc.text(`${iva.toFixed(2)} €`, amtX, totY + 20, { width: amtW, align: 'right' });
 
-    // Total row — teal accent
-    // TODO: '#d9e8e7' era teal-soft del antiguo verde petróleo. La paleta nueva no define teal-soft. Sustituido por crema neutra para no romper contraste; decidir si añadir un teal-soft al sistema o usar gris-200.
-    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#FAF7F0');
-    doc.font('Helvetica-Bold').fontSize(13).fillColor('#0F6B6B');
+    // Total · pastilla piedra + número en teal documentos
+    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#F7F8FA');
+    doc.font('PP-Sans-Bold').fontSize(13).fillColor('#0F6B6B');
     doc.text('TOTAL:', lblX, totY + 53, { width: 120 });
     doc.text(`${total.toFixed(2)} €`, amtX, totY + 53, { width: amtW, align: 'right' });
 
     // Footer
     const footY = doc.page.height - 70;
-    doc.font('Helvetica').fontSize(8).fillColor('#6B7280')
-      .text('Factura simplificada. IVA incluido en el precio (art. 7.1 RD 1619/2012).', margin, footY, { align: 'center', width: usableW })
-      .text(`PerfilaPro · ${ISSUER.web} · ${ISSUER.email}`, margin, footY + 14, { align: 'center', width: usableW });
+    doc.font('PP-Sans').fontSize(8).fillColor('#6B7280')
+      .text('Factura simplificada. IVA incluido en el precio (art. 7.1 RD 1619/2012).', margin, footY, { align: 'center', width: usableW });
+    // Mini-wordmark en el pie
+    doc.font('PP-Serif').fontSize(8).fillColor('#6B7280');
+    const wPie = doc.widthOfString('Perfila');
+    const wPiePro = doc.widthOfString('Pro') ;
+    const wTail = doc.widthOfString(` · ${ISSUER.web} · ${ISSUER.email}`);
+    const piePosX = (pageW - (wPie + wPiePro + wTail)) / 2;
+    doc.text('Perfila', piePosX, footY + 14, { lineBreak: false });
+    doc.font('PP-Serif-Italic').fontSize(8).fillColor('#0F6B6B')
+      .text('Pro', piePosX + wPie, footY + 14, { lineBreak: false });
+    doc.font('PP-Sans').fontSize(8).fillColor('#6B7280')
+      .text(` · ${ISSUER.web} · ${ISSUER.email}`, piePosX + wPie + wPiePro, footY + 14, { lineBreak: false });
 
     doc.end();
   });

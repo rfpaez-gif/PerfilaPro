@@ -18,21 +18,21 @@
 const PDFDocument = require('pdfkit');
 const { Resvg } = require('@resvg/resvg-js');
 const { buildQrSvg } = require('./lib/qr-svg.js');
+const { registerFonts } = require('./lib/pdf-fonts');
 
 const A6_WIDTH  = 297.64; // 105mm en puntos PDF (1pt = 1/72")
 const A6_HEIGHT = 419.53; // 148mm
 
-// Paleta del PDF imprimible. El header band conserva el teal por decisión
-// editorial pendiente: el rebrand restringe Teal Documentos a factura/contrato,
-// y este artefacto es marketing — toca rediseño de cabecera (TODO: brand pass).
-// El QR ya migrado al SVG nuevo (módulos circulares Tinta + finders especiales)
-// vía lib/qr-svg.js + resvg para rasterización en el embed PDF.
+// Paleta del PDF imprimible · alineada con el rebrand.
+// Header band en Tinta (la tarjeta es marketing, no documento legal —
+// Teal Documentos queda restringido a factura/contrato según brief).
 const COLORS = {
-  surface: '#FFFFFF',
-  ink:     '#1E1B14',
-  inkSoft: '#5C5246',
-  accent:  '#01696F',
-  border:  '#D9D2C4',
+  surface:    '#FFFFFF',
+  ink:        '#0A1F44', // tinta
+  inkSoft:    '#6B7280', // gris-500
+  accent:     '#0A1F44', // tinta (header band)
+  match:      '#00C277', // verde-match (acentos del wordmark)
+  border:     '#E5E7EB', // gris-200
 };
 
 function formatSpanishPhone(phone) {
@@ -75,6 +75,7 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
         Creator: 'PerfilaPro',
       },
     });
+    registerFonts(doc);
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -83,20 +84,33 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
     // Fondo blanco
     doc.rect(0, 0, A6_WIDTH, A6_HEIGHT).fill(COLORS.surface);
 
-    // Header band con marca
-    const headerH = 36;
+    // Header band en Tinta + wordmark "Perfila/Pro" centrado.
+    // "Perfila" en blanco, "Pro" italic verde-match (regla on-tinta del brief).
+    const headerH = 44;
     doc.rect(0, 0, A6_WIDTH, headerH).fill(COLORS.accent);
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(13)
-      .text('PerfilaPro', 0, 12, { width: A6_WIDTH, align: 'center', characterSpacing: 0.4 });
+
+    const wmSize = 18;
+    const charSp = -wmSize * 0.02;
+    doc.font('PP-Serif').fontSize(wmSize);
+    const wPerfila = doc.widthOfString('Perfila', { characterSpacing: charSp });
+    doc.font('PP-Serif-Italic').fontSize(wmSize);
+    const wPro = doc.widthOfString('Pro', { characterSpacing: charSp });
+    const totalW = wPerfila + wPro;
+    const wmX = (A6_WIDTH - totalW) / 2;
+    const wmY = (headerH - wmSize) / 2;
+    doc.font('PP-Serif').fontSize(wmSize).fillColor('#FFFFFF')
+      .text('Perfila', wmX, wmY, { lineBreak: false, characterSpacing: charSp });
+    doc.font('PP-Serif-Italic').fontSize(wmSize).fillColor(COLORS.match)
+      .text('Pro', wmX + wPerfila, wmY, { lineBreak: false, characterSpacing: charSp });
 
     // Identidad arriba
     let cursorY = headerH + 22;
-    doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(17)
+    doc.fillColor(COLORS.ink).font('PP-Serif').fontSize(17)
       .text(String(nombre || '').trim() || '—', 24, cursorY, { width: A6_WIDTH - 48, align: 'center' });
     cursorY += 22;
 
     if (tagline) {
-      doc.fillColor(COLORS.inkSoft).font('Helvetica').fontSize(10.5)
+      doc.fillColor(COLORS.inkSoft).font('PP-Serif-Italic').fontSize(10.5)
         .text(String(tagline).trim(), 24, cursorY, { width: A6_WIDTH - 48, align: 'center' });
       cursorY += 18;
     }
@@ -114,24 +128,24 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
     cursorY += qrSize + 12;
 
     // Etiqueta bajo QR
-    doc.fillColor(COLORS.inkSoft).font('Helvetica').fontSize(9)
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(9)
       .text('Escanea para abrir mi perfil completo', 0, cursorY, { width: A6_WIDTH, align: 'center' });
     cursorY += 22;
 
     // WhatsApp
     if (whatsapp) {
-      doc.fillColor(COLORS.ink).font('Helvetica-Bold').fontSize(11.5)
+      doc.fillColor(COLORS.ink).font('PP-Sans-SemiBold').fontSize(11.5)
         .text(formatSpanishPhone(whatsapp), 0, cursorY, { width: A6_WIDTH, align: 'center' });
       cursorY += 17;
     }
 
     // URL
-    doc.fillColor(COLORS.accent).font('Helvetica').fontSize(10)
+    doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(10)
       .text(`perfilapro.es/c/${slug}`, 0, cursorY, { width: A6_WIDTH, align: 'center' });
 
     // Footer
     const footerY = A6_HEIGHT - 16;
-    doc.fillColor('#A89F90').font('Helvetica').fontSize(7)
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(7)
       .text('Imprime a cualquier tamaño · perfilapro.es', 0, footerY, { width: A6_WIDTH, align: 'center' });
 
     doc.end();
