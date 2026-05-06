@@ -51,7 +51,7 @@ function makeHandler(db, emailClient) {
 
     const { data: card, error: cardError } = await db
       .from('cards')
-      .select('slug, nombre, tagline, whatsapp, email, plan, expires_at, stripe_session_id, edit_token')
+      .select('slug, nombre, tagline, whatsapp, direccion, zona, email, plan, expires_at, stripe_session_id, edit_token, categories(specialty_label)')
       .eq('slug', slug)
       .single();
 
@@ -95,10 +95,13 @@ function makeHandler(db, emailClient) {
     let qrPngBuffer   = null;
     try {
       cardPdfBuffer = await buildPrintableCardPDF({
-        nombre:   card.nombre,
-        tagline:  card.tagline,
-        whatsapp: card.whatsapp,
-        slug:     card.slug,
+        nombre:    card.nombre,
+        tagline:   card.tagline,
+        profesion: card.categories?.specialty_label || null,
+        whatsapp:  card.whatsapp,
+        direccion: card.direccion,
+        zona:      card.zona,
+        slug:      card.slug,
         cardUrl,
       });
     } catch (err) {

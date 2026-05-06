@@ -63,7 +63,7 @@ async function generateQrPngBuffer(cardUrl, size = 1024) {
   return rasterizeQrSvgToPng(cardUrl, size);
 }
 
-async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl }) {
+async function buildPrintableCardPDF({ nombre, tagline, profesion, whatsapp, direccion, zona, slug, cardUrl }) {
   if (!slug || !cardUrl) {
     throw new Error('buildPrintableCardPDF: slug y cardUrl son obligatorios');
   }
@@ -108,45 +108,81 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
     doc.font('PP-Serif-Italic').fontSize(wmSize).fillColor(COLORS.match)
       .text('Pro', wmX + wPerfila, wmY, { lineBreak: false, characterSpacing: charSp });
 
-    // Identidad arriba
+    // Identidad arriba: nombre + profesión canónica + tagline libre.
     let cursorY = headerH + 22;
     doc.fillColor(COLORS.ink).font('PP-Serif').fontSize(17)
-      .text(String(nombre || '').trim() || '—', 24, cursorY, { width: A6_WIDTH - 48, align: 'center' });
+      .text(String(nombre || '').trim() || '—', 24, cursorY, { width: A6_WIDTH - 48, align: 'center', lineBreak: false });
     cursorY += 22;
 
-    if (tagline) {
-      doc.fillColor(COLORS.inkSoft).font('PP-Serif-Italic').fontSize(10.5)
-        .text(String(tagline).trim(), 24, cursorY, { width: A6_WIDTH - 48, align: 'center' });
-      cursorY += 18;
+    // Profesión canónica (specialty_label) en chip uppercase verde-match.
+    // Se omite si coincide con el tagline (case-insensitive) para no duplicar.
+    const profesionTrim = profesion ? String(profesion).trim() : '';
+    const taglineTrim = tagline ? String(tagline).trim() : '';
+    const sameAsTagline = profesionTrim && taglineTrim &&
+      profesionTrim.toLowerCase() === taglineTrim.toLowerCase();
+    if (profesionTrim && !sameAsTagline) {
+      doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(8.5)
+        .text(profesionTrim.toUpperCase().substring(0, 40), 24, cursorY, {
+          width: A6_WIDTH - 48, align: 'center', lineBreak: false, characterSpacing: 1.2,
+        });
+      cursorY += 14;
+    }
+
+    if (taglineTrim) {
+      doc.fillColor(COLORS.inkSoft).font('PP-Serif-Italic').fontSize(10)
+        .text(taglineTrim.substring(0, 80), 24, cursorY, {
+          width: A6_WIDTH - 48, align: 'center', lineBreak: false,
+        });
+      cursorY += 16;
     }
 
     // Divider fino
-    cursorY += 8;
+    cursorY += 6;
     doc.moveTo(48, cursorY).lineTo(A6_WIDTH - 48, cursorY)
       .strokeColor(COLORS.border).lineWidth(0.5).stroke();
-    cursorY += 14;
+    cursorY += 12;
 
-    // QR centrado
-    const qrSize = 170;
+    // QR centrado — 160pt (≈56mm) sigue siendo holgado para impresión A6.
+    // Se reduce 10pt vs revisión anterior para dar aire a los datos físicos
+    // bajo el QR (dirección + zona).
+    const qrSize = 160;
     const qrX = (A6_WIDTH - qrSize) / 2;
     doc.image(qrBuffer, qrX, cursorY, { width: qrSize, height: qrSize });
-    cursorY += qrSize + 12;
+    cursorY += qrSize + 10;
 
     // Etiqueta bajo QR
     doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(9)
       .text('Escanea para abrir mi perfil completo', 0, cursorY, { width: A6_WIDTH, align: 'center' });
-    cursorY += 22;
+    cursorY += 17;
 
-    // WhatsApp
+    // WhatsApp (contacto principal, destacado)
     if (whatsapp) {
       doc.fillColor(COLORS.ink).font('PP-Sans-SemiBold').fontSize(11.5)
-        .text(formatSpanishPhone(whatsapp), 0, cursorY, { width: A6_WIDTH, align: 'center' });
-      cursorY += 17;
+        .text(formatSpanishPhone(whatsapp), 0, cursorY, { width: A6_WIDTH, align: 'center', lineBreak: false });
+      cursorY += 15;
+    }
+
+    // Dirección física (calle + CP — campo direccion ya viene libre del usuario)
+    if (direccion) {
+      doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(9)
+        .text(String(direccion).trim().substring(0, 60), 24, cursorY, {
+          width: A6_WIDTH - 48, align: 'center', lineBreak: false,
+        });
+      cursorY += 12;
+    }
+
+    // Zona (ciudad / provincia)
+    if (zona) {
+      doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(9)
+        .text(String(zona).trim().substring(0, 60), 24, cursorY, {
+          width: A6_WIDTH - 48, align: 'center', lineBreak: false,
+        });
+      cursorY += 12;
     }
 
     // URL
     doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(10)
-      .text(`perfilapro.es/c/${slug}`, 0, cursorY, { width: A6_WIDTH, align: 'center' });
+      .text(`perfilapro.es/c/${slug}`, 0, cursorY, { width: A6_WIDTH, align: 'center', lineBreak: false });
 
     // Footer
     const footerY = A6_HEIGHT - 16;
