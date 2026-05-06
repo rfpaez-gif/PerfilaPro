@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>PerfilaPro · Logo · demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/styles/brand.css">
+<style>
+  body { padding: 48px 24px 96px; background: var(--color-crema); }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 600;
+    color: var(--color-tinta);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--color-verde-match); }
+  .lead { color: var(--color-gris-500); font-size: 16px; margin-bottom: 48px; max-width: 680px; }
+  h2 {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-tinta);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-verde-match);
+    margin-bottom: 8px;
+  }
+  .desc { color: var(--color-gris-500); font-size: 14px; margin-bottom: 20px; max-width: 680px; }
+  .section {
+    background: #FFFFFF;
+    border: 1px solid var(--color-gris-200);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 32px;
+  }
+  .hero-logo {
+    background: var(--color-piedra);
+    border-radius: 16px;
+    padding: 96px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .app-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+  @media (max-width: 720px) { .app-grid { grid-template-columns: 1fr; } }
+  .app {
+    border-radius: 14px;
+    padding: 64px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .app--cream { background: var(--color-crema); border: 1px solid var(--color-gris-200); }
+  .app--piedra { background: var(--color-piedra); border: 1px solid var(--color-gris-200); }
+  .app--tinta { background: var(--color-tinta); }
+  .app--verde { background: var(--color-verde-match); }
+  .app__label {
+    font-size: 10px;
+    color: var(--color-gris-500);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .app--tinta .app__label, .app--verde .app__label { color: rgba(255,255,255,0.7); }
+
+  .scale-row { display: flex; flex-direction: column; gap: 24px; padding: 32px; background: var(--color-piedra); border-radius: 14px; margin-top: 16px; }
+  .scale-item { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--color-gris-200); }
+  .scale-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .scale-spec { font-size: 11px; color: var(--color-gris-500); text-transform: uppercase; letter-spacing: 0.08em; min-width: 120px; }
+  .scale-spec strong { display: block; color: var(--color-tinta); font-size: 13px; text-transform: none; letter-spacing: 0; margin-bottom: 2px; }
+
+  .header-sim {
+    background: #FFFFFF;
+    border: 1px solid var(--color-gris-200);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .header-sim--tinta { background: var(--color-tinta); border-color: transparent; }
+  .header-sim--verde { background: var(--color-verde-match); border-color: transparent; }
+  .header-sim__nav { display: flex; gap: 24px; font-size: 13px; color: var(--color-gris-500); }
+  .header-sim--tinta .header-sim__nav, .header-sim--verde .header-sim__nav { color: rgba(255,255,255,0.85); }
+  .header-sim__cta { background: var(--color-verde-match); color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+  .header-sim--verde .header-sim__cta { background: #fff; color: var(--color-tinta); }
+
+  .iso-row { display: flex; gap: 24px; flex-wrap: wrap; padding: 32px; background: var(--color-piedra); border-radius: 14px; align-items: flex-end; margin-top: 16px; }
+  .iso-cell { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .iso-label { font-size: 10px; color: var(--color-gris-500); text-transform: uppercase; letter-spacing: 0.08em; }
+  .iso-label strong { display: block; color: var(--color-tinta); font-size: 11px; margin-bottom: 2px; text-transform: none; letter-spacing: 0; }
+
+  .clearance-demo { background: var(--color-piedra); border-radius: 14px; padding: 48px 24px; margin-top: 16px; display: flex; justify-content: center; }
+  .clearance-box { position: relative; padding: 48px; border: 1px dashed var(--color-verde-match); }
+  .clearance-marker { position: absolute; background: var(--color-verde-match); opacity: 0.15; }
+  .marker-top { top: -48px; left: -48px; right: -48px; height: 48px; }
+  .marker-bottom { bottom: -48px; left: -48px; right: -48px; height: 48px; }
+  .marker-left { left: -48px; top: -48px; bottom: -48px; width: 48px; }
+  .marker-right { right: -48px; top: -48px; bottom: -48px; width: 48px; }
+
+  .dont-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
+  @media (max-width: 720px) { .dont-grid { grid-template-columns: 1fr; } }
+  .dont-card {
+    background: var(--color-piedra);
+    border: 1px solid var(--color-gris-200);
+    border-radius: 14px;
+    padding: 32px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    min-height: 140px;
+    justify-content: center;
+    position: relative;
+  }
+  .dont-card::after {
+    content: 'NO';
+    position: absolute;
+    top: 12px; right: 12px;
+    background: var(--color-coral);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .dont-card__label { font-size: 11px; color: var(--color-gris-500); text-align: center; }
+
+  .footer-note { text-align: center; color: var(--color-gris-500); font-size: 13px; margin-top: 64px; padding-top: 32px; border-top: 1px solid var(--color-gris-200); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>El logo <em>definitivo</em>.</h1>
+  <p class="lead">Wordmark <em>PerfilaPro</em> con el "Pro" en italic verde-match. Sin hexágono ni elementos añadidos. Source Serif 4, weight 600, letter-spacing -0.02em. La firma visual es el contraste tinta/verde y la inclinación.</p>
+
+  <!-- HERO -->
+  <section class="section">
+    <span class="tag">El logo</span>
+    <h2>Wordmark al hero.</h2>
+    <div class="hero-logo">
+      <span class="pp-logo pp-logo--hero">Perfila<span class="pp-logo__pro">Pro</span></span>
+    </div>
+  </section>
+
+  <!-- SOBRE FONDOS -->
+  <section class="section">
+    <span class="tag">Sobre fondos</span>
+    <h2>Funciona en los cuatro fondos de marca.</h2>
+    <p class="desc">Crema, piedra, tinta y verde. Sobre verde el "Pro" pasa a blanco para mantener contraste.</p>
+    <div class="app-grid">
+      <div class="app app--cream">
+        <span class="pp-logo pp-logo--lg">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Sobre crema · #FAF7F0</span>
+      </div>
+      <div class="app app--piedra">
+        <span class="pp-logo pp-logo--lg">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Sobre piedra · #F7F8FA</span>
+      </div>
+      <div class="app app--tinta">
+        <span class="pp-logo pp-logo--lg pp-logo--on-tinta">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Sobre tinta · #0A1F44</span>
+      </div>
+      <div class="app app--verde">
+        <span class="pp-logo pp-logo--lg pp-logo--on-verde">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Sobre verde — Pro pasa a blanco</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- VARIANTES MONOCROMAS -->
+  <section class="section">
+    <span class="tag">Variantes monocromas</span>
+    <h2>Para cuando solo hay un color.</h2>
+    <p class="desc">Factura B/N, sello en periódico, fotocopia, grabado, merchandising. La marca debe poder funcionar en monocromo.</p>
+    <div class="app-grid">
+      <div class="app" style="background:#fff;border:1px solid var(--color-gris-200)">
+        <span class="pp-logo pp-logo--md pp-logo--mono-tinta">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Todo tinta · impresión B/N</span>
+      </div>
+      <div class="app app--tinta">
+        <span class="pp-logo pp-logo--md pp-logo--mono-blanco">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Todo blanco · sobre tinta</span>
+      </div>
+      <div class="app" style="background:#fff;border:1px solid var(--color-gris-200)">
+        <span class="pp-logo pp-logo--md pp-logo--mono-verde">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Todo verde · merchandising</span>
+      </div>
+      <div class="app app--verde">
+        <span class="pp-logo pp-logo--md pp-logo--mono-blanco">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="app__label">Todo blanco · sobre verde</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESCALAS -->
+  <section class="section">
+    <span class="tag">Escalas y tamaños</span>
+    <h2>De cartel a botón.</h2>
+    <p class="desc">Cinco tamaños recomendados. Por debajo de 14px, usa el isotipo en lugar del wordmark.</p>
+    <div class="scale-row">
+      <div class="scale-item">
+        <div class="scale-spec"><strong>104px</strong>Hero / cartel</div>
+        <span class="pp-logo pp-logo--hero">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-spec"><strong>54px</strong>Sección destacada</div>
+        <span class="pp-logo pp-logo--lg">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-spec"><strong>32px</strong>Email / factura</div>
+        <span class="pp-logo pp-logo--md">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-spec"><strong>22px</strong>Header web</div>
+        <span class="pp-logo pp-logo--sm">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+      <div class="scale-item">
+        <div class="scale-spec"><strong>14px</strong>Mínimo legible</div>
+        <span class="pp-logo pp-logo--xs">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- HEADERS REALES -->
+  <section class="section">
+    <span class="tag">Headers reales</span>
+    <h2>En el navbar de la web.</h2>
+    <div class="header-sim">
+      <span class="pp-logo pp-logo--sm">Perfila<span class="pp-logo__pro">Pro</span></span>
+      <span class="header-sim__nav">Cómo funciona · Precios · Para empresas</span>
+      <span class="header-sim__cta">Crear mi perfil →</span>
+    </div>
+    <div class="header-sim header-sim--tinta">
+      <span class="pp-logo pp-logo--sm pp-logo--on-tinta">Perfila<span class="pp-logo__pro">Pro</span></span>
+      <span class="header-sim__nav">Cómo funciona · Precios · Para empresas</span>
+      <span class="header-sim__cta">Crear mi perfil →</span>
+    </div>
+    <div class="header-sim header-sim--verde">
+      <span class="pp-logo pp-logo--sm pp-logo--on-verde">Perfila<span class="pp-logo__pro">Pro</span></span>
+      <span class="header-sim__nav">Cómo funciona · Precios · Para empresas</span>
+      <span class="header-sim__cta">Crear mi perfil →</span>
+    </div>
+  </section>
+
+  <!-- ISOTIPO -->
+  <section class="section">
+    <span class="tag">Isotipo</span>
+    <h2>La "P" italic verde, autosuficiente.</h2>
+    <p class="desc">Cuando el wordmark no cabe — favicon, avatar de redes, app icon, sello en QR, watermark — usamos la "P" italic en verde, extraída del propio "Pro". No es un símbolo arbitrario: vive dentro del logotipo.</p>
+    <div class="iso-row">
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--128"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>App icon</strong>128px</span>
+      </div>
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--64"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Avatar redes</strong>64px</span>
+      </div>
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--48"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Sello QR</strong>48px</span>
+      </div>
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--32"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Favicon</strong>32px</span>
+      </div>
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--16"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Mínimo</strong>16px</span>
+      </div>
+    </div>
+    <div class="iso-row" style="margin-top:8px">
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--64 pp-iso--bg-verde"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Verde</strong>P blanca</span>
+      </div>
+      <div class="iso-cell">
+        <span class="pp-iso pp-iso--64 pp-iso--bg-white"><span class="pp-iso__P">P</span></span>
+        <span class="iso-label"><strong>Claro</strong>P en tinta</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOCKUP -->
+  <section class="section">
+    <span class="tag">Lockup con tagline</span>
+    <h2>Para hero, deck, factura y asset descargable.</h2>
+    <p class="desc">Cuando el logo va acompañado del tagline maestro. Distancia entre logo y tagline = altura de la "P".</p>
+    <div style="background:var(--color-piedra);border-radius:14px;padding:80px 32px;display:flex;justify-content:center;margin-top:16px">
+      <div class="pp-logo-lockup">
+        <span class="pp-logo pp-logo--lg">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="pp-logo__tagline">Tu trabajo merece verse.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESPACIO DE SEGURIDAD -->
+  <section class="section">
+    <span class="tag">Espacio de seguridad</span>
+    <h2>Aire alrededor del logo.</h2>
+    <p class="desc">El logo nunca se pega a otros elementos. Espacio mínimo a su alrededor ≈ altura de las minúsculas. Las zonas verdes son intocables — ni texto, ni iconos, ni bordes.</p>
+    <div class="clearance-demo">
+      <div class="clearance-box">
+        <div class="clearance-marker marker-top"></div>
+        <div class="clearance-marker marker-bottom"></div>
+        <div class="clearance-marker marker-left"></div>
+        <div class="clearance-marker marker-right"></div>
+        <span class="pp-logo pp-logo--md">Perfila<span class="pp-logo__pro">Pro</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- USOS PROHIBIDOS -->
+  <section class="section">
+    <span class="tag">Lo que NO se hace</span>
+    <h2>Usos prohibidos.</h2>
+    <p class="desc">Mantener consistencia es lo que hace que una marca se reconozca. Estos son los usos vetados.</p>
+    <div class="dont-grid">
+      <div class="dont-card">
+        <span class="pp-logo pp-logo--sm" style="transform:skewX(-15deg)">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="dont-card__label">No deformar ni inclinar</span>
+      </div>
+      <div class="dont-card">
+        <span class="pp-logo pp-logo--sm" style="color:var(--color-coral)">Perfila<span class="pp-logo__pro" style="color:var(--color-coral)">Pro</span></span>
+        <span class="dont-card__label">No usar otros colores</span>
+      </div>
+      <div class="dont-card">
+        <span class="pp-logo pp-logo--sm" style="text-shadow:2px 2px 0 rgba(0,0,0,0.3)">Perfila<span class="pp-logo__pro">Pro</span></span>
+        <span class="dont-card__label">No añadir sombras ni efectos</span>
+      </div>
+      <div class="dont-card">
+        <span style="font-family:var(--font-sans);font-size:22px;font-weight:600;color:var(--color-tinta);letter-spacing:-0.02em">Perfila<span style="font-style:italic;color:var(--color-verde-match)">Pro</span></span>
+        <span class="dont-card__label">No cambiar la tipografía</span>
+      </div>
+      <div class="dont-card">
+        <span class="pp-logo pp-logo--sm" style="font-weight:300">Perfila<span class="pp-logo__pro" style="font-weight:300">Pro</span></span>
+        <span class="dont-card__label">No alterar el peso</span>
+      </div>
+      <div class="dont-card">
+        <span class="pp-logo pp-logo--sm"><span style="font-style:italic;color:var(--color-verde-match)">Perfila</span><span class="pp-logo__pro" style="font-style:normal;color:var(--color-tinta)">Pro</span></span>
+        <span class="dont-card__label">No invertir el tratamiento</span>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">PerfilaPro · Tu trabajo merece verse · Hecho en Orihuela · <em>Made in Spain</em>.</p>
+</div>
+</body>
+</html>

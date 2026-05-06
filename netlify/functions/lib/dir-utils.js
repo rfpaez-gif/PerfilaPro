@@ -69,7 +69,8 @@ const DIR_CSS = `
 body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
 a{color:inherit;text-decoration:none}
 .pp-site-hd{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--color-gris-200);background:#FFFFFF;position:sticky;top:0;z-index:10}
-.pp-site-hd__logo{font-family:var(--font-serif);font-size:1.25rem;letter-spacing:-0.02em;color:var(--color-tinta)}
+.pp-site-hd__logo{font-family:var(--font-serif);font-size:1.25rem;font-weight:600;letter-spacing:-0.02em;color:var(--color-tinta);text-decoration:none}
+.pp-site-hd__logo-pro{font-style:italic;color:var(--color-verde-match)}
 .pp-site-hd__cta{padding:.5rem 1rem;background:var(--color-verde-match);color:#fff;border-radius:var(--pp-r-pill);font-size:.8125rem;font-weight:700;transition:background .15s}
 .pp-site-hd__cta:hover{background:var(--color-verde-dark)}
 .pp-breadcrumb{padding:.625rem 1.25rem;font-size:.8125rem;color:var(--color-gris-500);border-bottom:1px solid var(--color-gris-200);background:#FFFFFF}
@@ -268,7 +269,7 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
 </head>
 <body>
   <header class="pp-site-hd">
-    <a href="${esc(siteUrl)}" class="pp-site-hd__logo">PerfilaPro</a>
+    <a href="${esc(siteUrl)}" class="pp-site-hd__logo">Perfila<span class="pp-site-hd__logo-pro">Pro</span></a>
     <a href="${esc(siteUrl)}/#crear" class="pp-site-hd__cta">Crea tu perfil →</a>
   </header>
   ${crumbs ? breadcrumb(crumbs) : ''}

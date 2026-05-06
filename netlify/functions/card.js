@@ -225,7 +225,8 @@ exports.handler = async (event) => {
     .pp-free-banner__btn{font-size:.8125rem;font-weight:700;color:#fff;background:var(--color-verde-match);padding:.35rem .875rem;border-radius:var(--pp-r-pill);text-decoration:none;white-space:nowrap}
     .pp-free-banner__btn:hover{background:var(--color-verde-dark)}
     .pp-card__pw{text-align:center;font-size:.6875rem;color:var(--color-gris-500);padding:.75rem 0 .125rem;border-top:1px solid var(--color-gris-200);line-height:1.6}
-    .pp-card__pw strong{color:var(--color-verde-match)}
+    .pp-card__pw strong{font-family:var(--font-serif);font-weight:600;letter-spacing:-0.02em;color:var(--color-tinta);font-size:.8125rem}
+    .pp-logo__pro{font-family:var(--font-serif);font-style:italic;font-weight:600;color:var(--color-verde-match)}
     .pp-card__pw a{display:inline-block;margin-top:.3rem;padding:.3rem .875rem;background:var(--color-verde-match);color:#fff;border-radius:var(--pp-r-pill);font-size:.6875rem;font-weight:700;text-decoration:none}
     .pp-card__pw a:hover{background:var(--color-verde-dark)}
     .pp-page-foot{margin-top:1.5rem;font-size:.75rem;color:var(--color-gris-500);text-align:center}
@@ -303,7 +304,7 @@ exports.handler = async (event) => {
         <p><strong>Perfil básico</strong> · Sin foto, QR ni directorio</p>
       </div>` : ''}
       <div class="pp-card__pw">
-        Creado con <strong>PerfilaPro</strong><br>
+        Creado con <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
         <a href="https://perfilapro.es">Crea tu propio perfil</a>
       </div>
     </div>

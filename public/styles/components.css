@@ -536,31 +536,6 @@
   padding-block: 14px;
 }
 
-.pp-nav__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--pp-s-3);
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.02em;
-  color: var(--color-tinta);
-  text-decoration: none;
-  flex-shrink: 0;
-}
-.pp-nav__brand:hover { text-decoration: none; }
-
-.pp-nav__brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--color-verde-light);
-  color: var(--color-verde-match);
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--color-verde-match);
-  flex-shrink: 0;
-}
-
 .pp-nav__links {
   display: flex;
   gap: var(--pp-s-6);
@@ -1826,3 +1801,133 @@
 .pp-qr--size-160 .pp-qr__seal-inner { width: 36px; height: 36px; font-size: 22px; border-radius: 6px; }
 .pp-qr--size-200 .pp-qr__seal-inner { width: 48px; height: 48px; font-size: 28px; border-radius: 8px; }
 .pp-qr--size-280 .pp-qr__seal-inner { width: 64px; height: 64px; font-size: 38px; border-radius: 10px; }
+
+/* ============================================================
+   Logo · Wordmark "Perfila" + "Pro" italic verde
+   Source Serif 4, weight 600, letter-spacing -0.02em.
+   El "Pro" hereda font-weight de su padre y se diferencia solo
+   por italic + color, manteniendo unidad tipográfica.
+
+   Aplicaciones:
+     · pp-logo--xs   14px  · mínimo legible
+     · pp-logo--sm   22px  · header web (default)
+     · pp-logo--md   32px  · email / factura
+     · pp-logo--lg   54px  · sección destacada
+     · pp-logo--hero 104px · hero / cartel
+
+   Variantes:
+     · default          · "Perfila" tinta + "Pro" verde-match (uso normal)
+     · pp-logo--on-tinta· sobre fondo tinta: "Perfila" blanco + "Pro" verde
+     · pp-logo--on-verde· sobre fondo verde: ambos blancos (mantiene contraste)
+     · pp-logo--mono-*  · monocromas para B/N, merch o casos especiales
+   ============================================================ */
+
+.pp-logo {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-tinta);
+  display: inline-block;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.pp-logo__pro {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--color-verde-match);
+}
+
+.pp-logo--xs   { font-size: 14px; }
+.pp-logo--sm   { font-size: 22px; }
+.pp-logo--md   { font-size: 32px; }
+.pp-logo--lg   { font-size: 54px; }
+.pp-logo--hero { font-size: 104px; letter-spacing: -0.025em; }
+
+/* Sobre fondo tinta: el "Perfila" pasa a blanco; el "Pro" sigue verde */
+.pp-logo--on-tinta { color: #FFFFFF; }
+.pp-logo--on-tinta .pp-logo__pro { color: var(--color-verde-match); }
+
+/* Sobre fondo verde: ambos blancos para preservar contraste */
+.pp-logo--on-verde { color: #FFFFFF; }
+.pp-logo--on-verde .pp-logo__pro { color: #FFFFFF; }
+
+/* Monocromas: para B/N, fotocopia, grabado, merchandising */
+.pp-logo--mono-tinta .pp-logo__pro { color: var(--color-tinta); }
+.pp-logo--mono-blanco { color: #FFFFFF; }
+.pp-logo--mono-blanco .pp-logo__pro { color: #FFFFFF; }
+.pp-logo--mono-verde { color: var(--color-verde-match); }
+.pp-logo--mono-verde .pp-logo__pro { color: var(--color-verde-match); }
+
+/* Lockup con tagline (.pp-logo-lockup envuelve .pp-logo + .pp-logo__tagline) */
+.pp-logo-lockup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.pp-logo__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-gris-500);
+  letter-spacing: 0.02em;
+  font-size: 16px;
+}
+.pp-logo-lockup--on-tinta .pp-logo__tagline { color: rgba(255,255,255,0.75); }
+.pp-logo-lockup--on-verde .pp-logo__tagline { color: rgba(255,255,255,0.85); }
+
+/* ============================================================
+   Isotipo · "P" italic verde sobre cuadrado redondeado tinta
+   Misma "P" extraída del wordmark — no es un símbolo arbitrario.
+
+   Tamaños:
+     · pp-iso--16   16px · mínimo
+     · pp-iso--32   32px · favicon
+     · pp-iso--48   48px · sello QR
+     · pp-iso--64   64px · avatar redes
+     · pp-iso--128 128px · app icon
+
+   Fondos:
+     · default         · tinta + P verde (uso principal)
+     · pp-iso--bg-verde· verde-match + P blanca
+     · pp-iso--bg-white· blanco + P tinta (sobre fondos oscuros con borde)
+   ============================================================ */
+
+.pp-iso {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-tinta);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.pp-iso__P {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-style: italic;
+  color: var(--color-verde-match);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+}
+
+.pp-iso--16  { width: 16px;  height: 16px;  border-radius: 4px; }
+.pp-iso--32  { width: 32px;  height: 32px;  border-radius: 7px; }
+.pp-iso--48  { width: 48px;  height: 48px;  border-radius: 10px; }
+.pp-iso--64  { width: 64px;  height: 64px;  border-radius: 12px; }
+.pp-iso--128 { width: 128px; height: 128px; border-radius: 24px; }
+
+.pp-iso--16  .pp-iso__P { font-size: 11px; }
+.pp-iso--32  .pp-iso__P { font-size: 22px; }
+.pp-iso--48  .pp-iso__P { font-size: 32px; }
+.pp-iso--64  .pp-iso__P { font-size: 42px; }
+.pp-iso--128 .pp-iso__P { font-size: 84px; }
+
+.pp-iso--bg-verde { background: var(--color-verde-match); }
+.pp-iso--bg-verde .pp-iso__P { color: #FFFFFF; }
+.pp-iso--bg-white {
+  background: #FFFFFF;
+  border: 1px solid var(--color-gris-200);
+}
+.pp-iso--bg-white .pp-iso__P { color: var(--color-tinta); }

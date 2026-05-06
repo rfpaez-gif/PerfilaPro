@@ -102,8 +102,8 @@ function buildEmailLayout(opts) {
         <!-- Header -->
         <tr>
           <td style="background:${COLORS.accent};padding:32px 40px;text-align:center">
-            <p style="margin:0;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px">PerfilaPro</p>
-            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.75)">Tu trabajo merece verse.</p>
+            <p style="margin:0;font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-size:32px;font-weight:600;color:#ffffff;letter-spacing:-0.6px;line-height:1">Perfila<span style="font-style:italic;font-weight:600;color:#ffffff">Pro</span></p>
+            <p style="margin:10px 0 0;font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.85);letter-spacing:0.02em">Tu trabajo merece verse.</p>
           </td>
         </tr>
 
@@ -120,7 +120,7 @@ ${renderFooterNote(footerNote)}
         <!-- Footer -->
         <tr>
           <td style="padding:20px 40px;border-top:1px solid ${COLORS.border};text-align:center">
-            <p style="margin:0 0 6px;font-size:12px;color:${COLORS.inkSoft}">PerfilaPro · Tu trabajo merece verse.</p>
+            <p style="margin:0 0 6px;font-size:12px;color:${COLORS.inkSoft}">Perfila<span style="font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-weight:600;color:${COLORS.accent}">Pro</span> · Tu trabajo merece verse.</p>
             <p style="margin:0;font-size:11px;color:#c4bdb2">
               <a href="${safeSiteUrl}/terminos.html" style="color:${COLORS.inkSoft};text-decoration:none">Términos</a> ·
               <a href="${safeSiteUrl}/privacidad.html" style="color:${COLORS.inkSoft};text-decoration:none">Privacidad</a> ·
