@@ -110,7 +110,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios } = body;
+    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom } = body;
 
     if (!nombre || !whatsapp || !zona || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, zona, email' }) };
@@ -148,17 +148,39 @@ function makeHandler(db, emailClient = resend) {
       ? rawServicios.map(s => stripTags(s).substring(0, 100)).filter(Boolean)
       : [];
 
+    // Resolve category_id from archetype slugs so the printable PDF, directory
+    // search and admin filters work from day one (sin pasar por /editar).
+    let category_id = null;
+    if (category_sector && category_specialty) {
+      const { data: cat } = await db
+        .from('categories')
+        .select('id')
+        .eq('sector', category_sector)
+        .eq('specialty', category_specialty)
+        .maybeSingle();
+      category_id = cat?.id || null;
+    }
+
+    // specialty_custom solo se persiste cuando la specialty es 'otro-oficio'
+    // (flujo "No me veo aqui"). El PDF imprimible y el chip publico lo
+    // prefieren sobre specialty_label para mostrar el oficio real.
+    const specialtyCustomClean = (category_specialty === 'otro-oficio' && specialty_custom)
+      ? stripTags(specialty_custom).substring(0, 60)
+      : null;
+
     const row = {
       slug,
-      nombre:      cleanNombre,
+      nombre:           cleanNombre,
       tagline,
-      whatsapp:    waNumber,
-      zona:        stripTags(zona).substring(0, 100),
-      servicios:   serviciosParsed,
+      whatsapp:         waNumber,
+      zona:             stripTags(zona).substring(0, 100),
+      servicios:        serviciosParsed,
       email,
-      plan:        'base',
-      status:      'active',
-      edit_token:  editToken,
+      plan:             'base',
+      status:           'active',
+      category_id,
+      specialty_custom: specialtyCustomClean,
+      edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };
 

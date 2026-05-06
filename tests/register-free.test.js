@@ -4,7 +4,8 @@ const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 // --- Mocks ---
 
-const mockMaybeSingle = vi.fn();
+const mockMaybeSingle = vi.fn();             // cards slug-uniqueness check
+const mockCategoryMaybeSingle = vi.fn();     // categories sector+specialty lookup
 const mockInsert = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFrom = vi.fn();
@@ -12,8 +13,8 @@ const mockFrom = vi.fn();
 const mockEmailSend = vi.fn();
 const mockEmail = { emails: { send: mockEmailSend } };
 
-function makeSelectBuilder() {
-  const b = { select: vi.fn(), eq: vi.fn(), maybeSingle: mockMaybeSingle };
+function makeSelectBuilder(maybeSingleFn) {
+  const b = { select: vi.fn(), eq: vi.fn(), maybeSingle: maybeSingleFn };
   b.select.mockReturnValue(b);
   b.eq.mockReturnValue(b);
   return b;
@@ -49,15 +50,19 @@ describe('register-free handler', () => {
     _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
-    // Default: no existing slug (no collision)
+    // Default: no existing slug (no collision), no category match
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockCategoryMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockInsert.mockResolvedValue({ error: null });
 
     mockFrom.mockImplementation((table) => {
       if (table === 'cards') {
-        const selectBuilder = makeSelectBuilder();
+        const selectBuilder = makeSelectBuilder(mockMaybeSingle);
         selectBuilder.insert = mockInsert;
         return selectBuilder;
+      }
+      if (table === 'categories') {
+        return makeSelectBuilder(mockCategoryMaybeSingle);
       }
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: mockMaybeSingle };
     });
@@ -160,6 +165,78 @@ describe('register-free handler', () => {
     expect(res.statusCode).toBe(200);
     const insertCall = mockInsert.mock.calls[0][0];
     expect(insertCall.nombre).toBe('Paco García');
+  });
+
+  it('resolves and persists category_id when archetype slugs are provided', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 42 }, error: null });
+    const body = { ...validBody, category_sector: 'oficios', category_specialty: 'fontanero' };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.category_id).toBe(42);
+    // Confirm we hit the categories table with both filters
+    expect(mockFrom).toHaveBeenCalledWith('categories');
+  });
+
+  it('persists category_id=null when archetype slugs are missing', async () => {
+    const res = await handler(buildEvent({ body: validBody }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.category_id).toBeNull();
+    // No categories lookup should happen if slugs are absent
+    expect(mockCategoryMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('persists category_id=null when sector+specialty pair has no DB match', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    const body = { ...validBody, category_sector: 'oficios', category_specialty: 'inexistente' };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.category_id).toBeNull();
+  });
+
+  it('persists specialty_custom only when category_specialty is otro-oficio', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 99 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'otros',
+      category_specialty: 'otro-oficio',
+      specialty_custom:   'Limpiacristales en altura',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBe('Limpiacristales en altura');
+    expect(insertCall.category_id).toBe(99);
+  });
+
+  it('ignores specialty_custom when category_specialty is canonical', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 1 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'oficios',
+      category_specialty: 'fontanero',
+      specialty_custom:   'Fontanero <script>alert(1)</script>',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBeNull();
+  });
+
+  it('strips HTML tags from specialty_custom', async () => {
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 99 }, error: null });
+    const body = {
+      ...validBody,
+      category_sector:    'otros',
+      category_specialty: 'otro-oficio',
+      specialty_custom:   '<b>Pulidor</b> de suelos',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBe('Pulidor de suelos');
   });
 
   it('devuelve 429 al superar el límite por IP (5 requests / 10 min)', async () => {
