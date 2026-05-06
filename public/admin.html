@@ -7,7 +7,7 @@
   <title>Admin — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/brand.css">
   <style>
     /* ── Login ────────────────────────────────────────────── */
@@ -29,7 +29,7 @@
       text-align: center;
     }
     .pp-admin-login__title {
-      font-family: var(--pp-f-display);
+      font-family: var(--font-serif);
       font-size: 1.75rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
@@ -64,7 +64,7 @@
       justify-content: space-between;
     }
     .pp-admin-topbar__title {
-      font-family: var(--pp-f-display);
+      font-family: var(--font-serif);
       font-size: 1.5rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
@@ -87,7 +87,7 @@
       border-radius: var(--pp-r-pill);
       cursor: pointer;
       font-size: 13px;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       font-weight: 600;
       transition: background var(--pp-t-fast);
     }
@@ -113,7 +113,7 @@
       padding: 1.25rem;
     }
     .pp-stat__label {
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
       font-size: var(--pp-fs-eyebrow);
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
@@ -122,7 +122,7 @@
       margin-bottom: .5rem;
     }
     .pp-stat__value {
-      font-family: var(--pp-f-display);
+      font-family: var(--font-serif);
       font-size: 2.25rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-display);
@@ -149,7 +149,7 @@
       margin-bottom: 1rem;
     }
     .pp-admin-controls__title {
-      font-family: var(--pp-f-display);
+      font-family: var(--font-serif);
       font-size: 1.25rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-heading);
@@ -166,7 +166,7 @@
       border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       background: #FFFFFF;
       color: var(--color-tinta);
       outline: none;
@@ -186,7 +186,7 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       color: var(--color-tinta);
       transition: border-color var(--pp-t-fast),
                   color var(--pp-t-fast),
@@ -227,7 +227,7 @@
     .pp-tbl th {
       text-align: left;
       padding: .75rem 1rem;
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
       font-size: var(--pp-fs-eyebrow);
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
@@ -257,7 +257,7 @@
     .pp-tbl__name small {
       color: var(--color-gris-500);
       font-size: 12px;
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
     }
     .pp-tbl__email a {
       color: var(--color-verde-dark);
@@ -281,7 +281,7 @@
       font-size: 11px;
       font-weight: 700;
       white-space: nowrap;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
     }
     .pp-status-badge--active  { background: #dcfce7; color: #15803d; }
     .pp-status-badge--expired { background: #fee2e2; color: #b91c1c; }
@@ -294,7 +294,7 @@
       border-radius: var(--pp-r-sm);
       font-size: 11px;
       font-weight: 700;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
     }
     .pp-plan-badge--pro        { background: #ede9fe; color: #5b21b6; }
     .pp-plan-badge--base       { background: var(--color-verde-light); color: var(--color-verde-dark); }
@@ -308,7 +308,7 @@
       border-radius: var(--pp-r-pill);
       font-size: 11px;
       font-weight: 700;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
     }
     .pp-agent-badge--active { background: #dcfce7; color: #15803d; }
     .pp-agent-badge--muted  { background: #f3f4f6; color: #6b7280; }
@@ -322,7 +322,7 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       color: var(--color-tinta);
       transition: background var(--pp-t-fast),
                   border-color var(--pp-t-fast),
@@ -373,7 +373,7 @@
       border-radius: var(--pp-r-sm);
       background: var(--color-verde-light);
       color: var(--color-verde-dark);
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: .05em;
@@ -393,7 +393,7 @@
       font-weight: 700;
       cursor: pointer;
       border: none;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       transition: background var(--pp-t-fast), color var(--pp-t-fast);
       white-space: nowrap;
     }
@@ -408,7 +408,7 @@
       font-size: 11px;
       color: var(--color-gris-500);
       cursor: pointer;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       transition: background var(--pp-t-fast), border-color var(--pp-t-fast), color var(--pp-t-fast);
     }
     .pp-dir-config-btn:hover {
@@ -430,7 +430,7 @@
     .pp-dir-meta__city {
       color: var(--color-gris-500);
       font-size: 11px;
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
     }
 
     /* ── Modal ────────────────────────────────────────────── */
@@ -455,7 +455,7 @@
       max-width: 400px;
     }
     .pp-modal__title {
-      font-family: var(--pp-f-display);
+      font-family: var(--font-serif);
       font-size: 1.25rem;
       font-weight: 400;
       letter-spacing: var(--pp-ls-heading);
@@ -479,7 +479,7 @@
       border-radius: var(--pp-r-md);
       background: #FFFFFF;
       color: var(--color-tinta);
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -489,7 +489,7 @@
       padding: .6rem 1.2rem;
       border: none;
       border-radius: var(--pp-r-md);
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       font-size: 14px;
       font-weight: 700;
       color: #fff;
@@ -503,7 +503,7 @@
       border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       background: #FFFFFF;
       color: var(--color-tinta);
       outline: none;
@@ -520,7 +520,7 @@
       border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
       font-size: 14px;
-      font-family: var(--pp-f-sans);
+      font-family: var(--font-sans);
       color: var(--color-tinta);
       background: #FFFFFF;
       resize: vertical;
@@ -534,7 +534,7 @@
     }
     .pp-modal__field-label {
       display: block;
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
       font-size: var(--pp-fs-eyebrow);
       font-weight: 500;
       letter-spacing: var(--pp-ls-eyebrow);
@@ -603,7 +603,7 @@
       background: #f3f4f6;
       padding: .15rem .4rem;
       border-radius: var(--pp-r-sm);
-      font-family: var(--pp-f-mono);
+      font-family: var(--font-mono);
       font-size: 13px;
       color: var(--color-tinta);
     }
@@ -1226,7 +1226,7 @@
       const fecha = new Date(f.fecha).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'2-digit' });
       const plan  = f.plan ? f.plan.charAt(0).toUpperCase() + f.plan.slice(1) : '—';
       return `<tr>
-        <td><strong style="font-size:13px;font-family:var(--pp-f-mono)">${f.numero_factura}</strong></td>
+        <td><strong style="font-size:13px;font-family:var(--font-mono)">${f.numero_factura}</strong></td>
         <td><small style="color:var(--color-gris-500)">${fecha}</small></td>
         <td class="pp-tbl__col-md"><small style="color:var(--color-gris-500)">${f.nombre_cliente || ''}${f.email_cliente ? `<br><span style="color:var(--color-gris-500);opacity:.7">${f.email_cliente}</span>` : ''}</small></td>
         <td><span class="pp-plan-badge pp-plan-badge--${f.plan || 'none'}">${plan}</span></td>

@@ -2,13 +2,6 @@
 
 const SITE_URL = process.env.SITE_URL || 'https://perfilapro.es';
 
-const FONTS_HREF =
-  'https://fonts.googleapis.com/css2?' +
-  'family=Geist:wght@400;500;600&' +
-  'family=Geist+Mono:wght@400;500&' +
-  'family=Fraunces:ital,wght@0,400;1,400&' +
-  'display=swap';
-
 /**
  * Devuelve el bloque <head> base que debe usar cualquier función
  * que renderice HTML server-side. Garantiza que tokens.css,
@@ -63,13 +56,10 @@ ${canonical ? `<meta property="og:url" content="${esc(canonical)}">` : ''}
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 
-<!-- Sistema de marca -->
-<link rel="stylesheet" href="/styles/brand.css">
-
-<!-- Tipografía -->
+<!-- Sistema de marca (incluye carga de fuentes vía @import en tokens-typography.css) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="${FONTS_HREF}" rel="stylesheet">
+<link rel="stylesheet" href="/styles/brand.css">
 
 ${extraHead}`.trim();
 }

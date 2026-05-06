@@ -22,13 +22,15 @@ describe('renderHead', () => {
     expect(out).toContain('<link rel="stylesheet" href="/styles/brand.css">');
   });
 
-  it('incluye preconnect y stylesheet de Google Fonts (Geist + Fraunces)', () => {
+  it('incluye preconnect a Google Fonts (las fuentes vienen vía @import en tokens-typography.css)', () => {
     const out = renderHead({ title: 't', description: 'd' });
     expect(out).toContain('<link rel="preconnect" href="https://fonts.googleapis.com">');
     expect(out).toContain('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>');
-    expect(out).toContain('family=Geist:wght@400;500;600');
-    expect(out).toContain('family=Geist+Mono');
-    expect(out).toContain('family=Fraunces');
+    // Las fuentes ya no se cargan vía <link> aquí: el @import en
+    // tokens-typography.css (importado por brand.css) es la única
+    // fuente de carga. Verificamos que NO se inyectan las antiguas.
+    expect(out).not.toContain('family=Geist');
+    expect(out).not.toContain('family=Fraunces');
   });
 
   it('con noindex=true añade el meta robots', () => {
@@ -54,13 +56,13 @@ describe('renderHead', () => {
     expect(out).toContain(`<meta property="og:image" content="${url}">`);
   });
 
-  it('inyecta extraHead AL FINAL, después del stylesheet de fuentes', () => {
+  it('inyecta extraHead AL FINAL, después del stylesheet de marca', () => {
     const extra = '<script type="application/ld+json">{"@type":"Person"}</script>';
     const out = renderHead({ title: 't', description: 'd', extraHead: extra });
-    const idxFonts = out.indexOf('fonts.googleapis.com/css2');
+    const idxBrand = out.indexOf('/styles/brand.css');
     const idxExtra = out.indexOf(extra);
-    expect(idxFonts).toBeGreaterThan(0);
-    expect(idxExtra).toBeGreaterThan(idxFonts);
+    expect(idxBrand).toBeGreaterThan(0);
+    expect(idxExtra).toBeGreaterThan(idxBrand);
   });
 
   it('escapa <script> en title (seguridad XSS)', () => {

@@ -63,13 +63,13 @@ const DIR_CSS = `
   --pp-r-pill:999px;
   --pp-shadow:0 4px 16px rgba(10,31,68,.06);
   --pp-shadow-lg:0 12px 32px rgba(10,31,68,.08);
-  --pp-f-display:'Fraunces',Georgia,'Times New Roman',serif;
-  --pp-f-sans:'Geist',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-serif:'Source Serif 4',Georgia,serif;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
 }
-body{font-family:var(--pp-f-sans);background:var(--color-crema);color:var(--color-tinta);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
+body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);-webkit-font-smoothing:antialiased;min-height:100dvh;display:flex;flex-direction:column}
 a{color:inherit;text-decoration:none}
 .pp-site-hd{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid var(--color-gris-200);background:#FFFFFF;position:sticky;top:0;z-index:10}
-.pp-site-hd__logo{font-family:var(--pp-f-display);font-size:1.25rem;letter-spacing:-0.02em;color:var(--color-tinta)}
+.pp-site-hd__logo{font-family:var(--font-serif);font-size:1.25rem;letter-spacing:-0.02em;color:var(--color-tinta)}
 .pp-site-hd__cta{padding:.5rem 1rem;background:var(--color-verde-match);color:#fff;border-radius:var(--pp-r-pill);font-size:.8125rem;font-weight:700;transition:background .15s}
 .pp-site-hd__cta:hover{background:var(--color-verde-dark)}
 .pp-breadcrumb{padding:.625rem 1.25rem;font-size:.8125rem;color:var(--color-gris-500);border-bottom:1px solid var(--color-gris-200);background:#FFFFFF}
@@ -79,7 +79,7 @@ a{color:inherit;text-decoration:none}
 .pp-breadcrumb__sep{color:var(--color-gris-500);user-select:none}
 main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 3rem}
 .pp-dir-ph{margin-bottom:1.25rem}
-.pp-dir-ph h1{font-family:var(--pp-f-display);font-size:1.875rem;line-height:1.2;font-weight:400;letter-spacing:-0.02em;color:var(--color-tinta)}
+.pp-dir-ph h1{font-family:var(--font-serif);font-size:1.875rem;line-height:1.2;font-weight:400;letter-spacing:-0.02em;color:var(--color-tinta)}
 .pp-dir-ph__desc{font-size:.9375rem;color:var(--color-gris-500);margin-top:.5rem;line-height:1.6;max-width:60ch}
 .pp-dir-ph__count{font-size:.8125rem;color:var(--color-gris-500);margin-top:.375rem}
 .pp-sub-section{margin:.875rem 0 1.25rem}
@@ -94,7 +94,7 @@ main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 3rem
 .pp-dir-card__feat{font-size:.75em;vertical-align:.1em}
 .pp-dir-card__av{width:56px;height:56px;border-radius:50%;background:var(--color-verde-light);border:1.5px solid var(--color-gris-200);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
 .pp-dir-card__av img{width:100%;height:100%;object-fit:cover}
-.pp-dir-card__av-init{font-family:var(--pp-f-display);font-size:1.5rem;color:var(--color-verde-dark);line-height:1}
+.pp-dir-card__av-init{font-family:var(--font-serif);font-size:1.5rem;color:var(--color-verde-dark);line-height:1}
 .pp-dir-card__body{min-width:0}
 .pp-dir-card__name{font-size:.9375rem;font-weight:700;line-height:1.25;color:var(--color-tinta);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pp-dir-card__role{font-size:.8125rem;color:var(--color-verde-dark);font-weight:600;margin-top:.2rem}
@@ -104,10 +104,10 @@ main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:1.5rem 1.25rem 3rem
 .pp-dir-card--featured .pp-dir-card__arrow{background:var(--color-verde-light);color:var(--color-verde-dark)}
 .pp-dir-card--featured:hover .pp-dir-card__arrow{background:var(--color-verde-match);color:#fff}
 .pp-dir-empty{text-align:center;padding:3rem 1rem;background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:1rem}
-.pp-dir-empty h2{font-family:var(--pp-f-display);font-size:1.125rem;letter-spacing:-0.02em;font-weight:400;margin-bottom:.5rem;color:var(--color-tinta)}
+.pp-dir-empty h2{font-family:var(--font-serif);font-size:1.125rem;letter-spacing:-0.02em;font-weight:400;margin-bottom:.5rem;color:var(--color-tinta)}
 .pp-dir-empty p{color:var(--color-gris-500);font-size:.9375rem;line-height:1.6}
 .pp-dir-cta{margin-top:2.5rem;padding:1.875rem 1.5rem;background:var(--color-verde-light);border:1.5px solid var(--color-verde-dark);border-radius:1.25rem;text-align:center}
-.pp-dir-cta h2{font-family:var(--pp-f-display);font-size:1.375rem;line-height:1.2;letter-spacing:-0.02em;font-weight:400;color:var(--color-tinta);margin-bottom:.5rem}
+.pp-dir-cta h2{font-family:var(--font-serif);font-size:1.375rem;line-height:1.2;letter-spacing:-0.02em;font-weight:400;color:var(--color-tinta);margin-bottom:.5rem}
 .pp-dir-cta p{font-size:.9375rem;color:var(--color-gris-500);max-width:48ch;margin:0 auto 1.125rem;line-height:1.55}
 .pp-dir-cta__btn{display:inline-flex;align-items:center;padding:.75rem 1.5rem;background:var(--color-verde-match);color:#fff;border-radius:var(--pp-r-pill);font-size:.9375rem;font-weight:700;transition:background .15s}
 .pp-dir-cta__btn:hover{background:var(--color-verde-dark)}
@@ -133,8 +133,8 @@ const PROFILE_CSS = `
 .pp-prof__hero{display:grid;grid-template-columns:80px 1fr;gap:1.25rem;align-items:center;margin-bottom:1rem;padding:1.25rem;background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:1.25rem}
 .pp-prof__av{width:80px;height:80px;border-radius:50%;background:var(--color-verde-light);border:2px solid var(--color-gris-200);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
 .pp-prof__av img{width:100%;height:100%;object-fit:cover}
-.pp-prof__av-init{font-family:var(--pp-f-display);font-size:2rem;color:var(--color-verde-dark);line-height:1}
-.pp-prof__name{font-family:var(--pp-f-display);font-size:1.625rem;line-height:1.15;letter-spacing:-0.02em;font-weight:400;color:var(--color-tinta)}
+.pp-prof__av-init{font-family:var(--font-serif);font-size:2rem;color:var(--color-verde-dark);line-height:1}
+.pp-prof__name{font-family:var(--font-serif);font-size:1.625rem;line-height:1.15;letter-spacing:-0.02em;font-weight:400;color:var(--color-tinta)}
 .pp-prof__role{font-size:.875rem;color:var(--color-verde-dark);font-weight:600;margin-top:.25rem}
 .pp-prof__loc{font-size:.8125rem;color:var(--color-gris-500);margin-top:.3rem;display:flex;align-items:center;gap:.3rem}
 .pp-prof-section{background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:1.25rem;padding:1.125rem 1.25rem;margin-bottom:.75rem}
@@ -146,7 +146,7 @@ const PROFILE_CSS = `
 .pp-prof-svc__name{font-size:.875rem;font-weight:600;color:var(--color-tinta);min-width:0;flex:1}
 .pp-prof-svc__price{font-size:.8125rem;font-weight:700;color:var(--color-verde-dark);white-space:nowrap}
 .pp-prof-contact{display:grid;gap:.625rem;margin-bottom:.75rem}
-.pp-prof-cta{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.9375rem 1.25rem;border-radius:var(--pp-r-pill);font-family:var(--pp-f-sans);font-weight:700;text-decoration:none;cursor:pointer;border:none;min-height:52px;width:100%;transition:background .18s,opacity .18s;-webkit-tap-highlight-color:transparent;font-size:1rem}
+.pp-prof-cta{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.9375rem 1.25rem;border-radius:var(--pp-r-pill);font-family:var(--font-sans);font-weight:700;text-decoration:none;cursor:pointer;border:none;min-height:52px;width:100%;transition:background .18s,opacity .18s;-webkit-tap-highlight-color:transparent;font-size:1rem}
 .pp-prof-cta:active{opacity:.82;transform:scale(.98)}
 .pp-prof-cta--wa{background:var(--pp-wa);color:#fff}
 .pp-prof-cta--wa:hover{background:var(--pp-wa-deep)}
@@ -263,7 +263,7 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
   ${jsonLd ? `<script type="application/ld+json">${safeJson(jsonLd)}</script>` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>${DIR_CSS}${extraCss}</style>
 </head>
 <body>
