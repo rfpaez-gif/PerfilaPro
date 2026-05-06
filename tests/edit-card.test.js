@@ -8,6 +8,8 @@ const mockEqUpdate = vi.fn();
 const mockFrom = vi.fn();
 const mockDb = { from: mockFrom };
 
+const mockMaybeSingle = vi.fn();
+
 function makeBuilder() {
   const b = {
     select: vi.fn(),
@@ -15,6 +17,7 @@ function makeBuilder() {
     in: vi.fn(),
     is: vi.fn(),
     single: mockSingle,
+    maybeSingle: mockMaybeSingle,
     update: vi.fn(),
   };
   b.select.mockReturnValue(b);
@@ -59,6 +62,7 @@ describe('edit-card handler', () => {
     vi.clearAllMocks();
 
     mockSingle.mockResolvedValue({ data: baseCard, error: null });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockEqUpdate.mockResolvedValue({ error: null });
 
     mockFrom.mockImplementation(() => {
@@ -105,6 +109,41 @@ describe('edit-card handler', () => {
       expect(data.servicios).toHaveLength(2);
       expect(data.edit_token).toBeUndefined();
       expect(data.edit_token_expires_at).toBeUndefined();
+    });
+
+    it('expone category_checkout_vector cuando la tarjeta tiene category_id', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, category_id: 42 }, error: null });
+      mockMaybeSingle.mockResolvedValue({
+        data: { sector: 'oficios', specialty: 'fontanero', checkout_vector: 'van' },
+        error: null,
+      });
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.category_sector).toBe('oficios');
+      expect(data.category_specialty).toBe('fontanero');
+      expect(data.category_checkout_vector).toBe('van');
+    });
+
+    it('devuelve category_checkout_vector=null cuando la tarjeta no tiene category_id', async () => {
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.category_checkout_vector).toBeNull();
+      // No debe llegar a consultar 'categories' si no hay category_id.
+      expect(mockMaybeSingle).not.toHaveBeenCalled();
+    });
+
+    it('tolera categories sin checkout_vector (columna nula) sin romper', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, category_id: 99 }, error: null });
+      mockMaybeSingle.mockResolvedValue({
+        data: { sector: 'otros', specialty: 'otro-oficio', checkout_vector: null },
+        error: null,
+      });
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.category_checkout_vector).toBeNull();
     });
   });
 

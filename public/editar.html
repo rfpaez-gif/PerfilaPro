@@ -827,14 +827,14 @@
 
           <div class="pp-showcase">
             <div class="pp-showcase__stage">
-              <picture>
-                <source srcset="/images/furgoneta-960.webp" type="image/webp">
-                <img src="/images/furgoneta-960.png" alt="Furgoneta con tu QR pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
+              <picture id="upgradeShowcasePicture">
+                <source id="upgradeShowcaseSource" srcset="/images/furgoneta-960.webp" type="image/webp">
+                <img id="upgradeShowcaseImg" src="/images/furgoneta-960.png" alt="Tu QR en el mundo físico" class="pp-showcase__img" loading="lazy" width="960" height="480">
               </picture>
               <img id="upgradeQr" class="pp-showcase__qr" src="" alt="" loading="lazy">
             </div>
             <span class="pp-showcase__pill">Mundo físico</span>
-            <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
+            <p class="pp-showcase__caption" id="upgradeShowcaseCaption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
           </div>
 
           <ul class="pp-upgrade__perks">
@@ -1054,6 +1054,41 @@
     return _acRadius !== 'none' ? city + ' · ' + RADIUS_LABELS[_acRadius] : city;
   }
 
+  /* ── Checkout vector (3 ilustraciones del banner upgrade) ──
+     Mapea categories.checkout_vector -> imagen + caption. La columna
+     se rellena por sector en migracion 013; el frontend solo consume.
+     Si la imagen no carga (asset no entregado aun), el onerror hace
+     fallback a la furgoneta para no romper visualmente. */
+  const CHECKOUT_VECTOR_IMG = {
+    van:     { webp: '/images/furgoneta-960.webp', png: '/images/furgoneta-960.png' },
+    local:   { webp: '/images/local-960.webp',     png: '/images/local-960.png' },
+    tarjeta: { webp: '/images/tarjeta-960.webp',   png: '/images/tarjeta-960.png' },
+  };
+  const CHECKOUT_VECTOR_COPY = {
+    van:     'Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.',
+    local:   'Tu QR en la entrada, en el espejo, en la barra. Quien pase y escanee abre <strong id="upgradeUrl">tu perfil</strong>.',
+    tarjeta: 'Tu QR en tu tarjeta, en tu firma, en tu bio. Quien escanee abre <strong id="upgradeUrl">tu perfil</strong>.',
+  };
+  function applyCheckoutVector(vectorKey, slug) {
+    const key = CHECKOUT_VECTOR_IMG[vectorKey] ? vectorKey : 'tarjeta';
+    const asset = CHECKOUT_VECTOR_IMG[key];
+    const src = document.getElementById('upgradeShowcaseSource');
+    const img = document.getElementById('upgradeShowcaseImg');
+    const cap = document.getElementById('upgradeShowcaseCaption');
+    if (!src || !img || !cap) return;
+    src.srcset = asset.webp;
+    img.src = asset.png;
+    img.onerror = function () {
+      // Asset aun no entregado por el ilustrador: fallback a furgoneta.
+      img.onerror = null;
+      src.srcset = CHECKOUT_VECTOR_IMG.van.webp;
+      img.src = CHECKOUT_VECTOR_IMG.van.png;
+    };
+    cap.innerHTML = CHECKOUT_VECTOR_COPY[key];
+    const urlEl = document.getElementById('upgradeUrl');
+    if (urlEl && slug) urlEl.textContent = 'perfilapro.es/c/' + slug;
+  }
+
   /* ── City autocomplete init ── */
   (function () {
     const inp = document.getElementById('zona');
@@ -1186,8 +1221,11 @@
       document.getElementById('kitBanner').classList.add('is-visible');
     } else {
       // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
+      // ?vector=van|local|tarjeta permite validar visualmente cada ilustracion
+      // sin tocar BD; defecto 'van' para preservar el comportamiento previo.
       document.getElementById('upgradeName').textContent = 'Pedro';
-      document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
+      const previewVector = params.get('vector') || 'van';
+      applyCheckoutVector(previewVector, 'pedro-garcia');
       // En preview servimos un QR sample estático (sin backend disponible).
       document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
       const freeBanner = document.getElementById('freeBanner');
@@ -1421,7 +1459,7 @@
         // Personalizar headline + showcase con datos del usuario.
         const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
         document.getElementById('upgradeName').textContent = firstName;
-        document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
+        applyCheckoutVector(card.category_checkout_vector, slug);
         document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
         freeBanner.classList.add('is-visible');
         let selectedPlan = 'base';

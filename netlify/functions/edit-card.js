@@ -50,18 +50,23 @@ function makeHandler(db) {
     if (event.httpMethod === 'GET') {
       let category_sector = null;
       let category_specialty = null;
+      let category_checkout_vector = null;
       if (card.category_id) {
         const { data: cat } = await db
           .from('categories')
-          .select('sector, specialty')
+          .select('sector, specialty, checkout_vector')
           .eq('id', card.category_id)
           .maybeSingle();
-        if (cat) { category_sector = cat.sector; category_specialty = cat.specialty; }
+        if (cat) {
+          category_sector = cat.sector;
+          category_specialty = cat.specialty;
+          category_checkout_vector = cat.checkout_vector || null;
+        }
       }
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...card, category_sector, category_specialty }),
+        body: JSON.stringify({ ...card, category_sector, category_specialty, category_checkout_vector }),
       };
     }
 
