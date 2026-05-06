@@ -283,10 +283,10 @@
       white-space: nowrap;
       font-family: var(--font-sans);
     }
-    .pp-status-badge--active  { background: #dcfce7; color: #15803d; }
-    .pp-status-badge--expired { background: #fee2e2; color: #b91c1c; }
+    .pp-status-badge--active  { background: var(--color-verde-light); color: var(--color-verde-dark); }
+    .pp-status-badge--expired { background: var(--color-coral-light); color: var(--color-coral); }
     .pp-status-badge--soon    { background: var(--color-warning-light); color: var(--color-warning); }
-    .pp-status-badge--free    { background: #f3f4f6; color: #4b5563; }
+    .pp-status-badge--free    { background: var(--color-piedra); color: var(--color-gris-500); }
 
     .pp-plan-badge {
       display: inline-block;
@@ -296,10 +296,10 @@
       font-weight: 700;
       font-family: var(--font-sans);
     }
-    .pp-plan-badge--pro        { background: #ede9fe; color: #5b21b6; }
+    .pp-plan-badge--pro        { background: var(--color-piedra); color: var(--color-tinta); }
     .pp-plan-badge--base       { background: var(--color-verde-light); color: var(--color-verde-dark); }
     .pp-plan-badge--renovacion { background: var(--color-warning-light); color: var(--color-warning); }
-    .pp-plan-badge--none       { background: #f3f4f6; color: #9ca3af; }
+    .pp-plan-badge--none       { background: var(--color-piedra); color: var(--color-gris-500); }
 
     .pp-agent-badge {
       display: inline-flex;
@@ -310,8 +310,8 @@
       font-weight: 700;
       font-family: var(--font-sans);
     }
-    .pp-agent-badge--active { background: #dcfce7; color: #15803d; }
-    .pp-agent-badge--muted  { background: #f3f4f6; color: #6b7280; }
+    .pp-agent-badge--active { background: var(--color-verde-light); color: var(--color-verde-dark); }
+    .pp-agent-badge--muted  { background: var(--color-piedra); color: var(--color-gris-500); }
 
     /* ── Action buttons ───────────────────────────────────── */
     .pp-action-btn {
@@ -329,14 +329,14 @@
                   opacity var(--pp-t-fast);
     }
     .pp-action-btn:hover { opacity: .85; }
-    .pp-action-btn--reactivate { color: var(--color-verde-dark); border-color: #bbf7d0; }
-    .pp-action-btn--reactivate:hover { background: #dcfce7; }
+    .pp-action-btn--reactivate { color: var(--color-verde-dark); border-color: var(--color-verde-match); }
+    .pp-action-btn--reactivate:hover { background: var(--color-verde-light); }
     .pp-action-btn--extend { color: var(--color-warning); border-color: var(--color-warning); }
     .pp-action-btn--extend:hover { background: var(--color-warning-light); }
-    .pp-action-btn--refund { color: var(--color-coral); border-color: #fecaca; }
-    .pp-action-btn--refund:hover { background: #fee2e2; }
-    .pp-action-btn--invoice { color: #2563eb; border-color: #bfdbfe; }
-    .pp-action-btn--invoice:hover { background: #eff6ff; }
+    .pp-action-btn--refund { color: var(--color-coral); border-color: var(--color-coral); }
+    .pp-action-btn--refund:hover { background: var(--color-coral-light); }
+    .pp-action-btn--invoice { color: var(--color-tinta); border-color: var(--color-gris-200); }
+    .pp-action-btn--invoice:hover { background: var(--color-piedra); }
     .pp-action-btn--regen {
       color: var(--color-verde-dark);
       border-color: var(--color-verde-match);
@@ -397,8 +397,8 @@
       transition: background var(--pp-t-fast), color var(--pp-t-fast);
       white-space: nowrap;
     }
-    .pp-dir-toggle--on  { background: #dcfce7; color: #15803d; }
-    .pp-dir-toggle--off { background: #f3f4f6; color: #9ca3af; }
+    .pp-dir-toggle--on  { background: var(--color-verde-light); color: var(--color-verde-dark); }
+    .pp-dir-toggle--off { background: var(--color-piedra); color: var(--color-gris-500); }
     .pp-dir-toggle:disabled { opacity: .5; cursor: not-allowed; }
     .pp-dir-config-btn {
       background: none;
@@ -530,7 +530,7 @@
     }
     .pp-modal__textarea:focus {
       border-color: var(--color-coral);
-      box-shadow: 0 0 0 3px rgba(178, 58, 72, .15);
+      box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.15);
     }
     .pp-modal__field-label {
       display: block;
@@ -600,7 +600,7 @@
 
     /* ── Code chip (agent code) ───────────────────────────── */
     .pp-code-chip {
-      background: #f3f4f6;
+      background: var(--color-piedra);
       padding: .15rem .4rem;
       border-radius: var(--pp-r-sm);
       font-family: var(--font-mono);
@@ -1419,7 +1419,7 @@
       });
       btn.textContent = '✓ Enviado';
       btn.style.color = 'var(--color-verde-dark)';
-      btn.style.borderColor = '#bbf7d0';
+      btn.style.borderColor = 'var(--color-verde-match)';
       setTimeout(() => {
         btn.textContent = orig;
         btn.style.color = '';
@@ -1528,7 +1528,7 @@
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
       btn.textContent = '✓ Enviada';
       btn.style.color = 'var(--color-verde-dark)';
-      btn.style.borderColor = '#bbf7d0';
+      btn.style.borderColor = 'var(--color-verde-match)';
       setTimeout(() => {
         btn.textContent = orig;
         btn.style.color = '';
@@ -1558,7 +1558,7 @@
       if (!res.ok) throw new Error(data.error || 'Error desconocido');
       btn.textContent = '✓ Enviado';
       btn.style.color = 'var(--color-verde-dark)';
-      btn.style.borderColor = '#bbf7d0';
+      btn.style.borderColor = 'var(--color-verde-match)';
       setTimeout(() => {
         btn.textContent = orig;
         btn.style.color = '';
