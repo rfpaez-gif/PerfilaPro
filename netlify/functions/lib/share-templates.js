@@ -31,7 +31,12 @@ const TEMPLATES = {
   linkedin: { width: 1200, height: 627,  layout: 'horizontal' },
 };
 
-function avatarNode({ fotoUrl, nombre, size }) {
+// Avatar cuadrado (radius 24) en lugar de circular. El recorte cuadrado
+// preserva contexto (camión detrás de Antonio, pared del escaparate de
+// Natalia, mesa de trabajo de Carlos) y deja el rostro como protagonista
+// sin amputar hombros. La esquina ligeramente redondeada conserva tono
+// suave sin parecer carnet.
+function avatarNode({ fotoUrl, nombre, size, radius = 24 }) {
   const initial = (nombre || '?').trim().charAt(0).toUpperCase();
   if (fotoUrl) {
     return {
@@ -42,9 +47,8 @@ function avatarNode({ fotoUrl, nombre, size }) {
         height: size,
         style: {
           width: size, height: size,
-          borderRadius: size / 2,
+          borderRadius: radius,
           objectFit: 'cover',
-          border: `4px solid ${COLORS.surface}`,
         },
       },
     };
@@ -54,7 +58,7 @@ function avatarNode({ fotoUrl, nombre, size }) {
     props: {
       style: {
         width: size, height: size,
-        borderRadius: size / 2,
+        borderRadius: radius,
         background: COLORS.accent,
         color: COLORS.surface,
         display: 'flex',
@@ -62,7 +66,6 @@ function avatarNode({ fotoUrl, nombre, size }) {
         justifyContent: 'center',
         fontSize: size * 0.5,
         fontWeight: 700,
-        border: `4px solid ${COLORS.surface}`,
       },
       children: initial,
     },
@@ -91,7 +94,10 @@ function brandStrip({ fontSize = 22 } = {}) {
 }
 
 function horizontalLayout({ width, height, card, siteUrl }) {
-  const avatarSize = Math.round(height * 0.45);
+  // Avatar cuadrado al 70% de la altura (era 45% circular) — el rostro pasa
+  // a ser el bloque dominante del frame en formatos OG/LinkedIn sin asfixiar
+  // la columna de texto (1200-padding-avatar deja ≈600px para nombre+tagline).
+  const avatarSize = Math.round(height * 0.70);
   return {
     type: 'div',
     props: {
@@ -100,15 +106,15 @@ function horizontalLayout({ width, height, card, siteUrl }) {
         display: 'flex',
         flexDirection: 'row',
         background: COLORS.bg,
-        padding: 64,
+        padding: 56,
         fontFamily: 'Inter',
       },
       children: [
         {
           type: 'div',
           props: {
-            style: { display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: 56 },
-            children: avatarNode({ fotoUrl: card.foto_url, nombre: card.nombre, size: avatarSize }),
+            style: { display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: 48 },
+            children: avatarNode({ fotoUrl: card.foto_url, nombre: card.nombre, size: avatarSize, radius: 20 }),
           },
         },
         {
@@ -162,7 +168,12 @@ function horizontalLayout({ width, height, card, siteUrl }) {
 }
 
 function verticalLayout({ width, height, card, siteUrl }) {
-  const avatarSize = Math.round(width * 0.42);
+  // Avatar cuadrado al 62% del ancho (era 42% circular). En 1080×1080 = 670px
+  // y en 1080×1920 = 670px. El recorte cuadrado deja el contexto del entorno
+  // profesional intacto y el rostro domina el frame. Las tipografías bajan
+  // (72→60, 36→32, 28→24) para acomodar el avatar más grande sin desbordar
+  // el formato cuadrado.
+  const avatarSize = Math.round(width * 0.62);
   return {
     type: 'div',
     props: {
@@ -173,7 +184,7 @@ function verticalLayout({ width, height, card, siteUrl }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         background: COLORS.bg,
-        padding: 80,
+        padding: 60,
         fontFamily: 'Inter',
       },
       children: [
@@ -181,32 +192,32 @@ function verticalLayout({ width, height, card, siteUrl }) {
         {
           type: 'div',
           props: {
-            style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 },
+            style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 },
             children: [
-              avatarNode({ fotoUrl: card.foto_url, nombre: card.nombre, size: avatarSize }),
+              avatarNode({ fotoUrl: card.foto_url, nombre: card.nombre, size: avatarSize, radius: 32 }),
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 },
+                  style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 },
                   children: [
                     {
                       type: 'div',
                       props: {
-                        style: { fontSize: 72, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.05 },
+                        style: { fontSize: 60, fontWeight: 700, color: COLORS.ink, textAlign: 'center', lineHeight: 1.05 },
                         children: card.nombre || '',
                       },
                     },
                     card.tagline ? {
                       type: 'div',
                       props: {
-                        style: { fontSize: 36, color: COLORS.inkSoft, textAlign: 'center', lineHeight: 1.3 },
+                        style: { fontSize: 32, color: COLORS.inkSoft, textAlign: 'center', lineHeight: 1.3 },
                         children: card.tagline,
                       },
                     } : null,
                     card.zona ? {
                       type: 'div',
                       props: {
-                        style: { fontSize: 28, color: COLORS.accentDeep, fontWeight: 600 },
+                        style: { fontSize: 24, color: COLORS.accentDeep, fontWeight: 600 },
                         children: '📍 ' + card.zona,
                       },
                     } : null,
