@@ -3,22 +3,32 @@
 /**
  * PerfilaPro · QR endpoint · GET /api/qr/:slug
  *
- * Sirve el QR como SVG vectorial con la estética de marca (módulos
- * circulares en Tinta, finders con cápsula+hueco+punto). El sello P
- * NO va embebido aquí — es overlay HTML añadido por el componente
- * .pp-qr en components.css.
+ * Sirve el QR con la estética de marca (módulos circulares en Tinta,
+ * finders con cápsula+hueco+punto). Dos formatos:
+ *   · SVG (default): vectorial, escalable, infinito.
+ *   · PNG (?format=png&size=N): rasterizado vía @resvg/resvg-js,
+ *     pensado para Instagram bio, vinilos, escaparates.
  *
- * Cache: max-age 1 año + immutable. Para un mismo slug+size el QR
- * no cambia. Si en el futuro se migra el routing a vanity URL sin
- * /c/, hay que purgar la caché o cambiar el path del endpoint.
+ * El sello P NO va embebido en el SVG — es overlay HTML añadido por
+ * el componente .pp-qr en components.css. En el PNG tampoco va, por
+ * la misma razón: el sello vive en la capa de presentación, no en
+ * el dato.
  *
- * Tamaños permitidos: 120, 160, 200, 280. Cualquier otro cae a 200.
+ * Cache: max-age 1 año + immutable. Para un mismo slug+format+size
+ * el QR no cambia.
  *
- * Generador: netlify/functions/lib/qr-svg.js
- * Demo:      public/_dev/qr.html
+ * Tamaños SVG: 120, 160, 200, 280 (display).
+ * Tamaños PNG: 256, 512, 1024, 2048 (descarga).
+ *
+ * Generador SVG: netlify/functions/lib/qr-svg.js
+ * Demo:         public/_dev/qr.html
  */
 
+const { Resvg } = require('@resvg/resvg-js');
 const { buildQrSvg, buildCardUrl, VALID_SIZES } = require('./lib/qr-svg.js');
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+
+const VALID_PNG_SIZES = [256, 512, 1024, 2048];
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -42,28 +52,64 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'Invalid slug' };
   }
 
+  const format = event.queryStringParameters?.format === 'png' ? 'png' : 'svg';
   const sizeRaw = parseInt(event.queryStringParameters?.size, 10);
-  const size = VALID_SIZES.includes(sizeRaw) ? sizeRaw : 200;
+  const allowedSizes = format === 'png' ? VALID_PNG_SIZES : VALID_SIZES;
+  const defaultSize  = format === 'png' ? 1024 : 200;
+  const size = allowedSizes.includes(sizeRaw) ? sizeRaw : defaultSize;
+
+  // Rate-limit solo PNG: rasterizar consume CPU; SVG es cacheado al instante.
+  if (format === 'png') {
+    const rl = checkRateLimit(event, { bucket: 'qr-png', limit: 30, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
+  }
 
   // Determina baseUrl desde headers (preview/prod tienen dominio distinto).
   const proto = (event.headers && event.headers['x-forwarded-proto']) || 'https';
   const host  = (event.headers && event.headers.host) || 'perfilapro.es';
   const baseUrl = `${proto}://${host}`;
 
+  // Genera siempre el SVG fuente. Para PNG, lo rasterizamos al tamaño pedido.
   let svg;
   try {
-    svg = buildQrSvg(buildCardUrl(slug, baseUrl), { size });
+    // Para PNG el SVG fuente se genera al tamaño máximo (280) y resvg escala
+    // al destino. Para SVG, respetamos el tamaño solicitado del display.
+    const svgSize = format === 'png' ? 280 : size;
+    svg = buildQrSvg(buildCardUrl(slug, baseUrl), { size: svgSize });
   } catch (err) {
     console.error('[qr] error generando SVG:', err.message);
     return { statusCode: 500, body: 'Error generando QR' };
   }
 
+  if (format === 'svg') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type':  'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+      body: svg,
+    };
+  }
+
+  // PNG: rasterizar el SVG vía resvg al tamaño pedido.
+  let pngBuffer;
+  try {
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: size } });
+    pngBuffer = resvg.render().asPng();
+  } catch (err) {
+    console.error('[qr] error rasterizando PNG:', err.message);
+    return { statusCode: 500, body: 'Error generando QR PNG' };
+  }
+
   return {
     statusCode: 200,
     headers: {
-      'Content-Type':  'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Content-Type':        'image/png',
+      'Content-Disposition': `inline; filename="perfilapro-${slug}-${size}.png"`,
+      'Cache-Control':       'public, max-age=31536000, immutable',
     },
-    body: svg,
+    body: pngBuffer.toString('base64'),
+    isBase64Encoded: true,
   };
 };

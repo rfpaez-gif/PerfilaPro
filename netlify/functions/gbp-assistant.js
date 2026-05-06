@@ -117,8 +117,8 @@ function makeHandler(db) {
       steps:         buildSteps(card, siteUrl),
       assets: {
         cover_image:   `${siteUrl}/api/share-image?slug=${encodeURIComponent(card.slug)}&template=og`,
-        qr_svg:        `${siteUrl}/api/qr-download?slug=${encodeURIComponent(card.slug)}&format=svg`,
-        qr_png:        `${siteUrl}/api/qr-download?slug=${encodeURIComponent(card.slug)}&format=png&size=1024`,
+        qr_svg:        `${siteUrl}/api/qr/${encodeURIComponent(card.slug)}`,
+        qr_png:        `${siteUrl}/api/qr/${encodeURIComponent(card.slug)}?format=png&size=1024`,
       },
     };
 

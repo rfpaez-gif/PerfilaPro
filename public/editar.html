@@ -1298,7 +1298,7 @@
         const slugEnc  = encodeURIComponent(slug);
         const tokenEnc = encodeURIComponent(token);
         document.getElementById('kitDlCard').href = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
-        document.getElementById('kitDlQr').href   = '/api/download-qr?slug='   + slugEnc + '&token=' + tokenEnc;
+        document.getElementById('kitDlQr').href   = '/api/qr/' + slugEnc + '?format=png&size=1024';
         kitBanner.classList.add('is-visible');
       }
 

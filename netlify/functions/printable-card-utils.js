@@ -16,11 +16,17 @@
 // paleta del producto, este archivo debe tocarse en el MISMO commit.
 
 const PDFDocument = require('pdfkit');
-const QRCode = require('qrcode');
+const { Resvg } = require('@resvg/resvg-js');
+const { buildQrSvg } = require('./lib/qr-svg.js');
 
 const A6_WIDTH  = 297.64; // 105mm en puntos PDF (1pt = 1/72")
 const A6_HEIGHT = 419.53; // 148mm
 
+// Paleta del PDF imprimible. El header band conserva el teal por decisión
+// editorial pendiente: el rebrand restringe Teal Documentos a factura/contrato,
+// y este artefacto es marketing — toca rediseño de cabecera (TODO: brand pass).
+// El QR ya migrado al SVG nuevo (módulos circulares Tinta + finders especiales)
+// vía lib/qr-svg.js + resvg para rasterización en el embed PDF.
 const COLORS = {
   surface: '#FFFFFF',
   ink:     '#1E1B14',
@@ -28,9 +34,6 @@ const COLORS = {
   accent:  '#01696F',
   border:  '#D9D2C4',
 };
-
-const QR_DARK = '#01696F';
-const QR_LIGHT = '#FFFFFF';
 
 function formatSpanishPhone(phone) {
   if (!phone) return '';
@@ -42,14 +45,17 @@ function formatSpanishPhone(phone) {
   return `+34 ${local.substring(0, 3)} ${local.substring(3, 5)} ${local.substring(5, 7)} ${local.substring(7, 9)}`;
 }
 
+// Rasteriza el SVG del QR al PNG del tamaño solicitado.
+// El SVG fuente se genera a 280 (max display size) y resvg escala — fitTo
+// width preserva proporción y nitidez sub-pixel.
+function rasterizeQrSvgToPng(cardUrl, size) {
+  const svg = buildQrSvg(cardUrl, { size: 280 });
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: size } });
+  return resvg.render().asPng();
+}
+
 async function generateQrPngBuffer(cardUrl, size = 1024) {
-  return QRCode.toBuffer(cardUrl, {
-    type: 'png',
-    width: size,
-    margin: 2,
-    color: { dark: QR_DARK, light: QR_LIGHT },
-    errorCorrectionLevel: 'M',
-  });
+  return rasterizeQrSvgToPng(cardUrl, size);
 }
 
 async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl }) {
@@ -57,13 +63,7 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
     throw new Error('buildPrintableCardPDF: slug y cardUrl son obligatorios');
   }
 
-  const qrBuffer = await QRCode.toBuffer(cardUrl, {
-    type: 'png',
-    width: 1200,
-    margin: 0,
-    color: { dark: QR_DARK, light: QR_LIGHT },
-    errorCorrectionLevel: 'M',
-  });
+  const qrBuffer = rasterizeQrSvgToPng(cardUrl, 1200);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({

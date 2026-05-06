@@ -22,7 +22,10 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   const cardUrl = `${siteUrl}/c/${slug}`;
   const editUrl = editToken ? `${siteUrl}/editar.html?slug=${slug}&token=${editToken}` : null;
   const dlCardUrl = editToken ? `${siteUrl}/api/download-card?slug=${slug}&token=${editToken}` : null;
-  const dlQrUrl   = editToken ? `${siteUrl}/api/download-qr?slug=${slug}&token=${editToken}` : null;
+  // dlQrUrl no requiere token (endpoint público), pero lo agrupamos con
+  // dlCardUrl bajo el editToken para mostrar/ocultar la sección "kit físico"
+  // como una unidad: si el token no llega, no hay sección de re-descargas.
+  const dlQrUrl   = editToken ? `${siteUrl}/api/qr/${slug}?format=png&size=1024` : null;
   const planLabel = plan === 'pro' ? 'Premium' : 'Base';
   const planDuration = plan === 'pro' ? '365 días' : '90 días';
   const expiraFecha = new Date(expiresAt).toLocaleDateString('es-ES', {
