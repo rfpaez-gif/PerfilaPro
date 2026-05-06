@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PerfilaPro · Wireframe vector 'tarjeta'
+  Lienzo: 1920x960 px (entrega final 960x480 + 1920x960)
+  Hueco QR (NO MOVER): x=821.76 y=223.68 w=232.32 h=232.32  (12.1% x 12.1%)
+  Paleta:
+    #00C277 verde-match · #00A865 verde-dark · #0A1F44 tinta
+    #FAF7F0 crema       · #F7F8FA piedra      · #E5E7EB gris-200
+  Esto es una guia de composicion. La proporcion exacta de la tarjeta
+  es ajustable a juicio del ilustrador siempre que englobe el hueco QR
+  con margen razonable y deje sitio a la derecha para el copy.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 960" width="1920" height="960" font-family="Inter, system-ui, sans-serif">
+
+  <!-- Fondo crema calido (no blanco puro: la tarjeta es la que es blanca) -->
+  <rect x="0" y="0" width="1920" height="960" fill="#FAF7F0"/>
+
+  <!-- Sutil sombra bajo la tarjeta -->
+  <ellipse cx="960" cy="720" rx="700" ry="20" fill="#0A1F44" fill-opacity="0.08"/>
+
+  <!-- ── TARJETA DE VISITA ─────────────────────────────────────────── -->
+  <!-- Posicionada para que el hueco QR (x=821.76 y=223.68) quede en
+       el cuadrante superior-izquierdo de la tarjeta con margen razonable.
+       Proporcion ~1.7:1 (mas estilizada que tarjeta real, mejor en hero). -->
+
+  <!-- Card body -->
+  <rect x="700" y="170" width="1080" height="540" rx="18" ry="18"
+        fill="#FFFFFF" stroke="#0A1F44" stroke-width="2"/>
+
+  <!-- Banda decorativa fina verde-match en el borde superior -->
+  <rect x="700" y="170" width="1080" height="6" fill="#00C277"/>
+
+  <!-- ── HUECO QR · NO MOVER · CRITICAL ────────────────────────────── -->
+  <!-- x=821.76 y=223.68 w=232.32 h=232.32 -->
+  <rect x="821.76" y="223.68" width="232.32" height="232.32"
+        fill="none" stroke="#00C277" stroke-width="6" stroke-dasharray="16 8"/>
+
+  <!-- Anotacion del hueco (eliminar en arte final) -->
+  <text x="938" y="475" font-size="14" fill="#0A1F44" fill-opacity="0.5" text-anchor="middle">
+    HUECO QR · 232.32 x 232.32 · no mover
+  </text>
+
+  <!-- Linea separadora suave entre QR y copy -->
+  <line x1="1100" y1="240" x2="1100" y2="440" stroke="#E5E7EB" stroke-width="2"/>
+
+  <!-- Copy "Escanea para abrir este perfil" -->
+  <text x="1140" y="295" font-size="38" font-weight="700" fill="#00C277">Escanea</text>
+  <text x="1140" y="345" font-size="38" font-weight="700" fill="#00C277">para abrir</text>
+  <text x="1140" y="395" font-size="38" font-weight="700" fill="#00C277">este perfil</text>
+
+  <!-- Wordmark debajo del QR, dentro de la tarjeta -->
+  <text x="938" y="650" font-size="48" font-weight="700" fill="#00C277" text-anchor="middle">PerfilaPro</text>
+
+  <!-- ── ANOTACIONES (eliminar en entrega final) ──────────────────── -->
+  <g font-size="13" fill="#0A1F44" fill-opacity="0.45">
+    <text x="40" y="40">PerfilaPro · vector 'tarjeta' · wireframe (no es arte final)</text>
+    <text x="40" y="952">Lienzo 1920x960 · entregar 960x480 PNG/WebP + 1920x960 fuente editable</text>
+  </g>
+
+  <!-- Marca de las coordenadas exactas del hueco QR (cruz fina) -->
+  <line x1="821.76" y1="0" x2="821.76" y2="20" stroke="#E5484D" stroke-width="1"/>
+  <line x1="1054.08" y1="0" x2="1054.08" y2="20" stroke="#E5484D" stroke-width="1"/>
+  <line x1="0" y1="223.68" x2="20" y2="223.68" stroke="#E5484D" stroke-width="1"/>
+  <line x1="0" y1="456" x2="20" y2="456" stroke="#E5484D" stroke-width="1"/>
+
+</svg>
