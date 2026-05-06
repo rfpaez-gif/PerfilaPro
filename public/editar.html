@@ -374,60 +374,133 @@
     /* ── Banner upgrade (free → plan) ───────────────────────── */
     .pp-upgrade {
       display: none;
-      background: var(--color-warning-light);
-      border: 1px solid var(--color-warning);
+      background: linear-gradient(180deg, var(--color-verde-light) 0%, #FFFFFF 70%);
+      border: 1.5px solid var(--color-verde-match);
       border-radius: var(--pp-r-lg);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.25rem;
+      padding: 1.5rem 1.25rem 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px -12px rgba(0, 194, 119, 0.35);
     }
     .pp-upgrade.is-visible { display: block; }
-    .pp-upgrade__title {
-      font-size: 15px;
+    .pp-upgrade__eyebrow {
+      font-size: 11px;
       font-weight: 700;
-      color: var(--color-warning);
-      margin: 0 0 .2rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--color-verde-dark);
+      margin: 0 0 .5rem;
+    }
+    .pp-upgrade__title {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-tinta);
+      margin: 0 0 .5rem;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+    .pp-upgrade__title em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--color-verde-match);
     }
     .pp-upgrade__sub {
-      font-size: 13px;
-      color: var(--color-warning);
-      margin: 0 0 .75rem;
+      font-size: 14px;
+      color: var(--color-tinta);
+      opacity: 0.75;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
     }
+
+    /* Showcase del producto: furgo con QR + nombre del usuario */
+    .pp-showcase {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: 1rem 1rem .75rem;
+      margin: 0 0 1.25rem;
+      text-align: center;
+    }
+    .pp-showcase__svg {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      margin: 0 auto;
+    }
+    .pp-showcase__pill {
+      display: inline-block;
+      background: var(--color-tinta);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .35rem .75rem;
+      border-radius: 100px;
+      margin-top: .375rem;
+    }
+    .pp-showcase__caption {
+      font-size: 13px;
+      color: var(--color-gris-500);
+      margin: .625rem 0 0;
+      line-height: 1.4;
+    }
+    .pp-showcase__caption strong {
+      color: var(--color-tinta);
+      font-weight: 700;
+    }
+
     .pp-upgrade__perks {
       list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .25rem 1.25rem;
-      margin: 0 0 .875rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .5rem .875rem;
+      margin: 0 0 1.25rem;
       padding: 0;
     }
-    .pp-upgrade__perks li { font-size: 13px; color: var(--color-warning); }
-    .pp-upgrade__perks li::before { content: "✓ "; font-weight: 700; }
+    @media (max-width: 480px) {
+      .pp-upgrade__perks { grid-template-columns: 1fr; }
+    }
+    .pp-upgrade__perks li {
+      font-size: 13px;
+      color: var(--color-tinta);
+      display: flex;
+      align-items: flex-start;
+      gap: .375rem;
+      line-height: 1.4;
+    }
+    .pp-upgrade__perks li::before {
+      content: "✓";
+      color: var(--color-verde-match);
+      font-weight: 800;
+      flex-shrink: 0;
+    }
 
-    .pp-plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
+    .pp-plan-toggle { display: flex; gap: .5rem; margin-bottom: 1rem; }
     .pp-plan-btn {
       flex: 1;
-      padding: .5rem .75rem;
-      border: 1px solid var(--color-warning);
+      padding: .625rem .875rem;
+      border: 1.5px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
-      background: transparent;
+      background: #FFFFFF;
       font-family: var(--font-sans);
       font-size: 13px;
-      color: var(--color-warning);
+      color: var(--color-tinta);
       cursor: pointer;
       transition: border-color var(--pp-t-fast),
-                  background var(--pp-t-fast),
-                  color var(--pp-t-fast);
+                  background var(--pp-t-fast);
       text-align: left;
       line-height: 1.3;
     }
-    .pp-plan-btn:hover { border-color: var(--color-warning); background: var(--color-warning-light); }
+    .pp-plan-btn:hover { border-color: var(--color-verde-match); }
     .pp-plan-btn.is-selected {
       border-color: var(--color-verde-match);
       background: var(--color-verde-light);
-      color: var(--color-verde-dark);
+      box-shadow: 0 0 0 2px rgba(0, 194, 119, 0.15);
     }
-    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; }
-    .pp-plan-btn span { font-size: 12px; opacity: .75; }
+    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; color: var(--color-tinta); }
+    .pp-plan-btn span { font-size: 12px; color: var(--color-gris-500); }
 
     .pp-upgrade__cta {
       width: 100%;
@@ -435,7 +508,7 @@
       color: #fff;
       border: none;
       border-radius: var(--pp-r-md);
-      padding: .7rem 1.1rem;
+      padding: .85rem 1.1rem;
       font-family: var(--font-sans);
       font-size: 15px;
       font-weight: 700;
@@ -443,9 +516,11 @@
       text-decoration: none;
       display: block;
       text-align: center;
-      transition: background var(--pp-t-fast);
+      transition: background var(--pp-t-fast), transform var(--pp-t-fast);
+      box-shadow: 0 4px 12px -2px rgba(0, 194, 119, 0.4);
     }
-    .pp-upgrade__cta:hover { background: var(--color-verde-dark); }
+    .pp-upgrade__cta:hover { background: var(--color-verde-dark); transform: translateY(-1px); }
+    .pp-upgrade__cta:active { transform: translateY(0); }
 
     /* ── Directorio box + toggle ───────────────────────────── */
     .pp-dir-box {
@@ -731,14 +806,94 @@
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
         <div class="pp-upgrade" id="freeBanner">
-          <p class="pp-upgrade__title">Activa tu kit completo</p>
-          <p class="pp-upgrade__sub">Todo lo que necesitas para que tu trabajo se vea — en WhatsApp, en la furgo, en tus redes:</p>
+          <p class="pp-upgrade__eyebrow">Activa tu plan</p>
+          <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
+          <p class="pp-upgrade__sub">Imprime tu tarjeta, comparte tu QR, pégalo en la furgo. Tu kit completo te llega al activar.</p>
+
+          <div class="pp-showcase">
+            <svg class="pp-showcase__svg" viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <!-- Sombra del suelo -->
+              <ellipse cx="240" cy="290" rx="190" ry="6" fill="#0A1F44" opacity="0.08"/>
+
+              <!-- Cuerpo de la furgo -->
+              <path d="M 40 230 L 40 145 Q 40 132 53 132 L 165 132 L 195 100 L 395 100 Q 425 100 425 132 L 425 230 Z"
+                    fill="#FFFFFF" stroke="#0A1F44" stroke-width="2.4" stroke-linejoin="round"/>
+
+              <!-- Ventanilla cabina -->
+              <path d="M 175 132 L 200 105 L 280 105 L 280 132 Z" fill="#E5E7EB" stroke="#0A1F44" stroke-width="1.6" stroke-linejoin="round"/>
+
+              <!-- Línea separación cabina/caja -->
+              <line x1="293" y1="135" x2="293" y2="225" stroke="#0A1F44" stroke-width="1.2" opacity="0.35"/>
+
+              <!-- Acento verde-match del lateral -->
+              <rect x="40" y="170" width="253" height="3" fill="#00C277" opacity="0.6"/>
+
+              <!-- Panel lateral con QR -->
+              <rect x="312" y="138" width="100" height="78" rx="5" fill="#FFFFFF" stroke="#0A1F44" stroke-width="1.6"/>
+
+              <!-- QR estilizado -->
+              <g transform="translate(320, 146)">
+                <!-- Finder TL -->
+                <rect x="0" y="0" width="14" height="14" fill="#0A1F44" rx="2"/>
+                <rect x="3" y="3" width="8" height="8" fill="#FFFFFF" rx="1"/>
+                <rect x="5" y="5" width="4" height="4" fill="#0A1F44"/>
+                <!-- Finder TR -->
+                <rect x="70" y="0" width="14" height="14" fill="#0A1F44" rx="2"/>
+                <rect x="73" y="3" width="8" height="8" fill="#FFFFFF" rx="1"/>
+                <rect x="75" y="5" width="4" height="4" fill="#0A1F44"/>
+                <!-- Finder BL -->
+                <rect x="0" y="48" width="14" height="14" fill="#0A1F44" rx="2"/>
+                <rect x="3" y="51" width="8" height="8" fill="#FFFFFF" rx="1"/>
+                <rect x="5" y="53" width="4" height="4" fill="#0A1F44"/>
+                <!-- Patrón body -->
+                <circle cx="22" cy="20" r="1.5" fill="#0A1F44"/>
+                <circle cx="28" cy="22" r="1.5" fill="#0A1F44"/>
+                <circle cx="40" cy="18" r="1.5" fill="#0A1F44"/>
+                <circle cx="46" cy="24" r="1.5" fill="#0A1F44"/>
+                <circle cx="52" cy="20" r="1.5" fill="#0A1F44"/>
+                <circle cx="60" cy="22" r="1.5" fill="#0A1F44"/>
+                <circle cx="22" cy="32" r="1.5" fill="#0A1F44"/>
+                <circle cx="34" cy="34" r="1.5" fill="#0A1F44"/>
+                <circle cx="44" cy="32" r="1.5" fill="#0A1F44"/>
+                <circle cx="56" cy="36" r="1.5" fill="#0A1F44"/>
+                <circle cx="64" cy="32" r="1.5" fill="#0A1F44"/>
+                <circle cx="72" cy="38" r="1.5" fill="#0A1F44"/>
+                <circle cx="20" cy="44" r="1.5" fill="#0A1F44"/>
+                <circle cx="32" cy="48" r="1.5" fill="#0A1F44"/>
+                <circle cx="42" cy="46" r="1.5" fill="#0A1F44"/>
+                <circle cx="54" cy="48" r="1.5" fill="#0A1F44"/>
+                <circle cx="64" cy="44" r="1.5" fill="#0A1F44"/>
+                <circle cx="74" cy="50" r="1.5" fill="#0A1F44"/>
+                <circle cx="34" cy="58" r="1.5" fill="#0A1F44"/>
+                <circle cx="46" cy="60" r="1.5" fill="#0A1F44"/>
+                <circle cx="58" cy="58" r="1.5" fill="#0A1F44"/>
+                <circle cx="70" cy="62" r="1.5" fill="#0A1F44"/>
+              </g>
+
+              <!-- Texto sobre el QR -->
+              <text x="362" y="232" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#0A1F44" text-anchor="middle" opacity="0.7">ESCANEA</text>
+
+              <!-- Ruedas -->
+              <circle cx="125" cy="232" r="28" fill="#0A1F44"/>
+              <circle cx="125" cy="232" r="11" fill="#FFFFFF"/>
+              <circle cx="360" cy="232" r="28" fill="#0A1F44"/>
+              <circle cx="360" cy="232" r="11" fill="#FFFFFF"/>
+
+              <!-- Faro delantero -->
+              <rect x="40" y="208" width="14" height="8" rx="2" fill="#FFD96B" stroke="#0A1F44" stroke-width="1"/>
+            </svg>
+
+            <span class="pp-showcase__pill">Mundo físico</span>
+            <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
+          </div>
+
           <ul class="pp-upgrade__perks">
             <li>Tu URL pública con QR</li>
-            <li>Tarjeta imprimible y QR descargable</li>
-            <li>Imágenes listas para WhatsApp Status y redes</li>
+            <li>Tarjeta imprimible PDF</li>
+            <li>Imágenes para WhatsApp y redes</li>
             <li>Estadísticas de quién te ve</li>
           </ul>
+
           <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
             <button class="pp-plan-btn is-selected" data-plan="base" type="button">
               <strong>Base · 9€</strong>
@@ -1080,7 +1235,9 @@
       // Kit visible con hrefs dummy.
       document.getElementById('kitBanner').classList.add('is-visible');
     } else {
-      // Banner upgrade visible.
+      // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
+      document.getElementById('upgradeName').textContent = 'Pedro';
+      document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       freeBanner.classList.add('is-visible');
@@ -1309,6 +1466,10 @@
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       if (freeBanner && !card.stripe_session_id) {
+        // Personalizar headline + showcase con datos del usuario.
+        const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
+        document.getElementById('upgradeName').textContent = firstName;
+        document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
         freeBanner.classList.add('is-visible');
         let selectedPlan = 'base';
         freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
