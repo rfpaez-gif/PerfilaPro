@@ -374,60 +374,148 @@
     /* ── Banner upgrade (free → plan) ───────────────────────── */
     .pp-upgrade {
       display: none;
-      background: var(--color-warning-light);
-      border: 1px solid var(--color-warning);
+      background: linear-gradient(180deg, var(--color-verde-light) 0%, #FFFFFF 70%);
+      border: 1.5px solid var(--color-verde-match);
       border-radius: var(--pp-r-lg);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.25rem;
+      padding: 1.5rem 1.25rem 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px -12px rgba(0, 194, 119, 0.35);
     }
     .pp-upgrade.is-visible { display: block; }
-    .pp-upgrade__title {
-      font-size: 15px;
+    .pp-upgrade__eyebrow {
+      font-size: 11px;
       font-weight: 700;
-      color: var(--color-warning);
-      margin: 0 0 .2rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--color-verde-dark);
+      margin: 0 0 .5rem;
+    }
+    .pp-upgrade__title {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-tinta);
+      margin: 0 0 .5rem;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+    .pp-upgrade__title em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--color-verde-match);
     }
     .pp-upgrade__sub {
-      font-size: 13px;
-      color: var(--color-warning);
-      margin: 0 0 .75rem;
+      font-size: 14px;
+      color: var(--color-tinta);
+      opacity: 0.75;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
     }
+
+    /* Showcase del producto: furgo con QR + nombre del usuario */
+    .pp-showcase {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: 1rem 1rem .75rem;
+      margin: 0 0 1.25rem;
+      text-align: center;
+    }
+    .pp-showcase__stage {
+      position: relative;
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    .pp-showcase__img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .pp-showcase__qr {
+      position: absolute;
+      /* % calibrados sobre el rectángulo discontinuo de furgoneta_base
+         (medido por análisis de píxeles: 42.78%→54.90% X, 20.97%→49.83% Y) */
+      left: 42.8%;
+      top: 23.3%;
+      width: 12.1%;
+      aspect-ratio: 1 / 1;
+      height: auto;
+    }
+    .pp-showcase__pill {
+      display: inline-block;
+      background: var(--color-tinta);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .35rem .75rem;
+      border-radius: 100px;
+      margin-top: .375rem;
+    }
+    .pp-showcase__caption {
+      font-size: 13px;
+      color: var(--color-gris-500);
+      margin: .625rem 0 0;
+      line-height: 1.4;
+    }
+    .pp-showcase__caption strong {
+      color: var(--color-tinta);
+      font-weight: 700;
+    }
+
     .pp-upgrade__perks {
       list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .25rem 1.25rem;
-      margin: 0 0 .875rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .5rem .875rem;
+      margin: 0 0 1.25rem;
       padding: 0;
     }
-    .pp-upgrade__perks li { font-size: 13px; color: var(--color-warning); }
-    .pp-upgrade__perks li::before { content: "✓ "; font-weight: 700; }
+    @media (max-width: 480px) {
+      .pp-upgrade__perks { grid-template-columns: 1fr; }
+    }
+    .pp-upgrade__perks li {
+      font-size: 13px;
+      color: var(--color-tinta);
+      display: flex;
+      align-items: flex-start;
+      gap: .375rem;
+      line-height: 1.4;
+    }
+    .pp-upgrade__perks li::before {
+      content: "✓";
+      color: var(--color-verde-match);
+      font-weight: 800;
+      flex-shrink: 0;
+    }
 
-    .pp-plan-toggle { display: flex; gap: .375rem; margin-bottom: .875rem; }
+    .pp-plan-toggle { display: flex; gap: .5rem; margin-bottom: 1rem; }
     .pp-plan-btn {
       flex: 1;
-      padding: .5rem .75rem;
-      border: 1px solid var(--color-warning);
+      padding: .625rem .875rem;
+      border: 1.5px solid var(--color-gris-200);
       border-radius: var(--pp-r-md);
-      background: transparent;
+      background: #FFFFFF;
       font-family: var(--font-sans);
       font-size: 13px;
-      color: var(--color-warning);
+      color: var(--color-tinta);
       cursor: pointer;
       transition: border-color var(--pp-t-fast),
-                  background var(--pp-t-fast),
-                  color var(--pp-t-fast);
+                  background var(--pp-t-fast);
       text-align: left;
       line-height: 1.3;
     }
-    .pp-plan-btn:hover { border-color: var(--color-warning); background: var(--color-warning-light); }
+    .pp-plan-btn:hover { border-color: var(--color-verde-match); }
     .pp-plan-btn.is-selected {
       border-color: var(--color-verde-match);
       background: var(--color-verde-light);
-      color: var(--color-verde-dark);
+      box-shadow: 0 0 0 2px rgba(0, 194, 119, 0.15);
     }
-    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; }
-    .pp-plan-btn span { font-size: 12px; opacity: .75; }
+    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; color: var(--color-tinta); }
+    .pp-plan-btn span { font-size: 12px; color: var(--color-gris-500); }
 
     .pp-upgrade__cta {
       width: 100%;
@@ -435,7 +523,7 @@
       color: #fff;
       border: none;
       border-radius: var(--pp-r-md);
-      padding: .7rem 1.1rem;
+      padding: .85rem 1.1rem;
       font-family: var(--font-sans);
       font-size: 15px;
       font-weight: 700;
@@ -443,9 +531,11 @@
       text-decoration: none;
       display: block;
       text-align: center;
-      transition: background var(--pp-t-fast);
+      transition: background var(--pp-t-fast), transform var(--pp-t-fast);
+      box-shadow: 0 4px 12px -2px rgba(0, 194, 119, 0.4);
     }
-    .pp-upgrade__cta:hover { background: var(--color-verde-dark); }
+    .pp-upgrade__cta:hover { background: var(--color-verde-dark); transform: translateY(-1px); }
+    .pp-upgrade__cta:active { transform: translateY(0); }
 
     /* ── Directorio box + toggle ───────────────────────────── */
     .pp-dir-box {
@@ -589,6 +679,26 @@
     .pp-kit__btn:hover {
       background: var(--color-verde-light);
     }
+    .pp-kit__group-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-gris-500);
+      margin: 1.25rem 0 .625rem;
+    }
+    .pp-kit__group-label:first-of-type { margin-top: 0; }
+    .pp-kit__footer-link {
+      margin: 1rem 0 0;
+      font-size: 13px;
+      text-align: center;
+    }
+    .pp-kit__footer-link a {
+      color: var(--color-verde-dark);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .pp-kit__footer-link a:hover { text-decoration: underline; }
 
     .pp-public-link {
       display: none;
@@ -710,6 +820,110 @@
         <p class="pp-edit-card__sub" id="editSubtitle">Actualiza tus datos profesionales.</p>
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
+        <div class="pp-upgrade" id="freeBanner">
+          <p class="pp-upgrade__eyebrow">Activa tu plan</p>
+          <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
+          <p class="pp-upgrade__sub">Imprime tu tarjeta, comparte tu QR, pégalo en la furgo. Tu kit completo te llega al activar.</p>
+
+          <div class="pp-showcase">
+            <div class="pp-showcase__stage">
+              <picture>
+                <source srcset="/images/furgoneta-960.webp" type="image/webp">
+                <img src="/images/furgoneta-960.png" alt="Furgoneta con tu QR pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
+              </picture>
+              <img id="upgradeQr" class="pp-showcase__qr" src="" alt="" loading="lazy">
+            </div>
+            <span class="pp-showcase__pill">Mundo físico</span>
+            <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
+          </div>
+
+          <ul class="pp-upgrade__perks">
+            <li>Tu URL pública con QR</li>
+            <li>Tarjeta imprimible PDF</li>
+            <li>Imágenes para WhatsApp y redes</li>
+            <li>Estadísticas de quién te ve</li>
+          </ul>
+
+          <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
+            <button class="pp-plan-btn is-selected" data-plan="base" type="button">
+              <strong>Base · 9€</strong>
+              <span>90 días</span>
+            </button>
+            <button class="pp-plan-btn" data-plan="pro" type="button">
+              <strong>Pro · 20€</strong>
+              <span>365 días · estadísticas</span>
+            </button>
+          </div>
+          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
+        </div>
+
+        <div class="pp-kit" id="kitBanner">
+          <p class="pp-kit__eyebrow">📦 Tu kit completo</p>
+          <p class="pp-kit__title">Todo para que tu trabajo se vea</p>
+          <p class="pp-kit__sub">Imprime, comparte por WhatsApp, súbelo a redes. Tu kit se actualiza solo cuando editas tus datos.</p>
+
+          <p class="pp-kit__group-label">WhatsApp y físico</p>
+          <div class="pp-kit__items">
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">💬 Compartir por WhatsApp</p>
+                <p class="pp-kit__item-desc">Envía tu tarjeta a un cliente con un toque.</p>
+              </div>
+              <a id="kitWaShare" class="pp-kit__btn" href="#" target="_blank" rel="noopener">Compartir →</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📋 Copiar mi URL</p>
+                <p class="pp-kit__item-desc">Para pegar en bio de Instagram, email o donde quieras.</p>
+              </div>
+              <button type="button" id="kitCopyUrl" class="pp-kit__btn">Copiar</button>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">🃏 Tarjeta imprimible (PDF)</p>
+                <p class="pp-kit__item-desc">A6 vertical · imprímela tal cual o ampliada.</p>
+              </div>
+              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📱 Código QR (PNG 1024px)</p>
+                <p class="pp-kit__item-desc">Alta resolución · para escaparates, furgo y carteles.</p>
+              </div>
+              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📸 Imagen para Status / Story (1080×1920)</p>
+                <p class="pp-kit__item-desc">Súbela a tu WhatsApp Status para que la vean tus contactos.</p>
+              </div>
+              <a id="kitDlStory" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+          </div>
+
+          <p class="pp-kit__group-label">Redes y otros</p>
+          <div class="pp-kit__items">
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">🌐 Imagen para Facebook / Instagram (1080×1080)</p>
+                <p class="pp-kit__item-desc">Súbela como post o pégala en tu bio.</p>
+              </div>
+              <a id="kitDlSquare" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">💼 Imagen para LinkedIn (1200×627)</p>
+                <p class="pp-kit__item-desc">Por si lo usas profesionalmente.</p>
+              </div>
+              <a id="kitDlLinkedin" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+          </div>
+
+          <p class="pp-kit__footer-link">
+            <a href="" id="gbpAssistantLink">¿Quieres aparecer también en Google? Asistente Google Business →</a>
+          </p>
+        </div>
+
         <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadísticas del perfil">
           <header class="pp-stats__head">
             <h2 class="pp-stats__title">Estadísticas</h2>
@@ -734,41 +948,6 @@
             <p class="pp-stats__chart-lbl">Visitas por día · últimos 30 días</p>
           </div>
 
-          <div class="pp-share">
-            <p class="pp-share__title">Compartir mi perfil</p>
-            <p class="pp-share__hint">Un toque y lo enseñas a quien quieras.</p>
-            <div class="pp-share__row pp-share__row--icons">
-              <a href="" id="shareWa" class="pp-share__btn pp-share__btn--wa" target="_blank" rel="noopener" aria-label="Compartir por WhatsApp">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                WhatsApp
-              </a>
-              <button type="button" id="shareIg" class="pp-share__btn pp-share__btn--ig" data-url="" aria-label="Copiar enlace y abrir Instagram">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                Instagram
-              </button>
-              <a href="" id="shareLi" class="pp-share__btn pp-share__btn--li" target="_blank" rel="noopener" aria-label="Compartir en LinkedIn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                LinkedIn
-              </a>
-              <button type="button" id="shareCopy" class="pp-share__btn pp-share__btn--copy" data-url="" aria-label="Copiar URL del perfil">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                Copiar URL
-              </button>
-            </div>
-          </div>
-
-          <div class="pp-share">
-            <p class="pp-share__title">Descargar imagen para compartir</p>
-            <div class="pp-share__row">
-              <a href="" id="shareDlSquare"   class="pp-share__btn" download>Instagram · 1080×1080</a>
-              <a href="" id="shareDlStory"    class="pp-share__btn" download>Story · 1080×1920</a>
-              <a href="" id="shareDlLinkedin" class="pp-share__btn" download>LinkedIn · 1200×627</a>
-            </div>
-          </div>
-
-          <p class="pp-share__footer-link">
-            <a href="" id="gbpAssistantLink">¿Quieres aparecer también en Google? Asistente Google Business →</a>
-          </p>
         </section>
 
         <div class="pp-field">
@@ -845,89 +1024,6 @@
 
         <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Guardar cambios</button>
 
-        <details class="pp-detail" id="dirDetail">
-          <summary>Aparecer también en el directorio público</summary>
-          <div class="pp-detail__body">
-            <p class="pp-detail__hint">Opcional. Confirma tu especialidad y tu ciudad para que tu perfil aparezca en <code>perfilapro.es/directorio</code>. Disponible con plan Pro.</p>
-            <div class="pp-dir-box">
-              <div class="pp-field">
-                <label class="pp-field__label" for="sectorSel">Sector</label>
-                <select class="pp-input pp-input--select" id="sectorSel" onchange="onSectorChange()">
-                  <option value="">Selecciona sector…</option>
-                </select>
-              </div>
-              <div class="pp-field" id="specialtyField" style="display:none">
-                <label class="pp-field__label" for="specialtySel">Especialidad</label>
-                <select class="pp-input pp-input--select" id="specialtySel" onchange="onSpecialtyChange()">
-                  <option value="">Selecciona especialidad…</option>
-                </select>
-              </div>
-              <div class="pp-field" id="cityField" style="display:none">
-                <label class="pp-field__label" for="citySel">Ciudad</label>
-                <select class="pp-input pp-input--select" id="citySel" onchange="onCityChange()">
-                  <option value="">Selecciona ciudad…</option>
-                </select>
-              </div>
-              <div class="pp-toggle-row" id="visibleRow" style="display:none">
-                <div class="pp-toggle-row__info">
-                  <p class="pp-toggle-row__label">Visible en el directorio</p>
-                  <p class="pp-toggle-row__hint">Tu perfil aparecerá en perfilapro.es/directorio.</p>
-                </div>
-                <label class="pp-toggle-sw">
-                  <input type="checkbox" id="dirVisible">
-                  <span class="pp-toggle-track"></span>
-                </label>
-              </div>
-              <a id="pubProfileLink" href="#" target="_blank" class="pp-public-link">
-                Ver mi perfil público →
-              </a>
-            </div>
-          </div>
-        </details>
-
-        <div class="pp-kit" id="kitBanner">
-          <p class="pp-kit__eyebrow">📦 Tu kit físico</p>
-          <p class="pp-kit__title">Llévate tu perfil al mundo real</p>
-          <p class="pp-kit__sub">Imprime la tarjeta para entregar en mano o pegar en la furgo. El QR sirve para Instagram, escaparates y carteles.</p>
-          <div class="pp-kit__items">
-            <div class="pp-kit__item">
-              <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">🃏 Tarjeta imprimible (PDF)</p>
-                <p class="pp-kit__item-desc">A6 vertical · imprímela tal cual o ampliada.</p>
-              </div>
-              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descargar ↓</a>
-            </div>
-            <div class="pp-kit__item">
-              <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">📱 Código QR (PNG 1024px)</p>
-                <p class="pp-kit__item-desc">Alta resolución · para web, redes y vinilos.</p>
-              </div>
-              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descargar ↓</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="pp-upgrade" id="freeBanner">
-          <p class="pp-upgrade__title">¿Listo para activar tu perfil?</p>
-          <p class="pp-upgrade__sub">Desbloquea todo para que tus clientes te encuentren:</p>
-          <ul class="pp-upgrade__perks">
-            <li>Foto de perfil</li>
-            <li>Botón de WhatsApp directo</li>
-            <li>Código QR en tu tarjeta</li>
-            <li>Posición preferente en el directorio</li>
-          </ul>
-          <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
-            <button class="pp-plan-btn is-selected" data-plan="base" type="button">
-              <strong>Base · 9€</strong>
-              <span>90 días</span>
-            </button>
-            <button class="pp-plan-btn" data-plan="pro" type="button">
-              <strong>Pro · 20€</strong>
-              <span>365 días · estadísticas</span>
-            </button>
-          </div>
-          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
-        </div>
 
       </div>
 
@@ -1054,12 +1150,57 @@
   const params = new URLSearchParams(location.search);
   const slug = params.get('slug');
   const token = params.get('token');
+  const previewMode = params.get('preview'); // 'free' | 'pro' — dev-only bypass, sin auth
 
-  if (slug && token) {
+  if (previewMode === 'free' || previewMode === 'pro') {
+    loadEditFormPreview(previewMode);
+  } else if (slug && token) {
     loadEditForm();
   } else if (slug && !token) {
     document.getElementById('emailPhase').style.display = 'none';
     document.getElementById('slugPhase').style.display = '';
+  }
+
+  // Preview sin backend: rellena el editPhase con datos mock para
+  // validar visualmente el banner upgrade y el kit completo.
+  function loadEditFormPreview(plan) {
+    document.getElementById('emailPhase').style.display = 'none';
+    document.getElementById('editPhase').style.display = '';
+    document.getElementById('editSubtitle').textContent = 'Pedro García (preview)';
+    document.getElementById('nombre').value = 'Pedro García';
+    document.getElementById('tagline').value = 'Fontanero en Alicante';
+    document.getElementById('zona').value = 'Alicante';
+    document.getElementById('whatsapp').value = '34612345678';
+    document.getElementById('descripcion').value = 'Fontanero con 15 años de experiencia. Atención rápida y presupuesto sin compromiso.';
+    document.getElementById('editDescCount').textContent = document.getElementById('descripcion').value.length;
+    addService('Reparación de tuberías');
+    addService('Instalación de calderas');
+    if (plan === 'pro') {
+      // Stats panel — sólo para que se vea, no carga datos reales.
+      const panel = document.getElementById('statsPanel');
+      panel.style.display = '';
+      document.getElementById('statTotal').textContent = '247';
+      document.getElementById('stat30d').textContent = '38';
+      document.getElementById('stat7d').textContent = '11';
+      // Kit visible con hrefs dummy.
+      document.getElementById('kitBanner').classList.add('is-visible');
+    } else {
+      // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
+      document.getElementById('upgradeName').textContent = 'Pedro';
+      document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
+      // En preview servimos un QR sample estático (sin backend disponible).
+      document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
+      const freeBanner = document.getElementById('freeBanner');
+      const freeBannerBtn = document.getElementById('freeBannerBtn');
+      freeBanner.classList.add('is-visible');
+      freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+        });
+      });
+    }
   }
 
   // Foto preview con compresión cliente-side.
@@ -1068,7 +1209,6 @@
   // Safari mobile. Redimensionamos a max 1200px y re-encodeamos como
   // JPEG 0.85 antes de almacenar en memoria. Resultado típico < 400 KB.
   var pendingFotoDataUrl = null;
-  var directoryData = null;
 
   function compressImage(file, maxDim, quality) {
     return new Promise(function(resolve, reject) {
@@ -1168,56 +1308,6 @@
     document.getElementById('stat30d').textContent  = stats.last30d;
     document.getElementById('stat7d').textContent   = stats.last7d;
 
-    // Enlaces de descarga de imágenes shareables
-    const slugEnc  = encodeURIComponent(slug);
-    const tokenEnc = encodeURIComponent(token);
-    document.getElementById('shareDlSquare').href   = '/api/share-image?slug=' + slugEnc + '&template=square';
-    document.getElementById('shareDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
-    document.getElementById('shareDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
-    document.getElementById('gbpAssistantLink').href = '/asistente-gbp.html?slug=' + slugEnc + '&token=' + tokenEnc;
-
-    // Botones de compartir mi perfil (URL pública)
-    const profileUrl = window.location.origin + '/c/' + slug;
-    const shareText  = encodeURIComponent('Mira mi perfil profesional 👇 ' + profileUrl);
-    document.getElementById('shareWa').href = 'https://wa.me/?text=' + shareText;
-    document.getElementById('shareLi').href = 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(profileUrl);
-    document.getElementById('shareIg').dataset.url   = profileUrl;
-    document.getElementById('shareCopy').dataset.url = profileUrl;
-
-    function flashCopied(btn, msg) {
-      const original = btn.innerHTML;
-      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>' + (msg || 'Copiado');
-      btn.classList.add('is-copied');
-      setTimeout(function () {
-        btn.innerHTML = original;
-        btn.classList.remove('is-copied');
-      }, 1600);
-    }
-
-    async function copyUrl(url) {
-      try {
-        await navigator.clipboard.writeText(url);
-        return true;
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.select();
-        const ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-        return ok;
-      }
-    }
-
-    document.getElementById('shareIg').addEventListener('click', async function () {
-      const ok = await copyUrl(this.dataset.url);
-      if (ok) flashCopied(this, 'Pega en tu bio');
-      window.open('https://www.instagram.com/', '_blank', 'noopener');
-    });
-    document.getElementById('shareCopy').addEventListener('click', async function () {
-      const ok = await copyUrl(this.dataset.url);
-      if (ok) flashCopied(this, 'Copiado');
-    });
-
     const svg = document.getElementById('statsSpark');
     const series = stats.daily || [];
     if (!svg || !series.length) return;
@@ -1287,13 +1377,40 @@
         });
       }
 
-      // Kit físico (paid users): re-descarga de tarjeta + QR.
+      // Kit completo (paid users): WhatsApp share, copiar URL, descargas físicas y de redes.
       const kitBanner = document.getElementById('kitBanner');
       if (kitBanner && card.stripe_session_id) {
         const slugEnc  = encodeURIComponent(slug);
         const tokenEnc = encodeURIComponent(token);
-        document.getElementById('kitDlCard').href = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
-        document.getElementById('kitDlQr').href   = '/api/qr/' + slugEnc + '?format=png&size=1024';
+        const profileUrl = window.location.origin + '/c/' + slug;
+        const waText    = encodeURIComponent('Mira mi perfil profesional 👇 ' + profileUrl);
+
+        document.getElementById('kitWaShare').href    = 'https://wa.me/?text=' + waText;
+        document.getElementById('kitDlCard').href     = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
+        document.getElementById('kitDlQr').href       = '/api/qr/' + slugEnc + '?format=png&size=1024';
+        document.getElementById('kitDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
+        document.getElementById('kitDlSquare').href   = '/api/share-image?slug=' + slugEnc + '&template=square';
+        document.getElementById('kitDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
+        document.getElementById('gbpAssistantLink').href = '/asistente-gbp.html?slug=' + slugEnc + '&token=' + tokenEnc;
+
+        const copyBtn = document.getElementById('kitCopyUrl');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async function() {
+            const original = copyBtn.textContent;
+            try {
+              await navigator.clipboard.writeText(profileUrl);
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = profileUrl; ta.style.position = 'fixed'; ta.style.opacity = '0';
+              document.body.appendChild(ta); ta.select();
+              try { document.execCommand('copy'); } catch {}
+              document.body.removeChild(ta);
+            }
+            copyBtn.textContent = '✓ Copiado';
+            setTimeout(function() { copyBtn.textContent = original; }, 1600);
+          });
+        }
+
         kitBanner.classList.add('is-visible');
       }
 
@@ -1301,6 +1418,11 @@
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       if (freeBanner && !card.stripe_session_id) {
+        // Personalizar headline + showcase con datos del usuario.
+        const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
+        document.getElementById('upgradeName').textContent = firstName;
+        document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
+        document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
         freeBanner.classList.add('is-visible');
         let selectedPlan = 'base';
         freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
@@ -1331,10 +1453,6 @@
               const direccion   = document.getElementById('direccion').value.trim();
               const servicios   = Array.from(document.querySelectorAll('#servicesList input'))
                                        .map(i => i.value.trim()).filter(Boolean);
-              const sector      = document.getElementById('sectorSel').value;
-              const specialty   = document.getElementById('specialtySel').value;
-              const city_slug   = document.getElementById('citySel').value;
-              const directory_visible = document.getElementById('dirVisible').checked;
 
               if (!nombre || !zona || !whatsapp || !servicios.length) {
                 alert('Antes de activar, completa los campos obligatorios: nombre, zona, WhatsApp y al menos un servicio.');
@@ -1366,7 +1484,7 @@
               const saveRes = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, sector, specialty, city_slug, directory_visible }),
+                body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
               });
               if (!saveRes.ok) {
                 const err = await saveRes.json().catch(() => ({}));
@@ -1404,12 +1522,6 @@
         }
       }
 
-      // Enlace a la tarjeta y al perfil público
-      // Cargar opciones del directorio y pre-seleccionar valores actuales.
-      // Pasamos tagline + zona para que la función pueda resolver via
-      // archetypes.json: el archetype canónico aporta category_sector y
-      // category_specialty, y la zona se slugifica para matchear cities.
-      loadDirectoryOptions(card.category_sector, card.category_specialty, card.city_slug, card.directory_visible, card.sector, card.tagline, card.zona);
       const list = document.getElementById('servicesList');
       list.innerHTML = '';
       const services = card.servicios || [];
@@ -1451,162 +1563,6 @@
     btn.closest('.pp-svc-item').remove();
   }
 
-  // Slugify para matchear card.zona contra cities[].slug.
-  // Toma el primer token (antes de coma o paréntesis), normaliza acentos,
-  // baja a minúsculas y reemplaza no-alfanuméricos por guiones.
-  function zonaToCitySlug(zona) {
-    if (!zona) return '';
-    var first = String(zona).split(/[,(]/)[0].trim();
-    return first.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  }
-
-  async function loadDirectoryOptions(currentSector, currentSpecialty, currentCity, currentVisible, archetypeSector, taglineHint, zonaHint) {
-    try {
-      const [optsRes, archRes] = await Promise.all([
-        fetch('/api/directory-options'),
-        fetch('/data/archetypes.json'),
-      ]);
-      if (!optsRes.ok) return;
-      directoryData = await optsRes.json();
-      const archetypes = archRes.ok ? await archRes.json() : [];
-
-      // Poblar sectores (únicos, preservando label)
-      const sectorMap = {};
-      directoryData.categories.forEach(c => { if (!sectorMap[c.sector]) sectorMap[c.sector] = c.sector_label; });
-      const sectorSel = document.getElementById('sectorSel');
-      Object.entries(sectorMap).forEach(([val, label]) => {
-        const o = document.createElement('option'); o.value = val; o.textContent = label;
-        sectorSel.appendChild(o);
-      });
-
-      // Poblar ciudades
-      const citySel = document.getElementById('citySel');
-      const citySlugSet = new Set();
-      directoryData.cities.forEach(c => {
-        const o = document.createElement('option'); o.value = c.slug;
-        o.textContent = c.province && c.province !== c.name ? c.name + ' (' + c.province + ')' : c.name;
-        citySel.appendChild(o);
-        citySlugSet.add(c.slug);
-      });
-
-      // Lookup del archetype canónico por tagline (= rol_profesional del alta).
-      // Aporta category_sector y category_specialty respaldados por el seed.
-      let archMatch = null;
-      if (taglineHint && archetypes.length) {
-        archMatch = archetypes.find(a => a.rol_profesional === taglineHint) || null;
-      }
-
-      // Resolver sector. Prioridad:
-      //   1. currentSector (lo que el usuario guardó explícitamente)
-      //   2. archetype.category_sector (canónico, post migración 010)
-      //   3. archetypeSector (sector_slug legacy, fallback compat)
-      let resolvedSector = currentSector;
-      let autoMatched = false;
-      if (!resolvedSector && archMatch && archMatch.category_sector && sectorMap[archMatch.category_sector]) {
-        resolvedSector = archMatch.category_sector;
-        autoMatched = true;
-      }
-      if (!resolvedSector && archetypeSector && sectorMap[archetypeSector]) {
-        resolvedSector = archetypeSector;
-        autoMatched = true;
-      }
-
-      // Resolver specialty. Solo si el sector resuelto coincide con el
-      // archetype canónico — evita prefillar con un specialty de otro sector.
-      let resolvedSpecialty = currentSpecialty;
-      if (!resolvedSpecialty && archMatch && resolvedSector === archMatch.category_sector) {
-        const specs = directoryData.categories.filter(c => c.sector === resolvedSector);
-        if (specs.some(s => s.specialty === archMatch.category_specialty)) {
-          resolvedSpecialty = archMatch.category_specialty;
-        }
-      }
-
-      // Resolver city. Si no hay city_slug guardado, slugificamos la zona
-      // del card y validamos contra el catálogo de cities.
-      let resolvedCity = currentCity;
-      if (!resolvedCity && zonaHint) {
-        const guess = zonaToCitySlug(zonaHint);
-        if (guess && citySlugSet.has(guess)) resolvedCity = guess;
-      }
-
-      // Pre-seleccionar
-      if (resolvedSector) {
-        sectorSel.value = resolvedSector;
-        onSectorChange();
-        if (resolvedSpecialty) {
-          document.getElementById('specialtySel').value = resolvedSpecialty;
-          onSpecialtyChange();
-        }
-        if (resolvedCity) {
-          document.getElementById('citySel').value = resolvedCity;
-          onCityChange();
-        }
-        if (currentVisible) document.getElementById('dirVisible').checked = true;
-      }
-
-      // Si auto-resolvimos el sector desde el arquetipo, ocultamos el
-      // dropdown porque ya lo eligió el usuario en el alta. Si más
-      // adelante quiere cambiarlo, puede hacerlo desde "cambiar arquetipo".
-      if (autoMatched) {
-        const sectorField = sectorSel.closest('.pp-field');
-        if (sectorField) sectorField.style.display = 'none';
-      }
-
-      // Abrir el panel de directorio si el usuario ya tenía algo guardado
-      // o si el autofill lo dejó listo (specialty + city resueltos).
-      const dirDetail = document.getElementById('dirDetail');
-      const userHadConfig = currentSpecialty || currentCity || currentVisible;
-      const autofillReady = !userHadConfig && resolvedSpecialty && resolvedCity;
-      if (dirDetail && (userHadConfig || autofillReady)) {
-        dirDetail.open = true;
-      }
-
-      // Mostrar enlace perfil público si tiene sector+ciudad configurado
-      if (resolvedSector && resolvedCity) {
-        const lnk = document.getElementById('pubProfileLink');
-        lnk.href = '/p/' + slug;
-        lnk.classList.add('is-visible');
-      }
-    } catch (e) {
-      console.warn('loadDirectoryOptions error:', e);
-    }
-  }
-
-  function onSectorChange() {
-    if (!directoryData) return;
-    const sector = document.getElementById('sectorSel').value;
-    const specialtySel = document.getElementById('specialtySel');
-    const specialtyField = document.getElementById('specialtyField');
-
-    // Limpiar especialidades
-    specialtySel.innerHTML = '<option value="">Selecciona especialidad…</option>';
-    document.getElementById('cityField').style.display = 'none';
-    document.getElementById('visibleRow').style.display = 'none';
-
-    if (!sector) { specialtyField.style.display = 'none'; return; }
-
-    const specs = directoryData.categories.filter(c => c.sector === sector);
-    specs.forEach(c => {
-      const o = document.createElement('option'); o.value = c.specialty; o.textContent = c.specialty_label;
-      specialtySel.appendChild(o);
-    });
-    specialtyField.style.display = '';
-  }
-
-  function onSpecialtyChange() {
-    const specialty = document.getElementById('specialtySel').value;
-    document.getElementById('cityField').style.display = specialty ? '' : 'none';
-    document.getElementById('visibleRow').style.display = 'none';
-    if (!specialty) document.getElementById('citySel').value = '';
-  }
-
-  function onCityChange() {
-    const city = document.getElementById('citySel').value;
-    document.getElementById('visibleRow').style.display = city ? '' : 'none';
-  }
-
   async function saveProfile() {
     const nombre = document.getElementById('nombre').value.trim();
     const tagline = document.getElementById('tagline').value.trim();
@@ -1618,10 +1574,6 @@
     const direccion = document.getElementById('direccion').value.trim();
     const servicios = Array.from(document.querySelectorAll('#servicesList input'))
       .map(i => i.value.trim()).filter(Boolean);
-    const sector = document.getElementById('sectorSel').value;
-    const specialty = document.getElementById('specialtySel').value;
-    const city_slug = document.getElementById('citySel').value;
-    const directory_visible = document.getElementById('dirVisible').checked;
 
     const msg = document.getElementById('editMsg');
     msg.style.display = 'none';
@@ -1660,7 +1612,7 @@
       const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, sector, specialty, city_slug, directory_visible }),
+        body: JSON.stringify({ nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -1673,9 +1625,17 @@
       btn.disabled = false;
       btn.textContent = 'Guardar cambios';
       msg.className = 'pp-msg pp-msg--ok';
-      msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank">Ver mi tarjeta →</a>' + (directory_visible ? ' · <a href="/p/' + slug + '" target="_blank">Ver perfil público →</a>' : '');
-      msg.style.display = '';
-      msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const isPaid = document.getElementById('freeBanner').classList.contains('is-visible') === false;
+      if (isPaid) {
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank">Ver mi tarjeta →</a>';
+        msg.style.display = '';
+        msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="#freeBanner">Activa tu kit completo ↑</a>';
+        msg.style.display = '';
+        const banner = document.getElementById('freeBanner');
+        if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     } catch {
       showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
       btn.disabled = false;
