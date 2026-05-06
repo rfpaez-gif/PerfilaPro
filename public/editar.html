@@ -1045,12 +1045,53 @@
   const params = new URLSearchParams(location.search);
   const slug = params.get('slug');
   const token = params.get('token');
+  const previewMode = params.get('preview'); // 'free' | 'pro' — dev-only bypass, sin auth
 
-  if (slug && token) {
+  if (previewMode === 'free' || previewMode === 'pro') {
+    loadEditFormPreview(previewMode);
+  } else if (slug && token) {
     loadEditForm();
   } else if (slug && !token) {
     document.getElementById('emailPhase').style.display = 'none';
     document.getElementById('slugPhase').style.display = '';
+  }
+
+  // Preview sin backend: rellena el editPhase con datos mock para
+  // validar visualmente el banner upgrade y el kit completo.
+  function loadEditFormPreview(plan) {
+    document.getElementById('emailPhase').style.display = 'none';
+    document.getElementById('editPhase').style.display = '';
+    document.getElementById('editSubtitle').textContent = 'Pedro García (preview)';
+    document.getElementById('nombre').value = 'Pedro García';
+    document.getElementById('tagline').value = 'Fontanero en Alicante';
+    document.getElementById('zona').value = 'Alicante';
+    document.getElementById('whatsapp').value = '34612345678';
+    document.getElementById('descripcion').value = 'Fontanero con 15 años de experiencia. Atención rápida y presupuesto sin compromiso.';
+    document.getElementById('editDescCount').textContent = document.getElementById('descripcion').value.length;
+    addService('Reparación de tuberías');
+    addService('Instalación de calderas');
+    if (plan === 'pro') {
+      // Stats panel — sólo para que se vea, no carga datos reales.
+      const panel = document.getElementById('statsPanel');
+      panel.style.display = '';
+      document.getElementById('statTotal').textContent = '247';
+      document.getElementById('stat30d').textContent = '38';
+      document.getElementById('stat7d').textContent = '11';
+      // Kit visible con hrefs dummy.
+      document.getElementById('kitBanner').classList.add('is-visible');
+    } else {
+      // Banner upgrade visible.
+      const freeBanner = document.getElementById('freeBanner');
+      const freeBannerBtn = document.getElementById('freeBannerBtn');
+      freeBanner.classList.add('is-visible');
+      freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+        });
+      });
+    }
   }
 
   // Foto preview con compresión cliente-side.
