@@ -15,10 +15,15 @@
 // Hex codes sincronizados con tokens.css y lib/email-layout.js. Si cambia la
 // paleta del producto, este archivo debe tocarse en el MISMO commit.
 
+const path = require('path');
 const PDFDocument = require('pdfkit');
 const { Resvg } = require('@resvg/resvg-js');
 const { buildQrSvg } = require('./lib/qr-svg.js');
 const { registerFonts } = require('./lib/pdf-fonts');
+
+// __dirname = netlify/functions/ (tanto local como bundlado por esbuild).
+// El helper pdf-fonts.js no puede usar su propio __dirname al inlinearse.
+const FONTS_DIR = path.join(__dirname, 'lib/fonts');
 
 const A6_WIDTH  = 297.64; // 105mm en puntos PDF (1pt = 1/72")
 const A6_HEIGHT = 419.53; // 148mm
@@ -75,7 +80,7 @@ async function buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl 
         Creator: 'PerfilaPro',
       },
     });
-    registerFonts(doc);
+    registerFonts(doc, FONTS_DIR);
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));

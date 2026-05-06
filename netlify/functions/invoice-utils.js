@@ -1,5 +1,12 @@
+const path = require('path');
 const PDFDocument = require('pdfkit');
-const { registerFonts, drawWordmark } = require('./lib/pdf-fonts');
+const { registerFonts } = require('./lib/pdf-fonts');
+
+// __dirname aquí es netlify/functions/ tanto en local como tras el
+// bundle de esbuild (todas las funciones se despliegan al mismo path).
+// El helper pdf-fonts.js no puede usar su propio __dirname porque
+// al inlinearse pierde la ubicación de su fichero fuente.
+const FONTS_DIR = path.join(__dirname, 'lib/fonts');
 
 const ISSUER = {
   name: 'Rafael Páez Manso',
@@ -40,7 +47,7 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
       size: 'A4', margin: 60,
       info: { Title: `Factura ${numero} - PerfilaPro` },
     });
-    registerFonts(doc);
+    registerFonts(doc, FONTS_DIR);
     const chunks = [];
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
