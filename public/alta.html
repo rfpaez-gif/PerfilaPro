@@ -1087,13 +1087,15 @@
     btn.textContent = 'Publicando…';
 
     var payload = {
-      nombre:    document.getElementById('f_nombre').value.trim(),
-      sector:    selectedArch ? selectedArch.sector_slug : 'otro',
-      desc:      selectedArch ? selectedArch.rol_profesional : '',
-      servicios: selectedServices,
-      zona:      getZonaFull(),
-      whatsapp:  document.getElementById('f_whatsapp').value.trim(),
-      email:     document.getElementById('f_email').value.trim(),
+      nombre:             document.getElementById('f_nombre').value.trim(),
+      sector:             selectedArch ? selectedArch.sector_slug : 'otro',
+      category_sector:    selectedArch ? (selectedArch.category_sector    || null) : null,
+      category_specialty: selectedArch ? (selectedArch.category_specialty || null) : null,
+      desc:               selectedArch ? selectedArch.rol_profesional : '',
+      servicios:          selectedServices,
+      zona:               getZonaFull(),
+      whatsapp:           document.getElementById('f_whatsapp').value.trim(),
+      email:              document.getElementById('f_email').value.trim(),
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });

@@ -110,7 +110,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios } = body;
+    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty } = body;
 
     if (!nombre || !whatsapp || !zona || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, zona, email' }) };
@@ -148,6 +148,19 @@ function makeHandler(db, emailClient = resend) {
       ? rawServicios.map(s => stripTags(s).substring(0, 100)).filter(Boolean)
       : [];
 
+    // Resolve category_id from archetype slugs so the printable PDF, directory
+    // search and admin filters work from day one (sin pasar por /editar).
+    let category_id = null;
+    if (category_sector && category_specialty) {
+      const { data: cat } = await db
+        .from('categories')
+        .select('id')
+        .eq('sector', category_sector)
+        .eq('specialty', category_specialty)
+        .maybeSingle();
+      category_id = cat?.id || null;
+    }
+
     const row = {
       slug,
       nombre:      cleanNombre,
@@ -158,6 +171,7 @@ function makeHandler(db, emailClient = resend) {
       email,
       plan:        'base',
       status:      'active',
+      category_id,
       edit_token:  editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };
