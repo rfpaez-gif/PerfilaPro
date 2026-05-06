@@ -98,4 +98,38 @@ describe('buildPrintableCardPDF', () => {
     });
     expect(buf.slice(0, 5).toString()).toBe('%PDF-');
   });
+
+  it('renderiza con profesión, dirección y zona sin lanzar', async () => {
+    const buf = await buildPrintableCardPDF({
+      ...baseInput,
+      profesion: 'Electricista',
+      direccion: 'Senda del Obispo 03300',
+      zona:      'La Coruña, Galicia',
+    });
+    expect(buf.slice(0, 5).toString()).toBe('%PDF-');
+    // PDF con todos los datos > PDF mínimo (más texto, más streams)
+    const minimal = await buildPrintableCardPDF(baseInput);
+    expect(buf.length).toBeGreaterThan(minimal.length);
+  });
+
+  it('omite la profesión cuando coincide (case-insensitive) con el tagline', async () => {
+    // No falla y produce un PDF — el comportamiento de dedupe es interno;
+    // este test garantiza que la rama de igualdad no rompe el render.
+    const buf = await buildPrintableCardPDF({
+      ...baseInput,
+      tagline:   'Electricista',
+      profesion: 'ELECTRICISTA',
+    });
+    expect(buf.slice(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('truncaciones defensivas: profesión, dirección y zona muy largas no rompen', async () => {
+    const buf = await buildPrintableCardPDF({
+      ...baseInput,
+      profesion: 'Especialista en muchas cosas distintas y posiblemente más de las que caben',
+      direccion: 'Avenida Larguísima del Pueblo de los Mil Nombres, número trescientos cuarenta y cinco, escalera C, planta 4',
+      zona:      'Una provincia con un nombre tan largo que no debería caber pero por si acaso lo probamos',
+    });
+    expect(buf.slice(0, 5).toString()).toBe('%PDF-');
+  });
 });

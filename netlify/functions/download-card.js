@@ -31,7 +31,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, whatsapp, edit_token_expires_at')
+      .select('slug, nombre, tagline, whatsapp, direccion, zona, edit_token_expires_at, categories(specialty_label)')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -53,10 +53,13 @@ function makeHandler(db) {
     let pdfBuffer;
     try {
       pdfBuffer = await buildPrintableCardPDF({
-        nombre:   card.nombre,
-        tagline:  card.tagline,
-        whatsapp: card.whatsapp,
-        slug:     card.slug,
+        nombre:    card.nombre,
+        tagline:   card.tagline,
+        profesion: card.categories?.specialty_label || null,
+        whatsapp:  card.whatsapp,
+        direccion: card.direccion,
+        zona:      card.zona,
+        slug:      card.slug,
         cardUrl,
       });
     } catch (err) {

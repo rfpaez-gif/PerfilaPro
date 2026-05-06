@@ -178,12 +178,12 @@ exports.handler = async (event) => {
     }
     body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
     .pp-card{width:min(100%,420px);background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-lg);overflow:hidden;box-shadow:var(--pp-shadow)}
-    .pp-card__header{display:grid;grid-template-columns:72px 1fr;gap:1rem;align-items:center;padding:1.25rem;border-bottom:1px solid var(--color-gris-200)}
-    .pp-card__avatar{width:72px;height:72px;border-radius:50%;overflow:hidden;background:var(--color-verde-light);border:2px solid var(--color-gris-200);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-    .pp-card__avatar img{width:100%;height:100%;object-fit:cover}
-    .pp-card__avatar-init{font-family:var(--font-serif);font-size:1.75rem;color:var(--color-verde-match);line-height:1}
-    .pp-card__name{font-family:var(--font-serif);font-size:1.55rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
-    .pp-card__role{font-size:.8125rem;color:var(--color-gris-500);margin-top:.25rem;line-height:1.4}
+    .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.875rem;padding:1.25rem;border-bottom:1px solid var(--color-gris-200)}
+    .pp-card__avatar{width:100%;aspect-ratio:1/1;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
+    .pp-card__avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .pp-card__avatar-init{font-family:var(--font-serif);font-size:clamp(4rem,18vw,6rem);color:var(--color-verde-match);line-height:1}
+    .pp-card__name{font-family:var(--font-serif);font-size:1.75rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
+    .pp-card__role{font-size:.9375rem;color:var(--color-gris-500);margin-top:.375rem;line-height:1.4}
     .pp-card__body{display:grid;grid-template-columns:minmax(0,1fr);gap:.875rem;padding:1.1rem 1.25rem 1.25rem}
     .pp-chips{display:flex;flex-wrap:wrap;gap:.375rem}
     .pp-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;border-radius:var(--pp-r-pill);font-size:.6875rem;font-weight:600;line-height:1.3;max-width:100%;white-space:normal;overflow-wrap:anywhere}

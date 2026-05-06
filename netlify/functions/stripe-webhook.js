@@ -273,11 +273,26 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const host  = (event.headers && event.headers.host) || (process.env.SITE_URL || 'https://perfilapro.es').replace(/^https?:\/\//, '');
       const cardUrl = `${proto}://${host}/c/${slug}`;
 
+      // Profesión canónica para la tarjeta imprimible: joineamos categories
+      // tras el upsert para capturar el specialty_label si el usuario llegó
+      // con category_id seteado desde alta o desde una edición previa.
+      let profesion = null;
+      try {
+        const { data: cardWithCat } = await db
+          .from('cards')
+          .select('categories(specialty_label)')
+          .eq('slug', slug)
+          .single();
+        profesion = cardWithCat?.categories?.specialty_label || null;
+      } catch {
+        // No es fatal — el PDF se renderiza sin profesión.
+      }
+
       let cardPdfBuffer = null;
       let qrPngBuffer = null;
       try {
         cardPdfBuffer = await buildPrintableCardPDF({
-          nombre, tagline, whatsapp, slug, cardUrl,
+          nombre, tagline, profesion, whatsapp, direccion, zona, slug, cardUrl,
         });
         console.log(`Tarjeta PDF generada: ${cardPdfBuffer.length} bytes`);
       } catch (err) {
