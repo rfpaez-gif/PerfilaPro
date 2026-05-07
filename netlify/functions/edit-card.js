@@ -25,7 +25,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -78,7 +78,7 @@ function makeHandler(db) {
         };
       }
 
-      const { nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion,
+      const { nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico,
               sector, specialty, specialty_custom } = body;
 
       const ALLOWED_FOTO_HOSTS = [
@@ -166,6 +166,10 @@ function makeHandler(db) {
           foto_url:           fotoUrlClean,
           descripcion:        descripcion ? stripTags(descripcion).substring(0, 200) : null,
           direccion:          direccion ? stripTags(direccion).substring(0, 200) : null,
+          // local_publico solo cuenta si hay dirección efectiva — el toggle ON
+          // sin dirección no expone nada en la tarjeta y nos evita renderizar
+          // un link a Google Maps con string vacío.
+          local_publico:      local_publico === true && !!(direccion && stripTags(direccion).trim()),
           category_id:        category_id,
           specialty_custom:   specialtyCustomClean,
           city_slug:          citySlugResolved,

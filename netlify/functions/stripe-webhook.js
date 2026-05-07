@@ -223,7 +223,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, foto, plan, agent_code, ocupacion_code } =
+      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, local_publico, foto, plan, agent_code, ocupacion_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -283,6 +283,10 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         foto_url:    foto || null,
         descripcion: desc ? stripTags(desc).substring(0, 200) : null,
         direccion:   direccion ? stripTags(direccion).substring(0, 200) : null,
+        // local_publico llega como '1' / '' desde la metadata. Solo cuenta
+        // si además hay dirección — un toggle ON sin dirección no expone nada
+        // y nos evita que la tarjeta pinte un link a Maps a string vacío.
+        local_publico: local_publico === '1' && !!direccion,
         plan: plan || 'base',
         status: 'active',
         stripe_session_id: session.id,

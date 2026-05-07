@@ -247,6 +247,37 @@ describe('edit-card handler', () => {
       const updateArgs = currentBuilder.update.mock.calls[0][0];
       expect(updateArgs.telefono).toBeNull();
     });
+
+    // ── local_publico ──
+
+    it('persiste local_publico=true cuando llega true Y dirección', async () => {
+      const body = { ...validBody, direccion: 'Calle Mayor 23', local_publico: true };
+      await handler(buildEvent({ method: 'POST', body }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.direccion).toBe('Calle Mayor 23');
+      expect(updateArgs.local_publico).toBe(true);
+    });
+
+    it('fuerza local_publico=false si llega true pero dirección vacía', async () => {
+      const body = { ...validBody, direccion: '', local_publico: true };
+      await handler(buildEvent({ method: 'POST', body }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.direccion).toBeNull();
+      expect(updateArgs.local_publico).toBe(false);
+    });
+
+    it('fuerza local_publico=false si llega true pero dirección es solo HTML/whitespace', async () => {
+      const body = { ...validBody, direccion: '<script></script>   ', local_publico: true };
+      await handler(buildEvent({ method: 'POST', body }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.local_publico).toBe(false);
+    });
+
+    it('persiste local_publico=false cuando body no lo incluye', async () => {
+      await handler(buildEvent({ method: 'POST', body: validBody }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.local_publico).toBe(false);
+    });
   });
 
   // ── Perfiles free ──

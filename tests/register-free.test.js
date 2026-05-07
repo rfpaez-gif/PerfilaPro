@@ -139,6 +139,30 @@ describe('register-free handler', () => {
     expect(insertCall.city_slug).toBeNull();
   });
 
+  it('persiste direccion + local_publico=true cuando ambos llegan', async () => {
+    const body = { ...validBody, direccion: 'Calle Mayor 23', local_publico: true };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.direccion).toBe('Calle Mayor 23');
+    expect(insertCall.local_publico).toBe(true);
+  });
+
+  it('fuerza local_publico=false si llega true sin dirección efectiva', async () => {
+    const body = { ...validBody, direccion: '', local_publico: true };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.direccion).toBeNull();
+    expect(insertCall.local_publico).toBe(false);
+  });
+
+  it('por defecto local_publico=false cuando body no lo trae', async () => {
+    await handler(buildEvent({ body: validBody }));
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.local_publico).toBe(false);
+  });
+
   it('creates a free profile and returns slug + URLs', async () => {
     const res = await handler(buildEvent({ body: validBody }));
     expect(res.statusCode).toBe(200);

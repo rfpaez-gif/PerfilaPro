@@ -49,7 +49,7 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
     if (!nombre || !cp || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -91,6 +91,9 @@ function makeHandler(stripe) {
           servicios: JSON.stringify(servicios),
           desc: (desc || '').substring(0, 200),
           direccion: (direccion || '').substring(0, 200),
+          // Stripe metadata son siempre strings: el toggle viaja como '1' / ''
+          // y stripe-webhook lo re-interpreta como boolean al persistir.
+          local_publico: local_publico === true ? '1' : '',
           foto: foto || '',
           plan,
           agent_code: agent_code || '',

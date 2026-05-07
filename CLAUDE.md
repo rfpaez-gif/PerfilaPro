@@ -46,6 +46,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - Edit flow extra fields: `edit_token`, `edit_token_expires_at`, `edit_link_sent_at`, `reminder_30_sent`, `reminder_15_sent`, `reminder_7_sent`
 - Soft-delete + B2B defensive fields (Sprint 1, migration 007): `deleted_at`, `organization_id` (FK → `organizations.id`, NULL until phase 3 lands).
 - Kit tracking (migration 011): `kit_email_sent_at` — timestamp del último envío del welcome email post-pago con tarjeta + QR + factura. Lo setea `stripe-webhook` en el envío inicial; lo refresca `resend-kit` cuando un admin reenvía desde el panel.
+- Dirección física + visibilidad (migración 015 + `direccion` desde 003): `direccion` (text, nullable) y `local_publico` (boolean, default false). El render público en `/c/:slug` solo muestra la dirección + link a Google Maps cuando **ambos** están activos — un autónomo a domicilio queda con `local_publico=false` por defecto y nunca expone su casa aunque rellene el campo. El toggle vive en alta.html (Step 3) y editar.html. Backend fuerza `local_publico=false` si la dirección viene vacía o solo whitespace.
 
 **`organizations` table** — defensive scaffolding for phase 3 (B2B teams). Empty in phases 1-2:
 - `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at`
@@ -231,6 +232,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/download-qr` | `download-qr` |
 | `/api/resend-kit` | `resend-kit` |
 | `/api/ocupaciones-search` | `ocupaciones-search` |
+| `/api/cp-lookup` | `cp-lookup` |
 
 ### Catálogo SEPE/SISPE de ocupaciones
 

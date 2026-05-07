@@ -181,6 +181,11 @@
   to     = "/.netlify/functions/ocupaciones-search"
   status = 200
 
+[[redirects]]
+  from   = "/api/cp-lookup"
+  to     = "/.netlify/functions/cp-lookup"
+  status = 200
+
 [[edge_functions]]
   path     = "/api/admin-*"
   function = "rate-limiter"
