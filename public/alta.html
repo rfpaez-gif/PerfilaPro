@@ -124,6 +124,43 @@
     .pp-input.is-error:focus { box-shadow: 0 0 0 3px rgba(178, 58, 72, .15); }
     .pp-field__help.is-error { color: var(--color-coral); }
     .pp-required { color: var(--color-coral); }
+    .pp-field__optional { color: var(--color-gris-500); font-weight: 400; font-size: .85em; }
+    .pp-field__help.is-success { color: var(--color-verde-dark); font-weight: 600; }
+    .pp-field__help.is-loading { color: var(--color-gris-500); font-style: italic; }
+
+    /* ── Toggle (reutilizado de editar.html) ────────────────── */
+    .pp-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .875rem 1rem;
+      background: var(--color-crema);
+      border-radius: var(--pp-r-md);
+      border: 1px solid var(--color-gris-200);
+    }
+    .pp-toggle-row__info { flex: 1; }
+    .pp-toggle-row__label { font-size: 14px; font-weight: 600; color: var(--color-tinta); }
+    .pp-toggle-row__hint { font-size: 12px; color: var(--color-gris-500); margin-top: .2rem; }
+    .pp-toggle-sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; display: inline-block; }
+    .pp-toggle-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .pp-toggle-track {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--color-gris-200);
+      border-radius: 12px;
+      transition: background var(--pp-t-base);
+    }
+    .pp-toggle-track::before {
+      content: ""; position: absolute;
+      width: 18px; height: 18px; left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%;
+      transition: transform var(--pp-t-base);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track { background: var(--color-verde-match); }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track::before { transform: translateX(20px); }
+    .pp-field--collapsible { transition: opacity .2s, max-height .25s; overflow: hidden; }
+    .pp-field--collapsible.is-hidden { opacity: 0; max-height: 0; pointer-events: none; }
 
     /* ── Galería de arquetipos ──────────────────────────────── */
     .pp-arch-grid {
@@ -556,6 +593,23 @@
                 <input class="pp-input" id="f_email" type="email" placeholder="tu@email.com" autocomplete="email" required>
                 <p class="pp-field__help">Para enviarte el enlace de edición y la factura. No aparece en público.</p>
               </div>
+              <div class="pp-field">
+                <label class="pp-toggle-row" for="f_local_publico">
+                  <span class="pp-toggle-row__info">
+                    <span class="pp-toggle-row__label">Tengo local público</span>
+                    <span class="pp-toggle-row__hint">Tienda, taller o consulta donde recibes clientes. Si lo activas, podrás añadir la dirección y aparecerá un enlace a Google Maps en tu tarjeta.</span>
+                  </span>
+                  <span class="pp-toggle-sw">
+                    <input id="f_local_publico" type="checkbox">
+                    <span class="pp-toggle-track" aria-hidden="true"></span>
+                  </span>
+                </label>
+              </div>
+              <div class="pp-field pp-field--collapsible is-hidden" id="f_direccion_field">
+                <label class="pp-field__label" for="f_direccion">Dirección <span class="pp-field__optional">(una línea)</span></label>
+                <input class="pp-input" id="f_direccion" type="text" placeholder="Ej. Calle Mayor 23, bajo" autocomplete="street-address" maxlength="200">
+                <p class="pp-field__help">Calle y número. La ciudad ya la sabemos por tu CP — no la repitas.</p>
+              </div>
             </div>
             <div class="pp-form-actions">
               <button class="pp-btn pp-btn--ghost" onclick="goStep(2)">← Atrás</button>
@@ -584,6 +638,10 @@
               <div class="pp-review__row">
                 <span class="pp-review__key">CP</span>
                 <strong class="pp-review__val" id="rev_cp">—</strong>
+              </div>
+              <div class="pp-review__row" id="rev_dir_row" style="display:none">
+                <span class="pp-review__key">Dirección</span>
+                <strong class="pp-review__val" id="rev_dir" style="font-weight:400;max-width:26ch">—</strong>
               </div>
               <div class="pp-review__row">
                 <span class="pp-review__key">WhatsApp</span>
@@ -1119,10 +1177,12 @@
 
   function validateStep3() {
     var ok = true;
-    var cp       = getCp();
-    var whatsapp = document.getElementById('f_whatsapp').value.trim();
-    var email    = document.getElementById('f_email').value.trim();
-    clearError('f_cp'); clearError('f_whatsapp'); clearError('f_email');
+    var cp        = getCp();
+    var whatsapp  = document.getElementById('f_whatsapp').value.trim();
+    var email     = document.getElementById('f_email').value.trim();
+    var localPub  = document.getElementById('f_local_publico');
+    var direccion = document.getElementById('f_direccion').value.trim();
+    clearError('f_cp'); clearError('f_whatsapp'); clearError('f_email'); clearError('f_direccion');
     if (!cp || !/^\d{5}$/.test(cp)) {
       showError('f_cp', 'Introduce un CP español de 5 dígitos.'); ok = false;
     } else {
@@ -1144,6 +1204,9 @@
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showError('f_email', 'Introduce un email válido.'); ok = false;
     }
+    if (localPub && localPub.checked && !direccion) {
+      showError('f_direccion', 'Si tienes local público, introduce la dirección o desactiva el toggle.'); ok = false;
+    }
     return ok;
   }
 
@@ -1164,6 +1227,16 @@
     } else {
       svcRow.style.display = 'none';
     }
+
+    var dirRow  = document.getElementById('rev_dir_row');
+    var lpEl    = document.getElementById('f_local_publico');
+    var dirText = document.getElementById('f_direccion').value.trim();
+    if (lpEl && lpEl.checked && dirText) {
+      document.getElementById('rev_dir').textContent = dirText;
+      dirRow.style.display = '';
+    } else {
+      dirRow.style.display = 'none';
+    }
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -1180,6 +1253,10 @@
     // para que la tagline de la tarjeta coincida con lo que el usuario eligio.
     // Cuando el archetype es custom (flujo "No me veo aqui"), rol_profesional
     // ES el texto libre del usuario y va tambien como specialty_custom.
+    var localPubEl = document.getElementById('f_local_publico');
+    var localPub   = !!(localPubEl && localPubEl.checked);
+    var direccion  = document.getElementById('f_direccion').value.trim();
+
     var payload = {
       nombre:             document.getElementById('f_nombre').value.trim(),
       sector:             selectedArch ? (selectedArch.sector_slug || 'otro') : 'otro',
@@ -1192,6 +1269,8 @@
       cp:                 getCp(),
       whatsapp:           document.getElementById('f_whatsapp').value.trim(),
       email:              document.getElementById('f_email').value.trim(),
+      direccion:          localPub && direccion ? direccion : null,
+      local_publico:      localPub && !!direccion,
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
@@ -1250,15 +1329,80 @@
   };
 
   /* ════════════════════════════════════════════════════════════
-     CP INPUT · sanitize a 5 dígitos en tiempo real
+     CP INPUT · sanitize a 5 dígitos + lookup municipio en tiempo real
      ════════════════════════════════════════════════════════════ */
   (function () {
     var inp = document.getElementById('f_cp');
     if (!inp) return;
+    var hint = inp.parentElement.querySelector('.pp-field__help');
+    var defaultHintText = hint ? hint.textContent : '';
+    var debounceTimer = null;
+    var pendingFetch  = null;
+
+    function setHint(text, state) {
+      if (!hint) return;
+      hint.textContent = text;
+      hint.classList.remove('is-error', 'is-success', 'is-loading');
+      if (state) hint.classList.add(state);
+    }
+
+    function lookup(cp) {
+      if (pendingFetch && typeof pendingFetch.abort === 'function') {
+        try { pendingFetch.abort(); } catch (e) {}
+      }
+      var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      pendingFetch = ctrl;
+      setHint('Buscando municipio…', 'loading');
+      fetch('/api/cp-lookup?cp=' + encodeURIComponent(cp), ctrl ? { signal: ctrl.signal } : {})
+        .then(function (res) { return res.json(); })
+        .then(function (r) {
+          if (inp.value !== cp) return; // el usuario siguió tecleando
+          if (r && r.ok) {
+            setHint('→ ' + r.municipality_name + ' (' + r.province_slug + ')', 'success');
+            inp.classList.remove('is-error');
+          } else if (r && r.reason === 'not_found') {
+            setHint('Ese CP no está en nuestro catálogo. Revísalo o sigue adelante.', 'error');
+          } else {
+            setHint('CP fuera de rango. Los CPs españoles van del 01000 al 52999.', 'error');
+          }
+        })
+        .catch(function () { /* aborted o red — no reportamos */ });
+    }
+
     inp.addEventListener('input', function () {
       var v = inp.value.replace(/\D/g, '').slice(0, 5);
       if (v !== inp.value) inp.value = v;
       updatePreview();
+      clearTimeout(debounceTimer);
+      if (!v) {
+        setHint(defaultHintText, null);
+        return;
+      }
+      if (v.length < 5) {
+        setHint('Sigue escribiendo… (' + v.length + '/5)', 'loading');
+        return;
+      }
+      debounceTimer = setTimeout(function () { lookup(v); }, 250);
+    });
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     LOCAL PÚBLICO · toggle muestra/oculta input dirección
+     ════════════════════════════════════════════════════════════ */
+  (function () {
+    var toggle = document.getElementById('f_local_publico');
+    var field  = document.getElementById('f_direccion_field');
+    var input  = document.getElementById('f_direccion');
+    if (!toggle || !field || !input) return;
+    toggle.addEventListener('change', function () {
+      if (toggle.checked) {
+        field.classList.remove('is-hidden');
+        setTimeout(function () { input.focus({ preventScroll: false }); }, 80);
+      } else {
+        field.classList.add('is-hidden');
+        input.value = '';
+        clearError('f_direccion');
+      }
     });
   })();
 

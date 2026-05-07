@@ -287,7 +287,7 @@ exports.handler = async (event) => {
           <p>Escanea para abrir este perfil</p>
           ${data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
           ${data.email ? `<p>${esc(data.email)}</p>` : ''}
-          ${data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
+          ${data.local_publico && data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
           ${isPro ? `<div>
             <a href="/api/qr/${esc(data.slug)}" download="perfilapro-${esc(data.slug)}.svg" class="pp-qr__dl" title="SVG vectorial — escala infinita, ideal imprenta">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

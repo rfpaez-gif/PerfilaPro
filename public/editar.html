@@ -963,7 +963,7 @@
         <div class="pp-field">
           <label class="pp-field__label" for="cp">Código postal</label>
           <input type="text" class="pp-input" id="cp" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="postal-code" placeholder="Ej. 28001">
-          <p class="pp-field__hint">5 dígitos. Determina en qué provincia aparece tu perfil en el directorio.</p>
+          <p class="pp-field__hint" id="cpHint">5 dígitos. Determina en qué provincia aparece tu perfil en el directorio.</p>
         </div>
 
         <div class="pp-field">
@@ -998,9 +998,22 @@
         </div>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="direccion">Dirección<span class="pp-field__optional">(opcional)</span></label>
-          <input type="text" class="pp-input" id="direccion" placeholder="Ej: Calle Mayor 15, local B, Alicante">
-          <p class="pp-field__hint">Aparecerá con enlace a Google Maps. Ideal para comercios y locales.</p>
+          <label class="pp-toggle-row" for="local_publico">
+            <span class="pp-toggle-row__info">
+              <span class="pp-toggle-row__label">Tengo local público</span>
+              <span class="pp-toggle-row__hint">Tienda, taller o consulta donde recibes clientes. Si lo activas, podrás añadir la dirección y aparecerá un enlace a Google Maps en tu tarjeta.</span>
+            </span>
+            <span class="pp-toggle-sw">
+              <input id="local_publico" type="checkbox">
+              <span class="pp-toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+
+        <div class="pp-field" id="direccion_field" style="display:none">
+          <label class="pp-field__label" for="direccion">Dirección<span class="pp-field__optional">(una línea)</span></label>
+          <input type="text" class="pp-input" id="direccion" placeholder="Ej: Calle Mayor 15, local B" maxlength="200">
+          <p class="pp-field__hint">Calle y número. La ciudad la sabemos por tu CP — no la repitas.</p>
         </div>
 
         <hr class="pp-divider">
@@ -1035,16 +1048,70 @@
 </footer>
 
 <script>
-  /* ── CP input · sanitize en tiempo real ── */
+  /* ── CP input · sanitize en tiempo real + lookup municipio ── */
   function getCp() {
     return (document.getElementById('cp').value || '').replace(/\D/g, '').slice(0, 5);
   }
   (function () {
-    const inp = document.getElementById('cp');
+    const inp  = document.getElementById('cp');
+    const hint = document.getElementById('cpHint');
     if (!inp) return;
+    const defaultHintText = hint ? hint.textContent : '';
+    let debounceTimer = null;
+    let pendingFetch  = null;
+
+    function setHint(text, state) {
+      if (!hint) return;
+      hint.textContent = text;
+      hint.classList.remove('is-error', 'is-success', 'is-loading');
+      if (state) hint.classList.add(state);
+    }
+
+    function lookup(cp) {
+      if (pendingFetch && typeof pendingFetch.abort === 'function') {
+        try { pendingFetch.abort(); } catch (e) {}
+      }
+      const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      pendingFetch = ctrl;
+      setHint('Buscando municipio…', 'loading');
+      fetch('/api/cp-lookup?cp=' + encodeURIComponent(cp), ctrl ? { signal: ctrl.signal } : {})
+        .then(r => r.json())
+        .then(r => {
+          if (inp.value !== cp) return;
+          if (r && r.ok) {
+            setHint('→ ' + r.municipality_name + ' (' + r.province_slug + ')', 'success');
+          } else if (r && r.reason === 'not_found') {
+            setHint('Ese CP no está en nuestro catálogo. Revísalo o sigue adelante.', 'error');
+          } else {
+            setHint('CP fuera de rango. Los CPs españoles van del 01000 al 52999.', 'error');
+          }
+        })
+        .catch(() => {});
+    }
+
     inp.addEventListener('input', function () {
       const v = inp.value.replace(/\D/g, '').slice(0, 5);
       if (v !== inp.value) inp.value = v;
+      clearTimeout(debounceTimer);
+      if (!v) { setHint(defaultHintText, null); return; }
+      if (v.length < 5) { setHint('Sigue escribiendo… (' + v.length + '/5)', 'loading'); return; }
+      debounceTimer = setTimeout(() => lookup(v), 250);
+    });
+  })();
+
+  /* ── Local público · toggle muestra/oculta input dirección ── */
+  (function () {
+    const toggle = document.getElementById('local_publico');
+    const field  = document.getElementById('direccion_field');
+    const input  = document.getElementById('direccion');
+    if (!toggle || !field || !input) return;
+    toggle.addEventListener('change', function () {
+      if (toggle.checked) {
+        field.style.display = '';
+        setTimeout(() => input.focus({ preventScroll: false }), 60);
+      } else {
+        field.style.display = 'none';
+      }
     });
   })();
 
@@ -1252,6 +1319,20 @@
       descEl.value = card.descripcion || '';
       document.getElementById('editDescCount').textContent = descEl.value.length;
       document.getElementById('direccion').value = card.direccion || '';
+      // Toggle local_publico: arranca activado solo si la BD lo tiene a true
+      // (independiente de si hay dirección — si la BD lo tiene activo y la
+      // dirección está vacía, el usuario puede rellenarla sin activar nada).
+      const lpEl    = document.getElementById('local_publico');
+      const dirField = document.getElementById('direccion_field');
+      if (lpEl && dirField) {
+        lpEl.checked = !!card.local_publico;
+        dirField.style.display = lpEl.checked ? '' : 'none';
+      }
+      // Si llega CP precargado, dispara el lookup para que el hint muestre el municipio.
+      const cpInputEl = document.getElementById('cp');
+      if (cpInputEl && cpInputEl.value) {
+        cpInputEl.dispatchEvent(new Event('input'));
+      }
       descEl.addEventListener('input', function() {
         document.getElementById('editDescCount').textContent = this.value.length;
       });
@@ -1337,6 +1418,8 @@
               let   foto_url    = document.getElementById('foto_url').value.trim();
               const descripcion = document.getElementById('descripcion').value.trim();
               const direccion   = document.getElementById('direccion').value.trim();
+              const lpEl        = document.getElementById('local_publico');
+              const local_publico = !!(lpEl && lpEl.checked && direccion);
               const servicios   = Array.from(document.querySelectorAll('#servicesList input'))
                                        .map(i => i.value.trim()).filter(Boolean);
 
@@ -1370,7 +1453,7 @@
               const saveRes = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
+                body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico }),
               });
               if (!saveRes.ok) {
                 const err = await saveRes.json().catch(() => ({}));
@@ -1390,7 +1473,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   nombre, sector: tagline, cp, whatsapp, servicios,
-                  desc: descripcion, direccion, foto: foto_url, telefono,
+                  desc: descripcion, direccion, local_publico,
+                  foto: foto_url, telefono,
                   email: card.email,
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
@@ -1458,6 +1542,8 @@
     let foto_url = document.getElementById('foto_url').value.trim();
     const descripcion = document.getElementById('descripcion').value.trim();
     const direccion = document.getElementById('direccion').value.trim();
+    const lpEl = document.getElementById('local_publico');
+    const local_publico = !!(lpEl && lpEl.checked && direccion);
     const servicios = Array.from(document.querySelectorAll('#servicesList input'))
       .map(i => i.value.trim()).filter(Boolean);
 
@@ -1502,7 +1588,7 @@
       const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion }),
+        body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

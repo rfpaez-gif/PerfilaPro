@@ -111,7 +111,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code } = body;
 
     if (!nombre || !whatsapp || !cp || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
@@ -203,6 +203,13 @@ function makeHandler(db, emailClient = resend) {
     const zonaResolved = cpRow?.municipality_name || '';
     const citySlugResolved = cpRow?.province_slug || null;
 
+    // direccion se persiste siempre que llegue (texto libre, una línea); el
+    // toggle local_publico decide si /c/:slug la renderiza públicamente.
+    // Por defecto local_publico=false para no exponer la casa de un autónomo
+    // a domicilio que rellenó su dirección sin pensarlo.
+    const direccionClean = direccion ? stripTags(direccion).substring(0, 200) : null;
+    const localPublicoBool = local_publico === true && !!direccionClean;
+
     const row = {
       slug,
       nombre:           cleanNombre,
@@ -218,6 +225,8 @@ function makeHandler(db, emailClient = resend) {
       category_id,
       specialty_custom: specialtyCustomClean,
       ocupacion_code:   ocupacionCodeClean,
+      direccion:        direccionClean,
+      local_publico:    localPublicoBool,
       edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };
