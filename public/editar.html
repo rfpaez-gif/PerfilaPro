@@ -953,6 +953,9 @@
         <div class="pp-field">
           <label class="pp-field__label" for="nombre">Nombre completo</label>
           <input type="text" class="pp-input" id="nombre" placeholder="Ej: Juan García López">
+          <p class="pp-field__hint" id="nombreHint">
+            Tu URL pública es <strong>perfilapro.es/c/<span id="nombreSlugHint">tu-perfil</span></strong> y no cambia al editar el nombre. ¿Tienes una errata grave en la URL? Escríbenos a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y la corregimos.
+          </p>
         </div>
 
         <div class="pp-field">
@@ -1307,6 +1310,8 @@
       document.getElementById('editPhase').style.display = '';
       document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
       document.getElementById('nombre').value = card.nombre || '';
+      const slugHintEl = document.getElementById('nombreSlugHint');
+      if (slugHintEl && card.slug) slugHintEl.textContent = card.slug;
       document.getElementById('tagline').value = card.tagline || '';
       document.getElementById('cp').value = card.cp || '';
       document.getElementById('whatsapp').value = card.whatsapp || '';
