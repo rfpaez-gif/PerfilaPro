@@ -417,8 +417,55 @@
       background: var(--color-verde-light);
     }
     .pp-success__cta-row {
-      display: flex; gap: .75rem; justify-content: center;
-      flex-wrap: wrap; margin-top: var(--pp-s-6);
+      display: flex; flex-direction: column; gap: .65rem; align-items: center;
+      margin-top: var(--pp-s-6);
+    }
+    .pp-success__cta-row .pp-btn { width: 100%; max-width: 340px; }
+
+    /* ── Checklist "lo que falta" ───────────────────────────── */
+    .pp-success__checklist {
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: 1rem 1.25rem;
+      margin: var(--pp-s-5) auto var(--pp-s-2);
+      max-width: 380px;
+      text-align: left;
+    }
+    .pp-success__checklist-title {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--color-gris-500);
+      margin: 0 0 .5rem;
+    }
+    .pp-success__check-item {
+      display: flex; align-items: center; gap: .65rem;
+      font-size: 14px; color: var(--color-tinta);
+      padding: .35rem 0;
+    }
+    .pp-success__check-item::before {
+      content: ""; flex-shrink: 0;
+      width: 16px; height: 16px;
+      border: 1.5px dashed var(--color-gris-500);
+      opacity: .6;
+      border-radius: 50%;
+    }
+
+    /* ── Share row (links pequeños debajo de los CTAs) ──────── */
+    .pp-success__share-row {
+      display: flex; gap: 1rem; justify-content: center;
+      flex-wrap: wrap; margin-top: var(--pp-s-5);
+    }
+    .pp-success__share-link {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: 13px; color: var(--color-gris-500);
+      text-decoration: none;
+      border-bottom: 1px dotted transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .pp-success__share-link:hover {
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-dark);
     }
 
     /* ── Trust row debajo del form ──────────────────────────── */
@@ -680,7 +727,7 @@
             <div class="pp-success__icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <h2 class="pp-success__title">¡Tu perfil está listo!</h2>
+            <h2 class="pp-success__title">¡Tu perfil básico está publicado!</h2>
             <p class="pp-success__lead">Hemos enviado el enlace de edición a tu email.</p>
             <div>
               <p class="pp-success__caption">Tu URL pública:</p>
@@ -689,11 +736,23 @@
                 <span id="successUrlText"></span>
               </button>
             </div>
+
+            <div class="pp-success__checklist" aria-label="Lo que falta para activar tu perfil">
+              <p class="pp-success__checklist-title">Para activar te falta</p>
+              <div class="pp-success__check-item">Foto de perfil</div>
+              <div class="pp-success__check-item">QR para escaparate y redes</div>
+              <div class="pp-success__check-item">Aparecer en el directorio cuando alguien busque tu oficio</div>
+            </div>
+
             <div class="pp-success__cta-row">
-              <a id="btnEditarPerfil" href="#" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Completar mi perfil →</a>
-              <a id="btnVerPerfil" href="#" class="pp-btn pp-btn--secondary pp-btn--lg pp-btn--pill">Ver mi tarjeta</a>
-              <a id="btnWaPerfil" href="#" class="pp-btn pp-btn--wa pp-btn--lg pp-btn--pill" target="_blank" rel="noopener">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              <a id="btnActivarPerfil" href="#" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Activar todo (9€) →</a>
+              <a id="btnEditarPerfil" href="#" class="pp-btn pp-btn--ghost pp-btn--pill">Editar perfil</a>
+            </div>
+
+            <div class="pp-success__share-row">
+              <a id="btnVerPerfil" href="#" class="pp-success__share-link">Ver mi tarjeta</a>
+              <a id="btnWaPerfil" href="#" class="pp-success__share-link" target="_blank" rel="noopener">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
                 Compartir por WhatsApp
               </a>
             </div>
@@ -1294,6 +1353,9 @@
       var cardUrl = siteUrl + '/c/' + slug;
 
       document.getElementById('successUrlText').textContent = cardUrl;
+      // CTA principal va al editor con scroll directo al banner de upgrade —
+      // el usuario aterriza viendo "elige plan" sin pasos intermedios.
+      document.getElementById('btnActivarPerfil').href = r.data.edit_url + '#freeBanner';
       document.getElementById('btnEditarPerfil').href = r.data.edit_url;
       document.getElementById('btnVerPerfil').href = '/c/' + slug;
       document.getElementById('btnWaPerfil').href =

@@ -1391,6 +1391,13 @@
         document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
         document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
         freeBanner.classList.add('is-visible');
+        // Si el usuario llega con #freeBanner en la URL (CTA "Activar todo"
+        // desde la pantalla de éxito de /alta), forzamos scroll al banner una
+        // vez ya está visible — el scroll nativo del browser ocurre antes de
+        // que loadEditForm resuelva y el banner sigue oculto.
+        if (location.hash === '#freeBanner') {
+          setTimeout(function () { freeBanner.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+        }
         let selectedPlan = 'base';
         freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
           btn.addEventListener('click', function() {
