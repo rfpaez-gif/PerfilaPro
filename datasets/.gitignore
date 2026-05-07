@@ -1,0 +1,5 @@
+# Datasets en bruto (XLSX, ZIP) — son inputs de procesamiento únicos.
+# El output procesado vive en supabase/migrations/*.csv y *.sql.
+*.xlsx
+*.xls
+*.zip

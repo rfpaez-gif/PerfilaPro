@@ -111,7 +111,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code } = body;
 
     if (!nombre || !whatsapp || !cp || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
@@ -167,12 +167,34 @@ function makeHandler(db, emailClient = resend) {
       category_id = cat?.id || null;
     }
 
-    // specialty_custom solo se persiste cuando la specialty es 'otro-oficio'
-    // (flujo "No me veo aqui"). El PDF imprimible y el chip publico lo
-    // prefieren sobre specialty_label para mostrar el oficio real.
-    const specialtyCustomClean = (category_specialty === 'otro-oficio' && specialty_custom)
-      ? stripTags(specialty_custom).substring(0, 60)
-      : null;
+    // ocupacion_code (catálogo SEPE/SISPE 2011, migración 014). Se valida
+    // contra la tabla ocupaciones; si no existe o el formato no encaja,
+    // queda null sin bloquear el alta. El nombre canónico SEPE se persiste
+    // en specialty_custom para que la tarjeta y la página pública muestren
+    // el oficio real escogido por el usuario.
+    let ocupacionCodeClean = null;
+    let ocupacionName = null;
+    if (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) {
+      const { data: ocup } = await db
+        .from('ocupaciones')
+        .select('code, name')
+        .eq('code', String(ocupacion_code))
+        .maybeSingle();
+      if (ocup) {
+        ocupacionCodeClean = ocup.code;
+        ocupacionName = ocup.name;
+      }
+    }
+
+    // specialty_custom: orden de prioridad
+    //   1) ocupación SEPE elegida (lenguaje natural, ej. "Albañiles")
+    //   2) free text del flujo "otro-oficio" (legacy del picker actual)
+    //   3) null (cae al specialty_label de la categoría)
+    const specialtyCustomClean = ocupacionName
+      ? ocupacionName.substring(0, 60)
+      : (category_specialty === 'otro-oficio' && specialty_custom)
+        ? stripTags(specialty_custom).substring(0, 60)
+        : null;
 
     // CP → municipio + city_slug. zona pasa a guardarse como nombre humano del
     // municipio resuelto (ej. "Coslada"), city_slug como slug de la capital de
@@ -195,6 +217,7 @@ function makeHandler(db, emailClient = resend) {
       status:           'active',
       category_id,
       specialty_custom: specialtyCustomClean,
+      ocupacion_code:   ocupacionCodeClean,
       edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };

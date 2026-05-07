@@ -223,7 +223,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, foto, plan, agent_code } =
+      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, foto, plan, agent_code, ocupacion_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -246,6 +246,25 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const cpRow = cpNormalized ? await lookupCp(db, cpNormalized) : null;
       const zonaResolved = cpRow?.municipality_name || '';
       const citySlugResolved = cpRow?.province_slug || null;
+
+      // Catálogo SEPE: si el alta usó el autocomplete del picker 'No me veo',
+      // la metadata trae ocupacion_code. Resolvemos a name para guardarlo
+      // como specialty_custom (lenguaje natural en la tarjeta y en el page
+      // público). El sector_slug del catálogo no se usa aún para
+      // category_id — se queda dormido hasta sprint de directorio sectorial.
+      let ocupacionCodeClean = null;
+      let ocupacionName = null;
+      if (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) {
+        const { data: ocup } = await db
+          .from('ocupaciones')
+          .select('code, name')
+          .eq('code', String(ocupacion_code))
+          .maybeSingle();
+        if (ocup) {
+          ocupacionCodeClean = ocup.code;
+          ocupacionName = ocup.name;
+        }
+      }
 
       // Auto-publicación en directorio: el perfil pagado entra al directorio
       // si tenemos los dos pilares (categoría + ubicación). category_id se
@@ -271,7 +290,9 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         email,
         edit_token: editToken,
         agent_code: agent_code || null,
+        ocupacion_code: ocupacionCodeClean,
       };
+      if (ocupacionName) upsertRow.specialty_custom = ocupacionName.substring(0, 60);
 
       const { error } = await db.from('cards').upsert(upsertRow, { onConflict: 'slug' });
 

@@ -7,6 +7,7 @@ const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 const mockMaybeSingle = vi.fn();             // cards slug-uniqueness check
 const mockCategoryMaybeSingle = vi.fn();     // categories sector+specialty lookup
 const mockPostalMaybeSingle = vi.fn();       // postal_codes CP lookup
+const mockOcupacionMaybeSingle = vi.fn();    // ocupaciones SEPE lookup
 const mockInsert = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFrom = vi.fn();
@@ -59,6 +60,7 @@ describe('register-free handler', () => {
       data: { cp: '03001', municipality_name: 'Alicante', province_slug: 'alicante' },
       error: null,
     });
+    mockOcupacionMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockInsert.mockResolvedValue({ error: null });
 
     mockFrom.mockImplementation((table) => {
@@ -72,6 +74,9 @@ describe('register-free handler', () => {
       }
       if (table === 'postal_codes') {
         return makeSelectBuilder(mockPostalMaybeSingle);
+      }
+      if (table === 'ocupaciones') {
+        return makeSelectBuilder(mockOcupacionMaybeSingle);
       }
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: mockMaybeSingle };
     });
@@ -261,6 +266,57 @@ describe('register-free handler', () => {
     expect(res.statusCode).toBe(200);
     const insertCall = mockInsert.mock.calls[0][0];
     expect(insertCall.specialty_custom).toBeNull();
+  });
+
+  it('persiste ocupacion_code y usa el name SEPE como specialty_custom', async () => {
+    mockOcupacionMaybeSingle.mockResolvedValueOnce({
+      data: { code: '74301014', name: 'Mecánicos de Motor de Aviación' },
+      error: null,
+    });
+    const body = { ...validBody, ocupacion_code: '74301014' };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.ocupacion_code).toBe('74301014');
+    expect(insertCall.specialty_custom).toBe('Mecánicos de Motor de Aviación');
+  });
+
+  it('ignora ocupacion_code con formato inválido (no 8 dígitos)', async () => {
+    const body = { ...validBody, ocupacion_code: '123' };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.ocupacion_code).toBeNull();
+    expect(mockOcupacionMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('persiste null si ocupacion_code formato OK pero no existe en BD', async () => {
+    mockOcupacionMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    const body = { ...validBody, ocupacion_code: '99999999' };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.ocupacion_code).toBeNull();
+    expect(insertCall.specialty_custom).toBeNull();
+  });
+
+  it('ocupacion_code SEPE tiene prioridad sobre el specialty_custom legacy', async () => {
+    mockOcupacionMaybeSingle.mockResolvedValueOnce({
+      data: { code: '74301014', name: 'Mecánicos de Motor de Aviación' },
+      error: null,
+    });
+    mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 99 }, error: null });
+    const body = {
+      ...validBody,
+      ocupacion_code: '74301014',
+      category_sector: 'otros',
+      category_specialty: 'otro-oficio',
+      specialty_custom: 'Otra cosa libre',
+    };
+    const res = await handler(buildEvent({ body }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.specialty_custom).toBe('Mecánicos de Motor de Aviación');
   });
 
   it('strips HTML tags from specialty_custom', async () => {

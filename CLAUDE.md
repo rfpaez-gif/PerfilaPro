@@ -230,6 +230,20 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/download-card` | `download-card` |
 | `/api/download-qr` | `download-qr` |
 | `/api/resend-kit` | `resend-kit` |
+| `/api/ocupaciones-search` | `ocupaciones-search` |
+
+### Catálogo SEPE/SISPE de ocupaciones
+
+**`ocupaciones` table** (migración 014) — catálogo oficial de ocupaciones del SEPE (CNO-SISPE 2011, 2.221 entradas de 8 dígitos en lenguaje natural). Mapeadas a sectores PerfilaPro vía mapping subgrupo→sector embebed en el procesamiento. Alimenta el autocomplete del picker `No me veo` en `alta.html`:
+
+- `code` text PK (8 dígitos)
+- `name` text
+- `name_normalized` text (lowercase + sin acentos, indexado con GIN trigram para ILIKE rápido)
+- `sector_slug` text (CHECK contra los 20 sectores internos)
+
+`cards.ocupacion_code` (text, nullable) preserva el código si el alta usó el catálogo. El nombre canónico SEPE se persiste en `cards.specialty_custom` para que la tarjeta y la página pública muestren el oficio real (ej. "Mecánicos de Motor de Aviación").
+
+`/api/ocupaciones-search?q=fonta&limit=10` (función `ocupaciones-search.js`) hace ILIKE doble pase (starts-with + contains) y devuelve top N. Cache CDN 5 min, rate limit 60 req / 10 min por IP.
 
 ### Testing conventions
 

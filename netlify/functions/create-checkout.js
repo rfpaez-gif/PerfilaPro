@@ -49,7 +49,7 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
     if (!nombre || !cp || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -94,6 +94,10 @@ function makeHandler(stripe) {
           foto: foto || '',
           plan,
           agent_code: agent_code || '',
+          // Código SEPE/SISPE (8 dígitos) si el alta usó el catálogo. La
+          // resolución a name + sector_slug ocurre en stripe-webhook tras
+          // pago confirmado para evitar lookups innecesarios aquí.
+          ocupacion_code: (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) ? String(ocupacion_code) : '',
         },
         success_url: `${siteUrl}/success.html?slug=${slug}`,
         cancel_url:  cancelUrl || `${siteUrl}/#crear`,
