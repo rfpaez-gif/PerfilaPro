@@ -40,7 +40,7 @@ function buildStatsEmail({ nombre, slug, visitsWeek, visitsMonth, siteUrl }) {
             <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">${trend.msg}</p>
 
             <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
-              Recibes este resumen cada lunes como usuario del plan Pro. ¿Dudas? Responde este email.
+              Recibes este resumen cada lunes como usuario del plan Anual. ¿Dudas? Responde este email.
             </p>`;
 
   const html = buildEmailLayout({

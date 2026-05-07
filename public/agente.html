@@ -341,7 +341,7 @@
     const token = localStorage.getItem('pp_agent_token');
     if (!token) location.href = '/agente-login.html';
 
-    const PLAN_LABELS = { base: 'Base', pro: 'Pro', renovacion: 'Renovación' };
+    const PLAN_LABELS = { base: 'Trimestral', pro: 'Anual', renovacion: 'Renovación' };
 
     document.getElementById('agentName').textContent = localStorage.getItem('pp_agent_name') || '';
 
