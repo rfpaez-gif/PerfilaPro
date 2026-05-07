@@ -70,7 +70,7 @@ exports.handler = async (event) => {
     </div>`;
   }).join('');
 
-  const DEMO_SLUGS = ['paco-fontanero-alicante'];
+  const DEMO_SLUGS = ['paco-fontanero-alicante', 'pasteleria-sebastian'];
   const isDemo = DEMO_SLUGS.includes(data.slug);
 
   if (isDemo && !data.foto_url) {
