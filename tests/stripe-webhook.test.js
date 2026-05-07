@@ -333,12 +333,12 @@ describe('buildEmail', () => {
     expect(html).toContain('https://perfilapro.com/c/maria-electricista');
   });
 
-  it('muestra "Base" para plan base y "Premium" para plan pro', () => {
+  it('muestra "Trimestral" para plan base y "Anual" para plan pro', () => {
     const { html: htmlBase } = buildEmail({ ...base, plan: 'base' });
-    expect(htmlBase).toContain('Base');
+    expect(htmlBase).toContain('Trimestral');
 
     const { html: htmlPro } = buildEmail({ ...base, plan: 'pro' });
-    expect(htmlPro).toContain('Premium');
+    expect(htmlPro).toContain('Anual');
   });
 
   it('el subject incluye el nombre del usuario', () => {

@@ -16,9 +16,14 @@ const ISSUER = {
   web: 'perfilapro.es',
 };
 
+// Etiquetas user-facing alineadas con el copy de landing/alta/editar
+// (Gratis / Trimestral / Anual). Las KEYS (`base`, `pro`) se mantienen
+// intactas: son contractuales con Stripe (`STRIPE_PRICE_BASE`,
+// `STRIPE_PRICE_PRO`), columnas de BD y eventos PostHog. Solo cambia
+// el `label` que ven los humanos en facturas, emails y panel admin.
 const PLAN_INFO = {
-  base:       { label: 'Base',       duration: '90 días',   total: 9.00 },
-  pro:        { label: 'Pro',        duration: '365 días',  total: 19.00 },
+  base:       { label: 'Trimestral', duration: '3 meses',   total: 9.00 },
+  pro:        { label: 'Anual',      duration: '1 año',     total: 19.00 },
   renovacion: { label: 'Renovación', duration: '12 meses',  total: 5.00 },
 };
 

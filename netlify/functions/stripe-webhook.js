@@ -27,8 +27,12 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken }) {
   // dlCardUrl bajo el editToken para mostrar/ocultar la sección "kit físico"
   // como una unidad: si el token no llega, no hay sección de re-descargas.
   const dlQrUrl   = editToken ? `${siteUrl}/api/qr/${slug}?format=png&size=1024` : null;
-  const planLabel = plan === 'pro' ? 'Premium' : 'Base';
-  const planDuration = plan === 'pro' ? '365 días' : '90 días';
+  // Etiquetas user-facing leídas de PLAN_INFO (single source of truth con
+  // las facturas y el panel admin). Las KEYS `base` / `pro` son contractuales
+  // con Stripe y BD; los humanos ven "Trimestral" / "Anual".
+  const planInfo = PLAN_INFO[plan] || PLAN_INFO.base;
+  const planLabel    = planInfo.label;
+  const planDuration = planInfo.duration;
   const expiraFecha = new Date(expiresAt).toLocaleDateString('es-ES', {
     day: 'numeric', month: 'long', year: 'numeric',
   });

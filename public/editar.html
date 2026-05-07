@@ -846,15 +846,15 @@
 
           <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
             <button class="pp-plan-btn is-selected" data-plan="base" type="button">
-              <strong>Base · 9€</strong>
-              <span>90 días</span>
+              <strong>Trimestral · 9€</strong>
+              <span>3 meses</span>
             </button>
             <button class="pp-plan-btn" data-plan="pro" type="button">
-              <strong>Pro · 20€</strong>
-              <span>365 días · estadísticas</span>
+              <strong>Anual · 19€</strong>
+              <span>1 año · estadísticas</span>
             </button>
           </div>
-          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Base · 9€ →</button>
+          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Trimestral · 9€ →</button>
         </div>
 
         <div class="pp-kit" id="kitBanner">
@@ -927,7 +927,7 @@
         <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadísticas del perfil">
           <header class="pp-stats__head">
             <h2 class="pp-stats__title">Estadísticas</h2>
-            <span class="pp-stats__badge">Plan Pro</span>
+            <span class="pp-stats__badge">Plan Anual</span>
           </header>
           <div class="pp-stats__grid">
             <div class="pp-stats__cell">
@@ -1168,7 +1168,7 @@
         btn.addEventListener('click', function() {
           freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
           btn.classList.add('is-selected');
-          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
         });
       });
     }
@@ -1409,7 +1409,7 @@
             freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
             btn.classList.add('is-selected');
             selectedPlan = btn.dataset.plan;
-            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Pro · 20€ →' : 'Activar plan Base · 9€ →';
+            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
           });
         });
         if (freeBannerBtn) {
