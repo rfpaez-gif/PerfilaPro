@@ -185,6 +185,7 @@
     .pp-arch-search {
       position: relative;
       margin-top: var(--pp-s-2);
+      scroll-margin-top: 88px;
     }
     .pp-arch-search__label {
       display: block;
@@ -776,8 +777,11 @@
       card.addEventListener('click', function () {
         if (card.id === 'archOther') {
           var inp = document.getElementById('archSearch');
-          inp.focus();
-          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var section = inp.closest('.pp-arch-search') || inp;
+          grid.querySelectorAll('.pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+          card.classList.add('is-selected');
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(function () { inp.focus({ preventScroll: true }); }, 350);
           return;
         }
         var rol = card.dataset.rol;
