@@ -5,6 +5,7 @@ const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { capture: captureEvent } = require('./lib/posthog-server');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -110,14 +111,19 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, zona, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code } = body;
 
-    if (!nombre || !whatsapp || !zona || !email) {
-      return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, zona, email' }) };
+    if (!nombre || !whatsapp || !cp || !email) {
+      return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Email inválido' }) };
+    }
+
+    const cpNormalized = normalizeCp(cp);
+    if (!isValidCp(cpNormalized)) {
+      return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Código postal inválido. Introduce 5 dígitos de un CP español (01000-52999).' }) };
     }
 
     const cleanNombre = stripTags(nombre).substring(0, 100);
@@ -161,25 +167,57 @@ function makeHandler(db, emailClient = resend) {
       category_id = cat?.id || null;
     }
 
-    // specialty_custom solo se persiste cuando la specialty es 'otro-oficio'
-    // (flujo "No me veo aqui"). El PDF imprimible y el chip publico lo
-    // prefieren sobre specialty_label para mostrar el oficio real.
-    const specialtyCustomClean = (category_specialty === 'otro-oficio' && specialty_custom)
-      ? stripTags(specialty_custom).substring(0, 60)
-      : null;
+    // ocupacion_code (catálogo SEPE/SISPE 2011, migración 014). Se valida
+    // contra la tabla ocupaciones; si no existe o el formato no encaja,
+    // queda null sin bloquear el alta. El nombre canónico SEPE se persiste
+    // en specialty_custom para que la tarjeta y la página pública muestren
+    // el oficio real escogido por el usuario.
+    let ocupacionCodeClean = null;
+    let ocupacionName = null;
+    if (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) {
+      const { data: ocup } = await db
+        .from('ocupaciones')
+        .select('code, name')
+        .eq('code', String(ocupacion_code))
+        .maybeSingle();
+      if (ocup) {
+        ocupacionCodeClean = ocup.code;
+        ocupacionName = ocup.name;
+      }
+    }
+
+    // specialty_custom: orden de prioridad
+    //   1) ocupación SEPE elegida (lenguaje natural, ej. "Albañiles")
+    //   2) free text del flujo "otro-oficio" (legacy del picker actual)
+    //   3) null (cae al specialty_label de la categoría)
+    const specialtyCustomClean = ocupacionName
+      ? ocupacionName.substring(0, 60)
+      : (category_specialty === 'otro-oficio' && specialty_custom)
+        ? stripTags(specialty_custom).substring(0, 60)
+        : null;
+
+    // CP → municipio + city_slug. zona pasa a guardarse como nombre humano del
+    // municipio resuelto (ej. "Coslada"), city_slug como slug de la capital de
+    // provincia (ej. "madrid") para que SEO de directorio agrupe correctamente.
+    const cpRow = await lookupCp(db, cpNormalized);
+    const zonaResolved = cpRow?.municipality_name || '';
+    const citySlugResolved = cpRow?.province_slug || null;
 
     const row = {
       slug,
       nombre:           cleanNombre,
       tagline,
       whatsapp:         waNumber,
-      zona:             stripTags(zona).substring(0, 100),
+      cp:               cpNormalized,
+      zona:             zonaResolved.substring(0, 100),
+      city_slug:        citySlugResolved,
       servicios:        serviciosParsed,
       email,
       plan:             'base',
       status:           'active',
       category_id,
       specialty_custom: specialtyCustomClean,
+      ocupacion_code:   ocupacionCodeClean,
       edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
     };

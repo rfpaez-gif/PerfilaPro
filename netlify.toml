@@ -176,6 +176,11 @@
   to     = "/.netlify/functions/lab-gemini"
   status = 200
 
+[[redirects]]
+  from   = "/api/ocupaciones-search"
+  to     = "/.netlify/functions/ocupaciones-search"
+  status = 200
+
 [[edge_functions]]
   path     = "/api/admin-*"
   function = "rate-limiter"

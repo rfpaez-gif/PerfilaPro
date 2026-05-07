@@ -17,7 +17,7 @@ function buildEvent({ method = 'POST', body = {}, ip = '1.2.3.4' } = {}) {
 
 const validBody = {
   nombre:   'Paco García',
-  zona:     'Alicante',
+  cp:       '03001',
   whatsapp: '600111222',
   plan:     'base',
   servicios: [],
@@ -52,6 +52,18 @@ describe('create-checkout handler', () => {
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).url).toBe('https://checkout.stripe.com/test');
     expect(mockCreate).toHaveBeenCalledOnce();
+  });
+
+  it('devuelve 400 si CP no es un código postal español válido', async () => {
+    const res = await handler(buildEvent({ body: { ...validBody, cp: '99999' } }));
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('inyecta cp normalizado en metadata (pad-left)', async () => {
+    await handler(buildEvent({ body: { ...validBody, cp: '3001' } }));
+    const params = mockCreate.mock.calls[0][0];
+    expect(params.metadata.cp).toBe('03001');
+    expect(params.metadata.zona).toBeUndefined();
   });
 
   it('devuelve 429 al superar el límite por IP (10 requests / 10 min)', async () => {

@@ -7,13 +7,46 @@ const mockConstructEvent = vi.fn();
 const mockUpsert = vi.fn();
 const mockUpdateEq = vi.fn();
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }));
-const mockFrom = vi.fn(() => ({ upsert: mockUpsert, update: mockUpdate }));
+const mockPostalMaybeSingle = vi.fn();   // postal_codes lookup
+const mockCardSelectSingle = vi.fn();    // cards SELECT post-upsert (category_id + categories)
 const mockEmailSend = vi.fn();
 
+function makePostalSelectChain() {
+  const c = { select: vi.fn(), eq: vi.fn(), maybeSingle: mockPostalMaybeSingle };
+  c.select.mockReturnValue(c);
+  c.eq.mockReturnValue(c);
+  return c;
+}
+
+function makeCardSelectChain() {
+  const c = { select: vi.fn(), eq: vi.fn(), single: mockCardSelectSingle };
+  c.select.mockReturnValue(c);
+  c.eq.mockReturnValue(c);
+  return c;
+}
+
 const mockStripe = { webhooks: { constructEvent: mockConstructEvent } };
-const mockDb = { from: mockFrom };
 const mockEmail = { emails: { send: mockEmailSend } };
 
+// El mockFrom es un dispatch por nombre de tabla. Las builders de cards
+// son dinámicas según el método llamado: upsert para writes, select+single
+// para el read post-upsert (category_id + specialty_label), update+eq para
+// directory_visible y kit_email_sent_at.
+const mockFrom = vi.fn();
+
+function defaultFromImpl(table) {
+  if (table === 'postal_codes') return makePostalSelectChain();
+  if (table === 'cards') {
+    return {
+      upsert: mockUpsert,
+      update: mockUpdate,
+      ...makeCardSelectChain(),
+    };
+  }
+  return { upsert: mockUpsert, update: mockUpdate };
+}
+
+const mockDb = { from: mockFrom };
 const handler = makeHandler(mockStripe, mockDb, mockEmail);
 
 // --- Helpers ---
@@ -33,7 +66,11 @@ describe('stripe-webhook handler', () => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
     mockUpdateEq.mockResolvedValue({ error: null });
-    mockFrom.mockImplementation(() => ({ upsert: mockUpsert, update: mockUpdate }));
+    // Default: CP no resuelve (los tests existentes no envían cp). Los tests
+    // específicos de CP sobreescriben este mock.
+    mockPostalMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockCardSelectSingle.mockResolvedValue({ data: null, error: null });
+    mockFrom.mockImplementation(defaultFromImpl);
     mockEmailSend.mockResolvedValue({ id: 'email-123' });
   });
 
@@ -66,6 +103,10 @@ describe('stripe-webhook handler', () => {
   });
 
   it('activa la tarjeta y devuelve 200 cuando el upsert es exitoso', async () => {
+    mockPostalMaybeSingle.mockResolvedValueOnce({
+      data: { cp: '28001', municipality_name: 'Madrid', province_slug: 'madrid' },
+      error: null,
+    });
     mockConstructEvent.mockReturnValue(
       buildStripeEvent({
         metadata: {
@@ -73,7 +114,7 @@ describe('stripe-webhook handler', () => {
           nombre: 'Juan García',
           tagline: 'Fontanero profesional',
           whatsapp: '+34600000000',
-          zona: 'Madrid',
+          cp: '28001',
           servicios: JSON.stringify(['Instalación · 80€', 'Reparación · 50€']),
           foto: 'https://example.com/foto.jpg',
           plan: 'pro',
@@ -91,10 +132,71 @@ describe('stripe-webhook handler', () => {
     expect(upsertData.slug).toBe('juan-fontanero');
     expect(upsertData.status).toBe('active');
     expect(upsertData.plan).toBe('pro');
+    expect(upsertData.cp).toBe('28001');
+    expect(upsertData.zona).toBe('Madrid');
+    expect(upsertData.city_slug).toBe('madrid');
     expect(upsertData.servicios).toEqual(['Instalación · 80€', 'Reparación · 50€']);
     expect(upsertData.email).toBeNull();
     expect(upsertData.phone).toBeUndefined();
     expect(upsertData.telefono).toBeUndefined();
+  });
+
+  it('auto-publica directory_visible=true cuando hay category_id + city_slug', async () => {
+    mockPostalMaybeSingle.mockResolvedValueOnce({
+      data: { cp: '28001', municipality_name: 'Madrid', province_slug: 'madrid' },
+      error: null,
+    });
+    mockCardSelectSingle.mockResolvedValueOnce({
+      data: { category_id: 'cat-uuid', categories: { specialty_label: 'Fontaneros' } },
+      error: null,
+    });
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'juan-fontanero', nombre: 'Juan', cp: '28001', plan: 'base' },
+      })
+    );
+    await handler(buildEvent());
+    // El UPDATE de directory_visible se llama con eq(slug, ...).
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ directory_visible: true })
+    );
+  });
+
+  it('NO publica en directorio si CP no resuelve a city_slug', async () => {
+    mockPostalMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    mockCardSelectSingle.mockResolvedValueOnce({
+      data: { category_id: 'cat-uuid', categories: { specialty_label: 'Fontaneros' } },
+      error: null,
+    });
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'juan-fontanero', nombre: 'Juan', cp: '99999', plan: 'base' },
+      })
+    );
+    await handler(buildEvent());
+    expect(mockUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ directory_visible: true })
+    );
+  });
+
+  it('NO publica en directorio si no hay category_id en cards', async () => {
+    mockPostalMaybeSingle.mockResolvedValueOnce({
+      data: { cp: '28001', municipality_name: 'Madrid', province_slug: 'madrid' },
+      error: null,
+    });
+    mockCardSelectSingle.mockResolvedValueOnce({
+      data: { category_id: null, categories: null },
+      error: null,
+    });
+    mockConstructEvent.mockReturnValue(
+      buildStripeEvent({
+        metadata: { slug: 'juan', nombre: 'Juan', cp: '28001', plan: 'base' },
+      })
+    );
+    await handler(buildEvent());
+    expect(mockUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ directory_visible: true })
+    );
   });
 
   it('usa [] como valor por defecto de servicios cuando no está en los metadatos', async () => {
@@ -283,8 +385,11 @@ describe('stripe-webhook adjuntos', () => {
     vi.clearAllMocks();
     mockUpsert.mockResolvedValue({ error: null });
     mockUpdateEq.mockResolvedValue({ error: null });
+    mockPostalMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockCardSelectSingle.mockResolvedValue({ data: null, error: null });
     mockFrom.mockImplementation((table) => {
-      if (table === 'cards')    return { upsert: mockUpsert, update: mockUpdate };
+      if (table === 'postal_codes') return makePostalSelectChain();
+      if (table === 'cards')    return { upsert: mockUpsert, update: mockUpdate, ...makeCardSelectChain() };
       if (table === 'facturas') return {
         select: vi.fn().mockReturnThis(),
         like:   vi.fn().mockResolvedValue({ count: 0, error: null }),

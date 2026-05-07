@@ -1,6 +1,7 @@
 const stripeLib = require('stripe');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+const { isValidCp, normalizeCp } = require('./lib/cp-utils');
 
 const defaultStripe = stripeLib(process.env.STRIPE_SECRET_KEY);
 
@@ -48,10 +49,15 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, zona, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl } = body;
 
-    if (!nombre || !zona || !whatsapp || !plan) {
+    if (!nombre || !cp || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
+    }
+
+    const cpNormalized = normalizeCp(cp);
+    if (!isValidCp(cpNormalized)) {
+      return { statusCode: 400, body: 'Código postal inválido' };
     }
 
     const priceId = PRICES[plan];
@@ -81,13 +87,17 @@ function makeHandler(stripe) {
           nombre,
           tagline,
           whatsapp: waNumber,
-          zona,
+          cp: cpNormalized,
           servicios: JSON.stringify(servicios),
           desc: (desc || '').substring(0, 200),
           direccion: (direccion || '').substring(0, 200),
           foto: foto || '',
           plan,
           agent_code: agent_code || '',
+          // Código SEPE/SISPE (8 dígitos) si el alta usó el catálogo. La
+          // resolución a name + sector_slug ocurre en stripe-webhook tras
+          // pago confirmado para evitar lookups innecesarios aquí.
+          ocupacion_code: (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) ? String(ocupacion_code) : '',
         },
         success_url: `${siteUrl}/success.html?slug=${slug}`,
         cancel_url:  cancelUrl || `${siteUrl}/#crear`,

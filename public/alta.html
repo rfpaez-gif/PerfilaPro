@@ -185,6 +185,7 @@
     .pp-arch-search {
       position: relative;
       margin-top: var(--pp-s-2);
+      scroll-margin-top: 88px;
     }
     .pp-arch-search__label {
       display: block;
@@ -541,13 +542,9 @@
             <p class="pp-form-step__sub">Dónde trabajas y cómo pueden escribirte.</p>
             <div class="pp-fields">
               <div class="pp-field">
-                <label class="pp-field__label" for="f_zona">Ciudad o zona <span aria-hidden="true" class="pp-required">*</span></label>
-                <div class="pp-city-ac">
-                  <input class="pp-input" id="f_zona" type="text" placeholder="Escribe tu ciudad o municipio…" autocomplete="off" maxlength="100" required>
-                  <ul class="pp-city-ac__list" id="f_zona_list" role="listbox" hidden></ul>
-                  <p class="pp-city-osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
-                </div>
-                <p class="pp-field__help"></p>
+                <label class="pp-field__label" for="f_cp">Código postal <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_cp" type="text" inputmode="numeric" pattern="[0-9]{5}" placeholder="Ej. 28001" autocomplete="postal-code" maxlength="5" required>
+                <p class="pp-field__help">5 dígitos. Se usa para que tu perfil aparezca en el directorio de tu provincia.</p>
               </div>
               <div class="pp-field">
                 <label class="pp-field__label" for="f_whatsapp">WhatsApp <span aria-hidden="true" class="pp-required">*</span></label>
@@ -585,8 +582,8 @@
                 <span class="pp-review__val" id="rev_svc" style="font-weight:400;max-width:26ch">—</span>
               </div>
               <div class="pp-review__row">
-                <span class="pp-review__key">Zona</span>
-                <strong class="pp-review__val" id="rev_zona">—</strong>
+                <span class="pp-review__key">CP</span>
+                <strong class="pp-review__val" id="rev_cp">—</strong>
               </div>
               <div class="pp-review__row">
                 <span class="pp-review__key">WhatsApp</span>
@@ -709,8 +706,6 @@
   var ARCHETYPES = [];          // [{rol_profesional, sector, sector_slug, icon, diana, servicios_sugeridos, ...}]
   var selectedArch = null;       // arquetipo elegido (objeto del JSON, o {custom:true, rol_profesional, sector_slug:'otro'})
   var selectedServices = [];     // servicios elegidos (strings)
-  var _acCity = '';              // ciudad seleccionada del autocomplete OSM
-  var _acRadius = 'none';        // siempre 'none' (campo eliminado, default)
 
   /* ════════════════════════════════════════════════════════════
      UTILS
@@ -731,9 +726,8 @@
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
     });
   }
-  function getZonaFull() {
-    var city = _acCity || document.getElementById('f_zona').value.trim();
-    return city || '';
+  function getCp() {
+    return (document.getElementById('f_cp').value || '').replace(/\D/g, '').slice(0, 5);
   }
 
   /* ════════════════════════════════════════════════════════════
@@ -783,8 +777,11 @@
       card.addEventListener('click', function () {
         if (card.id === 'archOther') {
           var inp = document.getElementById('archSearch');
-          inp.focus();
-          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var section = inp.closest('.pp-arch-search') || inp;
+          grid.querySelectorAll('.pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+          card.classList.add('is-selected');
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(function () { inp.focus({ preventScroll: true }); }, 350);
           return;
         }
         var rol = card.dataset.rol;
@@ -803,59 +800,141 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     BUSCADOR DE ARQUETIPOS (autocomplete sobre los 77)
+     BUSCADOR DE ARQUETIPOS + CATÁLOGO SEPE
+     Local: matching contra ARCHETYPES (77 entradas, instantáneo).
+     Remoto: /api/ocupaciones-search → catálogo SEPE/SISPE 2011 (2.221
+     ocupaciones oficiales, debounced 250ms). Resultados locales se
+     muestran primero (más conocidos por el usuario, menor latencia).
      ════════════════════════════════════════════════════════════ */
   (function () {
     var inp = document.getElementById('archSearch');
     var lst = document.getElementById('archResults');
+    var debounceTimer = null;
+    var inflightController = null;
+    var lastQuery = '';
+    var sepeCache = {};   // query → results, evita fetch duplicados
 
     function hide() { lst.hidden = true; lst.innerHTML = ''; }
     function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 
-    function render(matches, query) {
-      if (!matches.length) {
-        lst.innerHTML =
-          '<li class="pp-arch-search__msg">' +
-            'No encontramos "' + escapeHtml(query) + '". Pulsa Enter para usarlo igualmente.' +
-          '</li>';
-        lst.hidden = false;
-        return;
-      }
-      lst.innerHTML = matches.slice(0, 12).map(function (a) {
-        return (
-          '<li class="pp-arch-search__item" role="option" data-rol="' + escapeHtml(a.rol_profesional) + '">' +
+    // Mapea sector_slug del catálogo SEPE al label humano (ej. 'oficios' → 'Oficios').
+    var SECTOR_LABELS_HUMAN = {
+      oficios:'Oficios', salud:'Salud', educacion:'Educación', comercial:'Comercial',
+      belleza:'Belleza', reforma:'Reforma', hosteleria:'Hostelería', tech:'Tecnología',
+      legal:'Legal', jardineria:'Jardinería', transporte:'Transporte', fotografia:'Fotografía',
+      eventos:'Eventos', automocion:'Automoción', seguridad:'Seguridad', cuidados:'Cuidados',
+      fitness:'Fitness', turismo:'Turismo', comercio:'Comercio', otro:'Otros',
+    };
+
+    function localMatches(nq) {
+      return ARCHETYPES.filter(function (a) { return norm(a.rol_profesional).indexOf(nq) !== -1; });
+    }
+
+    function fetchSepe(q) {
+      if (sepeCache[q]) return Promise.resolve(sepeCache[q]);
+      if (inflightController) inflightController.abort();
+      inflightController = new AbortController();
+      return fetch('/api/ocupaciones-search?q=' + encodeURIComponent(q) + '&limit=8',
+                   { signal: inflightController.signal })
+        .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+        .then(function (j) { sepeCache[q] = j.results || []; return sepeCache[q]; })
+        .catch(function () { return []; });  // abort/error → silencioso
+    }
+
+    function renderEmpty(query) {
+      lst.innerHTML =
+        '<li class="pp-arch-search__msg">' +
+          'No encontramos "' + escapeHtml(query) + '". Pulsa Enter para usarlo igualmente.' +
+        '</li>';
+      lst.hidden = false;
+    }
+
+    function render(localList, sepeList, query) {
+      // Dedupe: si una ocupación SEPE coincide con un archetype local, gana el local.
+      var localNames = new Set(localList.map(function (a) { return norm(a.rol_profesional); }));
+      var sepeFiltered = sepeList.filter(function (o) { return !localNames.has(norm(o.name)); });
+
+      if (!localList.length && !sepeFiltered.length) { renderEmpty(query); return; }
+
+      var html = '';
+      localList.slice(0, 6).forEach(function (a) {
+        html += (
+          '<li class="pp-arch-search__item" role="option"' +
+              ' data-source="local" data-rol="' + escapeHtml(a.rol_profesional) + '">' +
             '<i data-lucide="' + escapeHtml(a.icon || 'briefcase') + '"></i>' +
             '<span>' + escapeHtml(a.rol_profesional) + '</span>' +
             '<span class="pp-arch-search__item-sector">' + escapeHtml(a.sector) + '</span>' +
           '</li>'
         );
-      }).join('');
+      });
+      sepeFiltered.slice(0, 8).forEach(function (o) {
+        html += (
+          '<li class="pp-arch-search__item" role="option"' +
+              ' data-source="sepe" data-code="' + escapeHtml(o.code) + '"' +
+              ' data-name="' + escapeHtml(o.name) + '"' +
+              ' data-sector-slug="' + escapeHtml(o.sector_slug) + '">' +
+            '<i data-lucide="briefcase"></i>' +
+            '<span>' + escapeHtml(o.name) + '</span>' +
+            '<span class="pp-arch-search__item-sector">' +
+              escapeHtml(SECTOR_LABELS_HUMAN[o.sector_slug] || o.sector_slug) +
+            '</span>' +
+          '</li>'
+        );
+      });
+      lst.innerHTML = html;
       lst.hidden = false;
 
       lst.querySelectorAll('.pp-arch-search__item').forEach(function (item) {
         item.addEventListener('mousedown', function (e) {
           e.preventDefault();
-          var rol = item.dataset.rol;
-          var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
-          if (arch) {
-            selectArchetype(arch);
-            inp.value = arch.rol_profesional;
-            hide();
-            // limpiar selección visual del grid (porque eligió uno no diana)
-            document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+          if (item.dataset.source === 'local') {
+            var rol = item.dataset.rol;
+            var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
+            if (arch) {
+              selectArchetype(arch);
+              inp.value = arch.rol_profesional;
+            }
+          } else {
+            // SEPE: pseudo-archetype con ocupacion_code para que el backend
+            // resuelva name canónico desde la tabla ocupaciones.
+            selectArchetype({
+              rol_profesional:    item.dataset.name,
+              sector:             SECTOR_LABELS_HUMAN[item.dataset.sectorSlug] || 'Otros',
+              sector_slug:        item.dataset.sectorSlug,
+              icon:               'briefcase',
+              category_sector:    'otros',
+              category_specialty: 'otro-oficio',
+              servicios_sugeridos: [],
+              custom:             true,
+              ocupacion_code:     item.dataset.code,
+            });
+            inp.value = item.dataset.name;
           }
+          hide();
+          document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
         });
       });
 
       if (window.lucide) window.lucide.createIcons();
     }
 
+    function trigger(q) {
+      var nq = norm(q);
+      var local = localMatches(nq);
+      // Render local inmediato (latencia 0). Si SEPE responde, refrescamos.
+      render(local, [], q);
+      if (q !== lastQuery) lastQuery = q;
+      fetchSepe(nq).then(function (sepe) {
+        if (q !== lastQuery) return;   // query obsoleto, ignorar
+        render(local, sepe, q);
+      });
+    }
+
     inp.addEventListener('input', function () {
       var q = inp.value.trim();
       if (q.length < 2) { hide(); return; }
-      var nq = norm(q);
-      var matches = ARCHETYPES.filter(function (a) { return norm(a.rol_profesional).indexOf(nq) !== -1; });
-      render(matches, q);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () { trigger(q); }, 250);
     });
 
     inp.addEventListener('keydown', function (e) {
@@ -863,7 +942,6 @@
         e.preventDefault();
         var q = inp.value.trim();
         if (!q) return;
-        // Free text fallback: crear pseudo-arquetipo
         var nq = norm(q);
         var existing = ARCHETYPES.find(function (a) { return norm(a.rol_profesional) === nq; });
         if (existing) {
@@ -962,7 +1040,7 @@
      ════════════════════════════════════════════════════════════ */
   function updatePreview() {
     var nombre = document.getElementById('f_nombre').value.trim();
-    var zona   = getZonaFull();
+    var cp     = getCp();
 
     document.getElementById('prevNombre').textContent = nombre || 'Tu nombre';
     document.getElementById('prevAvatar').textContent = nombre ? initials(nombre) : '?';
@@ -970,7 +1048,7 @@
 
     var subParts = [];
     if (selectedArch) subParts.push(selectedArch.diana_label || selectedArch.rol_profesional);
-    if (zona) subParts.push(zona);
+    if (cp) subParts.push('CP ' + cp);
     document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Profesión · Ciudad';
 
     var descEl = document.getElementById('prevDesc');
@@ -1041,11 +1119,18 @@
 
   function validateStep3() {
     var ok = true;
-    var zona     = getZonaFull();
+    var cp       = getCp();
     var whatsapp = document.getElementById('f_whatsapp').value.trim();
     var email    = document.getElementById('f_email').value.trim();
-    clearError('f_zona'); clearError('f_whatsapp'); clearError('f_email');
-    if (!zona)     { showError('f_zona', 'Indica tu ciudad o zona.'); ok = false; }
+    clearError('f_cp'); clearError('f_whatsapp'); clearError('f_email');
+    if (!cp || !/^\d{5}$/.test(cp)) {
+      showError('f_cp', 'Introduce un CP español de 5 dígitos.'); ok = false;
+    } else {
+      var prefix = parseInt(cp.slice(0, 2), 10);
+      if (prefix < 1 || prefix > 52) {
+        showError('f_cp', 'CP fuera de rango. Los CPs españoles van del 01000 al 52999.'); ok = false;
+      }
+    }
     if (!whatsapp) {
       showError('f_whatsapp', 'El WhatsApp es obligatorio.'); ok = false;
     } else {
@@ -1068,7 +1153,7 @@
   function fillReview() {
     document.getElementById('rev_rol').textContent      = selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '—';
     document.getElementById('rev_nombre').textContent   = document.getElementById('f_nombre').value.trim();
-    document.getElementById('rev_zona').textContent     = getZonaFull();
+    document.getElementById('rev_cp').textContent       = getCp() || '—';
     document.getElementById('rev_whatsapp').textContent = document.getElementById('f_whatsapp').value.trim();
     document.getElementById('rev_email').textContent    = document.getElementById('f_email').value.trim();
 
@@ -1101,9 +1186,10 @@
       category_sector:    selectedArch ? (selectedArch.category_sector    || null) : null,
       category_specialty: selectedArch ? (selectedArch.category_specialty || null) : null,
       specialty_custom:   selectedArch && selectedArch.custom ? selectedArch.rol_profesional : null,
+      ocupacion_code:     selectedArch ? (selectedArch.ocupacion_code || null) : null,
       desc:               selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '',
       servicios:          selectedServices,
-      zona:               getZonaFull(),
+      cp:                 getCp(),
       whatsapp:           document.getElementById('f_whatsapp').value.trim(),
       email:              document.getElementById('f_email').value.trim(),
     };
@@ -1164,90 +1250,15 @@
   };
 
   /* ════════════════════════════════════════════════════════════
-     CITY AUTOCOMPLETE (OSM Nominatim)
+     CP INPUT · sanitize a 5 dígitos en tiempo real
      ════════════════════════════════════════════════════════════ */
   (function () {
-    var inp = document.getElementById('f_zona');
-    var lst = document.getElementById('f_zona_list');
-    var timer;
-
-    function hide() { lst.hidden = true; }
-
-    function selectCity(displayName) {
-      _acCity = displayName;
-      inp.value = displayName;
-      hide();
-      updatePreview();
-    }
-
-    function render(results) {
-      lst.innerHTML = '';
-      if (!results.length) {
-        lst.innerHTML = '<li class="pp-city-ac__msg">Sin resultados</li>';
-        lst.hidden = false;
-        return;
-      }
-      results.forEach(function (r) {
-        var addr = r.address || {};
-        var name = addr.city || addr.town || addr.village || addr.hamlet || addr.municipality || r.name || '';
-        var prov = addr.state || addr.county || '';
-        var display = name + (prov ? ', ' + prov : '');
-        var li = document.createElement('li');
-        li.className = 'pp-city-ac__item';
-        li.setAttribute('role', 'option');
-        li.innerHTML = '<span class="pp-city-ac__name">' + escapeHtml(name) + '</span>' + (prov ? '<span class="pp-city-ac__prov">' + escapeHtml(prov) + '</span>' : '');
-        li.addEventListener('mousedown', function (e) { e.preventDefault(); selectCity(display); });
-        lst.appendChild(li);
-      });
-      lst.hidden = false;
-    }
-
-    function doSearch(q) {
-      lst.innerHTML = '<li class="pp-city-ac__msg">Buscando…</li>';
-      lst.hidden = false;
-      fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&countrycodes=es&format=json&limit=8&addressdetails=1', {
-        headers: { 'Accept-Language': 'es' }
-      })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-          var places = data.filter(function (r) { return r.class === 'place' || r.class === 'boundary'; });
-          render(places.length ? places : data.slice(0, 8));
-        })
-        .catch(function () { hide(); });
-    }
-
+    var inp = document.getElementById('f_cp');
+    if (!inp) return;
     inp.addEventListener('input', function () {
-      _acCity = '';
-      clearTimeout(timer);
-      var q = inp.value.trim();
-      if (q.length < 2) { hide(); updatePreview(); return; }
-      timer = setTimeout(function () { doSearch(q); }, 400);
+      var v = inp.value.replace(/\D/g, '').slice(0, 5);
+      if (v !== inp.value) inp.value = v;
       updatePreview();
-    });
-
-    inp.addEventListener('blur', function () { setTimeout(hide, 150); });
-
-    inp.addEventListener('keydown', function (e) {
-      var items = [].slice.call(lst.querySelectorAll('.pp-city-ac__item'));
-      if (lst.hidden || !items.length) return;
-      var cur = lst.querySelector('.pp-city-ac__item[data-sel]');
-      var idx = cur ? items.indexOf(cur) : -1;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (cur) cur.removeAttribute('data-sel');
-        idx = Math.min(idx + 1, items.length - 1);
-        items[idx].dataset.sel = '1';
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (cur) cur.removeAttribute('data-sel');
-        idx = Math.max(idx - 1, 0);
-        items[idx].dataset.sel = '1';
-      } else if (e.key === 'Enter' && cur) {
-        e.preventDefault();
-        cur.dispatchEvent(new MouseEvent('mousedown'));
-      } else if (e.key === 'Escape') {
-        hide();
-      }
     });
   })();
 
