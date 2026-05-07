@@ -3,12 +3,14 @@ import { makeHandler } from '../netlify/functions/edit-card.js';
 
 // --- Mocks ---
 
-const mockSingle = vi.fn();
-const mockEqUpdate = vi.fn();
+const mockSingle = vi.fn();                 // cards SELECT (auth + load)
+const mockCategoryMaybeSingle = vi.fn();    // categories sector+specialty lookup
+const mockPostalMaybeSingle = vi.fn();      // postal_codes CP lookup
+const mockEqUpdate = vi.fn();               // cards UPDATE eq(slug)
 const mockFrom = vi.fn();
 const mockDb = { from: mockFrom };
 
-function makeBuilder() {
+function makeCardsBuilder() {
   const b = {
     select: vi.fn(),
     eq: vi.fn(),
@@ -25,6 +27,20 @@ function makeBuilder() {
   return b;
 }
 
+function makeCategoriesBuilder() {
+  const b = { select: vi.fn(), eq: vi.fn(), maybeSingle: mockCategoryMaybeSingle };
+  b.select.mockReturnValue(b);
+  b.eq.mockReturnValue(b);
+  return b;
+}
+
+function makePostalBuilder() {
+  const b = { select: vi.fn(), eq: vi.fn(), maybeSingle: mockPostalMaybeSingle };
+  b.select.mockReturnValue(b);
+  b.eq.mockReturnValue(b);
+  return b;
+}
+
 let currentBuilder;
 
 // --- Helpers ---
@@ -35,7 +51,8 @@ const baseCard = {
   slug: 'ana-electricista',
   nombre: 'Ana López',
   tagline: 'Electricista en Madrid',
-  zona: 'Madrid centro',
+  cp: '28001',
+  zona: 'Madrid',
   servicios: ['Instalación eléctrica · 80€', 'Revisión cuadro eléctrico'],
   whatsapp: '34612345678',
   telefono: '915001234',
@@ -60,9 +77,16 @@ describe('edit-card handler', () => {
 
     mockSingle.mockResolvedValue({ data: baseCard, error: null });
     mockEqUpdate.mockResolvedValue({ error: null });
+    mockCategoryMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockPostalMaybeSingle.mockResolvedValue({
+      data: { cp: '28001', municipality_name: 'Madrid', province_slug: 'madrid' },
+      error: null,
+    });
 
-    mockFrom.mockImplementation(() => {
-      currentBuilder = makeBuilder();
+    mockFrom.mockImplementation((table) => {
+      if (table === 'categories')   return makeCategoriesBuilder();
+      if (table === 'postal_codes') return makePostalBuilder();
+      currentBuilder = makeCardsBuilder();
       return currentBuilder;
     });
 
@@ -114,7 +138,7 @@ describe('edit-card handler', () => {
     const validBody = {
       nombre: 'Ana López Ruiz',
       tagline: 'Electricista en Madrid y alrededores',
-      zona: 'Madrid y sur',
+      cp: '28001',
       servicios: ['Instalación eléctrica · 90€'],
       whatsapp: '34698765432',
       telefono: '915009876',
@@ -144,9 +168,51 @@ describe('edit-card handler', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('devuelve 400 si falta la zona', async () => {
-      const res = await handler(buildEvent({ method: 'POST', body: { ...validBody, zona: '' } }));
+    it('devuelve 400 si falta el cp', async () => {
+      const res = await handler(buildEvent({ method: 'POST', body: { ...validBody, cp: '' } }));
       expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 400 si el cp es inválido', async () => {
+      const res = await handler(buildEvent({ method: 'POST', body: { ...validBody, cp: '99999' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('re-resuelve zona + city_slug desde cp en cada POST', async () => {
+      mockPostalMaybeSingle.mockResolvedValueOnce({
+        data: { cp: '03001', municipality_name: 'Alicante', province_slug: 'alicante' },
+        error: null,
+      });
+      await handler(buildEvent({ method: 'POST', body: { ...validBody, cp: '03001' } }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.cp).toBe('03001');
+      expect(updateArgs.zona).toBe('Alicante');
+      expect(updateArgs.city_slug).toBe('alicante');
+    });
+
+    it('auto directory_visible=true cuando hay category_id + city_slug resuelto', async () => {
+      mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 'cat-uuid' }, error: null });
+      const body = { ...validBody, sector: 'oficios', specialty: 'fontanero' };
+      await handler(buildEvent({ method: 'POST', body }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.category_id).toBe('cat-uuid');
+      expect(updateArgs.directory_visible).toBe(true);
+    });
+
+    it('directory_visible=false cuando no hay category_id', async () => {
+      mockCategoryMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+      await handler(buildEvent({ method: 'POST', body: validBody }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.directory_visible).toBe(false);
+    });
+
+    it('directory_visible=false cuando cp no resuelve a city_slug', async () => {
+      mockPostalMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+      mockCategoryMaybeSingle.mockResolvedValueOnce({ data: { id: 'cat-uuid' }, error: null });
+      const body = { ...validBody, cp: '28999', sector: 'oficios', specialty: 'fontanero' };
+      await handler(buildEvent({ method: 'POST', body }));
+      const updateArgs = currentBuilder.update.mock.calls[0][0];
+      expect(updateArgs.directory_visible).toBe(false);
     });
 
     it('acepta servicios vacío (perfiles free sin completar)', async () => {

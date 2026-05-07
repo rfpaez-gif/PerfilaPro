@@ -6,6 +6,7 @@ const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoic
 const { buildPrintableCardPDF, generateQrPngBuffer } = require('./printable-card-utils');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { capture: captureEvent } = require('./lib/posthog-server');
+const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -222,7 +223,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, zona, servicios, desc, direccion, foto, plan, agent_code } =
+      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, foto, plan, agent_code } =
         session.metadata || {};
 
       if (!slug) {
@@ -238,12 +239,27 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
       const serviciosParsed = servicios ? JSON.parse(servicios).map(s => stripTags(s).substring(0, 100)) : [];
 
-      const { error } = await db.from('cards').upsert({
+      // CP llega siempre desde create-checkout (validado allí). Si por algún
+      // legacy pasa null o inválido, persistimos el perfil pero sin city_slug
+      // y sin directory_visible — el admin puede arreglar a mano más tarde.
+      const cpNormalized = isValidCp(cp) ? normalizeCp(cp) : null;
+      const cpRow = cpNormalized ? await lookupCp(db, cpNormalized) : null;
+      const zonaResolved = cpRow?.municipality_name || '';
+      const citySlugResolved = cpRow?.province_slug || null;
+
+      // Auto-publicación en directorio: el perfil pagado entra al directorio
+      // si tenemos los dos pilares (categoría + ubicación). category_id se
+      // resuelve después con un SELECT, pero llegamos al webhook ya sabiendo
+      // si city_slug existe; el segundo flag se setea en el UPDATE post-upsert
+      // si efectivamente hay categoría asociada.
+      const upsertRow = {
         slug,
         nombre:      stripTags(nombre).substring(0, 100),
         tagline:     stripTags(tagline).substring(0, 100),
         whatsapp,
-        zona:        stripTags(zona).substring(0, 100),
+        cp:          cpNormalized,
+        zona:        zonaResolved.substring(0, 100),
+        city_slug:   citySlugResolved,
         servicios:   serviciosParsed,
         foto_url:    foto || null,
         descripcion: desc ? stripTags(desc).substring(0, 200) : null,
@@ -255,7 +271,9 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         email,
         edit_token: editToken,
         agent_code: agent_code || null,
-      }, { onConflict: 'slug' });
+      };
+
+      const { error } = await db.from('cards').upsert(upsertRow, { onConflict: 'slug' });
 
       if (error) {
         console.error('Supabase error:', error.message);
@@ -273,26 +291,37 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       const host  = (event.headers && event.headers.host) || (process.env.SITE_URL || 'https://perfilapro.es').replace(/^https?:\/\//, '');
       const cardUrl = `${proto}://${host}/c/${slug}`;
 
-      // Profesión canónica para la tarjeta imprimible: joineamos categories
-      // tras el upsert para capturar el specialty_label si el usuario llegó
-      // con category_id seteado desde alta o desde una edición previa.
+      // Profesión canónica para la tarjeta imprimible + auto-publicación en
+      // directorio: leemos category_id en el mismo SELECT para decidir si el
+      // perfil entra al directorio público (necesita category_id + city_slug
+      // simultáneamente; sin uno de los dos, el JOIN del view no encuentra fila).
       let profesion = null;
+      let categoryId = null;
       try {
         const { data: cardWithCat } = await db
           .from('cards')
-          .select('categories(specialty_label)')
+          .select('category_id, categories(specialty_label)')
           .eq('slug', slug)
           .single();
         profesion = cardWithCat?.categories?.specialty_label || null;
+        categoryId = cardWithCat?.category_id || null;
       } catch {
         // No es fatal — el PDF se renderiza sin profesión.
+      }
+
+      if (categoryId && citySlugResolved) {
+        const { error: dvErr } = await db
+          .from('cards')
+          .update({ directory_visible: true })
+          .eq('slug', slug);
+        if (dvErr) console.error('directory_visible update failed (no fatal):', dvErr.message);
       }
 
       let cardPdfBuffer = null;
       let qrPngBuffer = null;
       try {
         cardPdfBuffer = await buildPrintableCardPDF({
-          nombre, tagline, profesion, whatsapp, direccion, zona, slug, cardUrl,
+          nombre, tagline, profesion, whatsapp, direccion, zona: zonaResolved, slug, cardUrl,
         });
         console.log(`Tarjeta PDF generada: ${cardPdfBuffer.length} bytes`);
       } catch (err) {

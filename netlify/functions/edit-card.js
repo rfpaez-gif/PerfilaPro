@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
+const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -24,7 +25,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -77,8 +78,8 @@ function makeHandler(db) {
         };
       }
 
-      const { nombre, tagline, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion,
-              sector, specialty, specialty_custom, city_slug, directory_visible } = body;
+      const { nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion,
+              sector, specialty, specialty_custom } = body;
 
       const ALLOWED_FOTO_HOSTS = [
         'supabase.co/storage',
@@ -86,11 +87,20 @@ function makeHandler(db) {
       ];
       const fotoUrlClean = foto_url && ALLOWED_FOTO_HOSTS.some(h => foto_url.includes(h)) ? foto_url : null;
 
-      if (!nombre || !zona || !whatsapp || !Array.isArray(servicios)) {
+      if (!nombre || !cp || !whatsapp || !Array.isArray(servicios)) {
         return {
           statusCode: 400,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ error: 'Faltan campos obligatorios' }),
+        };
+      }
+
+      const cpNormalized = normalizeCp(cp);
+      if (!isValidCp(cpNormalized)) {
+        return {
+          statusCode: 400,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Código postal inválido' }),
         };
       }
 
@@ -134,14 +144,22 @@ function makeHandler(db) {
         ? stripTags(specialty_custom).substring(0, 60)
         : null;
 
-      const dirVisible = category_id && city_slug ? !!directory_visible : false;
+      // Re-resolver zona + city_slug desde CP. directory_visible se reactiva
+      // automáticamente si hay categoría + city_slug; si el usuario edita su CP
+      // a uno de provincia distinta, su perfil migra de directorio sin tocar
+      // nada manual.
+      const cpRow = await lookupCp(db, cpNormalized);
+      const zonaResolved = cpRow?.municipality_name || '';
+      const citySlugResolved = cpRow?.province_slug || null;
+      const dirVisibleResolved = !!(category_id && citySlugResolved);
 
       const { error: updateError } = await db
         .from('cards')
         .update({
           nombre:             stripTags(nombre).substring(0, 100),
           tagline:            tagline ? stripTags(tagline).substring(0, 100) : null,
-          zona:               stripTags(zona).substring(0, 100),
+          cp:                 cpNormalized,
+          zona:               zonaResolved.substring(0, 100),
           servicios:          servicios.map(s => stripTags(s).substring(0, 100)),
           whatsapp:           waNorm.e164,
           telefono:           telefonoClean,
@@ -150,8 +168,8 @@ function makeHandler(db) {
           direccion:          direccion ? stripTags(direccion).substring(0, 200) : null,
           category_id:        category_id,
           specialty_custom:   specialtyCustomClean,
-          city_slug:          city_slug ? stripTags(city_slug).substring(0, 80) : null,
-          directory_visible:  dirVisible,
+          city_slug:          citySlugResolved,
+          directory_visible:  dirVisibleResolved,
         })
         .eq('slug', slug);
 

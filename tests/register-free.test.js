@@ -6,6 +6,7 @@ const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 const mockMaybeSingle = vi.fn();             // cards slug-uniqueness check
 const mockCategoryMaybeSingle = vi.fn();     // categories sector+specialty lookup
+const mockPostalMaybeSingle = vi.fn();       // postal_codes CP lookup
 const mockInsert = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFrom = vi.fn();
@@ -36,7 +37,7 @@ const validBody = {
   nombre:   'Paco García',
   whatsapp: '600111222',
   sector:   'oficios',
-  zona:     'Alicante',
+  cp:       '03001',
   email:    'paco@example.com',
 };
 
@@ -50,9 +51,14 @@ describe('register-free handler', () => {
     _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
-    // Default: no existing slug (no collision), no category match
+    // Default: no existing slug (no collision), no category match,
+    // CP 03001 → Alicante / alicante (capital de provincia).
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockCategoryMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockPostalMaybeSingle.mockResolvedValue({
+      data: { cp: '03001', municipality_name: 'Alicante', province_slug: 'alicante' },
+      error: null,
+    });
     mockInsert.mockResolvedValue({ error: null });
 
     mockFrom.mockImplementation((table) => {
@@ -63,6 +69,9 @@ describe('register-free handler', () => {
       }
       if (table === 'categories') {
         return makeSelectBuilder(mockCategoryMaybeSingle);
+      }
+      if (table === 'postal_codes') {
+        return makeSelectBuilder(mockPostalMaybeSingle);
       }
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: mockMaybeSingle };
     });
@@ -94,6 +103,35 @@ describe('register-free handler', () => {
     expect(res.statusCode).toBe(400);
     const json = JSON.parse(res.body);
     expect(json.error).toMatch(/email/i);
+  });
+
+  it('returns 400 for invalid CP (no 5 dígitos numéricos)', async () => {
+    const res = await handler(buildEvent({ body: { ...validBody, cp: 'abcde' } }));
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body).error).toMatch(/digo postal/i);
+  });
+
+  it('returns 400 for CP fuera de rango (53xxx)', async () => {
+    const res = await handler(buildEvent({ body: { ...validBody, cp: '53000' } }));
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('persiste cp normalizado + zona resuelta + city_slug', async () => {
+    await handler(buildEvent({ body: { ...validBody, cp: '3001' } })); // sin pad
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.cp).toBe('03001');                  // pad-left aplicado
+    expect(insertCall.zona).toBe('Alicante');             // resuelto desde lookup
+    expect(insertCall.city_slug).toBe('alicante');        // capital de provincia
+  });
+
+  it('persiste perfil sin city_slug si CP válido pero no hay match en BD', async () => {
+    mockPostalMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    const res = await handler(buildEvent({ body: { ...validBody, cp: '28999' } }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.cp).toBe('28999');
+    expect(insertCall.zona).toBe('');
+    expect(insertCall.city_slug).toBeNull();
   });
 
   it('creates a free profile and returns slug + URLs', async () => {
