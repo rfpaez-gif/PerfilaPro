@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildPrintableCardPDF,
   generateQrPngBuffer,
+  buildEscaparateQrPng,
   formatSpanishPhone,
   A6_WIDTH,
   A6_HEIGHT,
@@ -48,6 +49,66 @@ describe('generateQrPngBuffer', () => {
     const small = await generateQrPngBuffer('https://perfilapro.es/c/test', 128);
     const big   = await generateQrPngBuffer('https://perfilapro.es/c/test', 1024);
     expect(big.length).toBeGreaterThan(small.length);
+  });
+});
+
+describe('buildEscaparateQrPng', () => {
+  const baseInput = {
+    nombre:    'María Pérez',
+    profesion: 'Electricista',
+    slug:      'maria-electricista',
+    cardUrl:   'https://perfilapro.es/c/maria-electricista',
+  };
+
+  it('devuelve un Buffer PNG válido (header iVBORw)', async () => {
+    const buf = await buildEscaparateQrPng(baseInput);
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(buf[0]).toBe(0x89);
+    expect(buf[1]).toBe(0x50);
+    expect(buf[2]).toBe(0x4E);
+    expect(buf[3]).toBe(0x47);
+  });
+
+  it('renderiza con aspect ratio vertical (alto > ancho)', async () => {
+    const buf = await buildEscaparateQrPng(baseInput);
+    // PNG IHDR: width/height son los uint32-BE en bytes 16-19 / 20-23.
+    const width  = buf.readUInt32BE(16);
+    const height = buf.readUInt32BE(20);
+    expect(width).toBe(1024);
+    expect(height).toBeGreaterThan(width); // vertical
+    // A6 ratio ≈ 1.413 → height debe rondar 1448px
+    expect(height).toBeGreaterThan(1400);
+    expect(height).toBeLessThan(1500);
+  });
+
+  it('respeta el tamaño solicitado (PNG mayor para size mayor)', async () => {
+    const small = await buildEscaparateQrPng({ ...baseInput, size: 256 });
+    const big   = await buildEscaparateQrPng({ ...baseInput, size: 1024 });
+    expect(big.length).toBeGreaterThan(small.length);
+  });
+
+  it('lanza si falta slug', async () => {
+    await expect(buildEscaparateQrPng({ ...baseInput, slug: '' }))
+      .rejects.toThrow(/slug/);
+  });
+
+  it('lanza si falta cardUrl', async () => {
+    await expect(buildEscaparateQrPng({ ...baseInput, cardUrl: '' }))
+      .rejects.toThrow(/cardUrl/);
+  });
+
+  it('renderiza sin profesión sin lanzar', async () => {
+    const buf = await buildEscaparateQrPng({ ...baseInput, profesion: null });
+    expect(buf[0]).toBe(0x89);
+  });
+
+  it('escapa caracteres XML problemáticos en nombre y profesión', async () => {
+    const buf = await buildEscaparateQrPng({
+      ...baseInput,
+      nombre:    'A & B <script> "test"',
+      profesion: "Ortopedia <médica>",
+    });
+    expect(buf[0]).toBe(0x89);
   });
 });
 

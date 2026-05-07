@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto = require('crypto');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
-const { buildPrintableCardPDF, generateQrPngBuffer } = require('./printable-card-utils');
+const { buildPrintableCardPDF, buildEscaparateQrPng } = require('./printable-card-utils');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { capture: captureEvent } = require('./lib/posthog-server');
 const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
@@ -353,7 +353,9 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         console.error('Error generando tarjeta PDF (no fatal):', err.message);
       }
       try {
-        qrPngBuffer = await generateQrPngBuffer(cardUrl, 1024);
+        qrPngBuffer = await buildEscaparateQrPng({
+          nombre, profesion, slug, cardUrl, size: 1024,
+        });
         console.log(`QR PNG generado: ${qrPngBuffer.length} bytes`);
       } catch (err) {
         console.error('Error generando QR PNG (no fatal):', err.message);

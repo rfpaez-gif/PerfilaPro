@@ -9,7 +9,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { calcIva, getNextInvoiceNumber, buildPDF, PLAN_INFO } = require('./invoice-utils');
-const { buildPrintableCardPDF, generateQrPngBuffer } = require('./printable-card-utils');
+const { buildPrintableCardPDF, buildEscaparateQrPng } = require('./printable-card-utils');
 const { sendConfirmationEmail } = require('./stripe-webhook');
 const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 
@@ -108,7 +108,13 @@ function makeHandler(db, emailClient) {
       console.error('Error generando tarjeta PDF (no fatal):', err.message);
     }
     try {
-      qrPngBuffer = await generateQrPngBuffer(cardUrl, 1024);
+      qrPngBuffer = await buildEscaparateQrPng({
+        nombre:    card.nombre,
+        profesion: card.categories?.specialty_label || null,
+        slug:      card.slug,
+        cardUrl,
+        size:      1024,
+      });
     } catch (err) {
       console.error('Error generando QR PNG (no fatal):', err.message);
     }

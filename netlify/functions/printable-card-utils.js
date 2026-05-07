@@ -63,6 +63,97 @@ async function generateQrPngBuffer(cardUrl, size = 1024) {
   return rasterizeQrSvgToPng(cardUrl, size);
 }
 
+// Escapa caracteres con significado en XML para texto que va embebido en SVG.
+function escSvg(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// PNG "escaparate" — el QR enmarcado como mini-tarjeta autosuficiente,
+// pensado para vinilo en luna de coche, lateral de furgo o cartel de barrio.
+// Composición:
+//   · Marco gris-200 redondeado (rx=14)
+//   · Header Tinta con wordmark Perfila/Pro
+//   · Nombre (Source Serif 4) + chip profesión (Inter SemiBold uppercase)
+//   · QR centrado (≈60% del ancho — sigue siendo el protagonista)
+//   · URL en verde-match abajo
+//   · Footer "Imprime a cualquier tamaño"
+//
+// Aspect ratio A6 (1:√2). Render por defecto 1024×1448px — densidad sobrada
+// para imprimir hasta A4 sin pixelar.
+//
+// Las fuentes (Source Serif 4 Semibold + Inter / Inter SemiBold) se cargan
+// desde lib/fonts vía resvg-js. loadSystemFonts:false garantiza render
+// determinista; defaultFontFamily evita el WARN si algún glifo no resuelve.
+async function buildEscaparateQrPng({ nombre, profesion, slug, cardUrl, size = 1024 }) {
+  if (!slug || !cardUrl) {
+    throw new Error('buildEscaparateQrPng: slug y cardUrl son obligatorios');
+  }
+
+  const VB_W = 300;
+  const VB_H = 424;
+  const FRAME_INSET = 6;
+  const FRAME_R = 14;
+  const HEADER_H = 40;
+
+  // Posiciona el QR centrado horizontalmente, justo bajo el bloque identidad.
+  const QR_W = 184;
+  const QR_X = (VB_W - QR_W) / 2;
+  const QR_Y = 138;
+
+  // Inyecta x/y/width/height en el `<svg>` raíz del QR para que se renderice
+  // como SVG anidado en la posición/escala deseada. Conserva el viewBox.
+  const qrSvgRaw = buildQrSvg(cardUrl, { size: 280 });
+  const qrEmbedded = qrSvgRaw.replace(
+    /^<svg[^>]*>/,
+    `<svg x="${QR_X}" y="${QR_Y}" width="${QR_W}" height="${QR_W}" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">`
+  );
+
+  const nombreClean    = String(nombre || '').trim().substring(0, 40) || '—';
+  const profesionClean = profesion ? String(profesion).trim().substring(0, 36) : '';
+  const urlLabel       = `perfilapro.es/c/${slug}`;
+
+  // SVG email-defensive: hex literales (sin currentColor / vars).
+  // Wordmark Perfila/Pro en dos `<tspan>` para alternar peso (regular vs italic)
+  // dentro de un mismo bloque de texto centrado.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${VB_W}" height="${VB_H}" viewBox="0 0 ${VB_W} ${VB_H}">
+<defs>
+  <clipPath id="frameClip">
+    <rect x="${FRAME_INSET}" y="${FRAME_INSET}" width="${VB_W - 2 * FRAME_INSET}" height="${VB_H - 2 * FRAME_INSET}" rx="${FRAME_R}" ry="${FRAME_R}"/>
+  </clipPath>
+</defs>
+<rect width="${VB_W}" height="${VB_H}" fill="${COLORS.surface}"/>
+<g clip-path="url(#frameClip)">
+  <rect x="${FRAME_INSET}" y="${FRAME_INSET}" width="${VB_W - 2 * FRAME_INSET}" height="${HEADER_H}" fill="${COLORS.accent}"/>
+</g>
+<rect x="${FRAME_INSET}" y="${FRAME_INSET}" width="${VB_W - 2 * FRAME_INSET}" height="${VB_H - 2 * FRAME_INSET}" rx="${FRAME_R}" ry="${FRAME_R}" fill="none" stroke="${COLORS.border}" stroke-width="1"/>
+<text x="${VB_W / 2}" y="${FRAME_INSET + HEADER_H / 2 + 6}" text-anchor="middle" font-family="Source Serif 4 Semibold" font-size="18" fill="#FFFFFF">Perfila<tspan font-family="Source Serif 4 Semibold" font-style="italic" fill="${COLORS.match}">Pro</tspan></text>
+<text x="${VB_W / 2}" y="84" text-anchor="middle" font-family="Source Serif 4 Semibold" font-size="17" fill="${COLORS.ink}">${escSvg(nombreClean)}</text>
+${profesionClean ? `<text x="${VB_W / 2}" y="104" text-anchor="middle" font-family="Inter SemiBold" font-size="9" fill="${COLORS.match}" letter-spacing="1.2">${escSvg(profesionClean.toUpperCase())}</text>` : ''}
+<line x1="60" y1="124" x2="${VB_W - 60}" y2="124" stroke="${COLORS.border}" stroke-width="0.8"/>
+${qrEmbedded}
+<text x="${VB_W / 2}" y="346" text-anchor="middle" font-family="Inter" font-size="9" fill="${COLORS.inkSoft}">Escanea para abrir mi perfil</text>
+<text x="${VB_W / 2}" y="368" text-anchor="middle" font-family="Inter SemiBold" font-size="11" fill="${COLORS.match}">${escSvg(urlLabel)}</text>
+<text x="${VB_W / 2}" y="408" text-anchor="middle" font-family="Inter" font-size="7" fill="${COLORS.inkSoft}">Imprime a cualquier tamaño · perfilapro.es</text>
+</svg>`;
+
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: 'width', value: size },
+    font: {
+      fontDirs: [FONTS_DIR],
+      loadSystemFonts: false,
+      defaultFontFamily: 'Inter',
+    },
+    textRendering: 2,
+    shapeRendering: 2,
+  });
+  return resvg.render().asPng();
+}
+
 async function buildPrintableCardPDF({ nombre, tagline, profesion, whatsapp, direccion, zona, slug, cardUrl }) {
   if (!slug || !cardUrl) {
     throw new Error('buildPrintableCardPDF: slug y cardUrl son obligatorios');
@@ -196,6 +287,7 @@ async function buildPrintableCardPDF({ nombre, tagline, profesion, whatsapp, dir
 module.exports = {
   buildPrintableCardPDF,
   generateQrPngBuffer,
+  buildEscaparateQrPng,
   formatSpanishPhone,
   A6_WIDTH,
   A6_HEIGHT,
