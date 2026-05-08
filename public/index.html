@@ -100,55 +100,46 @@
     .pp-omni__url strong { color: var(--color-verde-match); font-weight: 600; }
     .pp-omni__grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: var(--pp-s-4);
     }
-    @media (max-width: 700px) {
-      .pp-omni__grid { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .pp-omni__grid { grid-template-columns: repeat(2, 1fr); }
     }
     .pp-omni-card {
       background: #FFFFFF;
       border: 1px solid var(--color-gris-200);
       border-radius: var(--pp-r-lg);
-      overflow: hidden;
+      padding: var(--pp-s-6);
       display: flex;
       flex-direction: column;
+      gap: var(--pp-s-3);
       transition: transform var(--pp-t-base), box-shadow var(--pp-t-base);
     }
     .pp-omni-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--pp-sh-md);
     }
-    .pp-omni-card--wide { grid-column: 1 / -1; }
-    .pp-omni-card__media {
-      margin: 0;
-      width: 100%;
-      background: var(--color-crema);
-      aspect-ratio: 4 / 5;
-      overflow: hidden;
+    .pp-omni-card__icon {
+      width: 44px; height: 44px;
+      border-radius: var(--pp-r-md);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
+      display: grid;
+      place-items: center;
     }
-    .pp-omni-card__media img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .pp-omni-card__media--wide { aspect-ratio: 16 / 9; }
-    .pp-omni-card__media--wide img { object-fit: cover; }
     .pp-omni-card__title {
       font-family: var(--font-sans);
       font-size: 16px;
       font-weight: 700;
       color: var(--color-tinta);
       margin: 0;
-      padding: var(--pp-s-5) var(--pp-s-6) 0;
     }
     .pp-omni-card__text {
       font-size: 14px;
       color: var(--color-gris-500);
       line-height: 1.5;
-      margin: var(--pp-s-2) 0 0;
-      padding: 0 var(--pp-s-6) var(--pp-s-6);
+      margin: 0;
     }
 
     /* ── Sección anatomía · perfil + lista de piezas ────────── */
@@ -814,28 +805,36 @@
       </div>
 
       <div class="pp-omni__grid">
-        <article class="pp-omni-card pp-omni-card--wide pp-reveal">
-          <figure class="pp-omni-card__media pp-omni-card__media--wide">
-            <img src="/assets/landing/furgo-qr.jpg" alt="Furgo blanca con QR de PerfilaPro pegado en el lateral" loading="lazy">
-          </figure>
-          <h3 class="pp-omni-card__title">Mundo físico</h3>
-          <p class="pp-omni-card__text">El QR pegado en la furgo, en el escaparate, en un cartel de obra.</p>
-        </article>
-
         <article class="pp-omni-card pp-reveal">
-          <figure class="pp-omni-card__media">
-            <img src="/assets/landing/instagram-isabel.jpg" alt="Bio de Instagram de Isabel Limpiadora con enlace a su perfil de PerfilaPro" loading="lazy">
-          </figure>
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </span>
           <h3 class="pp-omni-card__title">Redes sociales</h3>
           <p class="pp-omni-card__text">Una bio que abre tu perfil completo. Instagram, TikTok, LinkedIn, Facebook.</p>
         </article>
 
         <article class="pp-omni-card pp-reveal">
-          <figure class="pp-omni-card__media">
-            <img src="/assets/landing/whatsapp-isabel.jpg" alt="Conversación de WhatsApp con preview enriquecido del perfil PerfilaPro" loading="lazy">
-          </figure>
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Mundo físico</h3>
+          <p class="pp-omni-card__text">El QR pegado en la furgo, en el escaparate, en un cartel de obra.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </span>
           <h3 class="pp-omni-card__title">Conversaciones</h3>
           <p class="pp-omni-card__text">Lo pegas en WhatsApp y va con foto, descripción y botón de contacto.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <span class="pp-omni-card__icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/></svg>
+          </span>
+          <h3 class="pp-omni-card__title">Tarjeta de visita</h3>
+          <p class="pp-omni-card__text">Imprímelo y entrégalo en mano. Quien lo escanee, te tiene en su teléfono.</p>
         </article>
       </div>
     </div>
