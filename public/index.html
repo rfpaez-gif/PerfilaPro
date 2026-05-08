@@ -132,6 +132,16 @@
       height: 100%;
       object-fit: cover;
     }
+    .pp-omni-card__media--contain {
+      display: grid;
+      place-items: center;
+      padding: 10%;
+    }
+    .pp-omni-card__media--contain img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
     .pp-omni-card__title {
       font-family: var(--font-sans);
       font-size: 16px;
@@ -820,7 +830,7 @@
         </article>
 
         <article class="pp-omni-card pp-reveal">
-          <figure class="pp-omni-card__media">
+          <figure class="pp-omni-card__media pp-omni-card__media--contain">
             <img src="/assets/landing/furgo-qr.jpg" alt="Furgoneta con QR de PerfilaPro pegado en el lateral" loading="lazy">
           </figure>
           <h3 class="pp-omni-card__title">Mundo físico</h3>
