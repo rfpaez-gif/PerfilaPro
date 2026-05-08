@@ -77,8 +77,12 @@ exports.handler = async (event) => {
     data.foto_url = 'https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg';
   }
 
+  // El landing embebe cards en vivo dentro de un iframe; saltamos el log
+  // de visitas para esos hits (si no, cada visita al home contamina los stats).
+  const isIframeEmbed = (event.headers && event.headers['sec-fetch-dest']) === 'iframe';
+
   // Registrar visita de forma no bloqueante
-  if (!isDemo) {
+  if (!isDemo && !isIframeEmbed) {
     supabase.from('visits').insert({ slug: data.slug }).then(({ error: ve }) => {
       if (ve) console.error('Error registrando visita:', ve.message);
     });
