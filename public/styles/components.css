@@ -503,6 +503,11 @@
   grid-template-columns: repeat(2, 1fr);
   gap: var(--pp-s-6);
 }
+.pp-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--pp-s-4);
+}
 .pp-grid-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -510,6 +515,7 @@
 }
 @media (max-width: 900px) {
   .pp-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .pp-grid-3 { grid-template-columns: 1fr; }
   .pp-grid-2 { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
