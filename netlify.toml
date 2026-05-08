@@ -30,6 +30,73 @@
 [context.deploy-preview]
   command = "npm test"
 
+# Legacy redirects: las páginas client-facing pasaron a /es/ y /ca/.
+# 301 para preservar SEO de links entrantes y emails antiguos.
+[[redirects]]
+  from   = "/index.html"
+  to     = "/"
+  status = 301
+
+[[redirects]]
+  from   = "/alta"
+  to     = "/es/alta"
+  status = 301
+
+[[redirects]]
+  from   = "/alta.html"
+  to     = "/es/alta"
+  status = 301
+
+[[redirects]]
+  from   = "/editar"
+  to     = "/es/editar"
+  status = 301
+
+[[redirects]]
+  from   = "/editar.html"
+  to     = "/es/editar"
+  status = 301
+
+[[redirects]]
+  from   = "/success"
+  to     = "/es/success"
+  status = 301
+
+[[redirects]]
+  from   = "/success.html"
+  to     = "/es/success"
+  status = 301
+
+[[redirects]]
+  from   = "/terminos"
+  to     = "/es/terminos"
+  status = 301
+
+[[redirects]]
+  from   = "/terminos.html"
+  to     = "/es/terminos"
+  status = 301
+
+[[redirects]]
+  from   = "/privacidad"
+  to     = "/es/privacidad"
+  status = 301
+
+[[redirects]]
+  from   = "/privacidad.html"
+  to     = "/es/privacidad"
+  status = 301
+
+[[redirects]]
+  from   = "/legal"
+  to     = "/es/legal"
+  status = 301
+
+[[redirects]]
+  from   = "/legal.html"
+  to     = "/es/legal"
+  status = 301
+
 [[redirects]]
   from   = "/api/stripe-webhook"
   to     = "/.netlify/functions/stripe-webhook"
