@@ -100,11 +100,11 @@
     .pp-omni__url strong { color: var(--color-verde-match); font-weight: 600; }
     .pp-omni__grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: var(--pp-s-4);
     }
-    @media (max-width: 700px) {
-      .pp-omni__grid { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .pp-omni__grid { grid-template-columns: repeat(2, 1fr); }
     }
     .pp-omni-card {
       background: #FFFFFF;
@@ -119,36 +119,47 @@
       transform: translateY(-2px);
       box-shadow: var(--pp-sh-md);
     }
-    .pp-omni-card--wide { grid-column: 1 / -1; }
     .pp-omni-card__media {
       margin: 0;
       width: 100%;
+      aspect-ratio: 1 / 1;
       background: var(--color-crema);
-      aspect-ratio: 4 / 5;
       overflow: hidden;
     }
     .pp-omni-card__media img {
       display: block;
       width: 100%;
       height: 100%;
+      object-fit: cover;
+    }
+    .pp-omni-card__media--contain {
+      display: grid;
+      place-items: center;
+      padding: 10%;
+    }
+    .pp-omni-card__media--contain img {
+      width: 100%;
+      height: 100%;
       object-fit: contain;
     }
-    .pp-omni-card__media--wide { aspect-ratio: 16 / 9; }
-    .pp-omni-card__media--wide img { object-fit: cover; }
+    .pp-omni-card__media--top {
+      padding-top: 0;
+      padding-bottom: 20%;
+    }
     .pp-omni-card__title {
       font-family: var(--font-sans);
       font-size: 16px;
       font-weight: 700;
       color: var(--color-tinta);
       margin: 0;
-      padding: var(--pp-s-5) var(--pp-s-6) 0;
+      padding: var(--pp-s-5) var(--pp-s-5) 0;
     }
     .pp-omni-card__text {
       font-size: 14px;
       color: var(--color-gris-500);
       line-height: 1.5;
       margin: var(--pp-s-2) 0 0;
-      padding: 0 var(--pp-s-6) var(--pp-s-6);
+      padding: 0 var(--pp-s-5) var(--pp-s-5);
     }
 
     /* ── Sección anatomía · perfil + lista de piezas ────────── */
@@ -814,20 +825,20 @@
       </div>
 
       <div class="pp-omni__grid">
-        <article class="pp-omni-card pp-omni-card--wide pp-reveal">
-          <figure class="pp-omni-card__media pp-omni-card__media--wide">
-            <img src="/assets/landing/furgo-qr.jpg" alt="Furgo blanca con QR de PerfilaPro pegado en el lateral" loading="lazy">
-          </figure>
-          <h3 class="pp-omni-card__title">Mundo físico</h3>
-          <p class="pp-omni-card__text">El QR pegado en la furgo, en el escaparate, en un cartel de obra.</p>
-        </article>
-
         <article class="pp-omni-card pp-reveal">
           <figure class="pp-omni-card__media">
-            <img src="/assets/landing/instagram-isabel.jpg" alt="Bio de Instagram de Isabel Limpiadora con enlace a su perfil de PerfilaPro" loading="lazy">
+            <img src="/assets/landing/instagram-isabel.jpg" alt="Bio de Instagram con enlace a perfil de PerfilaPro" loading="lazy">
           </figure>
           <h3 class="pp-omni-card__title">Redes sociales</h3>
           <p class="pp-omni-card__text">Una bio que abre tu perfil completo. Instagram, TikTok, LinkedIn, Facebook.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <figure class="pp-omni-card__media pp-omni-card__media--contain">
+            <img src="/assets/landing/furgo-qr.jpg" alt="Furgoneta con QR de PerfilaPro pegado en el lateral" loading="lazy">
+          </figure>
+          <h3 class="pp-omni-card__title">Mundo físico</h3>
+          <p class="pp-omni-card__text">El QR pegado en la furgo, en el escaparate, en un cartel de obra.</p>
         </article>
 
         <article class="pp-omni-card pp-reveal">
@@ -836,6 +847,14 @@
           </figure>
           <h3 class="pp-omni-card__title">Conversaciones</h3>
           <p class="pp-omni-card__text">Lo pegas en WhatsApp y va con foto, descripción y botón de contacto.</p>
+        </article>
+
+        <article class="pp-omni-card pp-reveal">
+          <figure class="pp-omni-card__media pp-omni-card__media--contain pp-omni-card__media--top">
+            <img src="/assets/landing/tarjeta-isabel.jpg" alt="Tarjeta de visita impresa con QR de PerfilaPro" loading="lazy">
+          </figure>
+          <h3 class="pp-omni-card__title">Tarjeta de visita</h3>
+          <p class="pp-omni-card__text">Imprímelo y entrégalo en mano. Quien lo escanee, te tiene en su teléfono.</p>
         </article>
       </div>
     </div>
