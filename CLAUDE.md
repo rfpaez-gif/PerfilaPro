@@ -153,6 +153,22 @@ Both are rate-limited (10 req / 10 min per IP) and cached as `private, no-store`
 
 Hex colors hardcoded in `lib/email-layout.js` (synchronised with `tokens.css`). Any palette change must touch both files in the same commit.
 
+### Promo de lanzamiento (acción comercial 100% bonificada)
+
+Acción comercial reversible para que los primeros usuarios completen el flujo de activación sin pagar. Se enciende con `LAUNCH_PROMO_ACTIVE=1` (env var). Cualquier otro valor lo apaga limpiamente.
+
+**Flujo del usuario:**
+1. Alta gratuita por `/alta` → `register-free`. Card en `status='active', plan='base'` (free), sin `kit_email_sent_at`.
+2. En `/editar` aparece el banner promo dentro de `#freeBanner`: chip *"🎉 Promo lanzamiento"*, copy *"100% bonificado"*, planes con precio tachado (`<s>9€</s> Gratis`), CTA *"Activar gratis · Promo lanzamiento →"*.
+3. Click → POST `/api/claim-launch-promo` (auth = slug + edit_token). Stripe NO interviene.
+4. Backend: pasa `plan` y `expires_at` (90/365 días), marca `kit_email_sent_at`, genera tarjeta PDF + QR PNG + Comprobante de Promoción PDF, manda email con prefix `[Promo lanzamiento]` / `[Promo llançament]`. Redirect a `/{idioma}/success?slug=&promo=1`.
+
+**Comprobante de Promoción** (NO factura): `invoice-utils.buildPDF` acepta `promo: true` + `bonificacion: 9|19`. Cambia el header a `COMPROBANTE DE PROMOCIÓN`, intercala una línea *"Bonificación lanzamiento: -9,00€"* antes del total y deja `TOTAL: 0,00 €`. Footer: *"Documento informativo. No es una factura. Bonificación 100% durante la campaña de lanzamiento."* La numeración usa prefijo `PROMO-YYYY-...` para no colisionar con la serie `FAC-YYYY-...` ni alimentar Verifactu (sin contraprestación = sin obligación fiscal).
+
+**Idempotencia**: si la card ya está `status='active'` con `plan` distinto de `'free'`, devuelve 409 sin reactivar. La gate del `#freeBanner` en el editor mira `!stripe_session_id && !kit_email_sent_at`, así un perfil promo-redimido oculta el banner correctamente al recargar `/editar`.
+
+**Apagado**: borrar la env var. El editor vuelve a llamar a `create-checkout` (Stripe), el endpoint `/api/claim-launch-promo` devuelve 410 Gone, los perfiles ya redimidos conservan su plan + expires_at sin cambios.
+
 ### Observability (PostHog)
 
 Sprint 1: analítica de producto vía PostHog Cloud (región EU). Carga **solo tras consentimiento explícito** del usuario en el banner de privacidad.
@@ -200,6 +216,7 @@ SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
 POSTHOG_API_KEY       # PostHog project key — empty disables analytics
 POSTHOG_HOST          # default https://eu.i.posthog.com
+LAUNCH_PROMO_ACTIVE   # "1" activa la promo de lanzamiento 100% bonificada
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3
 QUIPU_API_BASE        # Sprint 3 — default https://getquipu.com/api/v2
@@ -231,6 +248,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/download-card` | `download-card` |
 | `/api/download-qr` | `download-qr` |
 | `/api/resend-kit` | `resend-kit` |
+| `/api/claim-launch-promo` | `claim-launch-promo` |
 | `/api/ocupaciones-search` | `ocupaciones-search` |
 | `/api/cp-lookup` | `cp-lookup` |
 

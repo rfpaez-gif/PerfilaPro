@@ -46,11 +46,14 @@ async function getNextInvoiceNumber(db) {
   return `FAC-${year}-${String(n).padStart(4, '0')}`;
 }
 
-async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base, iva, total }) {
+async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base, iva, total, promo = false, bonificacion = 0 }) {
   return new Promise((resolve, reject) => {
+    const docTitle = promo
+      ? `Comprobante ${numero} - PerfilaPro`
+      : `Factura ${numero} - PerfilaPro`;
     const doc = new PDFDocument({
       size: 'A4', margin: 60,
-      info: { Title: `Factura ${numero} - PerfilaPro` },
+      info: { Title: docTitle },
     });
     registerFonts(doc, FONTS_DIR);
     const chunks = [];
@@ -81,9 +84,11 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     doc.font('PP-Serif-Italic').fontSize(10).fillColor('rgba(255,255,255,0.85)')
       .text('Tu trabajo merece verse.', margin, 68, { lineBreak: false });
 
-    // Etiqueta derecha "FACTURA SIMPLIFICADA"
+    // Etiqueta derecha — "FACTURA SIMPLIFICADA" en modo normal,
+    // "COMPROBANTE DE PROMOCIÓN" cuando es bonificación 100%.
+    const headerLabel = promo ? 'COMPROBANTE DE PROMOCIÓN' : 'FACTURA SIMPLIFICADA';
     doc.font('PP-Sans-Bold').fontSize(10).fillColor('#FFFFFF')
-      .text('FACTURA SIMPLIFICADA', 0, 44, { align: 'right', width: pageW - margin, characterSpacing: 0.8 });
+      .text(headerLabel, 0, 44, { align: 'right', width: pageW - margin, characterSpacing: 0.8 });
 
     // Número y fecha
     const refY = 116;
@@ -146,16 +151,30 @@ async function buildPDF({ numero, fecha, emailCliente, nombreCliente, plan, base
     doc.text('IVA (21%):', lblX, totY + 20, { width: 120 });
     doc.text(`${iva.toFixed(2)} €`, amtX, totY + 20, { width: amtW, align: 'right' });
 
+    // En modo promo intercalamos una línea con la bonificación negativa
+    // antes del total. Visualmente: subtotal con IVA → bonificación →
+    // total final 0,00 €. El usuario ve qué se ha bonificado y por cuánto.
+    let totalRowY = totY + 44;
+    if (promo && bonificacion > 0) {
+      doc.font('PP-Sans-Bold').fontSize(10).fillColor('#0F6B6B');
+      doc.text('Bonificación lanzamiento:', lblX, totY + 40, { width: 160 });
+      doc.text(`-${bonificacion.toFixed(2)} €`, amtX, totY + 40, { width: amtW, align: 'right' });
+      totalRowY = totY + 64;
+    }
+
     // Total · pastilla piedra + número en teal documentos
-    doc.roundedRect(lblX - 10, totY + 44, pageW - margin - lblX + 10, 32, 6).fill('#F7F8FA');
+    doc.roundedRect(lblX - 10, totalRowY, pageW - margin - lblX + 10, 32, 6).fill('#F7F8FA');
     doc.font('PP-Sans-Bold').fontSize(13).fillColor('#0F6B6B');
-    doc.text('TOTAL:', lblX, totY + 53, { width: 120 });
-    doc.text(`${total.toFixed(2)} €`, amtX, totY + 53, { width: amtW, align: 'right' });
+    doc.text('TOTAL:', lblX, totalRowY + 9, { width: 120 });
+    doc.text(`${total.toFixed(2)} €`, amtX, totalRowY + 9, { width: amtW, align: 'right' });
 
     // Footer
     const footY = doc.page.height - 70;
+    const footerCopy = promo
+      ? 'Documento informativo. No es una factura. Bonificación 100% durante la campaña de lanzamiento.'
+      : 'Factura simplificada. IVA incluido en el precio (art. 7.1 RD 1619/2012).';
     doc.font('PP-Sans').fontSize(8).fillColor('#6B7280')
-      .text('Factura simplificada. IVA incluido en el precio (art. 7.1 RD 1619/2012).', margin, footY, { align: 'center', width: usableW });
+      .text(footerCopy, margin, footY, { align: 'center', width: usableW });
     // Mini-wordmark en el pie
     doc.font('PP-Serif').fontSize(8).fillColor('#6B7280');
     const wPie = doc.widthOfString('Perfila');
