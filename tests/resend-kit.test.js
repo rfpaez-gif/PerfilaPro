@@ -146,6 +146,17 @@ describe('resend-kit handler', () => {
     expect(filenames.some(f => f.startsWith('factura-'))).toBe(true);
   }, 30000);
 
+  it('reenvía en catalán con prefix [Reenviament] cuando idioma=ca', async () => {
+    const emailClient = buildEmailClient();
+    const db = buildDb({ card: { ...baseCard, idioma: 'ca' } });
+    const res = await makeHandler(db, emailClient)(buildEvent());
+    expect(res.statusCode).toBe(200);
+    const [payload] = emailClient.emails.send.mock.calls[0];
+    expect(payload.subject).toMatch(/^\[Reenviament\]/);
+    expect(payload.html).toContain('lang="ca"');
+    expect(payload.html).toContain('/ca/terminos');
+  }, 30000);
+
   it('marca cards.kit_email_sent_at en éxito', async () => {
     const db = buildDb();
     await makeHandler(db, buildEmailClient())(buildEvent());

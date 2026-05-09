@@ -10,28 +10,52 @@ const supabase = createClient(
 );
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-function buildEditLinkEmail({ nombre, editUrl }) {
-  const firstName = (nombre || '').split(' ')[0] || 'Hola';
+const EDIT_LINK_STRINGS = {
+  es: {
+    fallbackName: 'Hola',
+    body: 'Has solicitado editar tu perfil profesional. Haz clic en el botón de abajo para acceder al formulario de edición. El enlace es válido durante <strong>7 días</strong>.',
+    cta: 'Editar mi perfil →',
+    closing: 'Si no has solicitado este enlace, puedes ignorar este email. Nadie ha accedido a tu perfil.',
+    preheader: 'Tu enlace de edición de PerfilaPro · válido 7 días',
+    title: (n) => `Edita tu perfil, ${n}`,
+    subject: (n) => `${n ? n + ', tu' : 'Tu'} enlace para editar tu perfil`,
+  },
+  ca: {
+    fallbackName: 'Hola',
+    body: 'Has demanat editar el teu perfil professional. Fes clic al botó de baix per accedir al formulari d’edició. L’enllaç és vàlid durant <strong>7 dies</strong>.',
+    cta: 'Editar el meu perfil →',
+    closing: 'Si no has demanat aquest enllaç, pots ignorar aquest email. Ningú ha accedit al teu perfil.',
+    preheader: 'El teu enllaç d’edició de PerfilaPro · vàlid 7 dies',
+    title: (n) => `Edita el teu perfil, ${n}`,
+    subject: (n) => `${n ? n + ', el teu' : 'El teu'} enllaç per editar el perfil`,
+  },
+};
+
+function buildEditLinkEmail({ nombre, editUrl, idioma = 'es' }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const T = EDIT_LINK_STRINGS[lang];
+  const firstName = (nombre || '').split(' ')[0] || T.fallbackName;
 
   const bodyHtml = `
             <p style="margin:0 0 24px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
-              Has solicitado editar tu perfil profesional. Haz clic en el botón de abajo para acceder al formulario de edición. El enlace es válido durante <strong>7 días</strong>.
+              ${T.body}
             </p>
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
               <tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Editar mi perfil →</a>
+                <a href="${editUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">${T.cta}</a>
               </td></tr>
             </table>
 
             <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
-              Si no has solicitado este enlace, puedes ignorar este email. Nadie ha accedido a tu perfil.
+              ${T.closing}
             </p>`;
 
   return buildEmailLayout({
-    preheader: 'Tu enlace de edición de PerfilaPro · válido 7 días',
-    title: `Edita tu perfil, ${firstName}`,
+    preheader: T.preheader,
+    title: T.title(firstName),
     bodyHtml,
+    idioma: lang,
   });
 }
 
@@ -67,7 +91,7 @@ function makeHandler(db, emailClient) {
     }
 
     // Look up card by slug (from card footer link) or by email (manual form)
-    const query = db.from('cards').select('slug, nombre, email, edit_link_sent_at').eq('status', 'active').is('deleted_at', null);
+    const query = db.from('cards').select('slug, nombre, email, idioma, edit_link_sent_at').eq('status', 'active').is('deleted_at', null);
     const { data: card } = slugParam
       ? await query.eq('slug', slugParam).single()
       : await query.eq('email', email).single();
@@ -91,15 +115,18 @@ function makeHandler(db, emailClient) {
         .eq('slug', card.slug);
 
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
-      const editUrl = `${siteUrl}/editar.html?slug=${card.slug}&token=${token}`;
+      const lang    = card.idioma === 'ca' ? 'ca' : 'es';
+      const editUrl = `${siteUrl}/${lang}/editar?slug=${card.slug}&token=${token}`;
+      const T       = EDIT_LINK_STRINGS[lang];
+      const firstName = (card.nombre || '').split(' ')[0];
 
       if (emailClient) {
         try {
           await emailClient.emails.send({
             from: 'PerfilaPro <hola@perfilapro.es>',
             to: sendTo,
-            subject: `${card.nombre ? card.nombre.split(' ')[0] + ', tu' : 'Tu'} enlace para editar tu perfil`,
-            html: buildEditLinkEmail({ nombre: card.nombre, editUrl }),
+            subject: T.subject(firstName),
+            html: buildEditLinkEmail({ nombre: card.nombre, editUrl, idioma: lang }),
           });
         } catch (err) {
           console.error('Error enviando email de edición:', err.message);

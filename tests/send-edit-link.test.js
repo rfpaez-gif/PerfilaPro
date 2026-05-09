@@ -90,7 +90,7 @@ describe('send-edit-link handler', () => {
 
     const emailArgs = mockEmailSend.mock.calls[0][0];
     expect(emailArgs.to).toBe('ana@test.com');
-    expect(emailArgs.html).toContain('editar.html');
+    expect(emailArgs.html).toContain('/es/editar');
     expect(emailArgs.html).toContain('ana-electricista');
   });
 
@@ -155,14 +155,65 @@ describe('send-edit-link handler', () => {
 
 describe('buildEditLinkEmail', () => {
   it('incluye el nombre y la URL de edición', () => {
-    const html = buildEditLinkEmail({ nombre: 'Juan García', editUrl: 'https://perfilapro.es/editar.html?slug=juan&token=abc' });
+    const html = buildEditLinkEmail({ nombre: 'Juan García', editUrl: 'https://perfilapro.es/es/editar?slug=juan&token=abc' });
     expect(html).toContain('Juan');
-    expect(html).toContain('https://perfilapro.es/editar.html?slug=juan&token=abc');
+    expect(html).toContain('https://perfilapro.es/es/editar?slug=juan&token=abc');
     expect(html).toContain('7 días');
   });
 
   it('funciona sin nombre', () => {
     const html = buildEditLinkEmail({ nombre: '', editUrl: 'https://example.com' });
     expect(html).toContain('Hola');
+  });
+
+  it('renderiza en catalán cuando idioma=ca', () => {
+    const html = buildEditLinkEmail({
+      nombre: 'Jordi Puig',
+      editUrl: 'https://perfilapro.es/ca/editar?slug=jordi&token=abc',
+      idioma: 'ca',
+    });
+    expect(html).toContain('Edita el teu perfil');
+    expect(html).toContain('Editar el meu perfil');
+    expect(html).toContain('7 dies');
+    expect(html).toContain('lang="ca"');
+    expect(html).toContain('/ca/terminos');
+  });
+
+  it('default a español cuando idioma es desconocido o falta', () => {
+    const html = buildEditLinkEmail({ nombre: 'Ana', editUrl: 'https://example.com', idioma: 'fr' });
+    expect(html).toContain('Edita tu perfil');
+    expect(html).toContain('lang="es"');
+  });
+});
+
+describe('send-edit-link · idioma', () => {
+  let handler;
+  let captured;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    _resetRateLimit();
+    process.env.SITE_URL = 'https://perfilapro.es';
+    captured = null;
+    mockSingle.mockResolvedValue({
+      data: { ...baseCard, idioma: 'ca' },
+      error: null,
+    });
+    mockEqUpdate.mockResolvedValue({ error: null });
+    mockEmailSend.mockImplementation((args) => {
+      captured = args;
+      return Promise.resolve({});
+    });
+    mockFrom.mockImplementation(() => makeBuilder());
+    handler = makeHandler(mockDb, mockEmail);
+  });
+
+  it('envía email en catalán cuando cards.idioma=ca', async () => {
+    const res = await handler(buildEvent({ body: { email: 'jordi@test.com' } }));
+    expect(res.statusCode).toBe(200);
+    expect(captured).toBeTruthy();
+    expect(captured.html).toContain('Edita el teu perfil');
+    expect(captured.html).toContain('/ca/editar');
+    expect(captured.subject).toMatch(/enllaç per editar/i);
   });
 });

@@ -9,15 +9,44 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-function buildStatsEmail({ nombre, slug, visitsWeek, visitsMonth, siteUrl }) {
+const STATS_STRINGS = {
+  es: {
+    trendHigh:   { icon: '🚀', msg: '¡Gran semana! Tu tarjeta está generando mucho interés.' },
+    trendMid:    { icon: '📈', msg: 'Buena actividad. Sigue compartiendo tu tarjeta.' },
+    trendLow:    { icon: '💡', msg: 'Comparte tu tarjeta en grupos de WhatsApp para conseguir más visitas.' },
+    weekLabel:   'Esta semana',
+    monthLabel:  'Últimos 30 días',
+    footerNote:  'Recibes este resumen cada lunes como usuario del plan Anual. ¿Dudas? Responde este email.',
+    cta:         'Ver mi tarjeta →',
+    preheader:   (n) => `Tuviste ${n} visita${n !== 1 ? 's' : ''} esta semana en tu tarjeta PerfilaPro.`,
+    title:       (firstName, icon) => `Hola, ${firstName} ${icon}`,
+    subject:     (firstName, n) => `${firstName}, tu tarjeta tuvo ${n} visita${n !== 1 ? 's' : ''} esta semana`,
+  },
+  ca: {
+    trendHigh:   { icon: '🚀', msg: 'Gran setmana! La teva targeta està generant molt d’interès.' },
+    trendMid:    { icon: '📈', msg: 'Bona activitat. Segueix compartint la teva targeta.' },
+    trendLow:    { icon: '💡', msg: 'Comparteix la teva targeta a grups de WhatsApp per aconseguir més visites.' },
+    weekLabel:   'Aquesta setmana',
+    monthLabel:  'Últims 30 dies',
+    footerNote:  'Reps aquest resum cada dilluns com a usuari del pla Anual. Tens dubtes? Respon aquest email.',
+    cta:         'Veure la meva targeta →',
+    preheader:   (n) => `Has tingut ${n} visita${n !== 1 ? 'es' : ''} aquesta setmana a la teva targeta PerfilaPro.`,
+    title:       (firstName, icon) => `Hola, ${firstName} ${icon}`,
+    subject:     (firstName, n) => `${firstName}, la teva targeta ha tingut ${n} visita${n !== 1 ? 'es' : ''} aquesta setmana`,
+  },
+};
+
+function buildStatsEmail({ nombre, slug, visitsWeek, visitsMonth, siteUrl, idioma = 'es' }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const T = STATS_STRINGS[lang];
   const firstName = (nombre || '').split(' ')[0];
   const cardUrl = `${siteUrl}/c/${slug}`;
 
   const trend = visitsWeek >= 10
-    ? { icon: '🚀', msg: '¡Gran semana! Tu tarjeta está generando mucho interés.' }
+    ? T.trendHigh
     : visitsWeek >= 3
-    ? { icon: '📈', msg: 'Buena actividad. Sigue compartiendo tu tarjeta.' }
-    : { icon: '💡', msg: 'Comparte tu tarjeta en grupos de WhatsApp para conseguir más visitas.' };
+    ? T.trendMid
+    : T.trendLow;
 
   const bodyHtml = `
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
@@ -25,13 +54,13 @@ function buildStatsEmail({ nombre, slug, visitsWeek, visitsMonth, siteUrl }) {
                 <td style="width:50%;padding-right:8px">
                   <div style="background:${COLORS.accentSoft};border-radius:10px;padding:20px;text-align:center">
                     <div style="font-size:2.5rem;font-weight:800;color:${COLORS.accent};line-height:1">${visitsWeek}</div>
-                    <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${COLORS.inkSoft};margin-top:6px">Esta semana</div>
+                    <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${COLORS.inkSoft};margin-top:6px">${T.weekLabel}</div>
                   </div>
                 </td>
                 <td style="width:50%;padding-left:8px">
                   <div style="background:${COLORS.bg};border-radius:10px;padding:20px;text-align:center">
                     <div style="font-size:2.5rem;font-weight:800;color:${COLORS.ink};line-height:1">${visitsMonth}</div>
-                    <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${COLORS.inkSoft};margin-top:6px">Últimos 30 días</div>
+                    <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${COLORS.inkSoft};margin-top:6px">${T.monthLabel}</div>
                   </div>
                 </td>
               </tr>
@@ -40,19 +69,20 @@ function buildStatsEmail({ nombre, slug, visitsWeek, visitsMonth, siteUrl }) {
             <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">${trend.msg}</p>
 
             <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
-              Recibes este resumen cada lunes como usuario del plan Anual. ¿Dudas? Responde este email.
+              ${T.footerNote}
             </p>`;
 
   const html = buildEmailLayout({
-    preheader: `Tuviste ${visitsWeek} visita${visitsWeek !== 1 ? 's' : ''} esta semana en tu tarjeta PerfilaPro.`,
-    title: `Hola, ${firstName} ${trend.icon}`,
+    preheader: T.preheader(visitsWeek),
+    title: T.title(firstName, trend.icon),
     bodyHtml,
-    cta: { text: 'Ver mi tarjeta →', url: cardUrl },
+    cta: { text: T.cta, url: cardUrl },
     siteUrl,
+    idioma: lang,
   });
 
   return {
-    subject: `${firstName}, tu tarjeta tuvo ${visitsWeek} visita${visitsWeek !== 1 ? 's' : ''} esta semana`,
+    subject: T.subject(firstName, visitsWeek),
     html,
   };
 }
@@ -65,7 +95,7 @@ async function processWeeklyStats(db, emailClient) {
 
   const { data: proCards, error } = await db
     .from('cards')
-    .select('slug, nombre, email')
+    .select('slug, nombre, email, idioma')
     .eq('plan', 'pro')
     .eq('status', 'active')
     .is('deleted_at', null)
@@ -92,6 +122,7 @@ async function processWeeklyStats(db, emailClient) {
       visitsWeek: visitsWeek ?? 0,
       visitsMonth: visitsMonth ?? 0,
       siteUrl,
+      idioma: card.idioma,
     });
 
     try {

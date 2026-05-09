@@ -104,4 +104,38 @@ describe('buildStatsEmail', () => {
     const { html } = buildStatsEmail({ ...base, visitsWeek: 15 });
     expect(html).toContain('Gran semana');
   });
+
+  it('renderiza en catalán cuando idioma=ca', () => {
+    const { subject, html } = buildStatsEmail({ ...base, visitsWeek: 12, idioma: 'ca' });
+    expect(subject).toContain('María');
+    expect(subject).toMatch(/aquesta setmana$/);
+    expect(html).toContain('Aquesta setmana');
+    expect(html).toContain('Últims 30 dies');
+    expect(html).toContain('Veure la meva targeta');
+    expect(html).toContain('Gran setmana');
+    expect(html).toContain('lang="ca"');
+  });
+
+  it('default a español cuando idioma falta', () => {
+    const { html } = buildStatsEmail({ ...base, visitsWeek: 12 });
+    expect(html).toContain('Esta semana');
+    expect(html).toContain('Últimos 30 días');
+    expect(html).toContain('lang="es"');
+  });
+});
+
+describe('weekly-stats · idioma desde DB', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailSend.mockResolvedValue({ id: 'ok' });
+    process.env.SITE_URL = 'https://perfilapro.es';
+  });
+
+  it('envía stats en catalán a tarjetas Pro con idioma=ca', async () => {
+    setupDb([{ slug: 'jordi-pro', nombre: 'Jordi Puig', email: 'jordi@test.com', idioma: 'ca' }], 12);
+    await handler();
+    const args = mockEmailSend.mock.calls[0][0];
+    expect(args.subject).toMatch(/aquesta setmana$/);
+    expect(args.html).toContain('Aquesta setmana');
+  });
 });
