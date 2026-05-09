@@ -955,7 +955,7 @@
       if (sepeCache[q]) return Promise.resolve(sepeCache[q]);
       if (inflightController) inflightController.abort();
       inflightController = new AbortController();
-      return fetch('/api/ocupaciones-search?q=' + encodeURIComponent(q) + '&limit=8',
+      return fetch('/api/ocupaciones-search?q=' + encodeURIComponent(q) + '&limit=8&lang=ca',
                    { signal: inflightController.signal })
         .then(function (r) { return r.ok ? r.json() : { results: [] }; })
         .then(function (j) { sepeCache[q] = j.results || []; return sepeCache[q]; })
@@ -989,13 +989,18 @@
         );
       });
       sepeFiltered.slice(0, 8).forEach(function (o) {
+        // El backend nos devuelve name_ca cuando hay traducción del long-head
+        // (~200 ocupaciones más comunes); cae a name castellano si la fila
+        // todavía está sin traducir. data-name guarda el display name para
+        // que la pre-fill del input use el mismo idioma que se mostró.
+        var displayName = o.name_ca || o.name;
         html += (
           '<li class="pp-arch-search__item" role="option"' +
               ' data-source="sepe" data-code="' + escapeHtml(o.code) + '"' +
-              ' data-name="' + escapeHtml(o.name) + '"' +
+              ' data-name="' + escapeHtml(displayName) + '"' +
               ' data-sector-slug="' + escapeHtml(o.sector_slug) + '">' +
             '<i data-lucide="briefcase"></i>' +
-            '<span>' + escapeHtml(o.name) + '</span>' +
+            '<span>' + escapeHtml(displayName) + '</span>' +
             '<span class="pp-arch-search__item-sector">' +
               escapeHtml(SECTOR_LABELS_HUMAN[o.sector_slug] || o.sector_slug) +
             '</span>' +

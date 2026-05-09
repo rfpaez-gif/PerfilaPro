@@ -186,14 +186,18 @@ function makeHandler(db, emailClient = resend) {
     let ocupacionCodeClean = null;
     let ocupacionName = null;
     if (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) {
+      // Selecciona name_ca solo si el alta es catalana, para que la tarjeta
+      // pública muestre el oficio en el idioma del autónomo. Si la fila no
+      // tiene name_ca (long-tail aún sin traducir), cae al name castellano.
+      const cols = idioma === 'ca' ? 'code, name, name_ca' : 'code, name';
       const { data: ocup } = await db
         .from('ocupaciones')
-        .select('code, name')
+        .select(cols)
         .eq('code', String(ocupacion_code))
         .maybeSingle();
       if (ocup) {
         ocupacionCodeClean = ocup.code;
-        ocupacionName = ocup.name;
+        ocupacionName = (idioma === 'ca' && ocup.name_ca) ? ocup.name_ca : ocup.name;
       }
     }
 
