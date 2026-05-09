@@ -1447,7 +1447,10 @@
         const firstName = (card.nombre || '').split(/\s+/)[0] || 'La teva feina';
         document.getElementById('upgradeName').textContent = firstName;
         document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
-        document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
+        // Sample estàtic: el QR de la furgoneta és il·lustratiu (≈43px en pantalla,
+        // no escanejable). El SVG real està gated a Anual a /api/qr (vegeu #59),
+        // així que per a free/promo fem servir el mateix asset que el mode preview.
+        document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
         freeBanner.classList.add('is-visible');
 
         // Mode Promo Llançament — revela banner, swap de labels i CTA.
