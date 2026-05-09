@@ -1,6 +1,9 @@
-// Toggle de idioma flotante (es/ca). Solo se muestra en /es/* y /ca/*.
-// Al hacer click guarda cookie pp_lang (1 año) y navega al equivalente
-// en el otro idioma preservando query string y hash.
+// Toggle de idioma (es/ca). Solo en /es/* y /ca/*.
+// Estrategia de inserción:
+//   1. Si existe .pp-nav__actions → entra como primer hijo (a la izquierda del CTA verde)
+//   2. Si solo existe .pp-nav      → se añade al final (a la derecha del logo)
+//   3. Fallback                    → flotante fixed top-right
+// Click → setea cookie pp_lang (1 año) y navega al equivalente preservando query+hash.
 
 (function () {
   'use strict';
@@ -13,9 +16,7 @@
   var current = isCa ? 'ca' : 'es';
 
   function targetPath(lang) {
-    if (isEs) return '/' + lang + '/' + path.slice(4);
-    if (isCa) return '/' + lang + '/' + path.slice(4);
-    return '/' + lang + '/';
+    return '/' + lang + '/' + path.slice(4);
   }
 
   function switchTo(lang) {
@@ -24,20 +25,28 @@
     location.href = targetPath(lang) + location.search + location.hash;
   }
 
-  function inject() {
-    if (document.getElementById('pp-lang-switch')) return;
-
+  function buildSwitch(mode) {
+    // mode: 'inline' (dentro de la nav) | 'float' (esquina fixed)
     var wrap = document.createElement('div');
     wrap.id = 'pp-lang-switch';
     wrap.setAttribute('role', 'group');
-    wrap.setAttribute('aria-label', current === 'ca' ? 'Idioma' : 'Idioma');
-    wrap.style.cssText = [
-      'position:fixed', 'top:14px', 'right:14px', 'z-index:998',
+    wrap.setAttribute('aria-label', 'Idioma');
+
+    var base = [
       'display:inline-flex', 'background:#FFFFFF',
       'border:1px solid #E5E7EB', 'border-radius:999px',
       'font:600 11px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
-      'box-shadow:0 2px 8px rgba(0,0,0,.06)', 'overflow:hidden',
-    ].join(';');
+      'overflow:hidden', 'flex-shrink:0',
+    ];
+    if (mode === 'float') {
+      base = base.concat([
+        'position:fixed', 'top:14px', 'right:14px', 'z-index:998',
+        'box-shadow:0 2px 8px rgba(0,0,0,.06)',
+      ]);
+    } else {
+      base = base.concat(['margin-right:8px', 'align-self:center']);
+    }
+    wrap.style.cssText = base.join(';');
 
     function btn(label, lang) {
       var b = document.createElement('button');
@@ -46,7 +55,7 @@
       b.setAttribute('aria-label', lang === 'ca' ? 'Català' : 'Español');
       var active = lang === current;
       b.style.cssText = [
-        'border:0', 'padding:7px 12px',
+        'border:0', 'padding:7px 11px',
         'background:' + (active ? '#0A1F44' : '#FFFFFF'),
         'color:' + (active ? '#FFFFFF' : '#6B7280'),
         'cursor:' + (active ? 'default' : 'pointer'),
@@ -58,14 +67,33 @@
         b.addEventListener('click', function () { switchTo(lang); });
         b.addEventListener('mouseenter', function () { b.style.color = '#0A1F44'; });
         b.addEventListener('mouseleave', function () { b.style.color = '#6B7280'; });
+      } else {
+        b.setAttribute('aria-current', 'true');
       }
-      if (active) b.setAttribute('aria-current', 'true');
       return b;
     }
-
     wrap.appendChild(btn('ES', 'es'));
     wrap.appendChild(btn('CA', 'ca'));
-    document.body.appendChild(wrap);
+    return wrap;
+  }
+
+  function inject() {
+    if (document.getElementById('pp-lang-switch')) return;
+
+    var actions = document.querySelector('.pp-nav__actions');
+    if (actions) {
+      actions.insertBefore(buildSwitch('inline'), actions.firstChild);
+      return;
+    }
+    var nav = document.querySelector('.pp-nav');
+    if (nav) {
+      var sw = buildSwitch('inline');
+      sw.style.marginLeft = 'auto'; // empuja el toggle a la derecha del logo
+      sw.style.marginRight = '0';
+      nav.appendChild(sw);
+      return;
+    }
+    document.body.appendChild(buildSwitch('float'));
   }
 
   if (document.readyState === 'loading') {
