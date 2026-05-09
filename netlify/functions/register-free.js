@@ -6,32 +6,10 @@ const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { capture: captureEvent } = require('./lib/posthog-server');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
+const { pickSectorLabel } = require('./lib/sector-labels');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-const SECTOR_LABELS = {
-  oficios:    'Oficios y servicios del hogar',
-  salud:      'Salud y bienestar',
-  educacion:  'Educación y formación',
-  comercial:  'Comercial y ventas',
-  belleza:    'Belleza y estética',
-  reforma:    'Reforma y construcción',
-  hosteleria: 'Hostelería y restauración',
-  tech:       'Tecnología y digital',
-  legal:      'Legal y asesoría',
-  jardineria: 'Jardinería y paisajismo',
-  transporte: 'Transporte y mudanzas',
-  fotografia: 'Fotografía y vídeo',
-  eventos:    'Eventos y celebraciones',
-  automocion: 'Automoción y mecánica',
-  seguridad:  'Seguridad y vigilancia',
-  cuidados:   'Cuidados y asistencia',
-  fitness:    'Fitness y deporte',
-  turismo:    'Turismo y viajes',
-  comercio:   'Comercio y tiendas',
-  otro:       'Otro',
-};
 
 function stripTags(str) {
   return String(str || '').replace(/<[^>]*>/g, '').trim();
@@ -180,7 +158,7 @@ function makeHandler(db, emailClient = resend) {
 
     const editToken = crypto.randomBytes(32).toString('hex');
     const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const sectorLabel = SECTOR_LABELS[sector] || sector || '';
+    const sectorLabel = pickSectorLabel(sector, idioma);
     const cleanDesc   = desc ? stripTags(desc).substring(0, 300) : '';
     const tagline     = cleanDesc || sectorLabel;
     const serviciosParsed = Array.isArray(rawServicios)
