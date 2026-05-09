@@ -6,6 +6,17 @@ export default async (request, context) => {
   const url = new URL(request.url);
   if (url.pathname !== '/') return context.next();
 
+  // Solo aplica al dominio canónico perfilapro.es. Los demás hosts
+  // (perfilapro.cat, perfilapro.com y sus www) tienen reglas de
+  // redirect propias en netlify.toml que harán el hop de host + path
+  // en un solo salto. Si esta función disparara aquí, añadiría /ca/ o
+  // /es/ al path antes del host-swap y produciría un doble prefijo
+  // (p.ej. perfilapro.cat/ → /ca/ → perfilapro.es/ca/ca/ → 404).
+  const host = url.host.toLowerCase();
+  if (host !== 'perfilapro.es' && host !== 'www.perfilapro.es') {
+    return context.next();
+  }
+
   const cookie = request.headers.get('cookie') || '';
   const cookieMatch = cookie.match(/(?:^|;\s*)pp_lang=(es|ca)(?:;|$)/);
   if (cookieMatch) {
