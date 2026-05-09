@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>PerfilaPro · Brand Kit</title>
+<meta name="description" content="Manual de marca PerfilaPro. Wordmark, isotipo, paleta, escalas, usos y descargas.">
+<link rel="icon" href="../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --tinta:        #0A1F44;
+    --tinta-soft:   #1F2D52;
+    --verde:        #00C277;
+    --verde-dark:   #00A865;
+    --verde-light:  #E6F9F0;
+    --crema:        #FAF7F0;
+    --piedra:       #F7F8FA;
+    --gris-200:     #E5E7EB;
+    --gris-500:     #6B7280;
+    --gris-800:     #374151;
+    --coral:        #E5484D;
+    --font-serif:   'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--crema);
+    color: var(--tinta);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 64px 24px 96px; }
+
+  /* Typography */
+  h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -0.02em; color: var(--tinta); margin: 0; }
+  h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1.05; margin-bottom: 16px; }
+  h1 em { font-style: italic; color: var(--verde); }
+  h2 { font-size: 32px; line-height: 1.15; margin-bottom: 8px; letter-spacing: -0.015em; }
+  h3 { font-size: 22px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h4 { font-size: 16px; line-height: 1.3; margin: 0 0 4px; }
+  p  { margin: 0 0 16px; color: var(--gris-800); }
+  .lead { font-size: 18px; color: var(--gris-500); max-width: 720px; margin-bottom: 0; }
+  a { color: var(--verde-dark); }
+  a:hover { color: var(--tinta); }
+  small { font-size: 12px; color: var(--gris-500); }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.9em; background: var(--piedra); padding: 2px 6px; border-radius: 4px; color: var(--tinta); }
+  ul { padding-left: 20px; margin: 0 0 16px; }
+  li { margin-bottom: 6px; color: var(--gris-800); }
+
+  /* Wordmark inline (para badges) */
+  .wm {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .wm em { font-style: italic; color: var(--verde); }
+
+  /* Tag / chip */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--verde);
+    margin-bottom: 12px;
+  }
+
+  /* Section */
+  section.block {
+    background: #fff;
+    border: 1px solid var(--gris-200);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 32px;
+    page-break-inside: avoid;
+  }
+  section.block + section.block { margin-top: 0; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--crema) 0%, var(--piedra) 100%);
+    border: 1px solid var(--gris-200);
+    border-radius: 24px;
+    padding: 64px 40px;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .hero img.lockup { max-width: 540px; width: 100%; height: auto; margin: 0 auto 24px; display: block; }
+  .hero .meta { display: inline-flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px; color: var(--gris-500); }
+  .hero .meta span { padding: 4px 12px; background: #fff; border: 1px solid var(--gris-200); border-radius: 100px; }
+
+  /* TOC */
+  .toc {
+    background: var(--tinta);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+  .toc h4 { color: rgba(255,255,255,0.7); font-family: var(--font-sans); font-weight: 600; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .toc ol { columns: 2; column-gap: 32px; margin: 0; padding-left: 20px; }
+  .toc li { color: #fff; margin-bottom: 6px; }
+  .toc a { color: #fff; text-decoration: none; font-size: 14px; }
+  .toc a:hover { color: var(--verde); }
+  @media (max-width: 600px) { .toc ol { columns: 1; } }
+
+  /* Color swatches */
+  .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-top: 24px; }
+  .swatch { background: var(--piedra); border: 1px solid var(--gris-200); border-radius: 14px; overflow: hidden; }
+  .swatch__color { height: 88px; }
+  .swatch__meta { padding: 12px 14px; }
+  .swatch__name { font-size: 13px; font-weight: 600; color: var(--tinta); margin-bottom: 2px; }
+  .swatch__hex  { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; color: var(--gris-500); }
+
+  /* Variant gallery */
+  .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
+  @media (max-width: 720px) { .gallery { grid-template-columns: 1fr; } }
+  .variant { background: var(--piedra); border: 1px solid var(--gris-200); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .variant__preview { padding: 40px 24px; display: flex; align-items: center; justify-content: center; min-height: 180px; }
+  .variant__preview--cream  { background: var(--crema); }
+  .variant__preview--white  { background: #fff; }
+  .variant__preview--tinta  { background: var(--tinta); }
+  .variant__preview--verde  { background: var(--verde); }
+  .variant__preview img { max-width: 80%; max-height: 120px; height: auto; }
+  .variant__meta { padding: 14px 18px; background: #fff; border-top: 1px solid var(--gris-200); }
+  .variant__name { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--tinta); }
+  .variant__desc { font-size: 12px; color: var(--gris-500); margin: 0 0 8px; line-height: 1.4; }
+  .variant__downloads { display: flex; gap: 8px; flex-wrap: wrap; }
+  .variant__downloads a {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--verde-dark);
+    text-decoration: none;
+    padding: 4px 10px;
+    background: var(--verde-light);
+    border-radius: 100px;
+    transition: background 0.15s;
+  }
+  .variant__downloads a:hover { background: var(--verde); color: #fff; }
+
+  /* Isotype gallery */
+  .iso-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  @media (max-width: 600px) { .iso-gallery { grid-template-columns: 1fr; } }
+  .iso { background: #fff; border: 1px solid var(--gris-200); border-radius: 14px; padding: 32px; text-align: center; }
+  .iso img { width: 128px; height: 128px; margin-bottom: 16px; }
+  .iso h4 { margin-bottom: 4px; }
+
+  /* Scales */
+  .scales { background: var(--piedra); border-radius: 14px; padding: 32px; margin-top: 24px; }
+  .scale-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--gris-200); gap: 24px; }
+  .scale-row:last-child { border: 0; padding-bottom: 0; }
+  .scale-row:first-child { padding-top: 0; }
+  .scale-spec { font-size: 12px; color: var(--gris-500); min-width: 140px; }
+  .scale-spec strong { display: block; font-size: 14px; color: var(--tinta); font-weight: 600; }
+  .scale-row img { max-height: 80px; height: auto; max-width: 60%; }
+
+  /* Application table */
+  table.uses {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  table.uses th, table.uses td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--gris-200);
+    vertical-align: top;
+  }
+  table.uses th {
+    font-weight: 600;
+    color: var(--tinta);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--piedra);
+  }
+  table.uses td:nth-child(2) { color: var(--gris-800); }
+  table.uses td code { background: var(--verde-light); color: var(--verde-dark); }
+
+  /* Don'ts */
+  .donts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+  @media (max-width: 720px) { .donts { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .donts { grid-template-columns: 1fr; } }
+  .dont {
+    background: var(--piedra);
+    border: 1px solid var(--gris-200);
+    border-radius: 12px;
+    padding: 18px;
+    position: relative;
+  }
+  .dont::after {
+    content: 'NO';
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--coral);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+  .dont__rule { font-size: 13px; font-weight: 600; color: var(--tinta); margin: 0 0 4px; line-height: 1.3; }
+  .dont__why  { font-size: 12px; color: var(--gris-500); margin: 0; line-height: 1.4; }
+
+  /* File inventory */
+  .inventory {
+    background: var(--tinta);
+    color: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    margin-top: 24px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .inventory .dir { color: var(--verde); }
+  .inventory .file { color: rgba(255,255,255,0.85); }
+  .inventory .size { color: rgba(255,255,255,0.5); }
+
+  /* Footer */
+  footer.foot {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--gris-200);
+    text-align: center;
+    color: var(--gris-500);
+    font-size: 13px;
+  }
+  footer.foot em { font-style: italic; }
+
+  /* Print */
+  @media print {
+    body { background: #fff; }
+    .wrap { max-width: 100%; padding: 24px; }
+    section.block, .hero { box-shadow: none; page-break-inside: avoid; }
+    .toc { background: var(--piedra); color: var(--tinta); }
+    .toc h4, .toc a, .toc li { color: var(--tinta); }
+    .inventory { background: var(--piedra); color: var(--tinta); }
+    .inventory .dir { color: var(--verde-dark); }
+    .inventory .file { color: var(--tinta); }
+    .inventory .size { color: var(--gris-500); }
+    a { color: inherit; text-decoration: underline; }
+    .variant__downloads { display: none; }
+    @page { margin: 18mm; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <img class="lockup" src="svg/perfilapro-lockup-default.svg" alt="PerfilaPro · Tu trabajo merece verse.">
+    <div class="meta">
+      <span>Brand Kit</span>
+      <span>v1.0 · 2026</span>
+      <span>Hecho en Orihuela · <em>Made in Spain</em></span>
+    </div>
+  </header>
+
+  <h1>Manual de <em>marca</em>.</h1>
+  <p class="lead">Documento de referencia para usar el wordmark, el isotipo y la paleta de PerfilaPro en cualquier soporte: documentos legales, vinilo de furgo, redes, merchandising, prensa. Todos los assets están en este mismo directorio (<code>public/assets/brand/</code>) y son <strong>vectoriales con texto convertido a paths</strong> — no requieren que el destino tenga Source Serif 4 instalada.</p>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <h4>Contenidos</h4>
+    <ol>
+      <li><a href="#paleta">Paleta de marca</a></li>
+      <li><a href="#tipografia">Tipografía</a></li>
+      <li><a href="#wordmark">Wordmark</a></li>
+      <li><a href="#isotipo">Isotipo</a></li>
+      <li><a href="#lockup">Lockup con tagline</a></li>
+      <li><a href="#aplicaciones">Aplicaciones por canal</a></li>
+      <li><a href="#prohibidos">Usos prohibidos</a></li>
+      <li><a href="#inventario">Inventario de archivos</a></li>
+      <li><a href="#imprenta">Imprenta profesional</a></li>
+      <li><a href="#regenerar">Regenerar el kit</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. PALETA -->
+  <section class="block" id="paleta">
+    <span class="tag">01 · Paleta</span>
+    <h2>Cinco colores. Ni uno más.</h2>
+    <p>La marca se reconoce por el contraste tinta/verde. Usar otros colores rompe la asociación. Los hex viven hardcodeados en <code>public/styles/tokens-color.css</code>, <code>netlify/functions/lib/email-layout.js</code> y <code>scripts/generate-brand-assets.js</code> — cualquier cambio toca los tres en el mismo commit.</p>
+    <div class="palette">
+      <div class="swatch"><div class="swatch__color" style="background:#0A1F44"></div><div class="swatch__meta"><div class="swatch__name">Tinta</div><div class="swatch__hex">#0A1F44</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#00C277"></div><div class="swatch__meta"><div class="swatch__name">Verde Match</div><div class="swatch__hex">#00C277</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#00A865"></div><div class="swatch__meta"><div class="swatch__name">Verde dark</div><div class="swatch__hex">#00A865</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#E6F9F0"></div><div class="swatch__meta"><div class="swatch__name">Verde light</div><div class="swatch__hex">#E6F9F0</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#FAF7F0;border-bottom:1px solid var(--gris-200)"></div><div class="swatch__meta"><div class="swatch__name">Crema</div><div class="swatch__hex">#FAF7F0</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#F7F8FA;border-bottom:1px solid var(--gris-200)"></div><div class="swatch__meta"><div class="swatch__name">Piedra</div><div class="swatch__hex">#F7F8FA</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#FFFFFF;border-bottom:1px solid var(--gris-200)"></div><div class="swatch__meta"><div class="swatch__name">Blanco</div><div class="swatch__hex">#FFFFFF</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#E5484D"></div><div class="swatch__meta"><div class="swatch__name">Coral · estado error</div><div class="swatch__hex">#E5484D</div></div></div>
+    </div>
+  </section>
+
+  <!-- 2. TIPOGRAFÍA -->
+  <section class="block" id="tipografia">
+    <span class="tag">02 · Tipografía</span>
+    <h2>Source Serif 4 + Inter.</h2>
+    <p>La serif es la firma. La sans es el oficio. Source Serif 4 SemiBold (600) construye el wordmark, los títulos y el tagline. Inter cubre cuerpo de texto, UI y formularios. Los TTFs viven en <code>netlify/functions/lib/fonts/</code> y se subsetean automáticamente en cada PDF generado.</p>
+    <div style="background:var(--piedra);border-radius:14px;padding:32px;margin-top:24px">
+      <div style="font-family:var(--font-serif);font-weight:600;font-size:48px;letter-spacing:-0.02em;line-height:1;color:var(--tinta);margin-bottom:8px">Aa Bb Cc 123 — <em style="font-style:italic;color:var(--verde)">Pro</em></div>
+      <div style="font-size:13px;color:var(--gris-500);font-family:ui-monospace,monospace">Source Serif 4 · SemiBold 600 · italic disponible</div>
+      <div style="height:1px;background:var(--gris-200);margin:24px 0"></div>
+      <div style="font-family:var(--font-sans);font-weight:400;font-size:24px;color:var(--tinta);margin-bottom:4px">Aa Bb Cc 123 — <strong style="font-weight:700">Bold</strong></div>
+      <div style="font-size:13px;color:var(--gris-500);font-family:ui-monospace,monospace">Inter · Regular 400 · SemiBold 600 · Bold 700</div>
+    </div>
+  </section>
+
+  <!-- 3. WORDMARK -->
+  <section class="block" id="wordmark">
+    <span class="tag">03 · Wordmark</span>
+    <h2>Seis variantes para todos los fondos.</h2>
+    <p>Source Serif 4 SemiBold con "Pro" en italic. Letter-spacing <code>-0.02em</code>. Cada glifo está convertido a path en los SVG, así que el archivo se abre idéntico en cualquier editor o imprenta sin instalar la fuente.</p>
+
+    <div class="gallery">
+      <div class="variant">
+        <div class="variant__preview variant__preview--cream"><img src="svg/perfilapro-wordmark-default.svg" alt="Wordmark default"></div>
+        <div class="variant__meta">
+          <div class="variant__name">Default</div>
+          <p class="variant__desc">Sobre crema, blanco o piedra. Uso por defecto en documentos, factura, deck, web.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-default.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-default@1x.png" download>PNG @1x</a>
+            <a href="png/perfilapro-wordmark-default@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-default@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant__preview variant__preview--tinta"><img src="svg/perfilapro-wordmark-on-tinta.svg" alt="Wordmark on tinta"></div>
+        <div class="variant__meta">
+          <div class="variant__name">On tinta</div>
+          <p class="variant__desc">Header oscuro, sobres, páginas internas oscuras.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-on-tinta.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-on-tinta@1x.png" download>@1x</a>
+            <a href="png/perfilapro-wordmark-on-tinta@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-on-tinta@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant__preview variant__preview--verde"><img src="svg/perfilapro-wordmark-on-verde.svg" alt="Wordmark on verde"></div>
+        <div class="variant__meta">
+          <div class="variant__name">On verde</div>
+          <p class="variant__desc">Banderines, hero verde, comunicaciones de marca. Ambos elementos en blanco.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-on-verde.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-on-verde@1x.png" download>@1x</a>
+            <a href="png/perfilapro-wordmark-on-verde@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-on-verde@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant__preview variant__preview--white"><img src="svg/perfilapro-wordmark-mono-tinta.svg" alt="Wordmark monocromo tinta"></div>
+        <div class="variant__meta">
+          <div class="variant__name">Mono tinta</div>
+          <p class="variant__desc">Impresión B/N, fotocopia, fax, grabado láser. Todo en tinta.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-mono-tinta.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-mono-tinta@1x.png" download>@1x</a>
+            <a href="png/perfilapro-wordmark-mono-tinta@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-mono-tinta@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant__preview variant__preview--tinta"><img src="svg/perfilapro-wordmark-mono-blanco.svg" alt="Wordmark monocromo blanco"></div>
+        <div class="variant__meta">
+          <div class="variant__name">Mono blanco</div>
+          <p class="variant__desc">Merchandising oscuro, vinilo en superficie negra. Todo en blanco.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-mono-blanco.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-mono-blanco@1x.png" download>@1x</a>
+            <a href="png/perfilapro-wordmark-mono-blanco@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-mono-blanco@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+      <div class="variant">
+        <div class="variant__preview variant__preview--cream"><img src="svg/perfilapro-wordmark-mono-verde.svg" alt="Wordmark monocromo verde"></div>
+        <div class="variant__meta">
+          <div class="variant__name">Mono verde</div>
+          <p class="variant__desc">Merchandising vibrante, sello verde sobre fondo claro.</p>
+          <div class="variant__downloads">
+            <a href="svg/perfilapro-wordmark-mono-verde.svg" download>SVG</a>
+            <a href="png/perfilapro-wordmark-mono-verde@1x.png" download>@1x</a>
+            <a href="png/perfilapro-wordmark-mono-verde@2x.png" download>@2x</a>
+            <a href="png/perfilapro-wordmark-mono-verde@3x.png" download>@3x</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:40px">Escalas recomendadas</h3>
+    <p>El wordmark trae <strong>clearance integrado</strong> equivalente a su x-height en cada lado — no añadir texto, iconos ni bordes dentro de ese margen. Tamaño mínimo legible: 14 px de alto (pantalla) o 8 mm (impresión). Por debajo, usar el isotipo.</p>
+    <div class="scales">
+      <div class="scale-row">
+        <div class="scale-spec"><strong>Hero / cartel</strong>≥ 64 px de alto</div>
+        <img src="svg/perfilapro-wordmark-default.svg" style="max-height:80px" alt="">
+      </div>
+      <div class="scale-row">
+        <div class="scale-spec"><strong>Sección destacada</strong>40 px</div>
+        <img src="svg/perfilapro-wordmark-default.svg" style="max-height:50px" alt="">
+      </div>
+      <div class="scale-row">
+        <div class="scale-spec"><strong>Email / factura</strong>28 px</div>
+        <img src="svg/perfilapro-wordmark-default.svg" style="max-height:32px" alt="">
+      </div>
+      <div class="scale-row">
+        <div class="scale-spec"><strong>Header web</strong>22 px</div>
+        <img src="svg/perfilapro-wordmark-default.svg" style="max-height:24px" alt="">
+      </div>
+      <div class="scale-row">
+        <div class="scale-spec"><strong>Mínimo legible</strong>14 px</div>
+        <img src="svg/perfilapro-wordmark-default.svg" style="max-height:16px" alt="">
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ISOTIPO -->
+  <section class="block" id="isotipo">
+    <span class="tag">04 · Isotipo</span>
+    <h2>La <em style="font-style:italic;color:var(--verde)">P</em>, autosuficiente.</h2>
+    <p>Cuando el wordmark no cabe — favicon, avatar de redes, app icon, sello en QR, watermark — usamos la <em style="font-style:italic">P</em> italic en verde, extraída del propio "Pro". No es un símbolo arbitrario: vive dentro del logotipo. Cuadrado redondeado con radio del 22 % del lado.</p>
+    <div class="iso-gallery">
+      <div class="iso">
+        <img src="svg/perfilapro-isotype-tinta.svg" alt="Isotipo tinta">
+        <h4>Tinta</h4>
+        <small>Default · favicon, sello QR, watermark</small>
+        <div class="variant__downloads" style="justify-content:center;margin-top:12px">
+          <a href="svg/perfilapro-isotype-tinta.svg" download>SVG</a>
+          <a href="png/perfilapro-isotype-tinta@2x.png" download>PNG 512px</a>
+        </div>
+      </div>
+      <div class="iso">
+        <img src="svg/perfilapro-isotype-verde.svg" alt="Isotipo verde">
+        <h4>Verde</h4>
+        <small>App icon redes — Instagram, LinkedIn, X</small>
+        <div class="variant__downloads" style="justify-content:center;margin-top:12px">
+          <a href="svg/perfilapro-isotype-verde.svg" download>SVG</a>
+          <a href="png/perfilapro-isotype-verde@2x.png" download>PNG 512px</a>
+        </div>
+      </div>
+      <div class="iso" style="background:var(--piedra)">
+        <img src="svg/perfilapro-isotype-white.svg" alt="Isotipo blanco" style="border:1px solid var(--gris-200);border-radius:28px">
+        <h4>White</h4>
+        <small>Watermark sobre fondo claro · borde si va sobre crema</small>
+        <div class="variant__downloads" style="justify-content:center;margin-top:12px">
+          <a href="svg/perfilapro-isotype-white.svg" download>SVG</a>
+          <a href="png/perfilapro-isotype-white@2x.png" download>PNG 512px</a>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:40px">Tamaños canónicos</h3>
+    <ul>
+      <li><strong>16 px</strong> — mínimo absoluto, favicon legacy</li>
+      <li><strong>32 px</strong> — favicon estándar</li>
+      <li><strong>48 px</strong> — sello sobre QR</li>
+      <li><strong>64 px</strong> — avatar de redes sociales</li>
+      <li><strong>128 px</strong> — app icon (iOS / Android)</li>
+      <li><strong>256 px / 512 px</strong> — app icon retina, perfiles destacados</li>
+    </ul>
+  </section>
+
+  <!-- 5. LOCKUP -->
+  <section class="block" id="lockup">
+    <span class="tag">05 · Lockup con tagline</span>
+    <h2>El logo + el manifiesto.</h2>
+    <p>Wordmark grande con la frase <em style="font-style:italic">"Tu trabajo merece verse."</em> en italic centrada debajo. Distancia logo→tagline = altura de la "P" del wordmark.</p>
+    <div style="background:var(--piedra);border-radius:14px;padding:64px 32px;text-align:center;margin-top:24px">
+      <img src="svg/perfilapro-lockup-default.svg" alt="Lockup PerfilaPro · Tu trabajo merece verse" style="max-width:480px;width:100%;height:auto">
+    </div>
+    <h3 style="margin-top:32px">Cuándo usarlo</h3>
+    <ul>
+      <li>Hero de landing</li>
+      <li>Portada de deck o propuesta comercial</li>
+      <li>Cabecera de factura institucional</li>
+      <li>Asset descargable / firma de email institucional</li>
+      <li>Cierre de vídeo, cortinilla</li>
+    </ul>
+    <h3 style="margin-top:24px">Cuándo NO usarlo</h3>
+    <ul>
+      <li>Espacios estrechos (header, navbar) — usa el wordmark solo</li>
+      <li>Cuando el tagline ya aparece en otro sitio cercano (no duplicar)</li>
+      <li>Sobre fondos cargados de imágenes (compite visualmente)</li>
+    </ul>
+    <div class="variant__downloads" style="margin-top:24px">
+      <a href="svg/perfilapro-lockup-default.svg" download>SVG</a>
+      <a href="png/perfilapro-lockup-default@1x.png" download>PNG @1x · 600px</a>
+      <a href="png/perfilapro-lockup-default@2x.png" download>@2x · 1200px</a>
+      <a href="png/perfilapro-lockup-default@3x.png" download>@3x · 1800px</a>
+    </div>
+  </section>
+
+  <!-- 6. APLICACIONES -->
+  <section class="block" id="aplicaciones">
+    <span class="tag">06 · Aplicaciones por canal</span>
+    <h2>Qué uso para qué.</h2>
+    <p>Cuando dudes, esta tabla. <strong>SVG para impresión y vector. PNG para digital.</strong> El raster pierde calidad al ampliar — para vinilo, lona y gran formato siempre vector.</p>
+    <table class="uses">
+      <thead><tr><th>Canal / soporte</th><th>Asset</th><th>Formato</th></tr></thead>
+      <tbody>
+        <tr><td>Documentos legales (Word, Google Docs, PDF)</td><td><code>wordmark-default</code> · <code>wordmark-mono-tinta</code> para B/N</td><td>SVG insertado o PNG @2x</td></tr>
+        <tr><td>Factura PDF</td><td>Ya integrado (lib/pdf-fonts) · overrides con <code>lockup-default</code></td><td>—</td></tr>
+        <tr><td><strong>Vinilo de furgo</strong></td><td><code>wordmark-default</code> · <code>wordmark-on-tinta</code> según color</td><td><strong>SVG obligatorio</strong></td></tr>
+        <tr><td>Cartelería gran formato</td><td><code>lockup-default</code> · <code>wordmark-default</code></td><td><strong>SVG obligatorio</strong></td></tr>
+        <tr><td>Tarjeta de visita física</td><td><code>wordmark-default</code> + <code>isotype-tinta</code> al 30% como watermark</td><td>SVG/PDF</td></tr>
+        <tr><td>Email signature</td><td><code>wordmark-default@2x</code> 480px</td><td>PNG</td></tr>
+        <tr><td>Slack / WhatsApp / mensajería</td><td><code>isotype-tinta@2x</code> · <code>wordmark-default@2x</code></td><td>PNG</td></tr>
+        <tr><td>Avatar Instagram / LinkedIn / X</td><td><code>isotype-verde@2x</code> 512px</td><td>PNG</td></tr>
+        <tr><td>Favicon web</td><td>Ya configurado (<code>../favicon.svg</code>)</td><td>SVG</td></tr>
+        <tr><td>Open Graph (preview en redes)</td><td>Ya configurado (<code>../og-default.png</code>)</td><td>PNG</td></tr>
+        <tr><td>Merchandising claro (taza, bolsa cruda)</td><td><code>wordmark-mono-tinta</code> · <code>wordmark-mono-verde</code></td><td>SVG/PDF</td></tr>
+        <tr><td>Merchandising oscuro (camiseta negra, gorra tinta)</td><td><code>wordmark-mono-blanco</code> · <code>wordmark-on-tinta</code></td><td>SVG/PDF</td></tr>
+        <tr><td>Sello en QR de la tarjeta</td><td><code>isotype-tinta</code> a 48 px</td><td>SVG</td></tr>
+        <tr><td>Press kit / dossier prensa</td><td>Adjuntar lockup + 4 wordmarks principales</td><td>Carpeta SVG + PNG</td></tr>
+        <tr><td>Watermark documental</td><td><code>isotype-white</code> al 8% opacidad</td><td>SVG</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 7. PROHIBIDOS -->
+  <section class="block" id="prohibidos">
+    <span class="tag">07 · Usos prohibidos</span>
+    <h2>Lo que NO se hace.</h2>
+    <p>La consistencia es lo que hace que una marca se reconozca. Estas reglas son innegociables.</p>
+    <div class="donts">
+      <div class="dont"><p class="dont__rule">No deformar ni inclinar</p><p class="dont__why">El italic del "Pro" es la única inclinación tolerada. El resto rompe la elegancia editorial.</p></div>
+      <div class="dont"><p class="dont__rule">No usar otros colores</p><p class="dont__why">La marca se reconoce por el contraste tinta/verde. Otro color = otra marca.</p></div>
+      <div class="dont"><p class="dont__rule">Sin sombras ni efectos</p><p class="dont__why">El logo es plano y serif. Brillos, sombras y degradados lo ensucian.</p></div>
+      <div class="dont"><p class="dont__rule">No cambiar la tipografía</p><p class="dont__why">Source Serif 4 es identidad. Ni a sans, ni a otra serif.</p></div>
+      <div class="dont"><p class="dont__rule">No alterar el peso</p><p class="dont__why">SemiBold (600) y solo SemiBold. Light o Bold extra rompen el "carácter editorial".</p></div>
+      <div class="dont"><p class="dont__rule">No invertir el tratamiento</p><p class="dont__why">"Perfila" siempre romana, "Pro" siempre italic. La jerarquía está pensada.</p></div>
+      <div class="dont"><p class="dont__rule">No rellenar el clearance</p><p class="dont__why">El aire alrededor del logo es parte del logo.</p></div>
+      <div class="dont"><p class="dont__rule">No estirar</p><p class="dont__why">Las proporciones de Source Serif 4 son exactas. Estirar = ridículo tipográfico.</p></div>
+      <div class="dont"><p class="dont__rule">No rotar</p><p class="dont__why">Salvo watermarks específicos a -20° tipo "DRAFT", nunca girar.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. INVENTARIO -->
+  <section class="block" id="inventario">
+    <span class="tag">08 · Inventario</span>
+    <h2>40 archivos · ~620 KB.</h2>
+    <p>Todo en <code>public/assets/brand/</code>. Cada SVG es vectorial puro (texto a paths) y cada PNG existe en tres densidades.</p>
+    <div class="inventory">
+<span class="dir">public/assets/brand/</span>
+├── <span class="file">BRAND_GUIDE.md</span>             <span class="size">guía técnica en markdown</span>
+├── <span class="file">index.html</span>                  <span class="size">esta página</span>
+├── <span class="dir">svg/</span>
+│   ├── <span class="file">perfilapro-wordmark-default.svg</span>      <span class="size">6,5 KB</span>
+│   ├── <span class="file">perfilapro-wordmark-on-tinta.svg</span>     <span class="size">6,6 KB</span>
+│   ├── <span class="file">perfilapro-wordmark-on-verde.svg</span>     <span class="size">6,6 KB</span>
+│   ├── <span class="file">perfilapro-wordmark-mono-tinta.svg</span>   <span class="size">6,5 KB</span>
+│   ├── <span class="file">perfilapro-wordmark-mono-blanco.svg</span>  <span class="size">6,6 KB</span>
+│   ├── <span class="file">perfilapro-wordmark-mono-verde.svg</span>   <span class="size">6,5 KB</span>
+│   ├── <span class="file">perfilapro-isotype-tinta.svg</span>         <span class="size">1,0 KB</span>
+│   ├── <span class="file">perfilapro-isotype-verde.svg</span>         <span class="size">1,0 KB</span>
+│   ├── <span class="file">perfilapro-isotype-white.svg</span>         <span class="size">1,0 KB</span>
+│   └── <span class="file">perfilapro-lockup-default.svg</span>        <span class="size">22 KB</span>
+└── <span class="dir">png/</span>  <span class="size">30 archivos · @1x / @2x / @3x por variante</span>
+    ├── <span class="file">perfilapro-wordmark-*</span>     <span class="size">480 / 960 / 1440 px de ancho</span>
+    ├── <span class="file">perfilapro-isotype-*</span>      <span class="size">256 / 512 / 768 px de lado</span>
+    └── <span class="file">perfilapro-lockup-*</span>       <span class="size">600 / 1200 / 1800 px de ancho</span>
+    </div>
+  </section>
+
+  <!-- 9. IMPRENTA -->
+  <section class="block" id="imprenta">
+    <span class="tag">09 · Imprenta profesional</span>
+    <h2>Para vinilo, lona, gran formato.</h2>
+    <p>Si la imprenta pide formato adicional al SVG:</p>
+    <ul>
+      <li><strong>PDF vectorial</strong> · abre el SVG en Illustrator / Inkscape / Affinity Designer y exporta como PDF/X-1a.</li>
+      <li><strong>EPS</strong> · Illustrator → Save As → EPS Level 3.</li>
+    </ul>
+    <h3 style="margin-top:24px">Equivalencias Pantone (orientativas — validar con prueba física)</h3>
+    <ul>
+      <li>Tinta <code>#0A1F44</code> ≈ Pantone <strong>2766 C</strong> o <strong>289 C</strong></li>
+      <li>Verde Match <code>#00C277</code> ≈ Pantone <strong>354 C</strong> o <strong>7481 C</strong></li>
+    </ul>
+    <h3 style="margin-top:24px">CMYK aproximado (para offset, validar prueba de color)</h3>
+    <ul>
+      <li>Tinta <code>#0A1F44</code> ≈ <code>C100 M85 Y30 K50</code></li>
+      <li>Verde Match <code>#00C277</code> ≈ <code>C75 M0 Y75 K0</code></li>
+    </ul>
+    <h3 style="margin-top:32px">Checklist antes de entregar</h3>
+    <ul>
+      <li>Variante correcta según fondo (default / on-tinta / on-verde / mono-*)</li>
+      <li>Formato correcto (SVG para vector / impresión, PNG para digital)</li>
+      <li>Pasarle este documento al proveedor</li>
+      <li>Tamaño mínimo respetado (≥ 14 px / ≥ 8 mm)</li>
+      <li>Clearance suficiente (no pega a otros elementos)</li>
+      <li>Para impresión: prueba de color validada antes de tirada</li>
+      <li>Para vinilo: archivo a escala real (no escalar después en imprenta)</li>
+    </ul>
+  </section>
+
+  <!-- 10. REGENERAR -->
+  <section class="block" id="regenerar">
+    <span class="tag">10 · Regenerar el kit</span>
+    <h2>Idempotente, un comando.</h2>
+    <p>Si la paleta cambia, si añades una variante o si actualizas la fuente:</p>
+    <div class="inventory" style="font-size:14px">
+<span class="size">$</span> <span class="file">node scripts/generate-brand-assets.js</span></div>
+    <p style="margin-top:24px">El script:</p>
+    <ol style="padding-left:20px;color:var(--gris-800)">
+      <li>Carga <code>SourceSerif4-Semibold.ttf</code> y <code>SourceSerif4-SemiboldIt.ttf</code> con <code>opentype.js</code>.</li>
+      <li>Renderiza cada glifo en <code>(0, 0)</code> y lo posiciona vía <code>transform="translate(...)"</code> — el render combinado de opentype tiene un bug de NaN con offsets decimales largos, documentado en el script.</li>
+      <li>Aplica kerning manual entre glifos consecutivos.</li>
+      <li>Compone los SVG con padding = x-height por lado.</li>
+      <li>Rasteriza cada SVG a PNG @1x/@2x/@3x con <code>@resvg/resvg-js</code>.</li>
+      <li>Verifica ausencia de <code>NaN</code> antes de escribir cada SVG.</li>
+    </ol>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <span class="wm">Perfila<em>Pro</em></span> · <em>Tu trabajo merece verse.</em>
+    </p>
+    <p>
+      Hecho en Orihuela · <em>Made in Spain</em> · v1.0 — 2026
+    </p>
+    <p style="margin-top:16px">
+      <small>Para imprimir como PDF: <kbd>⌘ P</kbd> / <kbd>Ctrl P</kbd> · usa "Guardar como PDF". El stylesheet de impresión está optimizado para A4.</small>
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
