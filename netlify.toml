@@ -226,6 +226,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/claim-launch-promo"
+  to     = "/.netlify/functions/claim-launch-promo"
+  status = 200
+
+[[redirects]]
   from   = "/api/admin-regenerate-seed"
   to     = "/.netlify/functions/admin-regenerate-seed"
   status = 200

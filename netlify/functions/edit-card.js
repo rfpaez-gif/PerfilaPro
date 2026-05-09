@@ -25,7 +25,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -59,10 +59,15 @@ function makeHandler(db) {
           .maybeSingle();
         if (cat) { category_sector = cat.sector; category_specialty = cat.specialty; }
       }
+      // Flag de la promo de lanzamiento — el editor lo lee para mostrar
+      // el banner "100% bonificado" y cambiar el CTA del freeBanner.
+      // Si LAUNCH_PROMO_ACTIVE no está, el frontend mantiene el flujo
+      // de Stripe normal sin tocar nada.
+      const launch_promo_active = process.env.LAUNCH_PROMO_ACTIVE === '1';
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...card, category_sector, category_specialty }),
+        body: JSON.stringify({ ...card, category_sector, category_specialty, launch_promo_active }),
       };
     }
 
