@@ -47,6 +47,31 @@
   status = 301
   force  = true
 
+# Brand kit: URL corta /brand → manual de marca completo
+# (compartible con abogado, asesoría, imprenta, prensa, partners).
+# El archivo real vive en /assets/brand/index.html.
+[[redirects]]
+  from   = "/brand"
+  to     = "/assets/brand/index.html"
+  status = 200
+
+[[redirects]]
+  from   = "/brand/"
+  to     = "/assets/brand/index.html"
+  status = 200
+
+# Defensivo: garantiza que /assets/brand/ (con o sin slash) sirve
+# el index.html aunque la pretty-URL config de Netlify no lo haga.
+[[redirects]]
+  from   = "/assets/brand"
+  to     = "/assets/brand/index.html"
+  status = 200
+
+[[redirects]]
+  from   = "/assets/brand/"
+  to     = "/assets/brand/index.html"
+  status = 200
+
 # Legacy redirects: las páginas client-facing pasaron a /es/ y /ca/.
 # 301 para preservar SEO de links entrantes y emails antiguos.
 [[redirects]]
