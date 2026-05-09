@@ -28,6 +28,9 @@ vi.mock('../netlify/functions/invoice-utils', () => ({
   roundTwo: (n) => Math.round(n * 100) / 100,
 }));
 
+// register-free crea las cards gratuitas con plan='base' + status='active'
+// desde el día uno. baseCard refleja ese estado real para que los tests
+// validen el flujo que de verdad ocurre en producción.
 const baseCard = {
   slug: 'paco-fontanero',
   nombre: 'Paco García',
@@ -36,12 +39,13 @@ const baseCard = {
   direccion: null,
   zona: null,
   email: 'paco@example.com',
-  plan: null,
-  status: 'free',
+  plan: 'base',
+  status: 'active',
   edit_token: 't'.repeat(64),
   edit_token_expires_at: new Date(Date.now() + 86400000).toISOString(),
   idioma: 'es',
   stripe_session_id: null,
+  kit_email_sent_at: null,
   categories: null,
 };
 
@@ -113,11 +117,26 @@ describe('claim-launch-promo handler', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('409 si ya tiene plan activo (idempotencia)', async () => {
-    const active = { ...baseCard, plan: 'pro', status: 'active' };
-    const handler = makeHandler(buildDb({ card: active }), emailClient);
+  it('409 si ya pagó vía Stripe (stripe_session_id presente)', async () => {
+    const paid = { ...baseCard, stripe_session_id: 'cs_test_abc', plan: 'pro' };
+    const handler = makeHandler(buildDb({ card: paid }), emailClient);
     const res = await handler(buildEvent({ body: { slug: baseCard.slug, token: baseCard.edit_token, plan: 'base' } }));
     expect(res.statusCode).toBe(409);
+  });
+
+  it('409 si ya redimió la promo (kit_email_sent_at presente)', async () => {
+    const redeemed = { ...baseCard, kit_email_sent_at: new Date().toISOString() };
+    const handler = makeHandler(buildDb({ card: redeemed }), emailClient);
+    const res = await handler(buildEvent({ body: { slug: baseCard.slug, token: baseCard.edit_token, plan: 'base' } }));
+    expect(res.statusCode).toBe(409);
+  });
+
+  it('200 para perfil free recién creado (plan=base, status=active, sin stripe ni kit)', async () => {
+    // Regresión: register-free deja plan='base'/status='active' por defecto.
+    // El check viejo (plan !== "free") bloqueaba TODOS los perfiles free.
+    const handler = makeHandler(buildDb(), emailClient);
+    const res = await handler(buildEvent({ body: { slug: baseCard.slug, token: baseCard.edit_token, plan: 'base' } }));
+    expect(res.statusCode).toBe(200);
   });
 
   it('200 en happy path: activa plan y devuelve expires_at', async () => {

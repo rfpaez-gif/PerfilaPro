@@ -62,7 +62,7 @@ function makeHandler(db, emailClient = resend) {
 
     const { data: card, error: cardError } = await db
       .from('cards')
-      .select('slug, nombre, tagline, whatsapp, direccion, zona, email, plan, status, edit_token_expires_at, edit_token, idioma, stripe_session_id, categories(specialty_label)')
+      .select('slug, nombre, tagline, whatsapp, direccion, zona, email, plan, status, edit_token_expires_at, edit_token, idioma, stripe_session_id, kit_email_sent_at, categories(specialty_label)')
       .eq('slug', slug)
       .eq('edit_token', token)
       .is('deleted_at', null)
@@ -76,10 +76,13 @@ function makeHandler(db, emailClient = resend) {
       return jsonResponse(401, { error: 'El enlace de edición ha expirado. Solicita uno nuevo.' });
     }
 
-    // Idempotencia: si ya está activa con plan pagado (Stripe o promo
-    // anterior), no permitimos doble redención. El frontend debería no
-    // mostrar el botón en ese caso, pero defendemos también en el back.
-    if (card.status === 'active' && card.plan && card.plan !== 'free') {
+    // Idempotencia: bloqueamos si la card ya pasó por Stripe (stripe_session_id)
+    // o ya redimió la promo (kit_email_sent_at). Mismo gate que el #freeBanner
+    // del editor — evita drift. Nota: register-free crea las cards gratuitas
+    // con plan='base' + status='active' desde el día uno, así que un check
+    // sobre plan/status confundiría perfiles free recién creados con perfiles
+    // ya activados de pago.
+    if (card.stripe_session_id || card.kit_email_sent_at) {
       return jsonResponse(409, { error: 'Tu perfil ya tiene plan activo' });
     }
 
