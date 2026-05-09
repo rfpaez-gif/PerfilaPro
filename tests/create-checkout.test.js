@@ -66,6 +66,27 @@ describe('create-checkout handler', () => {
     expect(params.metadata.zona).toBeUndefined();
   });
 
+  it('idioma="es" por defecto en metadata + success_url bajo /es/', async () => {
+    await handler(buildEvent({ body: validBody }));
+    const params = mockCreate.mock.calls[0][0];
+    expect(params.metadata.idioma).toBe('es');
+    expect(params.success_url).toContain('/es/success');
+    expect(params.cancel_url).toContain('/es/');
+  });
+
+  it('idioma="ca" del body llega a metadata y a success_url', async () => {
+    await handler(buildEvent({ body: { ...validBody, idioma: 'ca' } }));
+    const params = mockCreate.mock.calls[0][0];
+    expect(params.metadata.idioma).toBe('ca');
+    expect(params.success_url).toContain('/ca/success');
+    expect(params.cancel_url).toContain('/ca/');
+  });
+
+  it('idioma desconocido cae a "es" silenciosamente', async () => {
+    await handler(buildEvent({ body: { ...validBody, idioma: 'fr' } }));
+    expect(mockCreate.mock.calls[0][0].metadata.idioma).toBe('es');
+  });
+
   it('devuelve 429 al superar el límite por IP (10 requests / 10 min)', async () => {
     const ip = '9.9.9.9';
     for (let i = 0; i < 10; i++) {
