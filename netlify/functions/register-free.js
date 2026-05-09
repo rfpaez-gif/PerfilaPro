@@ -44,53 +44,85 @@ function toSlug(name) {
     .substring(0, 40);
 }
 
-function buildWelcomeEmail({ nombre, slug, siteUrl, editToken }) {
+const WELCOME_EMAIL_STRINGS = {
+  es: {
+    intro1: 'Tu perfil profesional está creado. Puedes editarlo y completarlo cuando quieras desde el enlace de abajo.',
+    intro2: 'Cuando estés listo para activarlo y que aparezca en el directorio, activa tu plan por solo 9€.',
+    seeProfile: 'Ver mi perfil →',
+    completeProfile: 'Completar mi perfil',
+    planActive: 'Plan activo · Gratuito',
+    planNote: 'Sin límite de tiempo · Activa el directorio cuando quieras',
+    yourLink: 'Tu enlace',
+    preheader: (n) => `${n}, tu perfil PerfilaPro ya está creado.`,
+    title: (n) => `¡Tu perfil ya existe, ${n}! 🚀`,
+    footerNote: '🔒 El botón "Completar mi perfil" es personal — no compartas este email con nadie.',
+    subject: (n) => `${n}, tu perfil está listo 🎉`,
+  },
+  ca: {
+    intro1: 'El teu perfil professional ja està creat. El pots editar i completar quan vulguis des de l’enllaç de baix.',
+    intro2: 'Quan estiguis a punt per activar-lo i que aparegui al directori, activa el teu pla per només 9€.',
+    seeProfile: 'Veure el meu perfil →',
+    completeProfile: 'Completar el meu perfil',
+    planActive: 'Pla actiu · Gratuït',
+    planNote: 'Sense límit de temps · Activa el directori quan vulguis',
+    yourLink: 'El teu enllaç',
+    preheader: (n) => `${n}, el teu perfil PerfilaPro ja està creat.`,
+    title: (n) => `El teu perfil ja existeix, ${n}! 🚀`,
+    footerNote: '🔒 El botó "Completar el meu perfil" és personal — no comparteixis aquest email amb ningú.',
+    subject: (n) => `${n}, el teu perfil està a punt 🎉`,
+  },
+};
+
+function buildWelcomeEmail({ nombre, slug, siteUrl, editToken, idioma = 'es' }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const T = WELCOME_EMAIL_STRINGS[lang];
   const cardUrl = `${siteUrl}/c/${slug}`;
-  const editUrl = `${siteUrl}/editar.html?slug=${slug}&token=${editToken}`;
+  const editUrl = `${siteUrl}/${lang}/editar?slug=${slug}&token=${editToken}`;
   const firstName = (nombre || '').split(' ')[0];
 
   const bodyHtml = `
             <p style="margin:0 0 12px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
-              Tu perfil profesional está creado. Puedes editarlo y completarlo cuando quieras desde el enlace de abajo.
+              ${T.intro1}
             </p>
             <p style="margin:0 0 28px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
-              Cuando estés listo para activarlo y que aparezca en el directorio, activa tu plan por solo 9€.
+              ${T.intro2}
             </p>
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 32px">
               <tr><td align="center" style="padding-bottom:12px">
-                <a href="${cardUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Ver mi perfil →</a>
+                <a href="${cardUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">${T.seeProfile}</a>
               </td></tr>
               <tr><td align="center">
-                <a href="${editUrl}" style="display:inline-block;background:${COLORS.surface};color:${COLORS.accent};font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid ${COLORS.accent}">Completar mi perfil</a>
+                <a href="${editUrl}" style="display:inline-block;background:${COLORS.surface};color:${COLORS.accent};font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:100px;border:2px solid ${COLORS.accent}">${T.completeProfile}</a>
               </td></tr>
             </table>
 
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
               <tr>
                 <td style="background:${COLORS.accentSoft};border-radius:10px 10px 0 0;padding:12px 20px;border-left:3px solid ${COLORS.accent}">
-                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">Plan activo · Gratuito</p>
-                  <p style="margin:4px 0 0;font-size:13px;color:${COLORS.ink};font-weight:600">Sin límite de tiempo · Activa el directorio cuando quieras</p>
+                  <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.accent}">${T.planActive}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:${COLORS.ink};font-weight:600">${T.planNote}</p>
                 </td>
               </tr>
               <tr>
                 <td style="background:${COLORS.bg};border-radius:0 0 10px 10px;padding:12px 20px">
-                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">Tu enlace</p>
+                  <p style="margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">${T.yourLink}</p>
                   <a href="${cardUrl}" style="font-size:14px;font-weight:700;color:${COLORS.accent};text-decoration:none">${cardUrl}</a>
                 </td>
               </tr>
             </table>`;
 
   const html = buildEmailLayout({
-    preheader: `${firstName}, tu perfil PerfilaPro ya está creado.`,
-    title: `¡Tu perfil ya existe, ${firstName}! 🚀`,
+    preheader: T.preheader(firstName),
+    title: T.title(firstName),
     bodyHtml,
-    footerNote: '🔒 El botón "Completar mi perfil" es personal — no compartas este email con nadie.',
+    footerNote: T.footerNote,
     siteUrl,
+    idioma: lang,
   });
 
   return {
-    subject: `${firstName}, tu perfil está listo 🎉`,
+    subject: T.subject(firstName),
     html,
   };
 }
@@ -111,7 +143,8 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma } = body;
+    const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
 
     if (!nombre || !whatsapp || !cp || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
@@ -229,6 +262,7 @@ function makeHandler(db, emailClient = resend) {
       local_publico:    localPublicoBool,
       edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
+      idioma,
     };
 
     const { error } = await db.from('cards').insert(row);
@@ -241,7 +275,7 @@ function makeHandler(db, emailClient = resend) {
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
     if (email && emailClient) {
-      const { subject, html } = buildWelcomeEmail({ nombre: cleanNombre, slug, siteUrl, editToken });
+      const { subject, html } = buildWelcomeEmail({ nombre: cleanNombre, slug, siteUrl, editToken, idioma });
       emailClient.emails.send({
         from: 'PerfilaPro <hola@perfilapro.es>',
         to: email,
@@ -250,7 +284,7 @@ function makeHandler(db, emailClient = resend) {
       }).catch(err => console.error('Email error:', err.message));
     }
 
-    captureEvent(slug, 'signup_completed_free', { sector: sector || null, plan: 'free' })
+    captureEvent(slug, 'signup_completed_free', { sector: sector || null, plan: 'free', idioma })
       .catch(() => {});
 
     return {
@@ -259,7 +293,7 @@ function makeHandler(db, emailClient = resend) {
       body: JSON.stringify({
         slug,
         card_url:  `${siteUrl}/c/${slug}`,
-        edit_url:  `${siteUrl}/editar.html?slug=${slug}&token=${editToken}`,
+        edit_url:  `${siteUrl}/${idioma}/editar?slug=${slug}&token=${editToken}`,
       }),
     };
   };

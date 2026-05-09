@@ -169,7 +169,7 @@ describe('register-free handler', () => {
     const json = JSON.parse(res.body);
     expect(json.slug).toBe('paco-garcia');
     expect(json.card_url).toBe('https://perfilapro.es/c/paco-garcia');
-    expect(json.edit_url).toContain('/editar.html?slug=paco-garcia&token=');
+    expect(json.edit_url).toContain('/es/editar?slug=paco-garcia&token=');
   });
 
   it('inserts plan=free, status=active, no directory_visible', async () => {
@@ -387,6 +387,6 @@ describe('buildWelcomeEmail', () => {
     });
     expect(subject).toContain('Ana');
     expect(html).toContain('https://perfilapro.es/c/ana-lopez');
-    expect(html).toContain('https://perfilapro.es/editar.html?slug=ana-lopez&token=abc123');
+    expect(html).toContain('https://perfilapro.es/es/editar?slug=ana-lopez&token=abc123');
   });
 });

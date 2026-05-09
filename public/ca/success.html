@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/success" />
+  <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/success" />
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
+  <link rel="canonical" href="https://perfilapro.es/ca/success" />
   <meta name="robots" content="noindex,nofollow">
-  <title>¡Tarjeta activa! — PerfilaPro</title>
+  <title>Targeta activa! — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -184,7 +188,7 @@
       text-decoration: none;
     }
 
-    /* ── Share link discreto (WhatsApp después del CTA primario) ─── */
+    /* ── Share link discreto (WhatsApp després del CTA primari) ─── */
     .pp-success-share {
       display: inline-flex; align-items: center; gap: .35rem;
       margin: .75rem auto 0;
@@ -265,55 +269,55 @@
 
   <div class="pp-success-card">
     <div class="pp-success-card__hd">
-      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inicio">Perfila<span class="pp-logo__pro">Pro</span></a>
+      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inici">Perfila<span class="pp-logo__pro">Pro</span></a>
     </div>
     <div class="pp-success-card__body">
 
       <!-- LOADING -->
       <div id="stateLoading" class="pp-success-state pp-success-loading is-visible">
         <div class="pp-success-spinner"></div>
-        <p class="pp-success-loading__title">Activando tu tarjeta<span class="pp-success-loading__dots"></span></p>
-        <p class="pp-success-loading__sub">Esto tarda solo unos segundos mientras confirmamos el pago.</p>
+        <p class="pp-success-loading__title">Activant la teva targeta<span class="pp-success-loading__dots"></span></p>
+        <p class="pp-success-loading__sub">Això triga només uns segons mentre confirmem el pagament.</p>
       </div>
 
       <!-- SUCCESS -->
       <div id="stateSuccess" class="pp-success-state">
         <div class="pp-success-icon">🎉</div>
-        <h1 class="pp-success-title">¡Tu tarjeta está activa!</h1>
-        <p class="pp-success-sub" id="successSub">Ya puedes compartirla y empezar a recibir clientes.</p>
+        <h1 class="pp-success-title">La teva targeta està activa!</h1>
+        <p class="pp-success-sub" id="successSub">Ja la pots compartir i començar a rebre clients.</p>
 
         <div class="pp-success-linkbox">
           <input class="pp-success-linkbox__input" id="cardUrl" type="text" readonly>
           <button class="pp-success-linkbox__copy" id="copyBtn" onclick="copyLink()">Copiar</button>
         </div>
 
-        <a class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="viewCardBtn" href="#" target="_blank" style="margin-bottom:.5rem">Ver mi tarjeta →</a>
+        <a class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="viewCardBtn" href="#" target="_blank" style="margin-bottom:.5rem">Veure la meva targeta →</a>
 
         <div style="text-align:center">
           <a class="pp-success-share" id="waShareBtn" href="#" target="_blank" rel="noopener">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-            Compartir por WhatsApp
+            Compartir per WhatsApp
           </a>
         </div>
 
         <div class="pp-success-note">
-          📧 Te hemos enviado un email con tu enlace y los datos del plan. Revisa también el spam por si acaso.
+          📧 T'hem enviat un correu amb el teu enllaç i les dades del pla. Revisa també la safata de correu brossa per si de cas.
         </div>
 
         <div class="pp-success-edit">
-          ¿Necesitas cambiar algo? Te hemos mandado el nuevo enlace de edición a tu email.
+          Necessites canviar alguna cosa? T'hem enviat el nou enllaç d'edició al teu correu.
         </div>
       </div>
 
       <!-- ERROR -->
       <div id="stateError" class="pp-success-state pp-success-error">
         <div class="pp-success-error__icon">😔</div>
-        <p class="pp-success-error__title">La tarjeta está tardando en activarse</p>
-        <p class="pp-success-error__text">Tu pago se ha procesado correctamente. Escríbenos y lo resolvemos en minutos.</p>
-        <a href="mailto:hola@perfilapro.es?subject=Mi%20tarjeta%20no%20se%20ha%20activado&body=Hola%2C%20he%20completado%20el%20pago%20pero%20mi%20tarjeta%20no%20aparece.%20Mi%20slug%20es%3A%20SLUG"
+        <p class="pp-success-error__title">La targeta està trigant a activar-se</p>
+        <p class="pp-success-error__text">El teu pagament s'ha processat correctament. Escriu-nos i ho resolem en minuts.</p>
+        <a href="mailto:hola@perfilapro.es?subject=La%20meva%20targeta%20no%20s'ha%20activat&body=Hola%2C%20he%20completat%20el%20pagament%20per%C3%B2%20la%20meva%20targeta%20no%20apareix.%20El%20meu%20slug%20%C3%A9s%3A%20SLUG"
            id="errorMailBtn"
            class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill">
-          ✉️ Contactar con soporte
+          ✉️ Contactar amb suport
         </a>
       </div>
 
@@ -321,7 +325,7 @@
   </div>
 
   <div class="pp-success-footer">
-    <a href="/">Volver a PerfilaPro</a>
+    <a href="/">Tornar a PerfilaPro</a>
   </div>
 
   <script>
@@ -342,11 +346,11 @@
       showState('stateSuccess');
       if (nombre) {
         const firstName = nombre.split(' ')[0];
-        document.getElementById('successSub').textContent = firstName + ', ya puedes compartirla y empezar a recibir clientes.';
+        document.getElementById('successSub').textContent = firstName + ', ja la pots compartir i començar a rebre clients.';
       }
       document.getElementById('cardUrl').value = cardUrl;
       document.getElementById('viewCardBtn').href = cardUrl;
-      const waText = encodeURIComponent('¡Hola! Te comparto mi tarjeta profesional 👇\n' + cardUrl);
+      const waText = encodeURIComponent('Hola! Et comparteixo la meva targeta professional 👇\n' + cardUrl);
       document.getElementById('waShareBtn').href = 'https://wa.me/?text=' + waText;
     }
 
@@ -367,7 +371,7 @@
         input.select();
         document.execCommand('copy');
       }
-      btn.textContent = '¡Copiado!';
+      btn.textContent = 'Copiat!';
       btn.classList.add('is-copied');
       setTimeout(() => {
         btn.textContent = 'Copiar';

@@ -227,6 +227,24 @@ describe('stripe-webhook handler', () => {
     expect(expiresAt).toBeLessThanOrEqual(after + ninetyDays);
   });
 
+  it('persiste idioma="es" por defecto cuando no llega en metadata', async () => {
+    mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug' } }));
+    await handler(buildEvent());
+    expect(mockUpsert.mock.calls[0][0].idioma).toBe('es');
+  });
+
+  it('persiste idioma="ca" cuando llega en metadata', async () => {
+    mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug', idioma: 'ca' } }));
+    await handler(buildEvent());
+    expect(mockUpsert.mock.calls[0][0].idioma).toBe('ca');
+  });
+
+  it('idioma desconocido en metadata cae a "es"', async () => {
+    mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug', idioma: 'fr' } }));
+    await handler(buildEvent());
+    expect(mockUpsert.mock.calls[0][0].idioma).toBe('es');
+  });
+
   it('establece expires_at en 365 días para plan pro', async () => {
     mockConstructEvent.mockReturnValue(buildStripeEvent({ metadata: { slug: 'test-slug', plan: 'pro' } }));
     const before = Date.now();
@@ -375,6 +393,30 @@ describe('buildEmail', () => {
   it('el botón principal "Ver mi perfil" apunta al cardUrl', () => {
     const { html } = buildEmail(base);
     expect(html).toMatch(/href="https:\/\/perfilapro\.com\/c\/maria-electricista"[^>]*>[^<]*Ver mi perfil/);
+  });
+
+  it('genera email en catalán cuando idioma="ca"', () => {
+    const { html, subject } = buildEmail({ ...base, idioma: 'ca' });
+    expect(html).toContain('<html lang="ca">');
+    expect(html).toContain('Veure el meu perfil');
+    expect(html).toContain('El teu kit físic');
+    expect(html).toContain('Targeta imprimible');
+    expect(html).toContain('Codi QR');
+    expect(html).toContain('Editar el meu perfil');
+    expect(subject).toContain('al món');
+  });
+
+  it('editUrl en catalán apunta a /ca/editar', () => {
+    const { html } = buildEmail({ ...base, idioma: 'ca' });
+    expect(html).toContain('https://perfilapro.com/ca/editar?slug=maria-electricista&token=tok-abc-123');
+    expect(html).not.toContain('/es/editar?slug=maria-electricista');
+  });
+
+  it('idioma="es" por defecto cuando no se pasa', () => {
+    const { html } = buildEmail(base);
+    expect(html).toContain('<html lang="es">');
+    expect(html).toContain('Ver mi perfil');
+    expect(html).toContain('https://perfilapro.com/es/editar?slug=maria-electricista&token=tok-abc-123');
   });
 });
 

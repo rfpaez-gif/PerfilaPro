@@ -44,13 +44,33 @@
     return;
   }
 
+  var LANG = (document.documentElement.lang || 'es').toLowerCase().slice(0, 2);
+  var IS_CA = LANG === 'ca';
+  var T = IS_CA ? {
+    aria: 'Avís de privadesa',
+    text: 'Fem servir galetes tècniques necessàries per al funcionament del servei, ' +
+          'i galetes d’analítica per entendre com s’utilitza el web (anonimitzades, sense perfilat publicitari). ',
+    moreInfo: 'Més info',
+    privacyHref: '/ca/privacidad',
+    reject: 'Rebutjar',
+    accept: 'Acceptar',
+  } : {
+    aria: 'Aviso de privacidad',
+    text: 'Usamos cookies tecnicas necesarias para que el servicio funcione, ' +
+          'y cookies de analitica para entender como se usa la web (anonimizadas, sin perfilado publicitario). ',
+    moreInfo: 'Mas info',
+    privacyHref: '/es/privacidad',
+    reject: 'Rechazar',
+    accept: 'Aceptar',
+  };
+
   function inject() {
     if (document.getElementById('pp-privacy-banner')) return;
 
     var banner = document.createElement('div');
     banner.id = 'pp-privacy-banner';
     banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-label', 'Aviso de privacidad');
+    banner.setAttribute('aria-label', T.aria);
     banner.style.cssText = [
       'position:fixed', 'left:16px', 'right:16px', 'bottom:16px', 'z-index:9999',
       'max-width:620px', 'margin:0 auto',
@@ -63,16 +83,15 @@
     var text = document.createElement('span');
     text.style.flex = '1 1 280px';
     text.innerHTML =
-      'Usamos cookies tecnicas necesarias para que el servicio funcione, ' +
-      'y cookies de analitica para entender como se usa la web (anonimizadas, sin perfilado publicitario). ' +
-      '<a href="/privacidad.html" style="color:#9bd4ff;text-decoration:underline">Mas info</a>.';
+      T.text +
+      '<a href="' + T.privacyHref + '" style="color:#9bd4ff;text-decoration:underline">' + T.moreInfo + '</a>.';
 
     var btns = document.createElement('div');
     btns.style.cssText = 'display:flex;gap:8px;flex:0 0 auto';
 
     var btnReject = document.createElement('button');
     btnReject.type = 'button';
-    btnReject.textContent = 'Rechazar';
+    btnReject.textContent = T.reject;
     btnReject.style.cssText = [
       'background:transparent', 'color:#fff', 'border:1px solid rgba(255,255,255,.4)',
       'border-radius:999px', 'padding:8px 16px', 'cursor:pointer',
@@ -84,7 +103,7 @@
 
     var btnAccept = document.createElement('button');
     btnAccept.type = 'button';
-    btnAccept.textContent = 'Aceptar';
+    btnAccept.textContent = T.accept;
     btnAccept.style.cssText = [
       'background:#fff', 'color:#111', 'border:0', 'border-radius:999px',
       'padding:8px 16px', 'cursor:pointer', 'font-weight:600',

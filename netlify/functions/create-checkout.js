@@ -49,11 +49,13 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl, idioma: rawIdioma } = body;
 
     if (!nombre || !cp || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
     }
+
+    const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
 
     const cpNormalized = normalizeCp(cp);
     if (!isValidCp(cpNormalized)) {
@@ -101,9 +103,10 @@ function makeHandler(stripe) {
           // resolución a name + sector_slug ocurre en stripe-webhook tras
           // pago confirmado para evitar lookups innecesarios aquí.
           ocupacion_code: (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) ? String(ocupacion_code) : '',
+          idioma,
         },
-        success_url: `${siteUrl}/success.html?slug=${slug}`,
-        cancel_url:  cancelUrl || `${siteUrl}/#crear`,
+        success_url: `${siteUrl}/${idioma}/success?slug=${slug}`,
+        cancel_url:  cancelUrl || `${siteUrl}/${idioma}/#crear`,
       };
 
       // Si tenemos el email del usuario (viene del alta o del card guardado),

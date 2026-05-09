@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/editar" />
+  <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/editar" />
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
+  <link rel="canonical" href="https://perfilapro.es/es/editar" />
+  <meta name="robots" content="noindex,nofollow">
+  <title>Editar mi perfil — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* ── Layout específico de editar ────────────────────────── */
+    .pp-edit-main {
+      padding-block: clamp(32px, 5vw, 64px);
+      display: flex;
+      justify-content: center;
+    }
+    .pp-edit-card {
+      width: 100%;
+      max-width: 520px;
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-xl);
+      box-shadow: var(--pp-sh-md);
+      padding: clamp(1.75rem, 4vw, 2.25rem);
+    }
+    .pp-edit-card__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, .8rem + 1.6vw, 1.875rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--color-tinta);
+      margin: 0 0 .25rem;
+    }
+    .pp-edit-card__sub {
+      color: var(--color-gris-500);
+      font-size: 14px;
+      margin: 0 0 var(--pp-s-6);
+    }
+
+    /* ── Mensajes (msg-ok / msg-err) ────────────────────────── */
+    .pp-msg {
+      padding: .875rem 1rem;
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+      border: 1px solid;
+    }
+    .pp-msg--ok {
+      background: var(--color-verde-light);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
+    }
+    .pp-msg--err {
+      background: rgba(178, 58, 72, 0.08);
+      border-color: var(--color-coral);
+      color: var(--color-coral);
+    }
+    .pp-msg a {
+      color: var(--color-verde-dark);
+      font-weight: 700;
+    }
+
+    /* ── Divider ────────────────────────────────────────────── */
+    .pp-divider {
+      border: none;
+      border-top: 1px solid var(--color-gris-200);
+      margin: 1.5rem 0;
+    }
+
+    /* ── Panel stats Pro ────────────────────────────────────── */
+    .pp-stats {
+      background: var(--color-verde-light);
+      border: 1px solid var(--color-verde-match);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem 1.25rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .pp-stats__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      margin-bottom: .875rem;
+    }
+    .pp-stats__title {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--color-verde-dark);
+      margin: 0;
+    }
+    .pp-stats__badge {
+      display: inline-block;
+      padding: .15rem .55rem;
+      background: var(--color-verde-match);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      border-radius: var(--pp-r-pill);
+    }
+    .pp-stats__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .5rem;
+      margin-bottom: 1rem;
+    }
+    .pp-stats__cell {
+      background: rgba(255, 255, 255, .55);
+      border-radius: var(--pp-r-md);
+      padding: .75rem .5rem;
+      text-align: center;
+      display: grid;
+      gap: .15rem;
+    }
+    .pp-stats__num {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-verde-dark);
+      line-height: 1;
+    }
+    .pp-stats__lbl {
+      font-size: 11px;
+      color: var(--color-gris-500);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .pp-stats__chart {
+      display: grid;
+      gap: .35rem;
+    }
+    .pp-stats__chart svg {
+      width: 100%;
+      height: 60px;
+      display: block;
+    }
+    .pp-stats__chart-lbl {
+      margin: 0;
+      font-size: 11px;
+      color: var(--color-gris-500);
+      text-align: center;
+    }
+    .pp-share {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-gris-200);
+    }
+    .pp-share__title {
+      font-size: 12px;
+      color: var(--color-gris-500);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin: 0 0 .5rem;
+      font-weight: 700;
+    }
+    .pp-share__row {
+      display: flex;
+      gap: .35rem;
+      flex-wrap: wrap;
+    }
+    .pp-share__btn {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: .5rem .65rem;
+      background: #FFFFFF;
+      color: var(--color-verde-dark);
+      border: 1px solid var(--color-verde-match);
+      border-radius: var(--pp-r-md);
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .pp-share__btn:hover {
+      background: var(--color-verde-light);
+    }
+    .pp-share__hint {
+      font-size: 12px;
+      color: var(--color-gris-500);
+      margin: -.25rem 0 .65rem;
+    }
+    .pp-share__row--icons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .4rem;
+    }
+    @media (max-width: 480px) {
+      .pp-share__row--icons { grid-template-columns: repeat(2, 1fr); }
+    }
+    .pp-share__row--icons .pp-share__btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: .75rem .5rem;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid var(--color-gris-200);
+      color: var(--color-tinta);
+      background: #FFFFFF;
+      transition: transform .12s, background .15s, border-color .15s;
+    }
+    .pp-share__row--icons .pp-share__btn:hover {
+      transform: translateY(-1px);
+      background: var(--color-verde-light);
+      border-color: var(--color-verde-match);
+    }
+    .pp-share__row--icons .pp-share__btn svg { display: block; }
+    .pp-share__btn--wa svg { color: #25D366; }
+    .pp-share__btn--ig svg { color: #E1306C; }
+    .pp-share__btn--li svg { color: #0A66C2; }
+    .pp-share__btn--copy svg { color: var(--color-gris-500); }
+    .pp-share__row--icons .pp-share__btn.is-copied {
+      background: var(--color-verde-match);
+      color: #fff;
+      border-color: var(--color-verde-match);
+    }
+    .pp-share__row--icons .pp-share__btn.is-copied svg { color: #fff; }
+    .pp-share__footer-link {
+      margin-top: 1rem;
+      padding-top: .85rem;
+      border-top: 1px dashed var(--color-gris-200);
+      font-size: 12px;
+      color: var(--color-gris-500);
+      text-align: center;
+    }
+    .pp-share__footer-link a {
+      color: var(--color-gris-500);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--color-gris-200);
+    }
+    .pp-share__footer-link a:hover {
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-match);
+    }
+
+    /* ── Optional label suffix ──────────────────────────────── */
+    .pp-field__optional {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--color-gris-500);
+      margin-left: .25rem;
+      font-size: 12px;
+    }
+
+    /* ── Servicios editor ───────────────────────────────────── */
+    .pp-services-list { display: flex; flex-direction: column; gap: .5rem; }
+    .pp-svc-item { display: flex; gap: .5rem; align-items: center; }
+    .pp-svc-item .pp-input { flex: 1; }
+
+    /* ── Detalles colapsables (directorio opcional) ─────────── */
+    .pp-detail {
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      margin-top: 1.5rem;
+    }
+    .pp-detail[open] {
+      background: #FFFFFF;
+    }
+    .pp-detail summary {
+      cursor: pointer;
+      padding: .9rem 1rem;
+      font-weight: 600;
+      color: var(--color-tinta);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      list-style: none;
+      font-size: 14px;
+    }
+    .pp-detail summary::-webkit-details-marker { display: none; }
+    .pp-detail summary::before {
+      content: "▸";
+      color: var(--color-gris-500);
+      transition: transform .15s;
+      display: inline-block;
+      font-size: 11px;
+    }
+    .pp-detail[open] summary::before { transform: rotate(90deg); }
+    .pp-detail__body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid var(--color-gris-200);
+      padding-top: 1rem;
+    }
+    .pp-detail__hint {
+      color: var(--color-gris-500);
+      font-size: 13px;
+      margin: 0 0 1rem;
+    }
+    .pp-svc-remove {
+      width: 2.25rem;
+      height: 2.25rem;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-sm);
+      background: #FFFFFF;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--color-gris-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
+      line-height: 1;
+    }
+    .pp-svc-remove:hover {
+      border-color: var(--color-coral);
+      color: var(--color-coral);
+    }
+    .pp-svc-add {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      margin-top: .5rem;
+      padding: .45rem .875rem;
+      border: 1px dashed var(--color-gris-200);
+      border-radius: var(--pp-r-sm);
+      background: none;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-gris-500);
+      cursor: pointer;
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
+    }
+    .pp-svc-add:hover {
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
+    }
+
+    /* ── Foto upload ────────────────────────────────────────── */
+    .pp-foto { display: flex; align-items: center; gap: 1rem; }
+    .pp-foto__preview {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid var(--color-gris-200);
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+    .pp-foto__preview img { width: 100%; height: 100%; object-fit: cover; }
+    .pp-foto__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .55rem 1rem;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-tinta);
+      cursor: pointer;
+      background: #FFFFFF;
+      transition: border-color var(--pp-t-fast), color var(--pp-t-fast);
+    }
+    .pp-foto__btn:hover {
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
+    }
+
+    /* ── Banner upgrade (free → plan) ───────────────────────── */
+    .pp-upgrade {
+      display: none;
+      background: linear-gradient(180deg, var(--color-verde-light) 0%, #FFFFFF 70%);
+      border: 1.5px solid var(--color-verde-match);
+      border-radius: var(--pp-r-lg);
+      padding: 1.5rem 1.25rem 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 8px 24px -12px rgba(0, 194, 119, 0.35);
+    }
+    .pp-upgrade.is-visible { display: block; }
+    .pp-upgrade__eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--color-verde-dark);
+      margin: 0 0 .5rem;
+    }
+    .pp-upgrade__title {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-tinta);
+      margin: 0 0 .5rem;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+    .pp-upgrade__title em {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: var(--color-verde-match);
+    }
+    .pp-upgrade__sub {
+      font-size: 14px;
+      color: var(--color-tinta);
+      opacity: 0.75;
+      margin: 0 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    /* Showcase del producto: furgo con QR + nombre del usuario */
+    .pp-showcase {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: 1rem 1rem .75rem;
+      margin: 0 0 1.25rem;
+      text-align: center;
+    }
+    .pp-showcase__stage {
+      position: relative;
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    .pp-showcase__img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .pp-showcase__qr {
+      position: absolute;
+      /* % calibrados sobre el rectángulo discontinuo de furgoneta_base
+         (medido por análisis de píxeles: 42.78%→54.90% X, 20.97%→49.83% Y) */
+      left: 42.8%;
+      top: 23.3%;
+      width: 12.1%;
+      aspect-ratio: 1 / 1;
+      height: auto;
+    }
+    .pp-showcase__pill {
+      display: inline-block;
+      background: var(--color-tinta);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .35rem .75rem;
+      border-radius: 100px;
+      margin-top: .375rem;
+    }
+    .pp-showcase__caption {
+      font-size: 13px;
+      color: var(--color-gris-500);
+      margin: .625rem 0 0;
+      line-height: 1.4;
+    }
+    .pp-showcase__caption strong {
+      color: var(--color-tinta);
+      font-weight: 700;
+    }
+
+    .pp-upgrade__perks {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .5rem .875rem;
+      margin: 0 0 1.25rem;
+      padding: 0;
+    }
+    @media (max-width: 480px) {
+      .pp-upgrade__perks { grid-template-columns: 1fr; }
+    }
+    .pp-upgrade__perks li {
+      font-size: 13px;
+      color: var(--color-tinta);
+      display: flex;
+      align-items: flex-start;
+      gap: .375rem;
+      line-height: 1.4;
+    }
+    .pp-upgrade__perks li::before {
+      content: "✓";
+      color: var(--color-verde-match);
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .pp-plan-toggle { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .pp-plan-btn {
+      flex: 1;
+      padding: .625rem .875rem;
+      border: 1.5px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      background: #FFFFFF;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--color-tinta);
+      cursor: pointer;
+      transition: border-color var(--pp-t-fast),
+                  background var(--pp-t-fast);
+      text-align: left;
+      line-height: 1.3;
+    }
+    .pp-plan-btn:hover { border-color: var(--color-verde-match); }
+    .pp-plan-btn.is-selected {
+      border-color: var(--color-verde-match);
+      background: var(--color-verde-light);
+      box-shadow: 0 0 0 2px rgba(0, 194, 119, 0.15);
+    }
+    .pp-plan-btn strong { display: block; font-size: 14px; font-weight: 700; color: var(--color-tinta); }
+    .pp-plan-btn span { font-size: 12px; color: var(--color-gris-500); }
+
+    .pp-upgrade__cta {
+      width: 100%;
+      background: var(--color-verde-match);
+      color: #fff;
+      border: none;
+      border-radius: var(--pp-r-md);
+      padding: .85rem 1.1rem;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: background var(--pp-t-fast), transform var(--pp-t-fast);
+      box-shadow: 0 4px 12px -2px rgba(0, 194, 119, 0.4);
+    }
+    .pp-upgrade__cta:hover { background: var(--color-verde-dark); transform: translateY(-1px); }
+    .pp-upgrade__cta:active { transform: translateY(0); }
+
+    /* ── Directorio box + toggle ───────────────────────────── */
+    .pp-dir-box {
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-lg);
+      padding: 1rem;
+    }
+    .pp-dir-box .pp-field:last-of-type { margin-bottom: 0; }
+    .pp-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .875rem 1rem;
+      background: var(--color-crema);
+      border-radius: var(--pp-r-md);
+      border: 1px solid var(--color-gris-200);
+      margin-top: .875rem;
+    }
+    .pp-toggle-row__info { flex: 1; }
+    .pp-toggle-row__label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-tinta);
+    }
+    .pp-toggle-row__hint {
+      font-size: 12px;
+      color: var(--color-gris-500);
+      margin-top: .2rem;
+    }
+    .pp-toggle-sw {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    .pp-toggle-sw input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .pp-toggle-track {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--color-gris-200);
+      border-radius: 12px;
+      transition: background var(--pp-t-base);
+    }
+    .pp-toggle-track::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform var(--pp-t-base);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track {
+      background: var(--color-verde-match);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track::before {
+      transform: translateX(20px);
+    }
+
+    /* ── Kit físico (paid users): re-descarga de tarjeta + QR ── */
+    .pp-kit {
+      display: none;
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .pp-kit.is-visible { display: block; }
+    .pp-kit__eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--color-verde-match);
+      margin: 0 0 .35rem;
+    }
+    .pp-kit__title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-tinta);
+      margin: 0 0 .25rem;
+    }
+    .pp-kit__sub {
+      font-size: 13px;
+      color: var(--color-gris-500);
+      margin: 0 0 1rem;
+      line-height: 1.5;
+    }
+    .pp-kit__items { display: grid; gap: .625rem; }
+    .pp-kit__item {
+      background: var(--color-crema, #FAF7F0);
+      border-radius: var(--pp-r-md);
+      border-left: 3px solid var(--color-verde-match);
+      padding: .75rem .875rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .pp-kit__item-text { flex: 1; min-width: 180px; }
+    .pp-kit__item-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-tinta);
+      margin: 0 0 .15rem;
+    }
+    .pp-kit__item-desc {
+      font-size: 12px;
+      color: var(--color-gris-500);
+      line-height: 1.4;
+      margin: 0;
+    }
+    .pp-kit__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-verde-match);
+      text-decoration: none;
+      padding: .4rem .85rem;
+      border: 1.5px solid var(--color-verde-match);
+      border-radius: 100px;
+      background: #FFFFFF;
+      white-space: nowrap;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-kit__btn:hover {
+      background: var(--color-verde-light);
+    }
+    .pp-kit__group-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--color-gris-500);
+      margin: 1.25rem 0 .625rem;
+    }
+    .pp-kit__group-label:first-of-type { margin-top: 0; }
+    .pp-kit__footer-link {
+      margin: 1rem 0 0;
+      font-size: 13px;
+      text-align: center;
+    }
+    .pp-kit__footer-link a {
+      color: var(--color-verde-dark);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .pp-kit__footer-link a:hover { text-decoration: underline; }
+
+    .pp-public-link {
+      display: none;
+      margin-top: .875rem;
+      font-size: 13px;
+      color: var(--color-verde-dark);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .pp-public-link.is-visible { display: inline; }
+
+    /* ── City autocomplete ──────────────────────────────────── */
+    .pp-city-ac { position: relative; }
+    .pp-city-ac__list {
+      position: absolute; z-index: var(--pp-z-dropdown);
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      box-shadow: var(--pp-sh-md);
+      list-style: none; margin: 0; padding: .25rem 0;
+      max-height: 260px; overflow-y: auto;
+    }
+    .pp-city-ac__item {
+      display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+      padding: .5rem .875rem; cursor: pointer; font-size: 14px;
+      color: var(--color-tinta);
+    }
+    .pp-city-ac__item:hover,
+    .pp-city-ac__item[data-sel] { background: var(--color-verde-light); }
+    .pp-city-ac__name { font-weight: 500; }
+    .pp-city-ac__prov { color: var(--color-gris-500); font-size: 12px; white-space: nowrap; }
+    .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--color-gris-500); font-style: italic; }
+    .pp-city-radius {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem;
+      margin-top: .5rem; padding: .5rem .75rem;
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      font-size: 13px;
+      color: var(--color-tinta);
+    }
+    .pp-city-radius__lbl {
+      color: var(--color-gris-500);
+      font-size: 12px;
+      flex: 0 0 100%;
+      margin-bottom: -.1rem;
+    }
+    .pp-city-radius label {
+      display: flex; align-items: center; gap: .3rem;
+      cursor: pointer; white-space: nowrap;
+    }
+    .pp-city-osm {
+      font-size: 11px;
+      color: var(--color-gris-500);
+      margin: .3rem 0 0;
+      text-align: right;
+    }
+    .pp-city-osm a { color: inherit; text-decoration: none; }
+    .pp-city-osm a:hover { text-decoration: underline; }
+
+    /* ── Hint dentro de .pp-field ───────────────────────────── */
+    .pp-field__hint {
+      font-size: 12px;
+      color: var(--color-gris-500);
+      margin: .35rem 0 0;
+    }
+  </style>
+  <script src="/js/posthog-init.js" defer></script>
+  <script src="/js/privacy-banner.js" defer></script>
+</head>
+<body>
+
+<a href="#main" class="pp-sr-only">Saltar al contenido</a>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="pp-site-header">
+  <div class="pp-wrap">
+    <nav class="pp-nav">
+      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inicio">Perfila<span class="pp-logo__pro">Pro</span></a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="pp-wrap">
+    <div class="pp-edit-main">
+
+      <!-- Phase 0: Slug-based send (desde el footer de la tarjeta) -->
+      <div class="pp-edit-card" id="slugPhase" style="display:none">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub">Te enviamos el enlace de acceso.</p>
+        <div id="slugMsg" style="display:none" class="pp-msg"></div>
+        <p style="font-size:14px;color:var(--color-gris-500);margin-bottom:1.5rem;line-height:1.6">
+          Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
+        </p>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
+        <p style="margin-top:1rem;text-align:center;font-size:13px;color:var(--color-gris-500)">
+          ¿No reconoces este perfil? <a href="/es/editar" style="color:var(--color-verde-dark);font-weight:600">Accede con tu email</a>
+        </p>
+      </div>
+
+      <!-- Phase 1: Email form -->
+      <div class="pp-edit-card" id="emailPhase">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub">Introduce tu email y te enviamos un enlace de acceso.</p>
+        <div id="emailMsg" style="display:none" class="pp-msg"></div>
+        <div class="pp-field">
+          <label class="pp-field__label" for="emailInput">Email</label>
+          <input type="email" class="pp-input" id="emailInput" placeholder="tu@email.com" autocomplete="email">
+          <p class="pp-field__hint">El email que usaste al crear tu perfil.</p>
+        </div>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="sendBtn" onclick="sendLink()" style="margin-top:1.5rem">Enviar enlace de edición</button>
+      </div>
+
+      <!-- Phase 2: Edit form -->
+      <div class="pp-edit-card" id="editPhase" style="display:none">
+        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
+        <p class="pp-edit-card__sub" id="editSubtitle">Actualiza tus datos profesionales.</p>
+        <div id="editMsg" style="display:none" class="pp-msg"></div>
+
+        <div class="pp-upgrade" id="freeBanner">
+          <p class="pp-upgrade__eyebrow">Activa tu plan</p>
+          <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
+          <p class="pp-upgrade__sub">Imprime tu tarjeta, comparte tu QR, pégalo en la furgo. Tu kit completo te llega al activar.</p>
+
+          <div class="pp-showcase">
+            <div class="pp-showcase__stage">
+              <picture>
+                <source srcset="/images/furgoneta-960.webp" type="image/webp">
+                <img src="/images/furgoneta-960.png" alt="Furgoneta con tu QR pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
+              </picture>
+              <img id="upgradeQr" class="pp-showcase__qr" src="" alt="" loading="lazy">
+            </div>
+            <span class="pp-showcase__pill">Mundo físico</span>
+            <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
+          </div>
+
+          <ul class="pp-upgrade__perks">
+            <li>Tu URL pública con QR</li>
+            <li>Tarjeta imprimible PDF</li>
+            <li>Imágenes para WhatsApp y redes</li>
+            <li>Estadísticas de quién te ve</li>
+          </ul>
+
+          <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
+            <button class="pp-plan-btn is-selected" data-plan="base" type="button">
+              <strong>Trimestral · 9€</strong>
+              <span>3 meses</span>
+            </button>
+            <button class="pp-plan-btn" data-plan="pro" type="button">
+              <strong>Anual · 19€</strong>
+              <span>1 año · estadísticas</span>
+            </button>
+          </div>
+          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Trimestral · 9€ →</button>
+        </div>
+
+        <div class="pp-kit" id="kitBanner">
+          <p class="pp-kit__eyebrow">📦 Tu kit completo</p>
+          <p class="pp-kit__title">Todo para que tu trabajo se vea</p>
+          <p class="pp-kit__sub">Imprime, comparte por WhatsApp, súbelo a redes. Tu kit se actualiza solo cuando editas tus datos.</p>
+
+          <p class="pp-kit__group-label">WhatsApp y físico</p>
+          <div class="pp-kit__items">
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">💬 Compartir por WhatsApp</p>
+                <p class="pp-kit__item-desc">Envía tu tarjeta a un cliente con un toque.</p>
+              </div>
+              <a id="kitWaShare" class="pp-kit__btn" href="#" target="_blank" rel="noopener">Compartir →</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📋 Copiar mi URL</p>
+                <p class="pp-kit__item-desc">Para pegar en bio de Instagram, email o donde quieras.</p>
+              </div>
+              <button type="button" id="kitCopyUrl" class="pp-kit__btn">Copiar</button>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">🃏 Tarjeta imprimible (PDF)</p>
+                <p class="pp-kit__item-desc">A6 vertical · imprímela tal cual o ampliada.</p>
+              </div>
+              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📱 Código QR (PNG 1024px)</p>
+                <p class="pp-kit__item-desc">Alta resolución · para escaparates, furgo y carteles.</p>
+              </div>
+              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">📸 Imagen para Status / Story (1080×1920)</p>
+                <p class="pp-kit__item-desc">Súbela a tu WhatsApp Status para que la vean tus contactos.</p>
+              </div>
+              <a id="kitDlStory" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+          </div>
+
+          <p class="pp-kit__group-label">Redes y otros</p>
+          <div class="pp-kit__items">
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">🌐 Imagen para Facebook / Instagram (1080×1080)</p>
+                <p class="pp-kit__item-desc">Súbela como post o pégala en tu bio.</p>
+              </div>
+              <a id="kitDlSquare" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+            <div class="pp-kit__item">
+              <div class="pp-kit__item-text">
+                <p class="pp-kit__item-name">💼 Imagen para LinkedIn (1200×627)</p>
+                <p class="pp-kit__item-desc">Por si lo usas profesionalmente.</p>
+              </div>
+              <a id="kitDlLinkedin" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+            </div>
+          </div>
+
+          <p class="pp-kit__footer-link">
+            <a href="" id="gbpAssistantLink">¿Quieres aparecer también en Google? Asistente Google Business →</a>
+          </p>
+        </div>
+
+        <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadísticas del perfil">
+          <header class="pp-stats__head">
+            <h2 class="pp-stats__title">Estadísticas</h2>
+            <span class="pp-stats__badge">Plan Anual</span>
+          </header>
+          <div class="pp-stats__grid">
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="statTotal">—</span>
+              <span class="pp-stats__lbl">Visitas totales</span>
+            </div>
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="stat30d">—</span>
+              <span class="pp-stats__lbl">Últimos 30 días</span>
+            </div>
+            <div class="pp-stats__cell">
+              <span class="pp-stats__num" id="stat7d">—</span>
+              <span class="pp-stats__lbl">Últimos 7 días</span>
+            </div>
+          </div>
+          <div class="pp-stats__chart" aria-hidden="true">
+            <svg id="statsSpark" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Visitas diarias últimos 30 días"></svg>
+            <p class="pp-stats__chart-lbl">Visitas por día · últimos 30 días</p>
+          </div>
+
+        </section>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="nombre">Nombre completo</label>
+          <input type="text" class="pp-input" id="nombre" placeholder="Ej: Juan García López">
+          <p class="pp-field__hint" id="nombreHint">
+            Tu URL pública es <strong>perfilapro.es/c/<span id="nombreSlugHint">tu-perfil</span></strong> y no cambia al editar el nombre. ¿Tienes una errata grave en la URL? Escríbenos a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y la corregimos.
+          </p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="tagline">Especialidad</label>
+          <input type="text" class="pp-input" id="tagline" placeholder="Ej: Fontanero en Alicante">
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="cp">Código postal</label>
+          <input type="text" class="pp-input" id="cp" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="postal-code" placeholder="Ej. 28001">
+          <p class="pp-field__hint" id="cpHint">5 dígitos. Determina en qué provincia aparece tu perfil en el directorio.</p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="whatsapp">WhatsApp</label>
+          <input type="text" class="pp-input" id="whatsapp" placeholder="Ej: 34612345678">
+          <p class="pp-field__hint">Con prefijo de país — 34 para España.</p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="telefono">Teléfono fijo<span class="pp-field__optional">(opcional)</span></label>
+          <input type="text" class="pp-input" id="telefono" placeholder="Ej: 965123456">
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label">Foto de perfil<span class="pp-field__optional">(opcional)</span></label>
+          <div class="pp-foto">
+            <div class="pp-foto__preview" id="fotoPreview">👤</div>
+            <div>
+              <label for="fotoFileInput" class="pp-foto__btn">📷 Cámara o galería</label>
+              <input type="file" id="fotoFileInput" accept="image/*" hidden>
+              <p class="pp-field__hint">En móvil puedes sacar foto o elegir de la galería.</p>
+              <p class="pp-field__hint" id="fotoFileName"></p>
+            </div>
+          </div>
+          <input type="hidden" id="foto_url">
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-field__label" for="descripcion">Descripción breve<span class="pp-field__optional">(opcional)</span></label>
+          <textarea class="pp-input pp-input--textarea" id="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso."></textarea>
+          <p class="pp-field__hint"><span id="editDescCount">0</span>/200 caracteres</p>
+        </div>
+
+        <div class="pp-field">
+          <label class="pp-toggle-row" for="local_publico">
+            <span class="pp-toggle-row__info">
+              <span class="pp-toggle-row__label">Tengo local público</span>
+              <span class="pp-toggle-row__hint">Tienda, taller o consulta donde recibes clientes. Si lo activas, podrás añadir la dirección y aparecerá un enlace a Google Maps en tu tarjeta.</span>
+            </span>
+            <span class="pp-toggle-sw">
+              <input id="local_publico" type="checkbox">
+              <span class="pp-toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+
+        <div class="pp-field" id="direccion_field" style="display:none">
+          <label class="pp-field__label" for="direccion">Dirección<span class="pp-field__optional">(una línea)</span></label>
+          <input type="text" class="pp-input" id="direccion" placeholder="Ej: Calle Mayor 15, local B" maxlength="200">
+          <p class="pp-field__hint">Calle y número. La ciudad la sabemos por tu CP — no la repitas.</p>
+        </div>
+
+        <hr class="pp-divider">
+
+        <div class="pp-field">
+          <label class="pp-field__label">Servicios</label>
+          <div class="pp-services-list" id="servicesList"></div>
+          <button class="pp-svc-add" type="button" onclick="addService()">+ Añadir servicio</button>
+          <p class="pp-field__hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€".</p>
+        </div>
+
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Guardar cambios</button>
+
+
+      </div>
+
+    </div><!-- /pp-edit-main -->
+  </div>
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="pp-site-footer">
+  <div class="pp-wrap">
+    <div class="pp-footer__bottom">
+      <span>© 2026 PerfilaPro</span>
+      <span>
+        <a href="/es/terminos" style="color:inherit">Términos</a> ·
+        <a href="/es/privacidad" style="color:inherit">Privacidad</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── CP input · sanitize en tiempo real + lookup municipio ── */
+  function getCp() {
+    return (document.getElementById('cp').value || '').replace(/\D/g, '').slice(0, 5);
+  }
+  (function () {
+    const inp  = document.getElementById('cp');
+    const hint = document.getElementById('cpHint');
+    if (!inp) return;
+    const defaultHintText = hint ? hint.textContent : '';
+    let debounceTimer = null;
+    let pendingFetch  = null;
+
+    function setHint(text, state) {
+      if (!hint) return;
+      hint.textContent = text;
+      hint.classList.remove('is-error', 'is-success', 'is-loading');
+      if (state) hint.classList.add(state);
+    }
+
+    function lookup(cp) {
+      if (pendingFetch && typeof pendingFetch.abort === 'function') {
+        try { pendingFetch.abort(); } catch (e) {}
+      }
+      const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      pendingFetch = ctrl;
+      setHint('Buscando municipio…', 'loading');
+      fetch('/api/cp-lookup?cp=' + encodeURIComponent(cp), ctrl ? { signal: ctrl.signal } : {})
+        .then(r => r.json())
+        .then(r => {
+          if (inp.value !== cp) return;
+          if (r && r.ok) {
+            setHint('→ ' + r.municipality_name + ' (' + r.province_slug + ')', 'success');
+          } else if (r && r.reason === 'not_found') {
+            setHint('Ese CP no está en nuestro catálogo. Revísalo o sigue adelante.', 'error');
+          } else {
+            setHint('CP fuera de rango. Los CPs españoles van del 01000 al 52999.', 'error');
+          }
+        })
+        .catch(() => {});
+    }
+
+    inp.addEventListener('input', function () {
+      const v = inp.value.replace(/\D/g, '').slice(0, 5);
+      if (v !== inp.value) inp.value = v;
+      clearTimeout(debounceTimer);
+      if (!v) { setHint(defaultHintText, null); return; }
+      if (v.length < 5) { setHint('Sigue escribiendo… (' + v.length + '/5)', 'loading'); return; }
+      debounceTimer = setTimeout(() => lookup(v), 250);
+    });
+  })();
+
+  /* ── Local público · toggle muestra/oculta input dirección ── */
+  (function () {
+    const toggle = document.getElementById('local_publico');
+    const field  = document.getElementById('direccion_field');
+    const input  = document.getElementById('direccion');
+    if (!toggle || !field || !input) return;
+    toggle.addEventListener('change', function () {
+      if (toggle.checked) {
+        field.style.display = '';
+        setTimeout(() => input.focus({ preventScroll: false }), 60);
+      } else {
+        field.style.display = 'none';
+      }
+    });
+  })();
+
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('slug');
+  const token = params.get('token');
+  const previewMode = params.get('preview'); // 'free' | 'pro' — dev-only bypass, sin auth
+
+  if (previewMode === 'free' || previewMode === 'pro') {
+    loadEditFormPreview(previewMode);
+  } else if (slug && token) {
+    loadEditForm();
+  } else if (slug && !token) {
+    document.getElementById('emailPhase').style.display = 'none';
+    document.getElementById('slugPhase').style.display = '';
+  }
+
+  // Preview sin backend: rellena el editPhase con datos mock para
+  // validar visualmente el banner upgrade y el kit completo.
+  function loadEditFormPreview(plan) {
+    document.getElementById('emailPhase').style.display = 'none';
+    document.getElementById('editPhase').style.display = '';
+    document.getElementById('editSubtitle').textContent = 'Pedro García (preview)';
+    document.getElementById('nombre').value = 'Pedro García';
+    document.getElementById('tagline').value = 'Fontanero en Alicante';
+    document.getElementById('cp').value = '03001';
+    document.getElementById('whatsapp').value = '34612345678';
+    document.getElementById('descripcion').value = 'Fontanero con 15 años de experiencia. Atención rápida y presupuesto sin compromiso.';
+    document.getElementById('editDescCount').textContent = document.getElementById('descripcion').value.length;
+    addService('Reparación de tuberías');
+    addService('Instalación de calderas');
+    if (plan === 'pro') {
+      // Stats panel — sólo para que se vea, no carga datos reales.
+      const panel = document.getElementById('statsPanel');
+      panel.style.display = '';
+      document.getElementById('statTotal').textContent = '247';
+      document.getElementById('stat30d').textContent = '38';
+      document.getElementById('stat7d').textContent = '11';
+      // Kit visible con hrefs dummy.
+      document.getElementById('kitBanner').classList.add('is-visible');
+    } else {
+      // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
+      document.getElementById('upgradeName').textContent = 'Pedro';
+      document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
+      // En preview servimos un QR sample estático (sin backend disponible).
+      document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
+      const freeBanner = document.getElementById('freeBanner');
+      const freeBannerBtn = document.getElementById('freeBannerBtn');
+      freeBanner.classList.add('is-visible');
+      freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
+        });
+      });
+    }
+  }
+
+  // Foto preview con compresión cliente-side.
+  // Las fotos de móvil pueden ser 5-10 MB en base64, lo que supera el
+  // límite de 6 MB de body de Netlify Functions y satura la memoria de
+  // Safari mobile. Redimensionamos a max 1200px y re-encodeamos como
+  // JPEG 0.85 antes de almacenar en memoria. Resultado típico < 400 KB.
+  var pendingFotoDataUrl = null;
+
+  function compressImage(file, maxDim, quality) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = function() { reject(new Error('No se pudo leer la imagen.')); };
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onerror = function() { reject(new Error('Formato de imagen no soportado.')); };
+        img.onload = function() {
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+            else        { w = Math.round(w * (maxDim / h)); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('fotoFileInput').addEventListener('change', async function() {
+    var file = this.files[0];
+    if (!file) return;
+    var fileNameEl = document.getElementById('fotoFileName');
+    fileNameEl.textContent = file.name + ' · procesando…';
+    try {
+      var dataUrl = await compressImage(file, 1200, 0.85);
+      pendingFotoDataUrl = dataUrl;
+      var preview = document.getElementById('fotoPreview');
+      preview.innerHTML = '<img src="' + dataUrl + '" alt="preview">';
+      var sizeKb = Math.round((dataUrl.length * 3 / 4) / 1024);
+      fileNameEl.textContent = file.name + ' · ' + sizeKb + ' KB';
+    } catch (err) {
+      pendingFotoDataUrl = null;
+      fileNameEl.textContent = '';
+      alert('No se pudo procesar la imagen: ' + err.message);
+    }
+  });
+
+  async function sendLinkBySlug() {
+    const btn = document.getElementById('slugSendBtn');
+    const msg = document.getElementById('slugMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    msg.style.display = 'none';
+    try {
+      await fetch('/api/send-edit-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      });
+      showMsg(msg, 'ok', '¡Listo! Recibirás el enlace en tu email en breve. Revisa también la carpeta de spam.');
+      btn.textContent = 'Enlace enviado ✓';
+    } catch {
+      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Enviar enlace de edición';
+    }
+  }
+
+  async function sendLink() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email) return;
+    const btn = document.getElementById('sendBtn');
+    const msg = document.getElementById('emailMsg');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    msg.style.display = 'none';
+    try {
+      await fetch('/api/send-edit-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      showMsg(msg, 'ok', '¡Listo! Si tu email está registrado recibirás el enlace en breve. Revisa también la carpeta de spam.');
+      btn.textContent = 'Enlace enviado';
+    } catch {
+      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Enviar enlace de edición';
+    }
+  }
+
+  async function loadProfileStats(slug, token) {
+    const res = await fetch('/api/profile-stats?slug=' + encodeURIComponent(slug) + '&token=' + encodeURIComponent(token));
+    if (!res.ok) return;
+    const stats = await res.json();
+    const panel = document.getElementById('statsPanel');
+    if (!panel) return;
+    panel.style.display = '';
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('stat30d').textContent  = stats.last30d;
+    document.getElementById('stat7d').textContent   = stats.last7d;
+
+    const svg = document.getElementById('statsSpark');
+    const series = stats.daily || [];
+    if (!svg || !series.length) return;
+    const max = Math.max(1, ...series.map(function(d) { return d.count; }));
+    const w   = 300;
+    const h   = 60;
+    const bw  = w / series.length;
+    let bars = '';
+    for (let i = 0; i < series.length; i++) {
+      const v  = series[i].count;
+      const bh = (v / max) * (h - 4);
+      const x  = i * bw;
+      const y  = h - bh;
+      bars += '<rect x="' + (x + 0.5) + '" y="' + y + '" width="' + (bw - 1) + '" height="' + bh + '" fill="#00C277" rx="1.5" ry="1.5"></rect>';
+    }
+    svg.innerHTML = bars;
+  }
+
+  async function loadEditForm() {
+    try {
+      const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
+      if (!res.ok) {
+        const emailMsg = document.getElementById('emailMsg');
+        showMsg(emailMsg, 'err', 'El enlace de edición no es válido o ha expirado. Solicita uno nuevo introduciendo tu email.');
+        return;
+      }
+      const card = await res.json();
+      document.getElementById('emailPhase').style.display = 'none';
+      document.getElementById('editPhase').style.display = '';
+      document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
+      document.getElementById('nombre').value = card.nombre || '';
+      const slugHintEl = document.getElementById('nombreSlugHint');
+      if (slugHintEl && card.slug) slugHintEl.textContent = card.slug;
+      document.getElementById('tagline').value = card.tagline || '';
+      document.getElementById('cp').value = card.cp || '';
+      document.getElementById('whatsapp').value = card.whatsapp || '';
+      document.getElementById('telefono').value = card.telefono || '';
+      document.getElementById('foto_url').value = card.foto_url || '';
+      if (card.foto_url) {
+        document.getElementById('fotoPreview').innerHTML = '<img src="' + card.foto_url + '" alt="foto actual">';
+      }
+      const descEl = document.getElementById('descripcion');
+      descEl.value = card.descripcion || '';
+      document.getElementById('editDescCount').textContent = descEl.value.length;
+      document.getElementById('direccion').value = card.direccion || '';
+      // Toggle local_publico: arranca activado solo si la BD lo tiene a true
+      // (independiente de si hay dirección — si la BD lo tiene activo y la
+      // dirección está vacía, el usuario puede rellenarla sin activar nada).
+      const lpEl    = document.getElementById('local_publico');
+      const dirField = document.getElementById('direccion_field');
+      if (lpEl && dirField) {
+        lpEl.checked = !!card.local_publico;
+        dirField.style.display = lpEl.checked ? '' : 'none';
+      }
+      // Si llega CP precargado, dispara el lookup para que el hint muestre el municipio.
+      const cpInputEl = document.getElementById('cp');
+      if (cpInputEl && cpInputEl.value) {
+        cpInputEl.dispatchEvent(new Event('input'));
+      }
+      descEl.addEventListener('input', function() {
+        document.getElementById('editDescCount').textContent = this.value.length;
+      });
+
+      // Stats Pro
+      if (card.plan === 'pro') {
+        loadProfileStats(slug, token).catch(function(err) {
+          console.warn('No se pudieron cargar las estadísticas:', err.message);
+        });
+      }
+
+      // Kit completo (paid users): WhatsApp share, copiar URL, descargas físicas y de redes.
+      const kitBanner = document.getElementById('kitBanner');
+      if (kitBanner && card.stripe_session_id) {
+        const slugEnc  = encodeURIComponent(slug);
+        const tokenEnc = encodeURIComponent(token);
+        const profileUrl = window.location.origin + '/c/' + slug;
+        const waText    = encodeURIComponent('Mira mi perfil profesional 👇 ' + profileUrl);
+
+        document.getElementById('kitWaShare').href    = 'https://wa.me/?text=' + waText;
+        document.getElementById('kitDlCard').href     = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
+        document.getElementById('kitDlQr').href       = '/api/qr/' + slugEnc + '?format=png&size=1024';
+        document.getElementById('kitDlStory').href    = '/api/share-image?slug=' + slugEnc + '&template=story';
+        document.getElementById('kitDlSquare').href   = '/api/share-image?slug=' + slugEnc + '&template=square';
+        document.getElementById('kitDlLinkedin').href = '/api/share-image?slug=' + slugEnc + '&template=linkedin';
+        document.getElementById('gbpAssistantLink').href = '/asistente-gbp.html?slug=' + slugEnc + '&token=' + tokenEnc;
+
+        const copyBtn = document.getElementById('kitCopyUrl');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', async function() {
+            const original = copyBtn.textContent;
+            try {
+              await navigator.clipboard.writeText(profileUrl);
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = profileUrl; ta.style.position = 'fixed'; ta.style.opacity = '0';
+              document.body.appendChild(ta); ta.select();
+              try { document.execCommand('copy'); } catch {}
+              document.body.removeChild(ta);
+            }
+            copyBtn.textContent = '✓ Copiado';
+            setTimeout(function() { copyBtn.textContent = original; }, 1600);
+          });
+        }
+
+        kitBanner.classList.add('is-visible');
+      }
+
+      // Upgrade banner
+      const freeBanner = document.getElementById('freeBanner');
+      const freeBannerBtn = document.getElementById('freeBannerBtn');
+      if (freeBanner && !card.stripe_session_id) {
+        // Personalizar headline + showcase con datos del usuario.
+        const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
+        document.getElementById('upgradeName').textContent = firstName;
+        document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
+        document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
+        freeBanner.classList.add('is-visible');
+        // Si el usuario llega con #freeBanner en la URL (CTA "Activar todo"
+        // desde la pantalla de éxito de /alta), forzamos scroll al banner una
+        // vez ya está visible — el scroll nativo del browser ocurre antes de
+        // que loadEditForm resuelva y el banner sigue oculto.
+        if (location.hash === '#freeBanner') {
+          setTimeout(function () { freeBanner.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+        }
+        let selectedPlan = 'base';
+        freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
+            btn.classList.add('is-selected');
+            selectedPlan = btn.dataset.plan;
+            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
+          });
+        });
+        if (freeBannerBtn) {
+          freeBannerBtn.addEventListener('click', async function() {
+            const label = freeBannerBtn.textContent;
+            freeBannerBtn.style.pointerEvents = 'none';
+            try {
+              // Snapshot del formulario actual (no de card, que es el snapshot
+              // de carga). Imprescindible: si el usuario editó campos sin
+              // pulsar antes "Guardar cambios", esos cambios se perderían
+              // porque stripe-webhook upserta foto_url/descripcion/direccion/
+              // etc. desde la metadata de la sesión.
+              const nombre      = document.getElementById('nombre').value.trim();
+              const tagline     = document.getElementById('tagline').value.trim();
+              const cp          = getCp();
+              const whatsapp    = document.getElementById('whatsapp').value.replace(/\D/g, '');
+              const telefono    = document.getElementById('telefono').value.replace(/\D/g, '');
+              let   foto_url    = document.getElementById('foto_url').value.trim();
+              const descripcion = document.getElementById('descripcion').value.trim();
+              const direccion   = document.getElementById('direccion').value.trim();
+              const lpEl        = document.getElementById('local_publico');
+              const local_publico = !!(lpEl && lpEl.checked && direccion);
+              const servicios   = Array.from(document.querySelectorAll('#servicesList input'))
+                                       .map(i => i.value.trim()).filter(Boolean);
+
+              if (!nombre || !cp || !whatsapp || !servicios.length) {
+                alert('Antes de activar, completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
+                freeBannerBtn.textContent = label;
+                freeBannerBtn.style.pointerEvents = '';
+                return;
+              }
+
+              // Sube foto pendiente si la hay (puede tardar varios segundos).
+              if (pendingFotoDataUrl) {
+                freeBannerBtn.textContent = 'Subiendo foto…';
+                try {
+                  const base64 = pendingFotoDataUrl.split(',')[1];
+                  const upRes = await fetch('/api/upload-avatar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64, contentType: 'image/jpeg', slug }),
+                  });
+                  const upJson = await upRes.json();
+                  if (upJson.url) {
+                    foto_url = upJson.url;
+                    document.getElementById('foto_url').value = upJson.url;
+                  }
+                } catch (e) { console.warn('upload-avatar error:', e); }
+              }
+
+              // Persiste en BD antes del redirect a Stripe.
+              freeBannerBtn.textContent = 'Guardando…';
+              const saveRes = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico }),
+              });
+              if (!saveRes.ok) {
+                const err = await saveRes.json().catch(() => ({}));
+                alert('No se pudieron guardar los cambios antes de activar: ' + (err.error || saveRes.status));
+                freeBannerBtn.textContent = label;
+                freeBannerBtn.style.pointerEvents = '';
+                return;
+              }
+              pendingFotoDataUrl = null;
+
+              // Crea checkout con los valores actuales (mismos que se acaban
+              // de persistir). El webhook upserta con esta metadata, así que
+              // foto_url, descripcion y direccion sobreviven al pago.
+              freeBannerBtn.textContent = 'Redirigiendo…';
+              const r = await fetch('/api/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  nombre, sector: tagline, cp, whatsapp, servicios,
+                  desc: descripcion, direccion, local_publico,
+                  foto: foto_url, telefono,
+                  email: card.email,
+                  plan: selectedPlan, slug: slug,
+                  cancel_url: window.location.href,
+                  idioma: (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
+                }),
+              });
+              const j = await r.json();
+              if (j.url) { window.location.href = j.url; }
+              else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
+            } catch(err) {
+              alert('Error de conexión: ' + err.message);
+              freeBannerBtn.textContent = label;
+              freeBannerBtn.style.pointerEvents = '';
+            }
+          });
+        }
+      }
+
+      const list = document.getElementById('servicesList');
+      list.innerHTML = '';
+      const services = card.servicios || [];
+      if (services.length === 0) {
+        addService();
+      } else {
+        services.forEach(s => addService(s));
+      }
+    } catch {
+      const emailMsg = document.getElementById('emailMsg');
+      showMsg(emailMsg, 'err', 'Error al cargar el formulario. Inténtalo de nuevo.');
+    }
+  }
+
+  function addService(value) {
+    const list = document.getElementById('servicesList');
+    if (list.children.length >= 8) return;
+    const item = document.createElement('div');
+    item.className = 'pp-svc-item';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'pp-input';
+    input.placeholder = 'Ej: Fontanería · 50€';
+    if (value) input.value = value;
+    const btn = document.createElement('button');
+    btn.className = 'pp-svc-remove';
+    btn.type = 'button';
+    btn.title = 'Eliminar';
+    btn.textContent = '×';
+    btn.onclick = function() { removeService(this); };
+    item.appendChild(input);
+    item.appendChild(btn);
+    list.appendChild(item);
+  }
+
+  function removeService(btn) {
+    const list = document.getElementById('servicesList');
+    if (list.children.length <= 1) return;
+    btn.closest('.pp-svc-item').remove();
+  }
+
+  async function saveProfile() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const tagline = document.getElementById('tagline').value.trim();
+    const cp = getCp();
+    const whatsapp = document.getElementById('whatsapp').value.replace(/\D/g, '');
+    const telefono = document.getElementById('telefono').value.replace(/\D/g, '');
+    let foto_url = document.getElementById('foto_url').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const lpEl = document.getElementById('local_publico');
+    const local_publico = !!(lpEl && lpEl.checked && direccion);
+    const servicios = Array.from(document.querySelectorAll('#servicesList input'))
+      .map(i => i.value.trim()).filter(Boolean);
+
+    const msg = document.getElementById('editMsg');
+    msg.style.display = 'none';
+
+    if (!nombre || !cp || !whatsapp || !servicios.length) {
+      showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
+      return;
+    }
+    if (!/^\d{5}$/.test(cp)) {
+      showMsg(msg, 'err', 'El código postal debe tener 5 dígitos.');
+      return;
+    }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Guardando…';
+
+    // Subir foto nueva si hay una seleccionada
+    if (pendingFotoDataUrl) {
+      btn.textContent = 'Subiendo foto…';
+      try {
+        const base64 = pendingFotoDataUrl.split(',')[1];
+        const upRes = await fetch('/api/upload-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64, contentType: 'image/jpeg', slug }),
+        });
+        const upJson = await upRes.json();
+        if (upJson.url) {
+          foto_url = upJson.url;
+          document.getElementById('foto_url').value = upJson.url;
+        }
+      } catch (e) {
+        console.warn('upload-avatar error:', e);
+      }
+      btn.textContent = 'Guardando…';
+    }
+
+    try {
+      const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, tagline, cp, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showMsg(msg, 'err', data.error || 'Error al guardar. Inténtalo de nuevo.');
+        btn.disabled = false;
+        btn.textContent = 'Guardar cambios';
+        return;
+      }
+      pendingFotoDataUrl = null;
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
+      msg.className = 'pp-msg pp-msg--ok';
+      const isPaid = document.getElementById('freeBanner').classList.contains('is-visible') === false;
+      if (isPaid) {
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank">Ver mi tarjeta →</a>';
+        msg.style.display = '';
+        msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        msg.innerHTML = '✅ ¡Cambios guardados! <a href="#freeBanner">Activa tu kit completo ↑</a>';
+        msg.style.display = '';
+        const banner = document.getElementById('freeBanner');
+        if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch {
+      showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
+    }
+  }
+
+  function showMsg(el, type, text) {
+    el.className = 'pp-msg pp-msg--' + type;
+    el.textContent = text;
+    el.style.display = '';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>

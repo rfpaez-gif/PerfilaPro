@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>Crea el teu perfil gratis · PerfilaPro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/alta" />
+  <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/alta" />
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
+  <link rel="canonical" href="https://perfilapro.es/ca/alta" />
+  <meta name="description" content="Crea el teu perfil professional en 2 minuts. Sense targeta, sense compte. La teva URL pròpia llesta a l'instant.">
+  <meta name="robots" content="index,follow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* ── Layout específico del alta ─────────────────────────── */
+    .pp-alta-main {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 380px;
+      gap: var(--pp-s-12);
+      align-items: start;
+      padding-block: clamp(40px, 6vw, 80px);
+    }
+    @media (max-width: 860px) {
+      .pp-alta-main { grid-template-columns: 1fr; }
+      .pp-alta-aside { display: none; }
+    }
+    .pp-alta-aside { position: sticky; top: 5.5rem; }
+    .pp-alta-aside__label {
+      font-family: var(--font-mono);
+      font-size: var(--pp-fs-eyebrow);
+      font-weight: 500;
+      letter-spacing: var(--pp-ls-eyebrow);
+      text-transform: uppercase;
+      color: var(--color-verde-match);
+      margin: 0 0 var(--pp-s-3);
+    }
+
+    /* ── Stepper (4 pasos) ──────────────────────────────────── */
+    .pp-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: var(--pp-s-8);
+    }
+    .pp-stepper__step {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: 13px;
+      color: var(--color-gris-500);
+      font-weight: 500;
+    }
+    .pp-stepper__step.is-active { color: var(--color-verde-dark); font-weight: 700; }
+    .pp-stepper__step.is-done   { color: var(--color-gris-500); }
+    .pp-stepper__num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--color-gris-200);
+      background: #FFFFFF;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: background var(--pp-t-fast),
+                  border-color var(--pp-t-fast),
+                  color var(--pp-t-fast);
+    }
+    .pp-stepper__step.is-active .pp-stepper__num {
+      background: var(--color-verde-match);
+      border-color: var(--color-verde-match);
+      color: #fff;
+    }
+    .pp-stepper__step.is-done .pp-stepper__num {
+      background: var(--color-verde-light);
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
+    }
+    .pp-stepper__line {
+      flex: 1;
+      height: 2px;
+      background: var(--color-gris-200);
+      margin: 0 .5rem;
+      min-width: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      .pp-stepper__label { display: none; }
+      .pp-stepper__line { min-width: 1rem; margin: 0 .25rem; }
+    }
+
+    /* ── Form card / steps / actions ────────────────────────── */
+    .pp-form-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-xl);
+      padding: clamp(1.5rem, 4vw, 2.25rem);
+      box-shadow: var(--pp-sh-md);
+    }
+    .pp-form-step { display: none; }
+    .pp-form-step.is-active { display: block; }
+    .pp-form-step__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, .8rem + 2vw, 2rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--color-tinta);
+      margin: 0 0 .35rem;
+    }
+    .pp-form-step__sub {
+      color: var(--color-gris-500);
+      font-size: 14px;
+      margin: 0 0 var(--pp-s-6);
+    }
+    .pp-fields { display: flex; flex-direction: column; gap: var(--pp-s-5); }
+    .pp-form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--pp-s-8);
+      gap: var(--pp-s-4);
+    }
+
+    /* ── Estado error en pp-input ──────────────────────────── */
+    .pp-input.is-error { border-color: var(--color-coral); }
+    .pp-input.is-error:focus { box-shadow: 0 0 0 3px rgba(178, 58, 72, .15); }
+    .pp-field__help.is-error { color: var(--color-coral); }
+    .pp-required { color: var(--color-coral); }
+    .pp-field__optional { color: var(--color-gris-500); font-weight: 400; font-size: .85em; }
+    .pp-field__help.is-success { color: var(--color-verde-dark); font-weight: 600; }
+    .pp-field__help.is-loading { color: var(--color-gris-500); font-style: italic; }
+
+    /* ── Toggle (reutilizado de editar.html) ────────────────── */
+    .pp-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .875rem 1rem;
+      background: var(--color-crema);
+      border-radius: var(--pp-r-md);
+      border: 1px solid var(--color-gris-200);
+    }
+    .pp-toggle-row__info { flex: 1; }
+    .pp-toggle-row__label { font-size: 14px; font-weight: 600; color: var(--color-tinta); }
+    .pp-toggle-row__hint { font-size: 12px; color: var(--color-gris-500); margin-top: .2rem; }
+    .pp-toggle-sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; display: inline-block; }
+    .pp-toggle-sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .pp-toggle-track {
+      position: absolute; cursor: pointer; inset: 0;
+      background: var(--color-gris-200);
+      border-radius: 12px;
+      transition: background var(--pp-t-base);
+    }
+    .pp-toggle-track::before {
+      content: ""; position: absolute;
+      width: 18px; height: 18px; left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%;
+      transition: transform var(--pp-t-base);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track { background: var(--color-verde-match); }
+    .pp-toggle-sw input:checked ~ .pp-toggle-track::before { transform: translateX(20px); }
+    .pp-field--collapsible { transition: opacity .2s, max-height .25s; overflow: hidden; }
+    .pp-field--collapsible.is-hidden { opacity: 0; max-height: 0; pointer-events: none; }
+
+    /* ── Galería de arquetipos ──────────────────────────────── */
+    .pp-arch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--pp-s-3);
+      margin-bottom: var(--pp-s-6);
+    }
+    @media (max-width: 720px) {
+      .pp-arch-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pp-arch-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: var(--pp-s-3) var(--pp-s-2);
+      background: #FFFFFF;
+      border: 1.5px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      cursor: pointer;
+      transition: transform .12s, border-color .15s, background .15s, box-shadow .15s;
+      text-align: center;
+      min-height: 96px;
+    }
+    .pp-arch-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-verde-match);
+      background: var(--color-verde-light);
+    }
+    .pp-arch-card.is-selected {
+      border-color: var(--color-verde-match);
+      background: var(--color-verde-match);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 194, 119, .25);
+    }
+    .pp-arch-card__icon {
+      width: 32px; height: 32px;
+      display: grid;
+      place-items: center;
+      color: var(--color-verde-dark);
+    }
+    .pp-arch-card.is-selected .pp-arch-card__icon { color: #fff; }
+    .pp-arch-card__label {
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.2;
+      color: var(--color-tinta);
+    }
+    .pp-arch-card.is-selected .pp-arch-card__label { color: #fff; }
+    .pp-arch-card--other {
+      border-style: dashed;
+      background: var(--color-crema);
+    }
+    .pp-arch-card--other .pp-arch-card__icon { color: var(--color-gris-500); }
+
+    /* ── Buscador de arquetipos ─────────────────────────────── */
+    .pp-arch-search {
+      position: relative;
+      margin-top: var(--pp-s-2);
+      scroll-margin-top: 88px;
+    }
+    .pp-arch-search__label {
+      display: block;
+      font-size: 13px;
+      color: var(--color-gris-500);
+      margin-bottom: 6px;
+    }
+    .pp-arch-search__results {
+      position: absolute;
+      z-index: var(--pp-z-dropdown);
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      box-shadow: var(--pp-sh-md);
+      list-style: none; margin: 0; padding: .25rem 0;
+      max-height: 260px; overflow-y: auto;
+    }
+    .pp-arch-search__item {
+      display: flex; gap: .6rem; align-items: center;
+      padding: .5rem .875rem; cursor: pointer; font-size: 14px;
+      color: var(--color-tinta);
+    }
+    .pp-arch-search__item:hover,
+    .pp-arch-search__item[data-sel] { background: var(--color-verde-light); }
+    .pp-arch-search__item-sector {
+      margin-left: auto; color: var(--color-gris-500); font-size: 12px;
+    }
+    .pp-arch-search__msg {
+      padding: .5rem .875rem; font-size: 14px;
+      color: var(--color-gris-500); font-style: italic;
+    }
+
+    /* ── Selección visible (estado actual) ──────────────────── */
+    .pp-arch-selected {
+      display: none;
+      align-items: center;
+      gap: var(--pp-s-3);
+      padding: var(--pp-s-3) var(--pp-s-4);
+      background: var(--color-verde-light);
+      border: 1px solid var(--color-verde-match);
+      border-radius: var(--pp-r-md);
+      margin-bottom: var(--pp-s-4);
+    }
+    .pp-arch-selected.is-visible { display: flex; }
+    .pp-arch-selected__icon {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      color: var(--color-verde-dark);
+      flex-shrink: 0;
+    }
+    .pp-arch-selected__text {
+      font-size: 14px; color: var(--color-tinta);
+      flex: 1;
+    }
+    .pp-arch-selected__text strong { color: var(--color-verde-dark); }
+    .pp-arch-selected__change {
+      font-size: 12px;
+      background: none;
+      border: none;
+      color: var(--color-verde-dark);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ── Chips de servicios ─────────────────────────────────── */
+    .pp-svc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .pp-svc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #FFFFFF;
+      border: 1.5px solid var(--color-gris-200);
+      border-radius: var(--pp-r-pill);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-tinta);
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .pp-svc-chip:hover { border-color: var(--color-verde-match); }
+    .pp-svc-chip.is-active {
+      background: var(--color-verde-match);
+      border-color: var(--color-verde-match);
+      color: #fff;
+    }
+    .pp-svc-chip__remove {
+      background: none; border: none; color: inherit;
+      font-size: 14px; line-height: 1; padding: 0; cursor: pointer;
+      opacity: .7;
+    }
+    .pp-svc-chip__remove:hover { opacity: 1; }
+    .pp-svc-add {
+      display: flex; gap: 6px; align-items: center;
+      margin-top: var(--pp-s-3);
+    }
+    .pp-svc-add input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .pp-svc-add input:focus {
+      outline: none;
+      border-color: var(--color-verde-match);
+      box-shadow: 0 0 0 3px var(--color-verde-light);
+    }
+    .pp-svc-add button {
+      padding: 8px 14px;
+      background: #FFFFFF;
+      border: 1px solid var(--color-verde-match);
+      color: var(--color-verde-dark);
+      border-radius: var(--pp-r-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pp-svc-add button:hover { background: var(--color-verde-light); }
+    .pp-svc-add button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Review panel ───────────────────────────────────────── */
+    .pp-review {
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-lg);
+      padding: var(--pp-s-5);
+      margin-bottom: var(--pp-s-6);
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+      font-size: 14px;
+    }
+    .pp-review__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: .5rem;
+    }
+    .pp-review__key { color: var(--color-gris-500); font-size: 13px; }
+    .pp-review__val {
+      color: var(--color-tinta);
+      font-weight: 600;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    /* ── Success panel ──────────────────────────────────────── */
+    .pp-success { display: none; text-align: center; padding: var(--pp-s-12) var(--pp-s-8); }
+    .pp-success.is-active { display: block; }
+    .pp-success__icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--color-verde-light);
+      border: 2px solid var(--color-verde-match);
+      color: var(--color-verde-dark);
+      display: grid; place-items: center;
+      margin: 0 auto var(--pp-s-6);
+    }
+    .pp-success__title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, .8rem + 2vw, 2rem);
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--color-tinta);
+      margin: 0 0 .5rem;
+    }
+    .pp-success__lead { color: var(--color-gris-500); font-size: 14px; margin: 0 0 var(--pp-s-4); }
+    .pp-success__caption { color: var(--color-gris-500); font-size: 13px; margin: 0 0 .4rem; }
+    .pp-success__url {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: .65rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      margin-block: var(--pp-s-5);
+      cursor: pointer;
+      color: var(--color-verde-dark);
+      word-break: break-all;
+    }
+    .pp-success__url:hover {
+      border-color: var(--color-verde-match);
+      background: var(--color-verde-light);
+    }
+    .pp-success__cta-row {
+      display: flex; flex-direction: column; gap: .65rem; align-items: center;
+      margin-top: var(--pp-s-6);
+    }
+    .pp-success__cta-row .pp-btn { width: 100%; max-width: 340px; }
+
+    /* ── Checklist "lo que falta" ───────────────────────────── */
+    .pp-success__checklist {
+      background: var(--color-crema);
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      padding: 1rem 1.25rem;
+      margin: var(--pp-s-5) auto var(--pp-s-2);
+      max-width: 380px;
+      text-align: left;
+    }
+    .pp-success__checklist-title {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--color-gris-500);
+      margin: 0 0 .5rem;
+    }
+    .pp-success__check-item {
+      display: flex; align-items: center; gap: .65rem;
+      font-size: 14px; color: var(--color-tinta);
+      padding: .35rem 0;
+    }
+    .pp-success__check-item::before {
+      content: ""; flex-shrink: 0;
+      width: 16px; height: 16px;
+      border: 1.5px dashed var(--color-gris-500);
+      opacity: .6;
+      border-radius: 50%;
+    }
+
+    /* ── Share row (links pequeños debajo de los CTAs) ──────── */
+    .pp-success__share-row {
+      display: flex; gap: 1rem; justify-content: center;
+      flex-wrap: wrap; margin-top: var(--pp-s-5);
+    }
+    .pp-success__share-link {
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: 13px; color: var(--color-gris-500);
+      text-decoration: none;
+      border-bottom: 1px dotted transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .pp-success__share-link:hover {
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-dark);
+    }
+
+    /* ── Trust row debajo del form ──────────────────────────── */
+    .pp-trust-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--pp-s-5); }
+    .pp-trust-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--color-gris-500);
+    }
+    .pp-trust-pill::before {
+      content: '✓';
+      color: var(--color-verde-dark);
+      font-weight: 700;
+    }
+
+    /* ── Preview lateral ────────────────────────────────────── */
+    .pp-alta-preview .pp-profile-card { margin: 0; }
+    .pp-alta-preview__meta-prefix { opacity: .8; }
+
+    /* ── City autocomplete ──────────────────────────────────── */
+    .pp-city-ac { position: relative; }
+    .pp-city-ac__list {
+      position: absolute; z-index: var(--pp-z-dropdown);
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      box-shadow: var(--pp-sh-md);
+      list-style: none; margin: 0; padding: .25rem 0;
+      max-height: 260px; overflow-y: auto;
+    }
+    .pp-city-ac__item {
+      display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+      padding: .5rem .875rem; cursor: pointer; font-size: 14px;
+      color: var(--color-tinta);
+    }
+    .pp-city-ac__item:hover,
+    .pp-city-ac__item[data-sel] { background: var(--color-verde-light); }
+    .pp-city-ac__name { font-weight: 500; }
+    .pp-city-ac__prov { color: var(--color-gris-500); font-size: 12px; white-space: nowrap; }
+    .pp-city-ac__msg { padding: .5rem .875rem; font-size: 14px; color: var(--color-gris-500); font-style: italic; }
+    .pp-city-osm {
+      font-size: 11px; color: var(--color-gris-500);
+      margin: .3rem 0 0; text-align: right;
+    }
+    .pp-city-osm a { color: inherit; text-decoration: none; }
+    .pp-city-osm a:hover { text-decoration: underline; }
+  </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="/js/posthog-init.js" defer></script>
+  <script src="/js/privacy-banner.js" defer></script>
+</head>
+<body>
+
+<a href="#main" class="pp-sr-only">Salta al contingut</a>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="pp-site-header">
+  <div class="pp-wrap">
+    <nav class="pp-nav">
+      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inici">Perfila<span class="pp-logo__pro">Pro</span></a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="pp-wrap">
+    <div class="pp-alta-main">
+
+      <!-- ── Left: form ── -->
+      <div>
+        <!-- Stepper (4 pasos) -->
+        <div class="pp-stepper" id="stepper" aria-label="Progrés del formulari">
+          <div class="pp-stepper__step is-active" id="st1">
+            <span class="pp-stepper__num">1</span>
+            <span class="pp-stepper__label">Qui ets</span>
+          </div>
+          <div class="pp-stepper__line"></div>
+          <div class="pp-stepper__step" id="st2">
+            <span class="pp-stepper__num">2</span>
+            <span class="pp-stepper__label">Identitat</span>
+          </div>
+          <div class="pp-stepper__line"></div>
+          <div class="pp-stepper__step" id="st3">
+            <span class="pp-stepper__num">3</span>
+            <span class="pp-stepper__label">Contacte</span>
+          </div>
+          <div class="pp-stepper__line"></div>
+          <div class="pp-stepper__step" id="st4">
+            <span class="pp-stepper__num">4</span>
+            <span class="pp-stepper__label">Confirmar</span>
+          </div>
+        </div>
+
+        <!-- Form card -->
+        <div class="pp-form-card" id="formCard">
+
+          <!-- Step 1: galería de arquetipos -->
+          <div class="pp-form-step is-active" id="step1">
+            <h1 class="pp-form-step__title">Qui ets?</h1>
+            <p class="pp-form-step__sub">Tria l'ofici que millor et defineix. La resta t'ho posem fàcil després.</p>
+
+            <div class="pp-arch-grid" id="archGrid" role="listbox" aria-label="Tria el teu ofici">
+              <!-- inyectado por JS -->
+            </div>
+
+            <div class="pp-arch-search">
+              <label class="pp-arch-search__label" for="archSearch">No et veus a dalt? Escriu la teva professió:</label>
+              <input class="pp-input" id="archSearch" type="text" placeholder="Ex. Advocada, Cuinera, Mecànic…" autocomplete="off" maxlength="80">
+              <ul class="pp-arch-search__results" id="archResults" role="listbox" hidden></ul>
+            </div>
+
+            <div class="pp-form-actions">
+              <span></span>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" id="step1Next" onclick="goStep(2)" disabled>Continuar →</button>
+            </div>
+          </div>
+
+          <!-- Step 2: identidad + servicios -->
+          <div class="pp-form-step" id="step2">
+            <div class="pp-arch-selected" id="archSelected">
+              <span class="pp-arch-selected__icon" id="archSelectedIcon"></span>
+              <span class="pp-arch-selected__text">Ets <strong id="archSelectedRol">—</strong></span>
+              <button type="button" class="pp-arch-selected__change" onclick="goStep(1)">Canviar</button>
+            </div>
+
+            <h2 class="pp-form-step__title">Com et dius?</h2>
+            <p class="pp-form-step__sub">El teu nom, el de la teva marca, o tots dos. Ho podràs canviar després.</p>
+
+            <div class="pp-fields">
+              <div class="pp-field">
+                <label class="pp-field__label" for="f_nombre">Nom <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_nombre" type="text" placeholder="Ex. Iolanda Pérez" maxlength="100" autocomplete="name" required>
+                <p class="pp-field__help">El que apareixerà gran al teu perfil.</p>
+              </div>
+
+              <div class="pp-field">
+                <label class="pp-field__label">Els teus serveis</label>
+                <div class="pp-svc-chips" id="svcChips" aria-live="polite">
+                  <!-- inyectado por JS -->
+                </div>
+                <div class="pp-svc-add">
+                  <input type="text" id="svcAddInput" placeholder="Afegir un altre servei…" maxlength="50">
+                  <button type="button" id="svcAddBtn" disabled>Afegir</button>
+                </div>
+                <p class="pp-field__help">T'hem suggerit els típics. Toca per activar/desactivar o afegeix els teus.</p>
+              </div>
+            </div>
+
+            <div class="pp-form-actions">
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(1)">← Enrere</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(3)">Continuar →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: contacto -->
+          <div class="pp-form-step" id="step3">
+            <h2 class="pp-form-step__title">Com et contacten?</h2>
+            <p class="pp-form-step__sub">On treballes i com poden escriure't.</p>
+            <div class="pp-fields">
+              <div class="pp-field">
+                <label class="pp-field__label" for="f_cp">Codi postal <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_cp" type="text" inputmode="numeric" pattern="[0-9]{5}" placeholder="Ex. 08001" autocomplete="postal-code" maxlength="5" required>
+                <p class="pp-field__help">5 dígits. S'utilitza perquè el teu perfil aparegui al directori de la teva província.</p>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label" for="f_whatsapp">WhatsApp <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_whatsapp" type="tel" placeholder="Ex. 612 345 678" autocomplete="tel" required>
+                <p class="pp-field__help">L'utilitzaran els teus clients per escriure't directament.</p>
+              </div>
+              <div class="pp-field">
+                <label class="pp-field__label" for="f_email">Correu electrònic <span aria-hidden="true" class="pp-required">*</span></label>
+                <input class="pp-input" id="f_email" type="email" placeholder="el-teu@correu.com" autocomplete="email" required>
+                <p class="pp-field__help">Per enviar-te l'enllaç d'edició i la factura. No apareix en públic.</p>
+              </div>
+              <div class="pp-field">
+                <label class="pp-toggle-row" for="f_local_publico">
+                  <span class="pp-toggle-row__info">
+                    <span class="pp-toggle-row__label">Tinc local públic</span>
+                    <span class="pp-toggle-row__hint">Botiga, taller o consulta on reps clients. Si l'actives, podràs afegir l'adreça i apareixerà un enllaç a Google Maps a la teva targeta.</span>
+                  </span>
+                  <span class="pp-toggle-sw">
+                    <input id="f_local_publico" type="checkbox">
+                    <span class="pp-toggle-track" aria-hidden="true"></span>
+                  </span>
+                </label>
+              </div>
+              <div class="pp-field pp-field--collapsible is-hidden" id="f_direccion_field">
+                <label class="pp-field__label" for="f_direccion">Adreça <span class="pp-field__optional">(una línia)</span></label>
+                <input class="pp-input" id="f_direccion" type="text" placeholder="Ex. Carrer Major 23, baixos" autocomplete="street-address" maxlength="200">
+                <p class="pp-field__help">Carrer i número. La ciutat ja la sabem pel teu CP — no la repeteixis.</p>
+              </div>
+            </div>
+            <div class="pp-form-actions">
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(2)">← Enrere</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" onclick="goStep(4)">Revisar perfil →</button>
+            </div>
+          </div>
+
+          <!-- Step 4: confirmar -->
+          <div class="pp-form-step" id="step4">
+            <h2 class="pp-form-step__title">Tot correcte?</h2>
+            <p class="pp-form-step__sub">Revisa el teu perfil abans de publicar-lo. El podràs editar sempre.</p>
+
+            <div class="pp-review">
+              <div class="pp-review__row">
+                <span class="pp-review__key">Professió</span>
+                <strong class="pp-review__val" id="rev_rol">—</strong>
+              </div>
+              <div class="pp-review__row">
+                <span class="pp-review__key">Nom</span>
+                <strong class="pp-review__val" id="rev_nombre">—</strong>
+              </div>
+              <div class="pp-review__row" id="rev_svc_row">
+                <span class="pp-review__key">Serveis</span>
+                <span class="pp-review__val" id="rev_svc" style="font-weight:400;max-width:26ch">—</span>
+              </div>
+              <div class="pp-review__row">
+                <span class="pp-review__key">CP</span>
+                <strong class="pp-review__val" id="rev_cp">—</strong>
+              </div>
+              <div class="pp-review__row" id="rev_dir_row" style="display:none">
+                <span class="pp-review__key">Adreça</span>
+                <strong class="pp-review__val" id="rev_dir" style="font-weight:400;max-width:26ch">—</strong>
+              </div>
+              <div class="pp-review__row">
+                <span class="pp-review__key">WhatsApp</span>
+                <strong class="pp-review__val" id="rev_whatsapp">—</strong>
+              </div>
+              <div class="pp-review__row">
+                <span class="pp-review__key">Correu electrònic</span>
+                <strong class="pp-review__val" id="rev_email">—</strong>
+              </div>
+            </div>
+
+            <div class="pp-alert pp-alert--info" style="margin-bottom:var(--pp-s-6)">
+              <span class="pp-alert__icon" aria-hidden="true">🔒</span>
+              <div class="pp-alert__body">
+                <span>El teu perfil es publica com a <strong>esborrany</strong>. Només qui tingui el teu enllaç pot veure'l. Per aparèixer al directori activa el plan Anual quan vulguis.</span>
+              </div>
+            </div>
+
+            <div id="errMsg" style="display:none" class="pp-alert pp-alert--error" role="alert">
+              <span class="pp-alert__icon" aria-hidden="true">⚠️</span>
+              <div class="pp-alert__body">
+                <span id="errText">S'ha produït un error. Torna-ho a provar.</span>
+              </div>
+            </div>
+
+            <div class="pp-form-actions">
+              <button class="pp-btn pp-btn--ghost" onclick="goStep(3)">← Enrere</button>
+              <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" id="submitBtn" onclick="submitForm()">
+                Publicar el meu perfil gratis
+              </button>
+            </div>
+          </div>
+
+          <!-- Success -->
+          <div class="pp-success" id="successPanel">
+            <div class="pp-success__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 class="pp-success__title">El teu perfil bàsic està publicat!</h2>
+            <p class="pp-success__lead">Hem enviat l'enllaç d'edició al teu correu electrònic.</p>
+            <div>
+              <p class="pp-success__caption">La teva URL pública:</p>
+              <button class="pp-success__url" id="successUrl" onclick="copyUrl()" title="Copiar enllaç" aria-label="Copiar enllaç">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span id="successUrlText"></span>
+              </button>
+            </div>
+
+            <div class="pp-success__checklist" aria-label="Què falta per activar el teu perfil">
+              <p class="pp-success__checklist-title">Per activar et falta</p>
+              <div class="pp-success__check-item">Foto de perfil</div>
+              <div class="pp-success__check-item">QR per a aparador i xarxes</div>
+              <div class="pp-success__check-item">Aparèixer al directori quan algú busqui el teu ofici</div>
+            </div>
+
+            <div class="pp-success__cta-row">
+              <a id="btnActivarPerfil" href="#" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Activar-ho tot (9€) →</a>
+              <a id="btnEditarPerfil" href="#" class="pp-btn pp-btn--ghost pp-btn--pill">Editar perfil</a>
+            </div>
+
+            <div class="pp-success__share-row">
+              <a id="btnVerPerfil" href="#" class="pp-success__share-link">Veure la meva targeta</a>
+              <a id="btnWaPerfil" href="#" class="pp-success__share-link" target="_blank" rel="noopener">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                Compartir per WhatsApp
+              </a>
+            </div>
+          </div>
+
+        </div><!-- /pp-form-card -->
+
+        <!-- Trust row debajo del form -->
+        <div class="pp-trust-row" id="trustRow">
+          <span class="pp-trust-pill">Sense targeta de crèdit</span>
+          <span class="pp-trust-pill">URL pròpia a l'instant</span>
+          <span class="pp-trust-pill">Editable sempre</span>
+        </div>
+      </div>
+
+      <!-- ── Right: preview sidebar ── -->
+      <aside class="pp-alta-aside pp-alta-preview" aria-label="Previsualització del perfil" aria-live="polite">
+        <p class="pp-alta-aside__label">Previsualització</p>
+        <div class="pp-profile-card">
+          <div class="pp-profile-card__top">
+            <div class="pp-avatar pp-avatar--xl" id="prevAvatar">?</div>
+            <div>
+              <p class="pp-profile-card__name" id="prevNombre">El teu nom</p>
+              <p class="pp-profile-card__sub" id="prevSub">Professió · Ciutat</p>
+            </div>
+          </div>
+          <div class="pp-profile-card__bio" id="prevDesc" style="display:none"></div>
+          <div class="pp-profile-card__role" id="prevRole" style="display:none">
+            <span id="prevRoleText"></span>
+            <span class="pp-profile-card__role-badge">Free</span>
+          </div>
+          <div class="pp-profile-card__actions">
+            <button class="pp-btn pp-btn--wa pp-btn--pill" style="cursor:default;opacity:.6" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.855L.057 23.882l6.198-1.462A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.886 0-3.656-.495-5.187-1.362l-.372-.22-3.679.867.908-3.576-.241-.379A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+              WhatsApp directe
+            </button>
+            <button class="pp-btn pp-btn--secondary pp-btn--pill" style="cursor:default;opacity:.6" tabindex="-1">Veure perfil</button>
+          </div>
+          <div class="pp-profile-card__meta">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="pp-alta-preview__meta-prefix">perfilapro.es/c/</span><strong id="prevSlug">el-teu-nom</strong>
+          </div>
+        </div>
+      </aside>
+
+    </div><!-- /pp-alta-main -->
+  </div>
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="pp-site-footer">
+  <div class="pp-wrap">
+    <div class="pp-footer__bottom">
+      <span>© 2026 PerfilaPro</span>
+      <span>
+        <a href="/ca/terminos" style="color:inherit">Termes</a> ·
+        <a href="/ca/privacidad" style="color:inherit">Privacitat</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ════════════════════════════════════════════════════════════
+     STATE
+     ════════════════════════════════════════════════════════════ */
+  var ARCHETYPES = [];          // [{rol_profesional, sector, sector_slug, icon, diana, servicios_sugeridos, ...}]
+  var selectedArch = null;       // arquetipo elegido (objeto del JSON, o {custom:true, rol_profesional, sector_slug:'otro'})
+  var selectedServices = [];     // servicios elegidos (strings)
+
+  /* ════════════════════════════════════════════════════════════
+     UTILS
+     ════════════════════════════════════════════════════════════ */
+  function toSlug(s) {
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      .substring(0, 40);
+  }
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function getCp() {
+    return (document.getElementById('f_cp').value || '').replace(/\D/g, '').slice(0, 5);
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     CARGA DE ARQUETIPOS
+     ════════════════════════════════════════════════════════════ */
+  function loadArchetypes() {
+    return fetch('/data/archetypes.json')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        ARCHETYPES = data;
+        renderGallery();
+      })
+      .catch(function (err) {
+        console.error('No se pudo cargar archetypes.json', err);
+        // Fallback: el flow puede continuar con free-text en el buscador.
+      });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     GALERÍA DE ARQUETIPOS DIANA
+     ════════════════════════════════════════════════════════════ */
+  function renderGallery() {
+    var grid = document.getElementById('archGrid');
+    var diana = ARCHETYPES
+      .filter(function (a) { return a.diana; })
+      .sort(function (a, b) { return (a.diana_order || 99) - (b.diana_order || 99); });
+    var html = diana.map(function (a) {
+      var label = a.diana_label || a.rol_profesional;
+      return (
+        '<div class="pp-arch-card" role="option" tabindex="0"' +
+        ' data-rol="' + escapeHtml(a.rol_profesional) + '">' +
+          '<span class="pp-arch-card__icon"><i data-lucide="' + escapeHtml(a.icon) + '"></i></span>' +
+          '<span class="pp-arch-card__label">' + escapeHtml(label) + '</span>' +
+        '</div>'
+      );
+    }).join('');
+    // Slot 15: "Otro / no me veo"
+    html +=
+      '<div class="pp-arch-card pp-arch-card--other" role="option" tabindex="0" id="archOther">' +
+        '<span class="pp-arch-card__icon"><i data-lucide="search"></i></span>' +
+        '<span class="pp-arch-card__label">No em veig</span>' +
+      '</div>';
+    grid.innerHTML = html;
+
+    // Click handlers en cada card
+    grid.querySelectorAll('.pp-arch-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        if (card.id === 'archOther') {
+          var inp = document.getElementById('archSearch');
+          var section = inp.closest('.pp-arch-search') || inp;
+          grid.querySelectorAll('.pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+          card.classList.add('is-selected');
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(function () { inp.focus({ preventScroll: true }); }, 350);
+          return;
+        }
+        var rol = card.dataset.rol;
+        var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
+        if (arch) selectArchetype(arch);
+        // visual selection
+        grid.querySelectorAll('.pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+        card.classList.add('is-selected');
+      });
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+      });
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     BUSCADOR DE ARQUETIPOS + CATÁLOGO SEPE
+     Local: matching contra ARCHETYPES (77 entradas, instantáneo).
+     Remoto: /api/ocupaciones-search → catálogo SEPE/SISPE 2011 (2.221
+     ocupaciones oficiales, debounced 250ms). Resultados locales se
+     muestran primero (más conocidos por el usuario, menor latencia).
+     ════════════════════════════════════════════════════════════ */
+  (function () {
+    var inp = document.getElementById('archSearch');
+    var lst = document.getElementById('archResults');
+    var debounceTimer = null;
+    var inflightController = null;
+    var lastQuery = '';
+    var sepeCache = {};   // query → results, evita fetch duplicados
+
+    function hide() { lst.hidden = true; lst.innerHTML = ''; }
+    function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+
+    // Mapea sector_slug del catálogo SEPE al label humano (ej. 'oficios' → 'Oficis').
+    var SECTOR_LABELS_HUMAN = {
+      oficios:'Oficis', salud:'Salut', educacion:'Educació', comercial:'Comercial',
+      belleza:'Bellesa', reforma:'Reforma', hosteleria:'Hostaleria', tech:'Tecnologia',
+      legal:'Legal', jardineria:'Jardineria', transporte:'Transport', fotografia:'Fotografia',
+      eventos:'Esdeveniments', automocion:'Automoció', seguridad:'Seguretat', cuidados:'Cures',
+      fitness:'Fitness', turismo:'Turisme', comercio:'Comerç', otro:'Altres',
+    };
+
+    function localMatches(nq) {
+      return ARCHETYPES.filter(function (a) { return norm(a.rol_profesional).indexOf(nq) !== -1; });
+    }
+
+    function fetchSepe(q) {
+      if (sepeCache[q]) return Promise.resolve(sepeCache[q]);
+      if (inflightController) inflightController.abort();
+      inflightController = new AbortController();
+      return fetch('/api/ocupaciones-search?q=' + encodeURIComponent(q) + '&limit=8',
+                   { signal: inflightController.signal })
+        .then(function (r) { return r.ok ? r.json() : { results: [] }; })
+        .then(function (j) { sepeCache[q] = j.results || []; return sepeCache[q]; })
+        .catch(function () { return []; });  // abort/error → silencioso
+    }
+
+    function renderEmpty(query) {
+      lst.innerHTML =
+        '<li class="pp-arch-search__msg">' +
+          'No hem trobat "' + escapeHtml(query) + '". Prem Enter per usar-ho igualment.' +
+        '</li>';
+      lst.hidden = false;
+    }
+
+    function render(localList, sepeList, query) {
+      // Dedupe: si una ocupación SEPE coincide con un archetype local, gana el local.
+      var localNames = new Set(localList.map(function (a) { return norm(a.rol_profesional); }));
+      var sepeFiltered = sepeList.filter(function (o) { return !localNames.has(norm(o.name)); });
+
+      if (!localList.length && !sepeFiltered.length) { renderEmpty(query); return; }
+
+      var html = '';
+      localList.slice(0, 6).forEach(function (a) {
+        html += (
+          '<li class="pp-arch-search__item" role="option"' +
+              ' data-source="local" data-rol="' + escapeHtml(a.rol_profesional) + '">' +
+            '<i data-lucide="' + escapeHtml(a.icon || 'briefcase') + '"></i>' +
+            '<span>' + escapeHtml(a.rol_profesional) + '</span>' +
+            '<span class="pp-arch-search__item-sector">' + escapeHtml(a.sector) + '</span>' +
+          '</li>'
+        );
+      });
+      sepeFiltered.slice(0, 8).forEach(function (o) {
+        html += (
+          '<li class="pp-arch-search__item" role="option"' +
+              ' data-source="sepe" data-code="' + escapeHtml(o.code) + '"' +
+              ' data-name="' + escapeHtml(o.name) + '"' +
+              ' data-sector-slug="' + escapeHtml(o.sector_slug) + '">' +
+            '<i data-lucide="briefcase"></i>' +
+            '<span>' + escapeHtml(o.name) + '</span>' +
+            '<span class="pp-arch-search__item-sector">' +
+              escapeHtml(SECTOR_LABELS_HUMAN[o.sector_slug] || o.sector_slug) +
+            '</span>' +
+          '</li>'
+        );
+      });
+      lst.innerHTML = html;
+      lst.hidden = false;
+
+      lst.querySelectorAll('.pp-arch-search__item').forEach(function (item) {
+        item.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          if (item.dataset.source === 'local') {
+            var rol = item.dataset.rol;
+            var arch = ARCHETYPES.find(function (a) { return a.rol_profesional === rol; });
+            if (arch) {
+              selectArchetype(arch);
+              inp.value = arch.rol_profesional;
+            }
+          } else {
+            // SEPE: pseudo-archetype con ocupacion_code para que el backend
+            // resuelva name canónico desde la tabla ocupaciones.
+            selectArchetype({
+              rol_profesional:    item.dataset.name,
+              sector:             SECTOR_LABELS_HUMAN[item.dataset.sectorSlug] || 'Altres',
+              sector_slug:        item.dataset.sectorSlug,
+              icon:               'briefcase',
+              category_sector:    'otros',
+              category_specialty: 'otro-oficio',
+              servicios_sugeridos: [],
+              custom:             true,
+              ocupacion_code:     item.dataset.code,
+            });
+            inp.value = item.dataset.name;
+          }
+          hide();
+          document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+        });
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function trigger(q) {
+      var nq = norm(q);
+      var local = localMatches(nq);
+      // Render local inmediato (latencia 0). Si SEPE responde, refrescamos.
+      render(local, [], q);
+      if (q !== lastQuery) lastQuery = q;
+      fetchSepe(nq).then(function (sepe) {
+        if (q !== lastQuery) return;   // query obsoleto, ignorar
+        render(local, sepe, q);
+      });
+    }
+
+    inp.addEventListener('input', function () {
+      var q = inp.value.trim();
+      if (q.length < 2) { hide(); return; }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () { trigger(q); }, 250);
+    });
+
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var q = inp.value.trim();
+        if (!q) return;
+        var nq = norm(q);
+        var existing = ARCHETYPES.find(function (a) { return norm(a.rol_profesional) === nq; });
+        if (existing) {
+          selectArchetype(existing);
+        } else {
+          selectArchetype({
+            rol_profesional:    q,
+            sector:             'Altres oficis',
+            sector_slug:        'otro',
+            icon:               'briefcase',
+            category_sector:    'otros',
+            category_specialty: 'otro-oficio',
+            servicios_sugeridos: [],
+            custom:             true,
+          });
+        }
+        hide();
+        document.querySelectorAll('#archGrid .pp-arch-card').forEach(function (c) { c.classList.remove('is-selected'); });
+      } else if (e.key === 'Escape') {
+        hide();
+      }
+    });
+
+    inp.addEventListener('blur', function () { setTimeout(hide, 150); });
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     SELECCIÓN DE ARQUETIPO (común a galería y buscador)
+     ════════════════════════════════════════════════════════════ */
+  function selectArchetype(arch) {
+    selectedArch = arch;
+    selectedServices = (arch.servicios_sugeridos || []).slice(0); // copia
+    document.getElementById('step1Next').disabled = false;
+    renderArchSelected();
+    renderServiceChips();
+    updatePreview();
+  }
+
+  function renderArchSelected() {
+    var box = document.getElementById('archSelected');
+    if (!selectedArch) { box.classList.remove('is-visible'); return; }
+    box.classList.add('is-visible');
+    document.getElementById('archSelectedRol').textContent = selectedArch.diana_label || selectedArch.rol_profesional;
+    var iconHost = document.getElementById('archSelectedIcon');
+    iconHost.innerHTML = '<i data-lucide="' + escapeHtml(selectedArch.icon || 'briefcase') + '"></i>';
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     CHIPS DE SERVICIOS
+     ════════════════════════════════════════════════════════════ */
+  function renderServiceChips() {
+    var host = document.getElementById('svcChips');
+    host.innerHTML = selectedServices.map(function (s, i) {
+      return (
+        '<span class="pp-svc-chip is-active" data-idx="' + i + '">' +
+          escapeHtml(s) +
+          '<button type="button" class="pp-svc-chip__remove" aria-label="Treure ' + escapeHtml(s) + '">×</button>' +
+        '</span>'
+      );
+    }).join('');
+    host.querySelectorAll('.pp-svc-chip__remove').forEach(function (btn, i) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var chip = btn.closest('.pp-svc-chip');
+        var idx = parseInt(chip.dataset.idx, 10);
+        selectedServices.splice(idx, 1);
+        renderServiceChips();
+        updatePreview();
+      });
+    });
+  }
+
+  (function () {
+    var inp = document.getElementById('svcAddInput');
+    var btn = document.getElementById('svcAddBtn');
+    function refreshBtn() { btn.disabled = !inp.value.trim() || selectedServices.length >= 5; }
+    inp.addEventListener('input', refreshBtn);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); btn.click(); }
+    });
+    btn.addEventListener('click', function () {
+      var v = inp.value.trim();
+      if (!v || selectedServices.length >= 5) return;
+      selectedServices.push(v);
+      inp.value = '';
+      refreshBtn();
+      renderServiceChips();
+      updatePreview();
+    });
+    refreshBtn();
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     PREVIEW LATERAL
+     ════════════════════════════════════════════════════════════ */
+  function updatePreview() {
+    var nombre = document.getElementById('f_nombre').value.trim();
+    var cp     = getCp();
+
+    document.getElementById('prevNombre').textContent = nombre || 'El teu nom';
+    document.getElementById('prevAvatar').textContent = nombre ? initials(nombre) : '?';
+    document.getElementById('prevSlug').textContent   = nombre ? toSlug(nombre) : 'el-teu-nom';
+
+    var subParts = [];
+    if (selectedArch) subParts.push(selectedArch.diana_label || selectedArch.rol_profesional);
+    if (cp) subParts.push('CP ' + cp);
+    document.getElementById('prevSub').textContent = subParts.length ? subParts.join(' · ') : 'Professió · Ciutat';
+
+    var descEl = document.getElementById('prevDesc');
+    if (selectedServices.length) {
+      descEl.textContent = selectedServices.join(' · ');
+      descEl.style.display = '';
+    } else {
+      descEl.style.display = 'none';
+    }
+
+    var roleEl   = document.getElementById('prevRole');
+    var roleText = document.getElementById('prevRoleText');
+    if (selectedArch) {
+      roleText.textContent = selectedArch.sector;
+      roleEl.style.display = '';
+    } else {
+      roleEl.style.display = 'none';
+    }
+  }
+
+  document.getElementById('f_nombre').addEventListener('input', updatePreview);
+
+  /* ════════════════════════════════════════════════════════════
+     STEPPER NAVIGATION (4 pasos)
+     ════════════════════════════════════════════════════════════ */
+  window.goStep = function (n) {
+    if (n === 2 && !validateStep1()) return;
+    if (n === 3 && !validateStep2()) return;
+    if (n === 4 && !validateStep3()) return;
+    if (n === 4) fillReview();
+
+    [1,2,3,4].forEach(function (i) {
+      document.getElementById('step' + i).classList.toggle('is-active', i === n);
+      var st = document.getElementById('st' + i);
+      st.classList.remove('is-active','is-done');
+      if (i === n) st.classList.add('is-active');
+      else if (i < n) st.classList.add('is-done');
+    });
+    document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (typeof window.ppEvent === 'function') window.ppEvent('signup_step_view', { step: n });
+  };
+
+  /* ════════════════════════════════════════════════════════════
+     VALIDACIONES
+     ════════════════════════════════════════════════════════════ */
+  function showError(id, msg) {
+    var el = document.getElementById(id);
+    el.classList.add('is-error');
+    var hint = el.parentElement.querySelector('.pp-field__help');
+    if (hint) { hint.textContent = msg; hint.classList.add('is-error'); }
+  }
+  function clearError(id) {
+    var el = document.getElementById(id);
+    el.classList.remove('is-error');
+    var hint = el.parentElement.querySelector('.pp-field__help');
+    if (hint) hint.classList.remove('is-error');
+  }
+
+  function validateStep1() { return !!selectedArch; }
+
+  function validateStep2() {
+    var ok = true;
+    var nombre = document.getElementById('f_nombre').value.trim();
+    clearError('f_nombre');
+    if (!nombre) { showError('f_nombre', 'El nom és obligatori.'); ok = false; }
+    return ok;
+  }
+
+  function validateStep3() {
+    var ok = true;
+    var cp        = getCp();
+    var whatsapp  = document.getElementById('f_whatsapp').value.trim();
+    var email     = document.getElementById('f_email').value.trim();
+    var localPub  = document.getElementById('f_local_publico');
+    var direccion = document.getElementById('f_direccion').value.trim();
+    clearError('f_cp'); clearError('f_whatsapp'); clearError('f_email'); clearError('f_direccion');
+    if (!cp || !/^\d{5}$/.test(cp)) {
+      showError('f_cp', 'Introdueix un CP espanyol de 5 dígits.'); ok = false;
+    } else {
+      var prefix = parseInt(cp.slice(0, 2), 10);
+      if (prefix < 1 || prefix > 52) {
+        showError('f_cp', 'CP fora de rang. Els CP espanyols van del 01000 al 52999.'); ok = false;
+      }
+    }
+    if (!whatsapp) {
+      showError('f_whatsapp', 'El WhatsApp és obligatori.'); ok = false;
+    } else {
+      var waDigits = whatsapp.replace(/\D/g, '');
+      if (waDigits.length === 13 && waDigits.indexOf('0034') === 0) waDigits = waDigits.substring(4);
+      else if (waDigits.length === 11 && waDigits.indexOf('34') === 0) waDigits = waDigits.substring(2);
+      if (!/^[6-9]\d{8}$/.test(waDigits)) {
+        showError('f_whatsapp', 'Introdueix un mòbil espanyol de 9 dígits (ex: 612 345 678).'); ok = false;
+      }
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('f_email', 'Introdueix un correu electrònic vàlid.'); ok = false;
+    }
+    if (localPub && localPub.checked && !direccion) {
+      showError('f_direccion', 'Si tens local públic, introdueix l\'adreça o desactiva el toggle.'); ok = false;
+    }
+    return ok;
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     REVIEW
+     ════════════════════════════════════════════════════════════ */
+  function fillReview() {
+    document.getElementById('rev_rol').textContent      = selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '—';
+    document.getElementById('rev_nombre').textContent   = document.getElementById('f_nombre').value.trim();
+    document.getElementById('rev_cp').textContent       = getCp() || '—';
+    document.getElementById('rev_whatsapp').textContent = document.getElementById('f_whatsapp').value.trim();
+    document.getElementById('rev_email').textContent    = document.getElementById('f_email').value.trim();
+
+    var svcRow = document.getElementById('rev_svc_row');
+    if (selectedServices.length) {
+      document.getElementById('rev_svc').textContent = selectedServices.join(' · ');
+      svcRow.style.display = '';
+    } else {
+      svcRow.style.display = 'none';
+    }
+
+    var dirRow  = document.getElementById('rev_dir_row');
+    var lpEl    = document.getElementById('f_local_publico');
+    var dirText = document.getElementById('f_direccion').value.trim();
+    if (lpEl && lpEl.checked && dirText) {
+      document.getElementById('rev_dir').textContent = dirText;
+      dirRow.style.display = '';
+    } else {
+      dirRow.style.display = 'none';
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     SUBMIT
+     ════════════════════════════════════════════════════════════ */
+  window.submitForm = function () {
+    var btn = document.getElementById('submitBtn');
+    var errMsg = document.getElementById('errMsg');
+    errMsg.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Publicant…';
+
+    // desc se queda con la diana_label cuando existe (ej: "Reformista / Pintor")
+    // para que la tagline de la tarjeta coincida con lo que el usuario eligio.
+    // Cuando el archetype es custom (flujo "No me veo aqui"), rol_profesional
+    // ES el texto libre del usuario y va tambien como specialty_custom.
+    var localPubEl = document.getElementById('f_local_publico');
+    var localPub   = !!(localPubEl && localPubEl.checked);
+    var direccion  = document.getElementById('f_direccion').value.trim();
+
+    var payload = {
+      nombre:             document.getElementById('f_nombre').value.trim(),
+      sector:             selectedArch ? (selectedArch.sector_slug || 'otro') : 'otro',
+      category_sector:    selectedArch ? (selectedArch.category_sector    || null) : null,
+      category_specialty: selectedArch ? (selectedArch.category_specialty || null) : null,
+      specialty_custom:   selectedArch && selectedArch.custom ? selectedArch.rol_profesional : null,
+      ocupacion_code:     selectedArch ? (selectedArch.ocupacion_code || null) : null,
+      desc:               selectedArch ? (selectedArch.diana_label || selectedArch.rol_profesional) : '',
+      servicios:          selectedServices,
+      cp:                 getCp(),
+      whatsapp:           document.getElementById('f_whatsapp').value.trim(),
+      email:              document.getElementById('f_email').value.trim(),
+      direccion:          localPub && direccion ? direccion : null,
+      local_publico:      localPub && !!direccion,
+      idioma:             (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
+    };
+
+    if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
+
+    fetch('/api/register-free', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+    .then(function (r) {
+      if (!r.ok) {
+        document.getElementById('errText').textContent = r.data.error || 'Error en crear el perfil.';
+        errMsg.style.display = '';
+        btn.disabled = false;
+        btn.textContent = 'Publicar el meu perfil gratis';
+        return;
+      }
+      var slug    = r.data.slug;
+      var siteUrl = window.location.origin;
+      var cardUrl = siteUrl + '/c/' + slug;
+
+      document.getElementById('successUrlText').textContent = cardUrl;
+      // CTA principal va al editor con scroll directo al banner de upgrade —
+      // el usuario aterriza viendo "elige plan" sin pasos intermedios.
+      document.getElementById('btnActivarPerfil').href = r.data.edit_url + '#freeBanner';
+      document.getElementById('btnEditarPerfil').href = r.data.edit_url;
+      document.getElementById('btnVerPerfil').href = '/c/' + slug;
+      document.getElementById('btnWaPerfil').href =
+        'https://wa.me/?text=' + encodeURIComponent('El meu perfil professional: ' + cardUrl);
+
+      [1,2,3,4].forEach(function (i) { document.getElementById('step' + i).classList.remove('is-active'); });
+      document.getElementById('stepper').style.display  = 'none';
+      document.getElementById('trustRow').style.display = 'none';
+      document.getElementById('successPanel').classList.add('is-active');
+
+      if (typeof window.ppIdentify === 'function') window.ppIdentify(slug, { plan: 'free', sector: payload.sector });
+      if (typeof window.ppEvent === 'function')    window.ppEvent('signup_completed_free', { sector: payload.sector });
+    })
+    .catch(function () {
+      document.getElementById('errText').textContent = 'Error de xarxa. Comprova la teva connexió i torna-ho a provar.';
+      errMsg.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Publicar el meu perfil gratis';
+    });
+  };
+
+  /* ════════════════════════════════════════════════════════════
+     COPY URL en pantalla de éxito
+     ════════════════════════════════════════════════════════════ */
+  window.copyUrl = function () {
+    var url = document.getElementById('successUrlText').textContent;
+    navigator.clipboard.writeText(url).then(function () {
+      var btn = document.getElementById('successUrl');
+      var orig = btn.querySelector('span').textContent;
+      btn.querySelector('span').textContent = 'Copiat!';
+      setTimeout(function () { btn.querySelector('span').textContent = orig; }, 2000);
+    });
+  };
+
+  /* ════════════════════════════════════════════════════════════
+     CP INPUT · sanitize a 5 dígitos + lookup municipio en tiempo real
+     ════════════════════════════════════════════════════════════ */
+  (function () {
+    var inp = document.getElementById('f_cp');
+    if (!inp) return;
+    var hint = inp.parentElement.querySelector('.pp-field__help');
+    var defaultHintText = hint ? hint.textContent : '';
+    var debounceTimer = null;
+    var pendingFetch  = null;
+
+    function setHint(text, state) {
+      if (!hint) return;
+      hint.textContent = text;
+      hint.classList.remove('is-error', 'is-success', 'is-loading');
+      if (state) hint.classList.add(state);
+    }
+
+    function lookup(cp) {
+      if (pendingFetch && typeof pendingFetch.abort === 'function') {
+        try { pendingFetch.abort(); } catch (e) {}
+      }
+      var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+      pendingFetch = ctrl;
+      setHint('Cercant municipi…', 'loading');
+      fetch('/api/cp-lookup?cp=' + encodeURIComponent(cp), ctrl ? { signal: ctrl.signal } : {})
+        .then(function (res) { return res.json(); })
+        .then(function (r) {
+          if (inp.value !== cp) return; // el usuario siguió tecleando
+          if (r && r.ok) {
+            setHint('→ ' + r.municipality_name + ' (' + r.province_slug + ')', 'success');
+            inp.classList.remove('is-error');
+          } else if (r && r.reason === 'not_found') {
+            setHint('Aquest CP no és al nostre catàleg. Revisa\'l o tira endavant.', 'error');
+          } else {
+            setHint('CP fora de rang. Els CP espanyols van del 01000 al 52999.', 'error');
+          }
+        })
+        .catch(function () { /* aborted o red — no reportamos */ });
+    }
+
+    inp.addEventListener('input', function () {
+      var v = inp.value.replace(/\D/g, '').slice(0, 5);
+      if (v !== inp.value) inp.value = v;
+      updatePreview();
+      clearTimeout(debounceTimer);
+      if (!v) {
+        setHint(defaultHintText, null);
+        return;
+      }
+      if (v.length < 5) {
+        setHint('Continua escrivint… (' + v.length + '/5)', 'loading');
+        return;
+      }
+      debounceTimer = setTimeout(function () { lookup(v); }, 250);
+    });
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     LOCAL PÚBLICO · toggle muestra/oculta input dirección
+     ════════════════════════════════════════════════════════════ */
+  (function () {
+    var toggle = document.getElementById('f_local_publico');
+    var field  = document.getElementById('f_direccion_field');
+    var input  = document.getElementById('f_direccion');
+    if (!toggle || !field || !input) return;
+    toggle.addEventListener('change', function () {
+      if (toggle.checked) {
+        field.classList.remove('is-hidden');
+        setTimeout(function () { input.focus({ preventScroll: false }); }, 80);
+      } else {
+        field.classList.add('is-hidden');
+        input.value = '';
+        clearError('f_direccion');
+      }
+    });
+  })();
+
+  /* ════════════════════════════════════════════════════════════
+     INIT
+     ════════════════════════════════════════════════════════════ */
+  loadArchetypes();
+  updatePreview();
+})();
+</script>
+
+</body>
+</html>

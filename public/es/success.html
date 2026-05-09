@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/success" />
+  <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/success" />
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
+  <link rel="canonical" href="https://perfilapro.es/es/success" />
+  <meta name="robots" content="noindex,nofollow">
+  <title>¡Tarjeta activa! — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Card ──────────────────────────────────────────────── */
+    .pp-success-card {
+      background: #FFFFFF;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-xl);
+      box-shadow: var(--pp-sh-lg);
+      width: 100%;
+      max-width: 460px;
+      overflow: hidden;
+    }
+    .pp-success-card__hd {
+      background: var(--color-verde-dark);
+      padding: 2rem;
+      text-align: center;
+    }
+    .pp-success-card__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--pp-s-2);
+      color: #fff;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .pp-success-card__brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+    }
+    .pp-success-card__body { padding: 2rem; }
+
+    /* ── State helpers ─────────────────────────────────────── */
+    .pp-success-state { display: none; }
+    .pp-success-state.is-visible { display: block; }
+
+    /* ── Loading ───────────────────────────────────────────── */
+    .pp-success-loading {
+      text-align: center;
+    }
+    .pp-success-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--color-verde-light);
+      border-top-color: var(--color-verde-dark);
+      border-radius: 50%;
+      animation: ppSuccessSpin .8s linear infinite;
+      margin: 0 auto 1.5rem;
+    }
+    @keyframes ppSuccessSpin { to { transform: rotate(360deg); } }
+    .pp-success-loading__title {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      color: var(--color-tinta);
+      margin: 0 0 .5rem;
+    }
+    .pp-success-loading__sub {
+      font-size: 14px;
+      color: var(--color-gris-500);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .pp-success-loading__dots::after {
+      content: '';
+      animation: ppSuccessDots 1.5s steps(4, end) infinite;
+    }
+    @keyframes ppSuccessDots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    /* ── Success ───────────────────────────────────────────── */
+    .pp-success-icon {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 1rem;
+      animation: ppSuccessPop .4s cubic-bezier(.34, 1.56, .64, 1);
+    }
+    @keyframes ppSuccessPop {
+      from { transform: scale(.5); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+    .pp-success-title {
+      font-family: var(--font-serif);
+      font-size: 1.75rem;
+      font-weight: 400;
+      letter-spacing: var(--pp-ls-display);
+      text-align: center;
+      color: var(--color-tinta);
+      margin: 0 0 .35rem;
+    }
+    .pp-success-sub {
+      font-size: 14px;
+      color: var(--color-gris-500);
+      text-align: center;
+      margin: 0 0 1.75rem;
+      line-height: 1.6;
+    }
+
+    /* ── Link box ──────────────────────────────────────────── */
+    .pp-success-linkbox {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1rem;
+    }
+    .pp-success-linkbox__input {
+      flex: 1;
+      min-width: 0;
+      padding: .75rem 1rem;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-tinta);
+      background: var(--color-crema);
+      outline: none;
+    }
+    .pp-success-linkbox__copy {
+      padding: .75rem 1rem;
+      background: var(--color-verde-match);
+      color: #fff;
+      border: none;
+      border-radius: var(--pp-r-md);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background var(--pp-t-fast);
+    }
+    .pp-success-linkbox__copy:hover { background: var(--color-verde-dark); }
+    .pp-success-linkbox__copy.is-copied { background: var(--color-verde-dark); }
+
+    /* ── CTA secondary ─────────────────────────────────────── */
+    .pp-success-secondary {
+      display: block;
+      text-align: center;
+      padding: .85rem;
+      border: 1px solid var(--color-gris-200);
+      border-radius: var(--pp-r-md);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-tinta);
+      text-decoration: none;
+      transition: border-color var(--pp-t-fast),
+                  color var(--pp-t-fast);
+    }
+    .pp-success-secondary:hover {
+      border-color: var(--color-verde-match);
+      color: var(--color-verde-dark);
+      text-decoration: none;
+    }
+
+    /* ── Share link discreto (WhatsApp después del CTA primario) ─── */
+    .pp-success-share {
+      display: inline-flex; align-items: center; gap: .35rem;
+      margin: .75rem auto 0;
+      font-size: 13px;
+      color: var(--color-gris-500);
+      text-decoration: none;
+      border-bottom: 1px dotted transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .pp-success-share:hover {
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-dark);
+      text-decoration: none;
+    }
+
+    /* ── Email note ────────────────────────────────────────── */
+    .pp-success-note {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: var(--color-verde-light);
+      border: 1px solid var(--color-verde-match);
+      border-radius: var(--pp-r-md);
+      font-size: 13px;
+      color: var(--color-gris-500);
+      text-align: center;
+      line-height: 1.5;
+    }
+    .pp-success-note strong { color: var(--color-verde-dark); }
+
+    .pp-success-edit {
+      margin-top: .75rem;
+      text-align: center;
+      font-size: 13px;
+      color: var(--color-gris-500);
+    }
+    .pp-success-edit a {
+      color: var(--color-verde-dark);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .pp-success-edit a:hover { text-decoration: underline; }
+
+    /* ── Error ─────────────────────────────────────────────── */
+    .pp-success-error { text-align: center; }
+    .pp-success-error__icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .pp-success-error__title {
+      font-family: var(--font-sans);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--color-coral);
+      margin: 0 0 .5rem;
+    }
+    .pp-success-error__text {
+      font-size: 14px;
+      color: var(--color-gris-500);
+      line-height: 1.6;
+      margin: 0 0 1.5rem;
+    }
+
+    /* ── Footer ────────────────────────────────────────────── */
+    .pp-success-footer {
+      margin-top: 1.5rem;
+      font-size: 12px;
+      color: var(--color-gris-500);
+      text-align: center;
+    }
+    .pp-success-footer a {
+      color: var(--color-verde-dark);
+      text-decoration: none;
+    }
+    .pp-success-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="pp-success-card">
+    <div class="pp-success-card__hd">
+      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inicio">Perfila<span class="pp-logo__pro">Pro</span></a>
+    </div>
+    <div class="pp-success-card__body">
+
+      <!-- LOADING -->
+      <div id="stateLoading" class="pp-success-state pp-success-loading is-visible">
+        <div class="pp-success-spinner"></div>
+        <p class="pp-success-loading__title">Activando tu tarjeta<span class="pp-success-loading__dots"></span></p>
+        <p class="pp-success-loading__sub">Esto tarda solo unos segundos mientras confirmamos el pago.</p>
+      </div>
+
+      <!-- SUCCESS -->
+      <div id="stateSuccess" class="pp-success-state">
+        <div class="pp-success-icon">🎉</div>
+        <h1 class="pp-success-title">¡Tu tarjeta está activa!</h1>
+        <p class="pp-success-sub" id="successSub">Ya puedes compartirla y empezar a recibir clientes.</p>
+
+        <div class="pp-success-linkbox">
+          <input class="pp-success-linkbox__input" id="cardUrl" type="text" readonly>
+          <button class="pp-success-linkbox__copy" id="copyBtn" onclick="copyLink()">Copiar</button>
+        </div>
+
+        <a class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="viewCardBtn" href="#" target="_blank" style="margin-bottom:.5rem">Ver mi tarjeta →</a>
+
+        <div style="text-align:center">
+          <a class="pp-success-share" id="waShareBtn" href="#" target="_blank" rel="noopener">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+            Compartir por WhatsApp
+          </a>
+        </div>
+
+        <div class="pp-success-note">
+          📧 Te hemos enviado un email con tu enlace y los datos del plan. Revisa también el spam por si acaso.
+        </div>
+
+        <div class="pp-success-edit">
+          ¿Necesitas cambiar algo? Te hemos mandado el nuevo enlace de edición a tu email.
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div id="stateError" class="pp-success-state pp-success-error">
+        <div class="pp-success-error__icon">😔</div>
+        <p class="pp-success-error__title">La tarjeta está tardando en activarse</p>
+        <p class="pp-success-error__text">Tu pago se ha procesado correctamente. Escríbenos y lo resolvemos en minutos.</p>
+        <a href="mailto:hola@perfilapro.es?subject=Mi%20tarjeta%20no%20se%20ha%20activado&body=Hola%2C%20he%20completado%20el%20pago%20pero%20mi%20tarjeta%20no%20aparece.%20Mi%20slug%20es%3A%20SLUG"
+           id="errorMailBtn"
+           class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill">
+          ✉️ Contactar con soporte
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="pp-success-footer">
+    <a href="/">Volver a PerfilaPro</a>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('slug') || '';
+    const siteUrl = location.origin;
+    const cardUrl = siteUrl + '/c/' + slug;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    function showState(id) {
+      ['stateLoading', 'stateSuccess', 'stateError'].forEach(s => {
+        document.getElementById(s).classList.toggle('is-visible', s === id);
+      });
+    }
+
+    function showSuccess(nombre) {
+      showState('stateSuccess');
+      if (nombre) {
+        const firstName = nombre.split(' ')[0];
+        document.getElementById('successSub').textContent = firstName + ', ya puedes compartirla y empezar a recibir clientes.';
+      }
+      document.getElementById('cardUrl').value = cardUrl;
+      document.getElementById('viewCardBtn').href = cardUrl;
+      const waText = encodeURIComponent('¡Hola! Te comparto mi tarjeta profesional 👇\n' + cardUrl);
+      document.getElementById('waShareBtn').href = 'https://wa.me/?text=' + waText;
+    }
+
+    function showError() {
+      showState('stateError');
+      const mailBtn = document.getElementById('errorMailBtn');
+      if (mailBtn && slug) {
+        mailBtn.href = mailBtn.href.replace('SLUG', encodeURIComponent(slug));
+      }
+    }
+
+    function copyLink() {
+      const input = document.getElementById('cardUrl');
+      const btn = document.getElementById('copyBtn');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(input.value);
+      } else {
+        input.select();
+        document.execCommand('copy');
+      }
+      btn.textContent = '¡Copiado!';
+      btn.classList.add('is-copied');
+      setTimeout(() => {
+        btn.textContent = 'Copiar';
+        btn.classList.remove('is-copied');
+      }, 2500);
+    }
+
+    async function poll() {
+      if (!slug) { showError(); return; }
+      attempts++;
+      try {
+        const res = await fetch('/api/card-status?slug=' + encodeURIComponent(slug));
+        const data = await res.json();
+        if (data.exists) {
+          showSuccess(data.nombre);
+          return;
+        }
+      } catch (e) {}
+      if (attempts >= maxAttempts) { showError(); return; }
+      setTimeout(poll, 2000);
+    }
+
+    poll();
+  </script>
+</body>
+</html>

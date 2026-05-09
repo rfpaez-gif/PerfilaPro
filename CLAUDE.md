@@ -234,6 +234,34 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/ocupaciones-search` | `ocupaciones-search` |
 | `/api/cp-lookup` | `cp-lookup` |
 
+### Internacionalización (es / ca)
+
+PerfilaPro sirve dos idiomas: español (default) y catalán. Estructura:
+
+- **Archivos**: las páginas client-facing viven bajo `public/es/*.html` y `public/ca/*.html` (mismos nombres de archivo). Las URLs son `/es/alta`, `/ca/alta`, etc. (Netlify pretty URLs sin `.html`).
+- **Detección de idioma en `/`**: edge function `netlify/edge-functions/lang-detect.js` intercepta la raíz, lee cookie `pp_lang` o `Accept-Language` (catalán solo si es la primera preferencia del navegador) y redirige 302 a `/es/` o `/ca/`.
+- **Legacy redirects**: 14 reglas 301 en `netlify.toml` mapean `/alta`, `/alta.html`, `/editar`, `/editar.html`, etc. a su equivalente bajo `/es/` para preservar links externos antiguos y emails enviados antes de la migración. URLs con query string (ej. `/editar?slug=&token=`) las preserva Netlify automáticamente.
+- **SEO multilingüe**: cada HTML lleva `<link rel="alternate" hreflang="es|ca|x-default" href="...">` + `<link rel="canonical" href="...">` apuntando a la versión absoluta en `https://perfilapro.es/{lang}/{page}`.
+
+**Cards.idioma** (migración 017) — cada autónomo tiene un idioma persistente:
+- `idioma text NOT NULL DEFAULT 'es' CHECK (idioma IN ('es','ca'))`
+- Lo elige el front (alta.html `/es/` o `/ca/` envía `idioma` en el JSON del POST a `/api/register-free` o `/api/create-checkout`).
+- `create-checkout` lo añade a `session.metadata.idioma` y ajusta `success_url`/`cancel_url` a `${siteUrl}/${idioma}/success`.
+- `stripe-webhook` lo lee de la metadata y lo upserta en `cards`.
+- `card.js` lee `data.idioma` para renderizar la tarjeta pública (`/c/:slug`) en el idioma del autónomo — independientemente del idioma del visitante. Usa el dict `CARD_T = { es:{...}, ca:{...} }` para todas las strings (HTML + JS embebido + WhatsApp pre-fill + og:locale).
+- Migración añade el campo con default `'es'`, así que perfiles pre-017 conservan el comportamiento actual.
+
+**Emails transaccionales**:
+- `lib/email-layout.js` acepta `opts.idioma` y traduce header tagline + footer + enlaces legales (`/${lang}/terminos`, etc.).
+- `stripe-webhook.buildEmail()` y `register-free.buildWelcomeEmail()` usan dicts internos (`POST_PAY_EMAIL_STRINGS`, `WELCOME_EMAIL_STRINGS`) y reciben `idioma` desde el handler.
+- **Pendiente** (no en la primera entrega): `remind-expiry`, `weekly-stats`, `send-edit-link`, `resend-invoice`, `resend-kit` siguen renderizando solo en español aunque `cards.idioma='ca'`. Migrarlos requiere extender el patrón a cada función.
+
+**Banner de privacidad** (`public/js/privacy-banner.js`): consciente del idioma — lee `document.documentElement.lang` y elige strings + link a privacidad en es o ca.
+
+**Páginas legales**: las versiones `/ca/terminos`, `/ca/privacidad`, `/ca/legal` traducen el copy pero los datos del titular (nombre, NIF, dirección, email) se siguen cargando dinámicamente vía `/api/legal-settings` (no se traducen, son nombres propios).
+
+**Fuera de scope inicial**: `directorio/` y los slugs SEO de directorio + `/p/:slug` (perfil-publico SEO) siguen monolingües en español. Admin (`admin.html`) y portal de agentes (`agente-login.html`, `agente.html`) tampoco se traducen — son back-office interno.
+
 ### Catálogo SEPE/SISPE de ocupaciones
 
 **`ocupaciones` table** (migración 014) — catálogo oficial de ocupaciones del SEPE (CNO-SISPE 2011, 2.221 entradas de 8 dígitos en lenguaje natural). Mapeadas a sectores PerfilaPro vía mapping subgrupo→sector embebed en el procesamiento. Alimenta el autocomplete del picker `No me veo` en `alta.html`:

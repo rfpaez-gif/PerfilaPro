@@ -32,6 +32,27 @@ const COLORS = {
 
 const SITE_URL_FALLBACK = 'https://perfilapro.es';
 
+const LAYOUT_STRINGS = {
+  es: {
+    htmlLang: 'es',
+    tagline: 'Tu trabajo merece verse.',
+    legalTerms: 'Términos',
+    legalPrivacy: 'Privacidad',
+    legalNotice: 'Aviso legal',
+  },
+  ca: {
+    htmlLang: 'ca',
+    tagline: 'La teva feina mereix veure’s.',
+    legalTerms: 'Termes',
+    legalPrivacy: 'Privadesa',
+    legalNotice: 'Avís legal',
+  },
+};
+
+function pickLang(idioma) {
+  return idioma === 'ca' ? 'ca' : 'es';
+}
+
 function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -78,14 +99,17 @@ function buildEmailLayout(opts) {
     cta       = null,
     footerNote = '',
     siteUrl   = process.env.SITE_URL || SITE_URL_FALLBACK,
+    idioma    = 'es',
   } = opts || {};
 
   const safePreheader = esc(preheader);
   const safeTitle     = esc(title);
   const safeSiteUrl   = esc(siteUrl);
+  const lang          = pickLang(idioma);
+  const T             = LAYOUT_STRINGS[lang];
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="${T.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -103,7 +127,7 @@ function buildEmailLayout(opts) {
         <tr>
           <td style="background:${COLORS.accent};padding:32px 40px;text-align:center">
             <p style="margin:0;font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-size:32px;font-weight:600;color:#ffffff;letter-spacing:-0.6px;line-height:1">Perfila<span style="font-style:italic;font-weight:600;color:#ffffff">Pro</span></p>
-            <p style="margin:10px 0 0;font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.85);letter-spacing:0.02em">Tu trabajo merece verse.</p>
+            <p style="margin:10px 0 0;font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:rgba(255,255,255,.85);letter-spacing:0.02em">${T.tagline}</p>
           </td>
         </tr>
 
@@ -120,11 +144,11 @@ ${renderFooterNote(footerNote)}
         <!-- Footer -->
         <tr>
           <td style="padding:20px 40px;border-top:1px solid ${COLORS.border};text-align:center">
-            <p style="margin:0 0 6px;font-size:12px;color:${COLORS.inkSoft}">Perfila<span style="font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-weight:600;color:${COLORS.accent}">Pro</span> · Tu trabajo merece verse.</p>
+            <p style="margin:0 0 6px;font-size:12px;color:${COLORS.inkSoft}">Perfila<span style="font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-style:italic;font-weight:600;color:${COLORS.accent}">Pro</span> · ${T.tagline}</p>
             <p style="margin:0;font-size:11px;color:#c4bdb2">
-              <a href="${safeSiteUrl}/terminos.html" style="color:${COLORS.inkSoft};text-decoration:none">Términos</a> ·
-              <a href="${safeSiteUrl}/privacidad.html" style="color:${COLORS.inkSoft};text-decoration:none">Privacidad</a> ·
-              <a href="${safeSiteUrl}/legal.html" style="color:${COLORS.inkSoft};text-decoration:none">Aviso legal</a>
+              <a href="${safeSiteUrl}/${lang}/terminos" style="color:${COLORS.inkSoft};text-decoration:none">${T.legalTerms}</a> ·
+              <a href="${safeSiteUrl}/${lang}/privacidad" style="color:${COLORS.inkSoft};text-decoration:none">${T.legalPrivacy}</a> ·
+              <a href="${safeSiteUrl}/${lang}/legal" style="color:${COLORS.inkSoft};text-decoration:none">${T.legalNotice}</a>
             </p>
           </td>
         </tr>

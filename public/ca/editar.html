@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/editar" />
+  <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/editar" />
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
+  <link rel="canonical" href="https://perfilapro.es/ca/editar" />
   <meta name="robots" content="noindex,nofollow">
-  <title>Editar mi perfil — PerfilaPro</title>
+  <title>Editar el meu perfil — PerfilaPro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -772,13 +776,13 @@
 </head>
 <body>
 
-<a href="#main" class="pp-sr-only">Saltar al contenido</a>
+<a href="#main" class="pp-sr-only">Saltar al contingut</a>
 
 <!-- ══════════════════ HEADER ══════════════════ -->
 <header class="pp-site-header">
   <div class="pp-wrap">
     <nav class="pp-nav">
-      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inicio">Perfila<span class="pp-logo__pro">Pro</span></a>
+      <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inici">Perfila<span class="pp-logo__pro">Pro</span></a>
     </nav>
   </div>
 </header>
@@ -789,195 +793,195 @@
 
       <!-- Phase 0: Slug-based send (desde el footer de la tarjeta) -->
       <div class="pp-edit-card" id="slugPhase" style="display:none">
-        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
-        <p class="pp-edit-card__sub">Te enviamos el enlace de acceso.</p>
+        <h1 class="pp-edit-card__title">Editar el meu perfil</h1>
+        <p class="pp-edit-card__sub">T'enviem l'enllaç d'accés.</p>
         <div id="slugMsg" style="display:none" class="pp-msg"></div>
         <p style="font-size:14px;color:var(--color-gris-500);margin-bottom:1.5rem;line-height:1.6">
-          Enviaremos el enlace de edición al email con el que creaste este perfil. Sin contraseñas, sin complicaciones.
+          Enviarem l'enllaç d'edició a l'email amb què vas crear aquest perfil. Sense contrasenyes, sense complicacions.
         </p>
-        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enlace de edición</button>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="slugSendBtn" onclick="sendLinkBySlug()">Enviar enllaç d'edició</button>
         <p style="margin-top:1rem;text-align:center;font-size:13px;color:var(--color-gris-500)">
-          ¿No reconoces este perfil? <a href="/editar.html" style="color:var(--color-verde-dark);font-weight:600">Accede con tu email</a>
+          No reconeixes aquest perfil? <a href="/ca/editar" style="color:var(--color-verde-dark);font-weight:600">Accedeix amb el teu email</a>
         </p>
       </div>
 
       <!-- Phase 1: Email form -->
       <div class="pp-edit-card" id="emailPhase">
-        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
-        <p class="pp-edit-card__sub">Introduce tu email y te enviamos un enlace de acceso.</p>
+        <h1 class="pp-edit-card__title">Editar el meu perfil</h1>
+        <p class="pp-edit-card__sub">Introdueix el teu email i t'enviem un enllaç d'accés.</p>
         <div id="emailMsg" style="display:none" class="pp-msg"></div>
         <div class="pp-field">
           <label class="pp-field__label" for="emailInput">Email</label>
           <input type="email" class="pp-input" id="emailInput" placeholder="tu@email.com" autocomplete="email">
-          <p class="pp-field__hint">El email que usaste al crear tu perfil.</p>
+          <p class="pp-field__hint">L'email que vas fer servir en crear el teu perfil.</p>
         </div>
-        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="sendBtn" onclick="sendLink()" style="margin-top:1.5rem">Enviar enlace de edición</button>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="sendBtn" onclick="sendLink()" style="margin-top:1.5rem">Enviar enllaç d'edició</button>
       </div>
 
       <!-- Phase 2: Edit form -->
       <div class="pp-edit-card" id="editPhase" style="display:none">
-        <h1 class="pp-edit-card__title">Editar mi perfil</h1>
-        <p class="pp-edit-card__sub" id="editSubtitle">Actualiza tus datos profesionales.</p>
+        <h1 class="pp-edit-card__title">Editar el meu perfil</h1>
+        <p class="pp-edit-card__sub" id="editSubtitle">Actualitza les teves dades professionals.</p>
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
         <div class="pp-upgrade" id="freeBanner">
-          <p class="pp-upgrade__eyebrow">Activa tu plan</p>
-          <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
-          <p class="pp-upgrade__sub">Imprime tu tarjeta, comparte tu QR, pégalo en la furgo. Tu kit completo te llega al activar.</p>
+          <p class="pp-upgrade__eyebrow">Activa el teu pla</p>
+          <h2 class="pp-upgrade__title"><span id="upgradeName">La teva feina</span>, <em>així es veurà</em></h2>
+          <p class="pp-upgrade__sub">Imprimeix la teva targeta, comparteix el teu QR, enganxa'l a la furgo. El teu kit complet t'arriba en activar.</p>
 
           <div class="pp-showcase">
             <div class="pp-showcase__stage">
               <picture>
                 <source srcset="/images/furgoneta-960.webp" type="image/webp">
-                <img src="/images/furgoneta-960.png" alt="Furgoneta con tu QR pintado en el lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
+                <img src="/images/furgoneta-960.png" alt="Furgoneta amb el teu QR pintat al lateral" class="pp-showcase__img" loading="lazy" width="960" height="480">
               </picture>
               <img id="upgradeQr" class="pp-showcase__qr" src="" alt="" loading="lazy">
             </div>
-            <span class="pp-showcase__pill">Mundo físico</span>
-            <p class="pp-showcase__caption">Tu QR pegado en la furgo, en el escaparate, en un cartel. Quien lo escanee abre <strong id="upgradeUrl">tu perfil</strong>.</p>
+            <span class="pp-showcase__pill">Món físic</span>
+            <p class="pp-showcase__caption">El teu QR enganxat a la furgo, a l'aparador, en un cartell. Qui l'escanegi obre <strong id="upgradeUrl">el teu perfil</strong>.</p>
           </div>
 
           <ul class="pp-upgrade__perks">
-            <li>Tu URL pública con QR</li>
-            <li>Tarjeta imprimible PDF</li>
-            <li>Imágenes para WhatsApp y redes</li>
-            <li>Estadísticas de quién te ve</li>
+            <li>La teva URL pública amb QR</li>
+            <li>Targeta imprimible PDF</li>
+            <li>Imatges per a WhatsApp i xarxes</li>
+            <li>Estadístiques de qui et veu</li>
           </ul>
 
-          <div class="pp-plan-toggle" role="group" aria-label="Elige tu plan">
+          <div class="pp-plan-toggle" role="group" aria-label="Tria el teu pla">
             <button class="pp-plan-btn is-selected" data-plan="base" type="button">
               <strong>Trimestral · 9€</strong>
-              <span>3 meses</span>
+              <span>3 mesos</span>
             </button>
             <button class="pp-plan-btn" data-plan="pro" type="button">
               <strong>Anual · 19€</strong>
-              <span>1 año · estadísticas</span>
+              <span>1 any · estadístiques</span>
             </button>
           </div>
-          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Trimestral · 9€ →</button>
+          <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar pla Trimestral · 9€ →</button>
         </div>
 
         <div class="pp-kit" id="kitBanner">
-          <p class="pp-kit__eyebrow">📦 Tu kit completo</p>
-          <p class="pp-kit__title">Todo para que tu trabajo se vea</p>
-          <p class="pp-kit__sub">Imprime, comparte por WhatsApp, súbelo a redes. Tu kit se actualiza solo cuando editas tus datos.</p>
+          <p class="pp-kit__eyebrow">📦 El teu kit complet</p>
+          <p class="pp-kit__title">Tot perquè la teva feina es vegi</p>
+          <p class="pp-kit__sub">Imprimeix, comparteix per WhatsApp, puja-ho a xarxes. El teu kit s'actualitza sol quan edites les teves dades.</p>
 
-          <p class="pp-kit__group-label">WhatsApp y físico</p>
+          <p class="pp-kit__group-label">WhatsApp i físic</p>
           <div class="pp-kit__items">
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">💬 Compartir por WhatsApp</p>
-                <p class="pp-kit__item-desc">Envía tu tarjeta a un cliente con un toque.</p>
+                <p class="pp-kit__item-name">💬 Compartir per WhatsApp</p>
+                <p class="pp-kit__item-desc">Envia la teva targeta a un client amb un toc.</p>
               </div>
               <a id="kitWaShare" class="pp-kit__btn" href="#" target="_blank" rel="noopener">Compartir →</a>
             </div>
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">📋 Copiar mi URL</p>
-                <p class="pp-kit__item-desc">Para pegar en bio de Instagram, email o donde quieras.</p>
+                <p class="pp-kit__item-name">📋 Copiar la meva URL</p>
+                <p class="pp-kit__item-desc">Per enganxar a la bio d'Instagram, email o on vulguis.</p>
               </div>
               <button type="button" id="kitCopyUrl" class="pp-kit__btn">Copiar</button>
             </div>
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">🃏 Tarjeta imprimible (PDF)</p>
-                <p class="pp-kit__item-desc">A6 vertical · imprímela tal cual o ampliada.</p>
+                <p class="pp-kit__item-name">🃏 Targeta imprimible (PDF)</p>
+                <p class="pp-kit__item-desc">A6 vertical · imprimeix-la tal qual o ampliada.</p>
               </div>
-              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+              <a id="kitDlCard" class="pp-kit__btn" href="#" download>Descarregar ↓</a>
             </div>
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">📱 Código QR (PNG 1024px)</p>
-                <p class="pp-kit__item-desc">Alta resolución · para escaparates, furgo y carteles.</p>
+                <p class="pp-kit__item-name">📱 Codi QR (PNG 1024px)</p>
+                <p class="pp-kit__item-desc">Alta resolució · per a aparadors, furgo i cartells.</p>
               </div>
-              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+              <a id="kitDlQr" class="pp-kit__btn" href="#" download>Descarregar ↓</a>
             </div>
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">📸 Imagen para Status / Story (1080×1920)</p>
-                <p class="pp-kit__item-desc">Súbela a tu WhatsApp Status para que la vean tus contactos.</p>
+                <p class="pp-kit__item-name">📸 Imatge per a Estats / Story (1080×1920)</p>
+                <p class="pp-kit__item-desc">Puja-la al teu Estat de WhatsApp perquè la vegin els teus contactes.</p>
               </div>
-              <a id="kitDlStory" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+              <a id="kitDlStory" class="pp-kit__btn" href="#" download>Descarregar ↓</a>
             </div>
           </div>
 
-          <p class="pp-kit__group-label">Redes y otros</p>
+          <p class="pp-kit__group-label">Xarxes i altres</p>
           <div class="pp-kit__items">
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">🌐 Imagen para Facebook / Instagram (1080×1080)</p>
-                <p class="pp-kit__item-desc">Súbela como post o pégala en tu bio.</p>
+                <p class="pp-kit__item-name">🌐 Imatge per a Facebook / Instagram (1080×1080)</p>
+                <p class="pp-kit__item-desc">Puja-la com a publicació o enganxa-la a la teva bio.</p>
               </div>
-              <a id="kitDlSquare" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+              <a id="kitDlSquare" class="pp-kit__btn" href="#" download>Descarregar ↓</a>
             </div>
             <div class="pp-kit__item">
               <div class="pp-kit__item-text">
-                <p class="pp-kit__item-name">💼 Imagen para LinkedIn (1200×627)</p>
-                <p class="pp-kit__item-desc">Por si lo usas profesionalmente.</p>
+                <p class="pp-kit__item-name">💼 Imatge per a LinkedIn (1200×627)</p>
+                <p class="pp-kit__item-desc">Per si el fas servir professionalment.</p>
               </div>
-              <a id="kitDlLinkedin" class="pp-kit__btn" href="#" download>Descargar ↓</a>
+              <a id="kitDlLinkedin" class="pp-kit__btn" href="#" download>Descarregar ↓</a>
             </div>
           </div>
 
           <p class="pp-kit__footer-link">
-            <a href="" id="gbpAssistantLink">¿Quieres aparecer también en Google? Asistente Google Business →</a>
+            <a href="" id="gbpAssistantLink">Vols aparèixer també a Google? Assistent Google Business →</a>
           </p>
         </div>
 
-        <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadísticas del perfil">
+        <section id="statsPanel" class="pp-stats" style="display:none" aria-label="Estadístiques del perfil">
           <header class="pp-stats__head">
-            <h2 class="pp-stats__title">Estadísticas</h2>
-            <span class="pp-stats__badge">Plan Anual</span>
+            <h2 class="pp-stats__title">Estadístiques</h2>
+            <span class="pp-stats__badge">Pla Anual</span>
           </header>
           <div class="pp-stats__grid">
             <div class="pp-stats__cell">
               <span class="pp-stats__num" id="statTotal">—</span>
-              <span class="pp-stats__lbl">Visitas totales</span>
+              <span class="pp-stats__lbl">Visites totals</span>
             </div>
             <div class="pp-stats__cell">
               <span class="pp-stats__num" id="stat30d">—</span>
-              <span class="pp-stats__lbl">Últimos 30 días</span>
+              <span class="pp-stats__lbl">Últims 30 dies</span>
             </div>
             <div class="pp-stats__cell">
               <span class="pp-stats__num" id="stat7d">—</span>
-              <span class="pp-stats__lbl">Últimos 7 días</span>
+              <span class="pp-stats__lbl">Últims 7 dies</span>
             </div>
           </div>
           <div class="pp-stats__chart" aria-hidden="true">
-            <svg id="statsSpark" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Visitas diarias últimos 30 días"></svg>
-            <p class="pp-stats__chart-lbl">Visitas por día · últimos 30 días</p>
+            <svg id="statsSpark" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Visites diàries últims 30 dies"></svg>
+            <p class="pp-stats__chart-lbl">Visites per dia · últims 30 dies</p>
           </div>
 
         </section>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="nombre">Nombre completo</label>
-          <input type="text" class="pp-input" id="nombre" placeholder="Ej: Juan García López">
+          <label class="pp-field__label" for="nombre">Nom complet</label>
+          <input type="text" class="pp-input" id="nombre" placeholder="Ex: Joan Garcia López">
           <p class="pp-field__hint" id="nombreHint">
-            Tu URL pública es <strong>perfilapro.es/c/<span id="nombreSlugHint">tu-perfil</span></strong> y no cambia al editar el nombre. ¿Tienes una errata grave en la URL? Escríbenos a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y la corregimos.
+            La teva URL pública és <strong>perfilapro.es/c/<span id="nombreSlugHint">el-teu-perfil</span></strong> i no canvia en editar el nom. Tens una errada greu a la URL? Escriu-nos a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> i la corregim.
           </p>
         </div>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="tagline">Especialidad</label>
-          <input type="text" class="pp-input" id="tagline" placeholder="Ej: Fontanero en Alicante">
+          <label class="pp-field__label" for="tagline">Especialitat</label>
+          <input type="text" class="pp-input" id="tagline" placeholder="Ex: Lampista a Alacant">
         </div>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="cp">Código postal</label>
-          <input type="text" class="pp-input" id="cp" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="postal-code" placeholder="Ej. 28001">
-          <p class="pp-field__hint" id="cpHint">5 dígitos. Determina en qué provincia aparece tu perfil en el directorio.</p>
+          <label class="pp-field__label" for="cp">Codi postal</label>
+          <input type="text" class="pp-input" id="cp" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="postal-code" placeholder="Ex. 08001">
+          <p class="pp-field__hint" id="cpHint">5 dígits. Determina en quina província apareix el teu perfil al directori.</p>
         </div>
 
         <div class="pp-field">
           <label class="pp-field__label" for="whatsapp">WhatsApp</label>
-          <input type="text" class="pp-input" id="whatsapp" placeholder="Ej: 34612345678">
-          <p class="pp-field__hint">Con prefijo de país — 34 para España.</p>
+          <input type="text" class="pp-input" id="whatsapp" placeholder="Ex: 34612345678">
+          <p class="pp-field__hint">Amb prefix de país — 34 per a Espanya.</p>
         </div>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="telefono">Teléfono fijo<span class="pp-field__optional">(opcional)</span></label>
-          <input type="text" class="pp-input" id="telefono" placeholder="Ej: 965123456">
+          <label class="pp-field__label" for="telefono">Telèfon fix<span class="pp-field__optional">(opcional)</span></label>
+          <input type="text" class="pp-input" id="telefono" placeholder="Ex: 935123456">
         </div>
 
         <div class="pp-field">
@@ -985,9 +989,9 @@
           <div class="pp-foto">
             <div class="pp-foto__preview" id="fotoPreview">👤</div>
             <div>
-              <label for="fotoFileInput" class="pp-foto__btn">📷 Cámara o galería</label>
+              <label for="fotoFileInput" class="pp-foto__btn">📷 Càmera o galeria</label>
               <input type="file" id="fotoFileInput" accept="image/*" hidden>
-              <p class="pp-field__hint">En móvil puedes sacar foto o elegir de la galería.</p>
+              <p class="pp-field__hint">Al mòbil pots fer foto o triar de la galeria.</p>
               <p class="pp-field__hint" id="fotoFileName"></p>
             </div>
           </div>
@@ -995,16 +999,16 @@
         </div>
 
         <div class="pp-field">
-          <label class="pp-field__label" for="descripcion">Descripción breve<span class="pp-field__optional">(opcional)</span></label>
-          <textarea class="pp-input pp-input--textarea" id="descripcion" rows="3" maxlength="200" placeholder="Ej: Fontanero en Alicante con más de 15 años de experiencia. Atención rápida y presupuesto sin compromiso."></textarea>
-          <p class="pp-field__hint"><span id="editDescCount">0</span>/200 caracteres</p>
+          <label class="pp-field__label" for="descripcion">Descripció breu<span class="pp-field__optional">(opcional)</span></label>
+          <textarea class="pp-input pp-input--textarea" id="descripcion" rows="3" maxlength="200" placeholder="Ex: Lampista a Alacant amb més de 15 anys d'experiència. Atenció ràpida i pressupost sense compromís."></textarea>
+          <p class="pp-field__hint"><span id="editDescCount">0</span>/200 caràcters</p>
         </div>
 
         <div class="pp-field">
           <label class="pp-toggle-row" for="local_publico">
             <span class="pp-toggle-row__info">
-              <span class="pp-toggle-row__label">Tengo local público</span>
-              <span class="pp-toggle-row__hint">Tienda, taller o consulta donde recibes clientes. Si lo activas, podrás añadir la dirección y aparecerá un enlace a Google Maps en tu tarjeta.</span>
+              <span class="pp-toggle-row__label">Tinc local públic</span>
+              <span class="pp-toggle-row__hint">Botiga, taller o consulta on reps clients. Si l'actives, podràs afegir l'adreça i apareixerà un enllaç a Google Maps a la teva targeta.</span>
             </span>
             <span class="pp-toggle-sw">
               <input id="local_publico" type="checkbox">
@@ -1014,21 +1018,21 @@
         </div>
 
         <div class="pp-field" id="direccion_field" style="display:none">
-          <label class="pp-field__label" for="direccion">Dirección<span class="pp-field__optional">(una línea)</span></label>
-          <input type="text" class="pp-input" id="direccion" placeholder="Ej: Calle Mayor 15, local B" maxlength="200">
-          <p class="pp-field__hint">Calle y número. La ciudad la sabemos por tu CP — no la repitas.</p>
+          <label class="pp-field__label" for="direccion">Adreça<span class="pp-field__optional">(una línia)</span></label>
+          <input type="text" class="pp-input" id="direccion" placeholder="Ex: Carrer Major 15, local B" maxlength="200">
+          <p class="pp-field__hint">Carrer i número. La ciutat la sabem pel teu CP — no la repeteixis.</p>
         </div>
 
         <hr class="pp-divider">
 
         <div class="pp-field">
-          <label class="pp-field__label">Servicios</label>
+          <label class="pp-field__label">Serveis</label>
           <div class="pp-services-list" id="servicesList"></div>
-          <button class="pp-svc-add" type="button" onclick="addService()">+ Añadir servicio</button>
-          <p class="pp-field__hint">Hasta 8 servicios. Ej: "Instalación de tuberías · 80€".</p>
+          <button class="pp-svc-add" type="button" onclick="addService()">+ Afegir servei</button>
+          <p class="pp-field__hint">Fins a 8 serveis. Ex: "Instal·lació de canonades · 80€".</p>
         </div>
 
-        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Guardar cambios</button>
+        <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" id="saveBtn" onclick="saveProfile()" style="margin-top:1.5rem">Desar canvis</button>
 
 
       </div>
@@ -1043,8 +1047,8 @@
     <div class="pp-footer__bottom">
       <span>© 2026 PerfilaPro</span>
       <span>
-        <a href="/terminos.html" style="color:inherit">Términos</a> ·
-        <a href="/privacidad.html" style="color:inherit">Privacidad</a>
+        <a href="/ca/terminos" style="color:inherit">Termes</a> ·
+        <a href="/ca/privacidad" style="color:inherit">Privacitat</a>
       </span>
     </div>
   </div>
@@ -1076,7 +1080,7 @@
       }
       const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
       pendingFetch = ctrl;
-      setHint('Buscando municipio…', 'loading');
+      setHint('Cercant municipi…', 'loading');
       fetch('/api/cp-lookup?cp=' + encodeURIComponent(cp), ctrl ? { signal: ctrl.signal } : {})
         .then(r => r.json())
         .then(r => {
@@ -1084,9 +1088,9 @@
           if (r && r.ok) {
             setHint('→ ' + r.municipality_name + ' (' + r.province_slug + ')', 'success');
           } else if (r && r.reason === 'not_found') {
-            setHint('Ese CP no está en nuestro catálogo. Revísalo o sigue adelante.', 'error');
+            setHint('Aquest CP no és al nostre catàleg. Revisa\'l o segueix endavant.', 'error');
           } else {
-            setHint('CP fuera de rango. Los CPs españoles van del 01000 al 52999.', 'error');
+            setHint('CP fora de rang. Els CPs espanyols van del 01000 al 52999.', 'error');
           }
         })
         .catch(() => {});
@@ -1097,7 +1101,7 @@
       if (v !== inp.value) inp.value = v;
       clearTimeout(debounceTimer);
       if (!v) { setHint(defaultHintText, null); return; }
-      if (v.length < 5) { setHint('Sigue escribiendo… (' + v.length + '/5)', 'loading'); return; }
+      if (v.length < 5) { setHint('Continua escrivint… (' + v.length + '/5)', 'loading'); return; }
       debounceTimer = setTimeout(() => lookup(v), 250);
     });
   })();
@@ -1137,15 +1141,15 @@
   function loadEditFormPreview(plan) {
     document.getElementById('emailPhase').style.display = 'none';
     document.getElementById('editPhase').style.display = '';
-    document.getElementById('editSubtitle').textContent = 'Pedro García (preview)';
-    document.getElementById('nombre').value = 'Pedro García';
-    document.getElementById('tagline').value = 'Fontanero en Alicante';
+    document.getElementById('editSubtitle').textContent = 'Pere Garcia (previsualització)';
+    document.getElementById('nombre').value = 'Pere Garcia';
+    document.getElementById('tagline').value = 'Lampista a Alacant';
     document.getElementById('cp').value = '03001';
     document.getElementById('whatsapp').value = '34612345678';
-    document.getElementById('descripcion').value = 'Fontanero con 15 años de experiencia. Atención rápida y presupuesto sin compromiso.';
+    document.getElementById('descripcion').value = 'Lampista amb 15 anys d\'experiència. Atenció ràpida i pressupost sense compromís.';
     document.getElementById('editDescCount').textContent = document.getElementById('descripcion').value.length;
-    addService('Reparación de tuberías');
-    addService('Instalación de calderas');
+    addService('Reparació de canonades');
+    addService('Instal·lació de calderes');
     if (plan === 'pro') {
       // Stats panel — sólo para que se vea, no carga datos reales.
       const panel = document.getElementById('statsPanel');
@@ -1157,7 +1161,7 @@
       document.getElementById('kitBanner').classList.add('is-visible');
     } else {
       // Banner upgrade visible — personalizamos headline y URL como en el flujo real.
-      document.getElementById('upgradeName').textContent = 'Pedro';
+      document.getElementById('upgradeName').textContent = 'Pere';
       document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/pedro-garcia';
       // En preview servimos un QR sample estático (sin backend disponible).
       document.getElementById('upgradeQr').src = '/images/qr-sample.svg';
@@ -1168,7 +1172,7 @@
         btn.addEventListener('click', function() {
           freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
           btn.classList.add('is-selected');
-          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
+          freeBannerBtn.textContent = btn.dataset.plan === 'pro' ? 'Activar pla Anual · 19€ →' : 'Activar pla Trimestral · 9€ →';
         });
       });
     }
@@ -1184,10 +1188,10 @@
   function compressImage(file, maxDim, quality) {
     return new Promise(function(resolve, reject) {
       var reader = new FileReader();
-      reader.onerror = function() { reject(new Error('No se pudo leer la imagen.')); };
+      reader.onerror = function() { reject(new Error('No s\'ha pogut llegir la imatge.')); };
       reader.onload = function(e) {
         var img = new Image();
-        img.onerror = function() { reject(new Error('Formato de imagen no soportado.')); };
+        img.onerror = function() { reject(new Error('Format d\'imatge no compatible.')); };
         img.onload = function() {
           var w = img.width, h = img.height;
           if (w > maxDim || h > maxDim) {
@@ -1209,18 +1213,18 @@
     var file = this.files[0];
     if (!file) return;
     var fileNameEl = document.getElementById('fotoFileName');
-    fileNameEl.textContent = file.name + ' · procesando…';
+    fileNameEl.textContent = file.name + ' · processant…';
     try {
       var dataUrl = await compressImage(file, 1200, 0.85);
       pendingFotoDataUrl = dataUrl;
       var preview = document.getElementById('fotoPreview');
-      preview.innerHTML = '<img src="' + dataUrl + '" alt="preview">';
+      preview.innerHTML = '<img src="' + dataUrl + '" alt="previsualització">';
       var sizeKb = Math.round((dataUrl.length * 3 / 4) / 1024);
       fileNameEl.textContent = file.name + ' · ' + sizeKb + ' KB';
     } catch (err) {
       pendingFotoDataUrl = null;
       fileNameEl.textContent = '';
-      alert('No se pudo procesar la imagen: ' + err.message);
+      alert('No s\'ha pogut processar la imatge: ' + err.message);
     }
   });
 
@@ -1228,7 +1232,7 @@
     const btn = document.getElementById('slugSendBtn');
     const msg = document.getElementById('slugMsg');
     btn.disabled = true;
-    btn.textContent = 'Enviando…';
+    btn.textContent = 'Enviant…';
     msg.style.display = 'none';
     try {
       await fetch('/api/send-edit-link', {
@@ -1236,12 +1240,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug }),
       });
-      showMsg(msg, 'ok', '¡Listo! Recibirás el enlace en tu email en breve. Revisa también la carpeta de spam.');
-      btn.textContent = 'Enlace enviado ✓';
+      showMsg(msg, 'ok', 'Llest! Rebràs l\'enllaç al teu email aviat. Revisa també la carpeta de correu brossa.');
+      btn.textContent = 'Enllaç enviat ✓';
     } catch {
-      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      showMsg(msg, 'err', 'Error en enviar l\'enllaç. Torna-ho a provar.');
       btn.disabled = false;
-      btn.textContent = 'Enviar enlace de edición';
+      btn.textContent = 'Enviar enllaç d\'edició';
     }
   }
 
@@ -1251,7 +1255,7 @@
     const btn = document.getElementById('sendBtn');
     const msg = document.getElementById('emailMsg');
     btn.disabled = true;
-    btn.textContent = 'Enviando…';
+    btn.textContent = 'Enviant…';
     msg.style.display = 'none';
     try {
       await fetch('/api/send-edit-link', {
@@ -1259,12 +1263,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      showMsg(msg, 'ok', '¡Listo! Si tu email está registrado recibirás el enlace en breve. Revisa también la carpeta de spam.');
-      btn.textContent = 'Enlace enviado';
+      showMsg(msg, 'ok', 'Llest! Si el teu email està registrat rebràs l\'enllaç aviat. Revisa també la carpeta de correu brossa.');
+      btn.textContent = 'Enllaç enviat';
     } catch {
-      showMsg(msg, 'err', 'Error al enviar el enlace. Inténtalo de nuevo.');
+      showMsg(msg, 'err', 'Error en enviar l\'enllaç. Torna-ho a provar.');
       btn.disabled = false;
-      btn.textContent = 'Enviar enlace de edición';
+      btn.textContent = 'Enviar enllaç d\'edició';
     }
   }
 
@@ -1302,13 +1306,13 @@
       const res = await fetch(`/api/edit-card?slug=${slug}&token=${token}`);
       if (!res.ok) {
         const emailMsg = document.getElementById('emailMsg');
-        showMsg(emailMsg, 'err', 'El enlace de edición no es válido o ha expirado. Solicita uno nuevo introduciendo tu email.');
+        showMsg(emailMsg, 'err', 'L\'enllaç d\'edició no és vàlid o ha caducat. Sol·licita\'n un de nou introduint el teu email.');
         return;
       }
       const card = await res.json();
       document.getElementById('emailPhase').style.display = 'none';
       document.getElementById('editPhase').style.display = '';
-      document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
+      document.getElementById('editSubtitle').textContent = card.nombre || 'Actualitza les teves dades';
       document.getElementById('nombre').value = card.nombre || '';
       const slugHintEl = document.getElementById('nombreSlugHint');
       if (slugHintEl && card.slug) slugHintEl.textContent = card.slug;
@@ -1345,7 +1349,7 @@
       // Stats Pro
       if (card.plan === 'pro') {
         loadProfileStats(slug, token).catch(function(err) {
-          console.warn('No se pudieron cargar las estadísticas:', err.message);
+          console.warn('No s\'han pogut carregar les estadístiques:', err.message);
         });
       }
 
@@ -1355,7 +1359,7 @@
         const slugEnc  = encodeURIComponent(slug);
         const tokenEnc = encodeURIComponent(token);
         const profileUrl = window.location.origin + '/c/' + slug;
-        const waText    = encodeURIComponent('Mira mi perfil profesional 👇 ' + profileUrl);
+        const waText    = encodeURIComponent('Mira el meu perfil professional 👇 ' + profileUrl);
 
         document.getElementById('kitWaShare').href    = 'https://wa.me/?text=' + waText;
         document.getElementById('kitDlCard').href     = '/api/download-card?slug=' + slugEnc + '&token=' + tokenEnc;
@@ -1378,7 +1382,7 @@
               try { document.execCommand('copy'); } catch {}
               document.body.removeChild(ta);
             }
-            copyBtn.textContent = '✓ Copiado';
+            copyBtn.textContent = '✓ Copiat';
             setTimeout(function() { copyBtn.textContent = original; }, 1600);
           });
         }
@@ -1391,7 +1395,7 @@
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       if (freeBanner && !card.stripe_session_id) {
         // Personalizar headline + showcase con datos del usuario.
-        const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
+        const firstName = (card.nombre || '').split(/\s+/)[0] || 'La teva feina';
         document.getElementById('upgradeName').textContent = firstName;
         document.getElementById('upgradeUrl').textContent = 'perfilapro.es/c/' + slug;
         document.getElementById('upgradeQr').src = '/api/qr/' + encodeURIComponent(slug) + '?format=svg';
@@ -1409,7 +1413,7 @@
             freeBanner.querySelectorAll('.pp-plan-btn').forEach(function(b) { b.classList.remove('is-selected'); });
             btn.classList.add('is-selected');
             selectedPlan = btn.dataset.plan;
-            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar plan Anual · 19€ →' : 'Activar plan Trimestral · 9€ →';
+            freeBannerBtn.textContent = selectedPlan === 'pro' ? 'Activar pla Anual · 19€ →' : 'Activar pla Trimestral · 9€ →';
           });
         });
         if (freeBannerBtn) {
@@ -1436,7 +1440,7 @@
                                        .map(i => i.value.trim()).filter(Boolean);
 
               if (!nombre || !cp || !whatsapp || !servicios.length) {
-                alert('Antes de activar, completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
+                alert('Abans d\'activar, omple els camps obligatoris: nom, CP, WhatsApp i almenys un servei.');
                 freeBannerBtn.textContent = label;
                 freeBannerBtn.style.pointerEvents = '';
                 return;
@@ -1444,7 +1448,7 @@
 
               // Sube foto pendiente si la hay (puede tardar varios segundos).
               if (pendingFotoDataUrl) {
-                freeBannerBtn.textContent = 'Subiendo foto…';
+                freeBannerBtn.textContent = 'Pujant foto…';
                 try {
                   const base64 = pendingFotoDataUrl.split(',')[1];
                   const upRes = await fetch('/api/upload-avatar', {
@@ -1461,7 +1465,7 @@
               }
 
               // Persiste en BD antes del redirect a Stripe.
-              freeBannerBtn.textContent = 'Guardando…';
+              freeBannerBtn.textContent = 'Desant…';
               const saveRes = await fetch(`/api/edit-card?slug=${slug}&token=${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1469,7 +1473,7 @@
               });
               if (!saveRes.ok) {
                 const err = await saveRes.json().catch(() => ({}));
-                alert('No se pudieron guardar los cambios antes de activar: ' + (err.error || saveRes.status));
+                alert('No s\'han pogut desar els canvis abans d\'activar: ' + (err.error || saveRes.status));
                 freeBannerBtn.textContent = label;
                 freeBannerBtn.style.pointerEvents = '';
                 return;
@@ -1479,7 +1483,7 @@
               // Crea checkout con los valores actuales (mismos que se acaban
               // de persistir). El webhook upserta con esta metadata, así que
               // foto_url, descripcion y direccion sobreviven al pago.
-              freeBannerBtn.textContent = 'Redirigiendo…';
+              freeBannerBtn.textContent = 'Redirigint…';
               const r = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1490,13 +1494,14 @@
                   email: card.email,
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
+                  idioma: (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
                 }),
               });
               const j = await r.json();
               if (j.url) { window.location.href = j.url; }
-              else { alert('Error al iniciar el pago: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
+              else { alert('Error en iniciar el pagament: ' + (j.error || r.status)); freeBannerBtn.textContent = label; freeBannerBtn.style.pointerEvents = ''; }
             } catch(err) {
-              alert('Error de conexión: ' + err.message);
+              alert('Error de connexió: ' + err.message);
               freeBannerBtn.textContent = label;
               freeBannerBtn.style.pointerEvents = '';
             }
@@ -1514,7 +1519,7 @@
       }
     } catch {
       const emailMsg = document.getElementById('emailMsg');
-      showMsg(emailMsg, 'err', 'Error al cargar el formulario. Inténtalo de nuevo.');
+      showMsg(emailMsg, 'err', 'Error en carregar el formulari. Torna-ho a provar.');
     }
   }
 
@@ -1526,7 +1531,7 @@
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'pp-input';
-    input.placeholder = 'Ej: Fontanería · 50€';
+    input.placeholder = 'Ex: Lampisteria · 50€';
     if (value) input.value = value;
     const btn = document.createElement('button');
     btn.className = 'pp-svc-remove';
@@ -1563,21 +1568,21 @@
     msg.style.display = 'none';
 
     if (!nombre || !cp || !whatsapp || !servicios.length) {
-      showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
+      showMsg(msg, 'err', 'Omple els camps obligatoris: nom, CP, WhatsApp i almenys un servei.');
       return;
     }
     if (!/^\d{5}$/.test(cp)) {
-      showMsg(msg, 'err', 'El código postal debe tener 5 dígitos.');
+      showMsg(msg, 'err', 'El codi postal ha de tenir 5 dígits.');
       return;
     }
 
     const btn = document.getElementById('saveBtn');
     btn.disabled = true;
-    btn.textContent = 'Guardando…';
+    btn.textContent = 'Desant…';
 
     // Subir foto nueva si hay una seleccionada
     if (pendingFotoDataUrl) {
-      btn.textContent = 'Subiendo foto…';
+      btn.textContent = 'Pujant foto…';
       try {
         const base64 = pendingFotoDataUrl.split(',')[1];
         const upRes = await fetch('/api/upload-avatar', {
@@ -1593,7 +1598,7 @@
       } catch (e) {
         console.warn('upload-avatar error:', e);
       }
-      btn.textContent = 'Guardando…';
+      btn.textContent = 'Desant…';
     }
 
     try {
@@ -1604,30 +1609,30 @@
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        showMsg(msg, 'err', data.error || 'Error al guardar. Inténtalo de nuevo.');
+        showMsg(msg, 'err', data.error || 'Error en desar. Torna-ho a provar.');
         btn.disabled = false;
-        btn.textContent = 'Guardar cambios';
+        btn.textContent = 'Desar canvis';
         return;
       }
       pendingFotoDataUrl = null;
       btn.disabled = false;
-      btn.textContent = 'Guardar cambios';
+      btn.textContent = 'Desar canvis';
       msg.className = 'pp-msg pp-msg--ok';
       const isPaid = document.getElementById('freeBanner').classList.contains('is-visible') === false;
       if (isPaid) {
-        msg.innerHTML = '✅ ¡Cambios guardados! <a href="/c/' + slug + '" target="_blank">Ver mi tarjeta →</a>';
+        msg.innerHTML = '✅ Canvis desats! <a href="/c/' + slug + '" target="_blank">Veure la meva targeta →</a>';
         msg.style.display = '';
         msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       } else {
-        msg.innerHTML = '✅ ¡Cambios guardados! <a href="#freeBanner">Activa tu kit completo ↑</a>';
+        msg.innerHTML = '✅ Canvis desats! <a href="#freeBanner">Activa el teu kit complet ↑</a>';
         msg.style.display = '';
         const banner = document.getElementById('freeBanner');
         if (banner) banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } catch {
-      showMsg(msg, 'err', 'Error de conexión. Inténtalo de nuevo.');
+      showMsg(msg, 'err', 'Error de connexió. Torna-ho a provar.');
       btn.disabled = false;
-      btn.textContent = 'Guardar cambios';
+      btn.textContent = 'Desar canvis';
     }
   }
 
