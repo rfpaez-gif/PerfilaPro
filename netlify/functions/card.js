@@ -162,8 +162,12 @@ exports.handler = async (event) => {
     ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent(T.waMessage)}`
     : null;
 
-  const isFree = !data.stripe_session_id;
-  const isPaid = isDemo || !!data.stripe_session_id;
+  // Gate paid/free unificado: stripe_session_id (Stripe real) o kit_email_sent_at
+  // (promo de lanzamiento redimida). Mismo criterio que el #freeBanner del editor
+  // y la idempotencia de claim-launch-promo. Sin esto las promos quedan como
+  // "Perfil básico" en el render público y pierden el QR.
+  const isFree = !data.stripe_session_id && !data.kit_email_sent_at;
+  const isPaid = isDemo || !isFree;
   const proto   = (event.headers && event.headers['x-forwarded-proto']) || 'https';
   const host    = (event.headers && event.headers.host) || 'perfilapro.es';
   const siteUrl = `${proto}://${host}`;

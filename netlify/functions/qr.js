@@ -112,7 +112,7 @@ function makeHandler(deps = {}) {
   try {
     const { data: card, error } = await db
       .from('cards')
-      .select('plan, stripe_session_id, deleted_at')
+      .select('plan, stripe_session_id, kit_email_sent_at, deleted_at')
       .eq('slug', slug)
       .is('deleted_at', null)
       .single();
@@ -120,7 +120,10 @@ function makeHandler(deps = {}) {
       return { statusCode: 404, body: 'Card not found' };
     }
     plan   = card.plan;
-    isPaid = !!card.stripe_session_id;
+    // Promo redimida (kit_email_sent_at sin stripe_session_id) cuenta como
+    // paid: el usuario activó su plan completo. Mismo gate que card.js y
+    // claim-launch-promo.
+    isPaid = !!card.stripe_session_id || !!card.kit_email_sent_at;
   } catch (err) {
     console.error('[qr] error lookup card:', err.message);
     // Defensivo: tratamos como Free (con marca de agua) en lugar de 500.
