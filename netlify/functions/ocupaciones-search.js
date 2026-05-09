@@ -43,6 +43,7 @@ function makeHandler(deps) {
     const params = event.queryStringParameters || {};
     const qRaw = (params.q || '').trim();
     const qNorm = normalize(qRaw);
+    const lang = params.lang === 'ca' ? 'ca' : 'es';
 
     if (qNorm.length < MIN_QUERY_LENGTH) {
       return {
@@ -58,20 +59,26 @@ function makeHandler(deps) {
     // Escape % y _ para evitar wildcard injection en ILIKE.
     const safeQ = qNorm.replace(/[%_\\]/g, c => '\\' + c);
 
-    // Dos passes: (1) los que empiezan por el query → más relevantes;
-    // (2) cualquier match en otra posición. Concat sin duplicar.
-    const [{ data: starts }, { data: contains }] = await Promise.all([
-      db.from('ocupaciones')
-        .select('code, name, sector_slug')
-        .ilike('name_normalized', `${safeQ}%`)
-        .order('name', { ascending: true })
-        .limit(limit),
-      db.from('ocupaciones')
-        .select('code, name, sector_slug')
-        .ilike('name_normalized', `%${safeQ}%`)
-        .order('name', { ascending: true })
-        .limit(limit * 2),
-    ]);
+    // Selección de columnas: si lang=ca incluimos name_ca para que el cliente
+    // pueda mostrarla. Cuando una fila no tiene name_ca traducido (long-tail
+    // todavía sin cubrir), el cliente cae a name castellano.
+    const selectCols = lang === 'ca' ? 'code, name, name_ca, sector_slug' : 'code, name, sector_slug';
+
+    // Matcheo: en ES solo name_normalized; en CA buscamos también en
+    // lower(name_ca) para que el usuario que teclea "lampista" encuentre
+    // el código aunque la fila castellana sea "Fontaneros, en general".
+    // Cuando name_ca es NULL, ILIKE devuelve false sin error.
+    const startsCaFilter = `name_normalized.ilike.${safeQ}%,name_ca.ilike.${safeQ}%`;
+    const containsCaFilter = `name_normalized.ilike.%${safeQ}%,name_ca.ilike.%${safeQ}%`;
+
+    const startsQuery = lang === 'ca'
+      ? db.from('ocupaciones').select(selectCols).or(startsCaFilter).order('name', { ascending: true }).limit(limit)
+      : db.from('ocupaciones').select(selectCols).ilike('name_normalized', `${safeQ}%`).order('name', { ascending: true }).limit(limit);
+    const containsQuery = lang === 'ca'
+      ? db.from('ocupaciones').select(selectCols).or(containsCaFilter).order('name', { ascending: true }).limit(limit * 2)
+      : db.from('ocupaciones').select(selectCols).ilike('name_normalized', `%${safeQ}%`).order('name', { ascending: true }).limit(limit * 2);
+
+    const [{ data: starts }, { data: contains }] = await Promise.all([startsQuery, containsQuery]);
 
     const seen = new Set();
     const results = [];
