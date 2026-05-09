@@ -121,4 +121,44 @@ describe('buildReminderEmail', () => {
     const { html } = buildReminderEmail({ ...base, daysLeft: 30 });
     expect(html).toContain('#00C277');
   });
+
+  it('renderiza en catalán cuando idioma=ca', () => {
+    const { subject, html } = buildReminderEmail({ ...base, daysLeft: 7, idioma: 'ca' });
+    expect(subject).toMatch(/caduca en 7 dies$/);
+    expect(html).toContain('Només queden 7 dies');
+    expect(html).toContain('Renovar la meva targeta');
+    expect(html).toContain('lang="ca"');
+    expect(html).toContain('/ca/terminos');
+  });
+
+  it('default a español cuando idioma falta', () => {
+    const { subject, html } = buildReminderEmail({ ...base, daysLeft: 7 });
+    expect(subject).toMatch(/caduca en 7 días$/);
+    expect(html).toContain('Renovar mi tarjeta');
+    expect(html).toContain('lang="es"');
+  });
+});
+
+describe('remind-expiry · idioma desde DB', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailSend.mockResolvedValue({ id: 'email-ok' });
+    process.env.SITE_URL = 'https://perfilapro.es';
+  });
+
+  it('envía email en catalán para tarjetas con idioma=ca', async () => {
+    setupDbMock([cardExpiringInDays(30, { idioma: 'ca' })]);
+    await handler();
+    const args = mockEmailSend.mock.calls[0][0];
+    expect(args.subject).toMatch(/caduca en 30 dies$/);
+    expect(args.html).toContain('/ca/terminos');
+  });
+
+  it('envía email en español cuando idioma=es', async () => {
+    setupDbMock([cardExpiringInDays(30, { idioma: 'es' })]);
+    await handler();
+    const args = mockEmailSend.mock.calls[0][0];
+    expect(args.subject).toMatch(/caduca en 30 días$/);
+    expect(args.html).toContain('/es/terminos');
+  });
 });

@@ -51,7 +51,7 @@ function makeHandler(db, emailClient) {
 
     const { data: card, error: cardError } = await db
       .from('cards')
-      .select('slug, nombre, tagline, whatsapp, direccion, zona, email, plan, expires_at, stripe_session_id, edit_token, categories(specialty_label)')
+      .select('slug, nombre, tagline, whatsapp, direccion, zona, email, plan, expires_at, stripe_session_id, edit_token, idioma, categories(specialty_label)')
       .eq('slug', slug)
       .single();
 
@@ -162,6 +162,7 @@ function makeHandler(db, emailClient) {
       console.error('Error preparando factura para reenvío (no fatal):', err.message);
     }
 
+    const idioma = card.idioma === 'ca' ? 'ca' : 'es';
     const emailSent = await sendConfirmationEmail({
       email:        card.email,
       nombre:       card.nombre,
@@ -173,7 +174,8 @@ function makeHandler(db, emailClient) {
       pdfAttachment,
       cardPdfBuffer,
       qrPngBuffer,
-      subjectPrefix: '[Reenvío]',
+      subjectPrefix: idioma === 'ca' ? '[Reenviament]' : '[Reenvío]',
+      idioma,
     });
 
     if (!emailSent) {

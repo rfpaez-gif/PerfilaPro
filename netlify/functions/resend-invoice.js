@@ -43,7 +43,7 @@ function makeHandler(db, emailClient) {
     // 1. Cargar tarjeta
     const { data: card, error: cardError } = await db
       .from('cards')
-      .select('slug, nombre, email, plan, expires_at, stripe_session_id, edit_token')
+      .select('slug, nombre, email, plan, expires_at, stripe_session_id, edit_token, idioma')
       .eq('slug', slug)
       .single();
 
@@ -128,6 +128,7 @@ function makeHandler(db, emailClient) {
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+    const idioma  = card.idioma === 'ca' ? 'ca' : 'es';
     const { subject, html } = buildEmail({
       nombre: card.nombre,
       slug: card.slug,
@@ -135,13 +136,15 @@ function makeHandler(db, emailClient) {
       expiresAt: card.expires_at || new Date().toISOString(),
       siteUrl,
       editToken: card.edit_token,
+      idioma,
     });
+    const subjectPrefix = idioma === 'ca' ? '[Reenviament]' : '[Reenvío]';
 
     try {
       await emailClient.emails.send({
         from: 'PerfilaPro <hola@perfilapro.es>',
         to: card.email,
-        subject: `[Reenvío] ${subject}`,
+        subject: `${subjectPrefix} ${subject}`,
         html,
         attachments: [{
           filename: `factura-${pdfAttachment.numero}.pdf`,

@@ -251,10 +251,15 @@ PerfilaPro sirve dos idiomas: español (default) y catalán. Estructura:
 - `card.js` lee `data.idioma` para renderizar la tarjeta pública (`/c/:slug`) en el idioma del autónomo — independientemente del idioma del visitante. Usa el dict `CARD_T = { es:{...}, ca:{...} }` para todas las strings (HTML + JS embebido + WhatsApp pre-fill + og:locale).
 - Migración añade el campo con default `'es'`, así que perfiles pre-017 conservan el comportamiento actual.
 
-**Emails transaccionales**:
+**Emails transaccionales** (todos respetan `cards.idioma`):
 - `lib/email-layout.js` acepta `opts.idioma` y traduce header tagline + footer + enlaces legales (`/${lang}/terminos`, etc.).
-- `stripe-webhook.buildEmail()` y `register-free.buildWelcomeEmail()` usan dicts internos (`POST_PAY_EMAIL_STRINGS`, `WELCOME_EMAIL_STRINGS`) y reciben `idioma` desde el handler.
-- **Pendiente** (no en la primera entrega): `remind-expiry`, `weekly-stats`, `send-edit-link`, `resend-invoice`, `resend-kit` siguen renderizando solo en español aunque `cards.idioma='ca'`. Migrarlos requiere extender el patrón a cada función.
+- Cada función tiene su propio dict de strings (`*_STRINGS = { es: {...}, ca: {...} }`) y recibe `idioma` desde el handler:
+  - `stripe-webhook.buildEmail()` — `POST_PAY_EMAIL_STRINGS`, post-pago con kit + factura.
+  - `register-free.buildWelcomeEmail()` — `WELCOME_EMAIL_STRINGS`, alta gratuita.
+  - `remind-expiry.buildReminderEmail()` — `REMINDER_STRINGS`, urgencias 30/15/7 días + locale para `toLocaleDateString`.
+  - `weekly-stats.buildStatsEmail()` — `STATS_STRINGS`, lunes Pro con visitas semana+mes.
+  - `send-edit-link.buildEditLinkEmail()` — `EDIT_LINK_STRINGS`, enlace de edición (CTA → `/${lang}/editar`).
+  - `resend-invoice` y `resend-kit` reusan `buildEmail()` / `sendConfirmationEmail()` y propagan `idioma`. El prefix admin se localiza también: `[Reenvío]` (es) / `[Reenviament]` (ca).
 
 **Banner de privacidad** (`public/js/privacy-banner.js`): consciente del idioma — lee `document.documentElement.lang` y elige strings + link a privacidad en es o ca.
 
