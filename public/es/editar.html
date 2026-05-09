@@ -1494,6 +1494,7 @@
                   email: card.email,
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
+                  idioma: (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
                 }),
               });
               const j = await r.json();

@@ -131,9 +131,9 @@ describe('buildEmailLayout', () => {
     const original = process.env.SITE_URL;
     process.env.SITE_URL = 'https://staging.perfilapro.es';
     const out = buildEmailLayout(baseOpts);
-    expect(out).toContain('href="https://staging.perfilapro.es/terminos.html"');
-    expect(out).toContain('href="https://staging.perfilapro.es/privacidad.html"');
-    expect(out).toContain('href="https://staging.perfilapro.es/legal.html"');
+    expect(out).toContain('href="https://staging.perfilapro.es/es/terminos"');
+    expect(out).toContain('href="https://staging.perfilapro.es/es/privacidad"');
+    expect(out).toContain('href="https://staging.perfilapro.es/es/legal"');
     if (original === undefined) delete process.env.SITE_URL;
     else process.env.SITE_URL = original;
   });
@@ -143,7 +143,25 @@ describe('buildEmailLayout', () => {
       ...baseOpts,
       siteUrl: 'https://custom.test',
     });
-    expect(out).toContain('href="https://custom.test/terminos.html"');
+    expect(out).toContain('href="https://custom.test/es/terminos"');
+  });
+
+  it('renderiza header/footer en catalán cuando idioma="ca"', () => {
+    const out = buildEmailLayout({ ...baseOpts, idioma: 'ca', siteUrl: 'https://perfilapro.es' });
+    expect(out).toContain('<html lang="ca">');
+    expect(out).toContain('La teva feina mereix veure’s.');
+    expect(out).toContain('href="https://perfilapro.es/ca/terminos"');
+    expect(out).toContain('href="https://perfilapro.es/ca/privacidad"');
+    expect(out).toContain('href="https://perfilapro.es/ca/legal"');
+    expect(out).toContain('Termes');
+    expect(out).toContain('Privadesa');
+    expect(out).toContain('Avís legal');
+  });
+
+  it('idioma desconocido cae a español por defecto', () => {
+    const out = buildEmailLayout({ ...baseOpts, idioma: 'fr' });
+    expect(out).toContain('<html lang="es">');
+    expect(out).toContain('Tu trabajo merece verse.');
   });
 
   it('no truena si se llama sin opts (defaults razonables)', () => {

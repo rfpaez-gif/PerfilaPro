@@ -24,6 +24,69 @@ function safeJson(obj) {
   return JSON.stringify(obj).replace(/<\//g, '<\\/');
 }
 
+const CARD_T = {
+  es: {
+    htmlLang: 'es',
+    ogLocale: 'es_ES',
+    notFoundTitle: 'Tarjeta no encontrada',
+    notFoundBody: 'Este perfil no existe o no está activo.',
+    metaProfile: 'Perfil profesional',
+    waMessage: 'Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.',
+    waLabel: 'WhatsApp',
+    callLabel: 'Llamar',
+    visits30: (n) => `${n} visitas &middot; 30 d&iacute;as`,
+    sharePerfil: 'Compartir perfil',
+    share: 'Compartir',
+    shareWa: 'Compartir por WhatsApp',
+    shareWaPre: (nombre, url) => `Mira el perfil de ${nombre}: ${url}`,
+    addContactTitle: 'Añadir contacto',
+    addContactAria: 'Añadir a contactos',
+    downloadCardTitle: 'Descargar tarjeta',
+    qrScan: 'Escanea para abrir este perfil',
+    qrSvgTitle: 'SVG vectorial — escala infinita, ideal imprenta',
+    qrPngTitle: 'PNG 1024×1024 — para web/redes',
+    qrDownload: 'Descargar QR',
+    freeBanner: '<strong>Perfil básico</strong> · Sin foto, QR ni directorio',
+    pwCreated: 'Creado con',
+    pwOwn: 'Crea tu propio perfil',
+    footOwn: '¿Quieres tu propio perfil? &rarr; PerfilaPro.es',
+    copied: '¡Copiado!',
+    generating: 'Generando…',
+    canvasServices: 'SERVICIOS',
+    canvasFooter: 'Creado con PerfilaPro',
+  },
+  ca: {
+    htmlLang: 'ca',
+    ogLocale: 'ca_ES',
+    notFoundTitle: 'Targeta no trobada',
+    notFoundBody: 'Aquest perfil no existeix o no està actiu.',
+    metaProfile: 'Perfil professional',
+    waMessage: 'Hola, he vist el teu perfil a PerfilaPro i m’interessa contactar-te.',
+    waLabel: 'WhatsApp',
+    callLabel: 'Trucar',
+    visits30: (n) => `${n} visites &middot; 30 dies`,
+    sharePerfil: 'Compartir perfil',
+    share: 'Compartir',
+    shareWa: 'Compartir per WhatsApp',
+    shareWaPre: (nombre, url) => `Mira el perfil de ${nombre}: ${url}`,
+    addContactTitle: 'Afegir contacte',
+    addContactAria: 'Afegir als contactes',
+    downloadCardTitle: 'Descarregar targeta',
+    qrScan: 'Escaneja per obrir aquest perfil',
+    qrSvgTitle: 'SVG vectorial — escala infinita, ideal impremta',
+    qrPngTitle: 'PNG 1024×1024 — per a web/xarxes',
+    qrDownload: 'Descarregar QR',
+    freeBanner: '<strong>Perfil bàsic</strong> · Sense foto, QR ni directori',
+    pwCreated: 'Creat amb',
+    pwOwn: 'Crea el teu propi perfil',
+    footOwn: 'Vols el teu propi perfil? &rarr; PerfilaPro.es',
+    copied: 'Copiat!',
+    generating: 'Generant…',
+    canvasServices: 'SERVEIS',
+    canvasFooter: 'Creat amb PerfilaPro',
+  },
+};
+
 exports.handler = async (event) => {
   // 1) Intentar leer slug de la query (?slug=...)
   const slugFromQuery = event.queryStringParameters?.slug;
@@ -49,16 +112,23 @@ exports.handler = async (event) => {
     .single();
 
   if (error || !data) {
+    // 404 sin idioma conocido — usamos el del primer Accept-Language o ES.
+    const accept = (event.headers?.['accept-language'] || '').toLowerCase();
+    const fallbackLang = /^ca(-|$)/.test(accept.split(',')[0]?.trim()) ? 'ca' : 'es';
+    const T404 = CARD_T[fallbackLang];
     return {
       statusCode: 404,
       headers: { 'Content-Type': 'text/html' },
-      body: `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-        <title>Tarjeta no encontrada</title>
+      body: `<!DOCTYPE html><html lang="${T404.htmlLang}"><head><meta charset="UTF-8">
+        <title>${T404.notFoundTitle}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FAF7F0;color:#0A1F44;margin:0}div{text-align:center;padding:1rem}h1{font-size:1.5rem;margin-bottom:.5rem;font-weight:700;letter-spacing:-0.02em}p{color:#6B7280;margin:0}</style>
-      </head><body><div><h1>Tarjeta no encontrada</h1><p>Este perfil no existe o no está activo.</p></div></body></html>`
+      </head><body><div><h1>${T404.notFoundTitle}</h1><p>${T404.notFoundBody}</p></div></body></html>`
     };
   }
+
+  const idioma = data.idioma === 'ca' ? 'ca' : 'es';
+  const T = CARD_T[idioma];
 
   const serviciosHTML = (data.servicios || []).map((s, i) => {
     const m = s.match(/^(.+?)[\s·\-–]+(\d[\d.,€\s\/h]*)$/);
@@ -89,7 +159,7 @@ exports.handler = async (event) => {
   }
 
   const waUrl = !isDemo && data.whatsapp
-    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent('Hola, he visto tu perfil en PerfilaPro y me interesa contactarte.')}`
+    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent(T.waMessage)}`
     : null;
 
   const isFree = !data.stripe_session_id;
@@ -128,17 +198,17 @@ exports.handler = async (event) => {
   const hasBothCtas = !!(waUrl && data.telefono);
 
   const html = `<!DOCTYPE html>
-<html lang="es">
+<html lang="${T.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${esc(data.nombre) || 'Perfil profesional'} — PerfilaPro</title>
+  <title>${esc(data.nombre) || T.metaProfile} — PerfilaPro</title>
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
   <link rel="canonical" href="${siteUrl}/p/${data.slug}">
   <meta property="og:type" content="profile">
   <meta property="og:site_name" content="PerfilaPro">
-  <meta property="og:locale" content="es_ES">
+  <meta property="og:locale" content="${T.ogLocale}">
   <meta property="og:url" content="${siteUrl}/p/${data.slug}">
   <meta property="og:title" content="${esc(data.nombre)} — PerfilaPro">
   <meta property="og:description" content="${esc(data.tagline)}">
@@ -254,67 +324,67 @@ exports.handler = async (event) => {
     <div class="pp-card__body">
       ${(data.zona || (isPro && visitCount !== null)) ? `<div class="pp-chips">
         ${data.zona ? `<span class="pp-chip pp-chip--loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${zonaLocal}${zonaRange ? ` &middot; ${zonaRange}` : ''}</span>` : ''}
-        ${isPro && visitCount !== null ? `<span class="pp-chip pp-chip--stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${visitCount} visitas &middot; 30 d&iacute;as</span>` : ''}
+        ${isPro && visitCount !== null ? `<span class="pp-chip pp-chip--stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${T.visits30(visitCount)}</span>` : ''}
       </div>` : ''}
       ${data.descripcion ? `<p class="pp-card__desc">${esc(data.descripcion)}</p>` : ''}
       ${serviciosHTML ? `<div class="pp-svc-list">${serviciosHTML}</div>` : ''}
       ${(waUrl || data.telefono) ? `<div class="pp-cta-group${hasBothCtas ? ' pp-cta-group--dual' : ''}">
         ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="pp-cta pp-cta--wa">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-          WhatsApp
+          ${T.waLabel}
         </a>` : ''}
         ${data.telefono ? `<a href="tel:${normalizePhone(data.telefono)}" class="pp-cta pp-cta--call">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Llamar
+          ${T.callLabel}
         </a>` : ''}
       </div>` : ''}
       <div class="pp-utils">
-        <button class="pp-icon-btn" id="shareBtn" onclick="shareProfile()" title="Compartir" aria-label="Compartir perfil">
+        <button class="pp-icon-btn" id="shareBtn" onclick="shareProfile()" title="${T.share}" aria-label="${T.sharePerfil}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         </button>
-        <a class="pp-icon-btn" href="https://wa.me/?text=${encodeURIComponent('Mira el perfil de ' + data.nombre + ': ' + cardUrl)}" target="_blank" rel="noopener" title="Compartir por WhatsApp" aria-label="Compartir por WhatsApp">
+        <a class="pp-icon-btn" href="https://wa.me/?text=${encodeURIComponent(T.shareWaPre(data.nombre, cardUrl))}" target="_blank" rel="noopener" title="${T.shareWa}" aria-label="${T.shareWa}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 2C6.477 2 2 6.477 2 12c0 1.883.517 3.643 1.415 5.163L2 22l4.978-1.398A9.955 9.955 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
         </a>
-        <button class="pp-icon-btn" onclick="downloadVCard()" title="Añadir contacto" aria-label="Añadir a contactos">
+        <button class="pp-icon-btn" onclick="downloadVCard()" title="${T.addContactTitle}" aria-label="${T.addContactAria}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
-        <button class="pp-icon-btn" id="dlCardBtn" onclick="downloadCard(this)" title="Descargar tarjeta" aria-label="Descargar tarjeta">
+        <button class="pp-icon-btn" id="dlCardBtn" onclick="downloadCard(this)" title="${T.downloadCardTitle}" aria-label="${T.downloadCardTitle}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
       </div>
       ${qrSvg ? `<div class="pp-qr">
-        <div class="pp-qr__code" aria-label="Código QR para ${esc(data.nombre)}">
+        <div class="pp-qr__code" aria-label="QR ${esc(data.nombre)}">
           ${qrSvg}
           <span class="pp-qr__seal" aria-hidden="true"><span class="pp-qr__seal-inner">P</span></span>
         </div>
         <div class="pp-qr__meta">
-          <p>Escanea para abrir este perfil</p>
+          <p>${T.qrScan}</p>
           ${data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
           ${data.email ? `<p>${esc(data.email)}</p>` : ''}
           ${data.local_publico && data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
           ${isPro ? `<div>
-            <a href="/api/qr/${esc(data.slug)}" download="perfilapro-${esc(data.slug)}.svg" class="pp-qr__dl" title="SVG vectorial — escala infinita, ideal imprenta">
+            <a href="/api/qr/${esc(data.slug)}" download="perfilapro-${esc(data.slug)}.svg" class="pp-qr__dl" title="${T.qrSvgTitle}">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               SVG
             </a>
-            <a href="/api/qr/${esc(data.slug)}?format=png&size=1024" download="perfilapro-${esc(data.slug)}.png" class="pp-qr__dl pp-qr__dl--alt" title="PNG 1024×1024 — para web/redes">PNG</a>
+            <a href="/api/qr/${esc(data.slug)}?format=png&size=1024" download="perfilapro-${esc(data.slug)}.png" class="pp-qr__dl pp-qr__dl--alt" title="${T.qrPngTitle}">PNG</a>
           </div>` : `<a href="/api/qr/${esc(data.slug)}?format=png&size=1024" download="perfilapro-${esc(data.slug)}.png" class="pp-qr__dl">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Descargar QR
+            ${T.qrDownload}
           </a>`}
         </div>
       </div>` : ''}
       ${isFree ? `<div class="pp-free-banner">
-        <p><strong>Perfil básico</strong> · Sin foto, QR ni directorio</p>
+        <p>${T.freeBanner}</p>
       </div>` : ''}
       <div class="pp-card__pw">
-        Creado con <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
-        <a href="https://perfilapro.es">Crea tu propio perfil</a>
+        ${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
+        <a href="https://perfilapro.es">${T.pwOwn}</a>
       </div>
     </div>
   </div>
   <div class="pp-page-foot">
-    <a href="https://perfilapro.es" target="_blank">¿Quieres tu propio perfil? &rarr; PerfilaPro.es</a>
+    <a href="https://perfilapro.es" target="_blank">${T.footOwn}</a>
   </div>
   <script>
     var CARD = ${safeJson({
@@ -329,6 +399,12 @@ exports.handler = async (event) => {
       slug:        data.slug,
       cardUrl:     cardUrl,
     })};
+    var STRINGS = ${safeJson({
+      copied:         T.copied,
+      generating:     T.generating,
+      canvasServices: T.canvasServices,
+      canvasFooter:   T.canvasFooter,
+    })};
 
     function shareProfile() {
       var btn = document.getElementById('shareBtn');
@@ -337,7 +413,7 @@ exports.handler = async (event) => {
       } else {
         navigator.clipboard.writeText(CARD.cardUrl).then(function() {
           var orig = btn.innerHTML;
-          btn.textContent = '¡Copiado!';
+          btn.textContent = STRINGS.copied;
           setTimeout(function() { btn.innerHTML = orig; }, 2000);
         });
       }
@@ -365,7 +441,7 @@ exports.handler = async (event) => {
     }
 
     async function downloadCard(btn) {
-      var orig = btn.innerHTML; btn.textContent = 'Generando…'; btn.disabled = true;
+      var orig = btn.innerHTML; btn.textContent = STRINGS.generating; btn.disabled = true;
       var svcs = (CARD.servicios || []).slice(0,5);
       var W = 800, H = 280 + svcs.length*58 + (CARD.zona ? 50 : 0) + 120;
       var canvas = document.createElement('canvas');
@@ -400,7 +476,7 @@ exports.handler = async (event) => {
       var y = 220;
       if (svcs.length) {
         ctx.fillStyle = P; ctx.font = 'bold 11px Arial,sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText('SERVICIOS', 80, y); y += 30;
+        ctx.fillText(STRINGS.canvasServices, 80, y); y += 30;
         svcs.forEach(function(s,i) {
           var m = s.match(/^(.+?)[\\s·\\-–]+(\\d[\\d.,€\\s\\/h]*)$/);
           var nom = m ? m[1].trim() : s, pr = m ? m[2].trim() : '';
@@ -419,7 +495,7 @@ exports.handler = async (event) => {
       ctx.fillStyle = P; ctx.font = 'bold 17px Arial,sans-serif'; ctx.textAlign='left';
       ctx.fillText(CARD.cardUrl,80,y);
       ctx.fillStyle = 'rgba(30,27,20,.25)'; ctx.font = '13px Arial,sans-serif';
-      ctx.textAlign = 'center'; ctx.fillText('Creado con PerfilaPro',W/2,H-52);
+      ctx.textAlign = 'center'; ctx.fillText(STRINGS.canvasFooter,W/2,H-52);
 
       canvas.toBlob(function(blob) {
         var url = URL.createObjectURL(blob);

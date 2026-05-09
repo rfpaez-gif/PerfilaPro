@@ -1334,6 +1334,7 @@
       email:              document.getElementById('f_email').value.trim(),
       direccion:          localPub && direccion ? direccion : null,
       local_publico:      localPub && !!direccion,
+      idioma:             (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
