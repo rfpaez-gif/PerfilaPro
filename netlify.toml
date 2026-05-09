@@ -30,6 +30,23 @@
 [context.deploy-preview]
   command = "npm test"
 
+# perfilapro.cat: dominio puerta de entrada para la versión catalana.
+# Cualquier ruta entrante por el .cat se 301 a su equivalente bajo
+# perfilapro.es/ca/* — un único canonical SEO, sin contenido duplicado.
+# La raíz `/` cae a /ca/ directamente (sin pasar por la edge function de
+# detección, que solo aplica a perfilapro.es).
+[[redirects]]
+  from   = "https://perfilapro.cat/*"
+  to     = "https://perfilapro.es/ca/:splat"
+  status = 301
+  force  = true
+
+[[redirects]]
+  from   = "https://www.perfilapro.cat/*"
+  to     = "https://perfilapro.es/ca/:splat"
+  status = 301
+  force  = true
+
 # Legacy redirects: las páginas client-facing pasaron a /es/ y /ca/.
 # 301 para preservar SEO de links entrantes y emails antiguos.
 [[redirects]]
