@@ -65,7 +65,9 @@ function makeHandler(deps) {
       _getCityBySlug(db, data.city_slug),
     ]);
 
-    const isPaid = !!data.stripe_session_id;
+    // Promo redimida (kit_email_sent_at sin stripe_session_id) cuenta como
+    // paid: mismo gate que card.js, claim-launch-promo y el editor.
+    const isPaid = !!data.stripe_session_id || !!data.kit_email_sent_at;
     const profileUrl = `${siteUrl}/p/${data.slug}`;
     const cardUrl    = `${siteUrl}/c/${data.slug}`;
 

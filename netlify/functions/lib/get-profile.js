@@ -5,7 +5,7 @@ const PAGE_SIZE = 20;
 async function getPublicProfile(db, slug) {
   const { data, error } = await db
     .from('cards')
-    .select('slug, nombre, tagline, foto_url, whatsapp, email, telefono, zona, descripcion, servicios, plan, stripe_session_id, status, profile_views, directory_featured, directory_visible, category_id, city_slug')
+    .select('slug, nombre, tagline, foto_url, whatsapp, email, telefono, zona, descripcion, servicios, plan, stripe_session_id, kit_email_sent_at, status, profile_views, directory_featured, directory_visible, category_id, city_slug')
     .eq('slug', slug)
     .eq('status', 'active')
     .is('deleted_at', null)
