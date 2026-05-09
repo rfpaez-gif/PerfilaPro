@@ -855,14 +855,14 @@
      CARGA DE ARQUETIPOS
      ════════════════════════════════════════════════════════════ */
   function loadArchetypes() {
-    return fetch('/data/archetypes.json')
+    return fetch('/data/archetypes-ca.json')
       .then(function (res) { return res.json(); })
       .then(function (data) {
         ARCHETYPES = data;
         renderGallery();
       })
       .catch(function (err) {
-        console.error('No se pudo cargar archetypes.json', err);
+        console.error('No se pudo cargar archetypes-ca.json', err);
         // Fallback: el flow puede continuar con free-text en el buscador.
       });
   }

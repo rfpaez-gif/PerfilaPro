@@ -2,35 +2,13 @@ const stripeLib = require('stripe');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { isValidCp, normalizeCp } = require('./lib/cp-utils');
+const { pickSectorLabel } = require('./lib/sector-labels');
 
 const defaultStripe = stripeLib(process.env.STRIPE_SECRET_KEY);
 
 const PRICES = {
   base: process.env.STRIPE_PRICE_BASE,
   pro:  process.env.STRIPE_PRICE_PRO,
-};
-
-const SECTOR_LABELS = {
-  oficios:    'Oficios y servicios del hogar',
-  salud:      'Salud y bienestar',
-  educacion:  'Educación y formación',
-  comercial:  'Comercial y ventas',
-  belleza:    'Belleza y estética',
-  reforma:    'Reforma y construcción',
-  hosteleria: 'Hostelería y restauración',
-  tech:       'Tecnología y digital',
-  legal:      'Legal y asesoría',
-  jardineria: 'Jardinería y paisajismo',
-  transporte: 'Transporte y mudanzas',
-  fotografia: 'Fotografía y vídeo',
-  eventos:    'Eventos y celebraciones',
-  automocion: 'Automoción y mecánica',
-  seguridad:  'Seguridad y vigilancia',
-  cuidados:   'Cuidados y asistencia',
-  fitness:    'Fitness y deporte',
-  turismo:    'Turismo y viajes',
-  comercio:   'Comercio y tiendas',
-  otro:       'Otro',
 };
 
 function makeHandler(stripe) {
@@ -72,7 +50,7 @@ function makeHandler(stripe) {
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       .substring(0, 40);
 
-    const tagline  = SECTOR_LABELS[sector] || sector || '';
+    const tagline  = pickSectorLabel(sector, idioma);
     const phone = normalizeSpanishPhone(whatsapp);
     if (!phone.ok) {
       return { statusCode: 400, body: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' };
