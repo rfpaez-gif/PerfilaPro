@@ -27,7 +27,17 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl, idioma: rawIdioma } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken } = body;
+
+    // organization_id (opcional) y redeemed_token (opcional) viajan dentro
+    // de session.metadata como strings (Stripe sólo acepta strings). El
+    // stripe-webhook se encarga de validarlos contra la BD tras el pago.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const orgIdStr = (typeof rawOrgId === 'string' && UUID_RE.test(rawOrgId)) ? rawOrgId : '';
+    const TOKEN_RE = /^[a-f0-9]{48}$/;
+    const redeemedTokenStr = (typeof rawRedeemedToken === 'string' && TOKEN_RE.test(rawRedeemedToken.toLowerCase()))
+      ? rawRedeemedToken.toLowerCase()
+      : '';
 
     if (!nombre || !cp || !whatsapp || !plan) {
       return { statusCode: 400, body: 'Faltan campos obligatorios' };
@@ -82,6 +92,8 @@ function makeHandler(stripe) {
           // pago confirmado para evitar lookups innecesarios aquí.
           ocupacion_code: (ocupacion_code && /^\d{8}$/.test(String(ocupacion_code))) ? String(ocupacion_code) : '',
           idioma,
+          organization_id: orgIdStr,
+          redeemed_token: redeemedTokenStr,
         },
         success_url: `${siteUrl}/${idioma}/success?slug=${slug}`,
         cancel_url:  cancelUrl || `${siteUrl}/${idioma}/#crear`,

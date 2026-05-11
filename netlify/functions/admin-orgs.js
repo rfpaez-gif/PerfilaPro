@@ -1,6 +1,7 @@
 'use strict';
 
 const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
 const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 const {
   isValidHex,
@@ -8,11 +9,16 @@ const {
   isValidOrgSlug,
   isValidTagline,
 } = require('./lib/org-utils');
+const { buildLeadEmail } = require('./lead-b2b');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
+
+const defaultEmailClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function jsonResponse(statusCode, payload) {
   return {
@@ -22,7 +28,7 @@ function jsonResponse(statusCode, payload) {
   };
 }
 
-function makeHandler(db) {
+function makeHandler(db, emailClient = defaultEmailClient) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };
@@ -208,6 +214,118 @@ function makeHandler(db) {
         .eq('slug', card_slug);
       if (error) return jsonResponse(500, { error: error.message });
       return jsonResponse(200, { ok: true, card_slug, organization_id });
+    }
+
+    // ── leads_list: leads B2B persistidos (filtrables) ──
+    // Devuelve los leads del form /es/empresas para que el admin los gestione
+    // (asociar a org, reenviar magic-link). Por defecto solo pendientes.
+    if (action === 'leads_list') {
+      const onlyPending = body.only_pending !== false;
+      let q = db
+        .from('b2b_leads')
+        .select('id, invite_token, name, company, email, team_size, sector, message, idioma, organization_id, created_at, redeemed_at, redeemed_card_slug')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (onlyPending) q = q.is('redeemed_at', null);
+      const { data, error } = await q;
+      if (error) return jsonResponse(500, { error: error.message });
+
+      // Resolvemos los nombres de org en JS (cardinalidad baja: < 200 leads
+      // y < 50 orgs realistas). Evitamos un JOIN complejo y mantenemos el
+      // select-builder mockeable en tests.
+      const orgIds = Array.from(new Set((data || []).map(l => l.organization_id).filter(Boolean)));
+      let orgMap = {};
+      if (orgIds.length) {
+        const { data: orgs } = await db
+          .from('organizations')
+          .select('id, slug, name')
+          .in('id', orgIds);
+        for (const o of (orgs || [])) orgMap[o.id] = { slug: o.slug, name: o.name };
+      }
+      const leads = (data || []).map(l => ({
+        ...l,
+        // No exponemos invite_token en bruto a UI más allá de lo necesario;
+        // sirve para construir el magic-link en el modal de copy.
+        org: l.organization_id ? orgMap[l.organization_id] || null : null,
+      }));
+      return jsonResponse(200, { ok: true, leads });
+    }
+
+    // ── leads_assign: asociar un lead a una organización ──
+    if (action === 'leads_assign') {
+      const { lead_id, org_slug } = body;
+      if (!lead_id || !UUID_RE.test(String(lead_id))) {
+        return jsonResponse(400, { error: 'lead_id inválido' });
+      }
+      if (org_slug !== null && !isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido (pasa null para desvincular)' });
+      }
+
+      let organization_id = null;
+      if (org_slug) {
+        const { data: org } = await db
+          .from('organizations')
+          .select('id')
+          .eq('slug', org_slug)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
+        organization_id = org.id;
+      }
+
+      const { error } = await db
+        .from('b2b_leads')
+        .update({ organization_id })
+        .eq('id', lead_id);
+      if (error) return jsonResponse(500, { error: error.message });
+      return jsonResponse(200, { ok: true, lead_id, organization_id });
+    }
+
+    // ── leads_resend: reenviar el magic-link al lead ──
+    // Idempotente: NO regeneramos el invite_token. Si el lead ya está
+    // redeemed_at, devolvemos 409 sin enviar (el link no vale para nada).
+    if (action === 'leads_resend') {
+      const { lead_id } = body;
+      if (!lead_id || !UUID_RE.test(String(lead_id))) {
+        return jsonResponse(400, { error: 'lead_id inválido' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      const { data: lead, error } = await db
+        .from('b2b_leads')
+        .select('id, name, company, email, idioma, invite_token, redeemed_at')
+        .eq('id', lead_id)
+        .maybeSingle();
+      if (error) return jsonResponse(500, { error: error.message });
+      if (!lead) return jsonResponse(404, { error: 'lead no encontrado' });
+      if (lead.redeemed_at) {
+        return jsonResponse(409, { error: 'Este lead ya redimió su enlace' });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const { subject, html } = buildLeadEmail({
+        name: lead.name,
+        company: lead.company,
+        inviteToken: lead.invite_token,
+        idioma: lead.idioma,
+        siteUrl,
+      });
+
+      try {
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>',
+          to: lead.email,
+          subject: '[Reenvío] ' + subject,
+          html,
+        });
+      } catch (err) {
+        console.error('admin-orgs leads_resend: error enviando email:', err.message);
+        return jsonResponse(500, { error: 'No se pudo reenviar el email' });
+      }
+
+      return jsonResponse(200, { ok: true });
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });

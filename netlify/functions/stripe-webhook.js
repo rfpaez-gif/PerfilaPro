@@ -291,10 +291,30 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
-      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, local_publico, foto, plan, agent_code, ocupacion_code, idioma: rawIdioma } =
+      const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, local_publico, foto, plan, agent_code, ocupacion_code, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken } =
         session.metadata || {};
 
       const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
+
+      // organization_id viaja como string en metadata; validamos contra la BD
+      // antes de persistir para evitar FK rota si la org se borró entre el
+      // checkout y el webhook.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let organization_id = null;
+      if (rawOrgId && UUID_RE.test(String(rawOrgId))) {
+        const { data: org } = await db
+          .from('organizations')
+          .select('id')
+          .eq('id', rawOrgId)
+          .is('deleted_at', null)
+          .maybeSingle();
+        organization_id = org?.id || null;
+      }
+
+      const TOKEN_RE = /^[a-f0-9]{48}$/;
+      const redeemedToken = (typeof rawRedeemedToken === 'string' && TOKEN_RE.test(rawRedeemedToken.toLowerCase()))
+        ? rawRedeemedToken.toLowerCase()
+        : null;
 
       if (!slug) {
         console.error('No slug in metadata');
@@ -373,6 +393,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         idioma,
       };
       if (ocupacionName) upsertRow.specialty_custom = ocupacionName.substring(0, 60);
+      if (organization_id) upsertRow.organization_id = organization_id;
 
       const { error } = await db.from('cards').upsert(upsertRow, { onConflict: 'slug' });
 
@@ -382,6 +403,18 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       }
 
       console.log(`Perfil activado: ${slug}`);
+
+      // Redención del lead B2B (si el alta vino desde /es/onboarding y luego
+      // pasó por checkout en vez de free). Update condicional para no pisar
+      // un redeem anterior. No fatal si falla.
+      if (redeemedToken) {
+        const { error: redErr } = await db
+          .from('b2b_leads')
+          .update({ redeemed_at: new Date().toISOString(), redeemed_card_slug: slug })
+          .eq('invite_token', redeemedToken)
+          .is('redeemed_at', null);
+        if (redErr) console.warn('No se pudo marcar lead redimido (no fatal):', redErr.message);
+      }
 
       captureEvent(slug, 'signup_completed_paid', { plan: plan || 'base', agent_code: agent_code || null })
         .catch(() => {});
