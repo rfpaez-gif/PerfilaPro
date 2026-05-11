@@ -273,6 +273,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/register-b2b"
+  to     = "/.netlify/functions/register-b2b"
+  status = 200
+
+[[redirects]]
   from   = "/api/export-data"
   to     = "/.netlify/functions/export-data"
   status = 200

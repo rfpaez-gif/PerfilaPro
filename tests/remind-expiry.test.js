@@ -8,6 +8,7 @@ const mockEqUpdate = vi.fn();
 const mockSelect  = vi.fn();
 const mockEq      = vi.fn();
 const mockEq2     = vi.fn();
+const mockNeq     = vi.fn();
 const mockIs      = vi.fn();
 const mockGte     = vi.fn();
 const mockLte     = vi.fn();
@@ -33,7 +34,8 @@ function setupDbMock(cards = []) {
   mockLte.mockResolvedValue({ data: cards, error: null });
   mockGte.mockReturnValue({ lte: mockLte });
   mockIs.mockReturnValue({ gte: mockGte });
-  mockEq2.mockReturnValue({ is: mockIs });
+  mockNeq.mockReturnValue({ is: mockIs });
+  mockEq2.mockReturnValue({ neq: mockNeq });
   mockEq.mockReturnValue({ eq: mockEq2 });
   mockSelect.mockReturnValue({ eq: mockEq });
   mockEqUpdate.mockResolvedValue({ error: null });
@@ -58,6 +60,16 @@ describe('remind-expiry handler', () => {
     expect(emailArgs.subject).toContain('30');
 
     expect(mockUpdate).toHaveBeenCalledWith({ reminder_30_sent: true });
+  });
+
+  it('excluye explícitamente perfiles del carril B2B (plan=b2b)', async () => {
+    // Defensivo: aunque los perfiles B2B no tienen expires_at y deberían
+    // quedar fuera por la ventana de fechas, añadimos un neq('plan','b2b')
+    // para garantizar que un B2B con expires_at heredado nunca recibe el
+    // email de "tu plan caduca en 7 días".
+    setupDbMock([]);
+    await handler();
+    expect(mockNeq).toHaveBeenCalledWith('plan', 'b2b');
   });
 
   it('no envía email si la tarjeta no tiene email', async () => {

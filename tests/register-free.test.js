@@ -8,8 +8,6 @@ const mockMaybeSingle = vi.fn();             // cards slug-uniqueness check
 const mockCategoryMaybeSingle = vi.fn();     // categories sector+specialty lookup
 const mockPostalMaybeSingle = vi.fn();       // postal_codes CP lookup
 const mockOcupacionMaybeSingle = vi.fn();    // ocupaciones SEPE lookup
-const mockOrgMaybeSingle = vi.fn();          // organizations id+deleted_at lookup
-const mockLeadUpdateIs = vi.fn();            // b2b_leads update().eq().is() chain end
 const mockInsert = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFrom = vi.fn();
@@ -63,8 +61,6 @@ describe('register-free handler', () => {
       error: null,
     });
     mockOcupacionMaybeSingle.mockResolvedValue({ data: null, error: null });
-    mockOrgMaybeSingle.mockResolvedValue({ data: null, error: null });
-    mockLeadUpdateIs.mockResolvedValue({ error: null });
     mockInsert.mockResolvedValue({ error: null });
 
     mockFrom.mockImplementation((table) => {
@@ -81,22 +77,6 @@ describe('register-free handler', () => {
       }
       if (table === 'ocupaciones') {
         return makeSelectBuilder(mockOcupacionMaybeSingle);
-      }
-      if (table === 'organizations') {
-        // organizations: select(...).eq('id', x).is('deleted_at', null).maybeSingle()
-        const b = { select: vi.fn(), eq: vi.fn(), is: vi.fn(), maybeSingle: mockOrgMaybeSingle };
-        b.select.mockReturnValue(b);
-        b.eq.mockReturnValue(b);
-        b.is.mockReturnValue(b);
-        return b;
-      }
-      if (table === 'b2b_leads') {
-        // b2b_leads: update({...}).eq('invite_token', t).is('redeemed_at', null)
-        // El último eslabón devuelve la promesa { error }.
-        const b = { update: vi.fn(), eq: vi.fn(), is: mockLeadUpdateIs };
-        b.update.mockReturnValue(b);
-        b.eq.mockReturnValue(b);
-        return b;
       }
       return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: mockMaybeSingle };
     });
@@ -396,52 +376,21 @@ describe('register-free handler', () => {
     expect(otherIp.statusCode).toBe(200);
   });
 
-  // ── Sprint 3 · pieza A: organization_id + redeemed_token ─────────────
-  const validOrgUuid     = '11111111-2222-3333-4444-555555555555';
-  const validInviteToken = 'a'.repeat(48);
-
-  it('persiste organization_id cuando llega un UUID que resuelve a org viva', async () => {
-    mockOrgMaybeSingle.mockResolvedValueOnce({ data: { id: validOrgUuid }, error: null });
-    const res = await handler(buildEvent({ body: { ...validBody, organization_id: validOrgUuid } }));
-    expect(res.statusCode).toBe(200);
-    const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.organization_id).toBe(validOrgUuid);
-  });
-
-  it('omite organization_id si la org no existe (o está soft-deleted)', async () => {
-    mockOrgMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
-    const res = await handler(buildEvent({ body: { ...validBody, organization_id: validOrgUuid } }));
-    expect(res.statusCode).toBe(200);
+  // register-free es el carril autónomo: NUNCA debe tocar organizations
+  // ni b2b_leads. El carril B2B vive en register-b2b.js.
+  it('nunca toca organizations ni b2b_leads aunque lleguen esos campos en el body', async () => {
+    await handler(buildEvent({ body: {
+      ...validBody,
+      organization_id: '11111111-2222-3333-4444-555555555555',
+      redeemed_token: 'a'.repeat(48),
+    } }));
+    const tablesTouched = mockFrom.mock.calls.map(c => c[0]);
+    expect(tablesTouched).not.toContain('organizations');
+    expect(tablesTouched).not.toContain('b2b_leads');
+    // Y el insert NO lleva organization_id
     const insertCall = mockInsert.mock.calls[0][0];
     expect(insertCall.organization_id).toBeUndefined();
-  });
-
-  it('ignora organization_id con formato no-UUID', async () => {
-    const res = await handler(buildEvent({ body: { ...validBody, organization_id: 'no-uuid' } }));
-    expect(res.statusCode).toBe(200);
-    expect(mockOrgMaybeSingle).not.toHaveBeenCalled();
-    const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.organization_id).toBeUndefined();
-  });
-
-  it('marca redeemed_token cuando llega con formato hex 48 válido', async () => {
-    const res = await handler(buildEvent({ body: { ...validBody, redeemed_token: validInviteToken } }));
-    expect(res.statusCode).toBe(200);
-    // El update se hizo contra b2b_leads
-    expect(mockFrom).toHaveBeenCalledWith('b2b_leads');
-    expect(mockLeadUpdateIs).toHaveBeenCalledWith('redeemed_at', null);
-  });
-
-  it('ignora redeemed_token con formato inválido (no toca b2b_leads)', async () => {
-    const res = await handler(buildEvent({ body: { ...validBody, redeemed_token: 'short' } }));
-    expect(res.statusCode).toBe(200);
-    expect(mockLeadUpdateIs).not.toHaveBeenCalled();
-  });
-
-  it('no falla el alta si el update de b2b_leads devuelve error (no fatal)', async () => {
-    mockLeadUpdateIs.mockResolvedValueOnce({ error: { message: 'lead not found' } });
-    const res = await handler(buildEvent({ body: { ...validBody, redeemed_token: validInviteToken } }));
-    expect(res.statusCode).toBe(200);
+    expect(insertCall.plan).toBe('base');
   });
 });
 

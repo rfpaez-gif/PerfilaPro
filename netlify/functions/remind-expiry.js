@@ -121,6 +121,7 @@ async function processReminders(db, emailClient) {
       .select('slug, nombre, email, expires_at, idioma')
       .eq('status', 'active')
       .eq(field, false)
+      .neq('plan', 'b2b')
       .is('deleted_at', null)
       .gte('expires_at', windowStart.toISOString())
       .lte('expires_at', windowEnd.toISOString());
