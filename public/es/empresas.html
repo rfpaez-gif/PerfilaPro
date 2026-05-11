@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PerfilaPro para empresas · Tu red profesional, con tu marca</title>
+  <meta name="description" content="Cada miembro de tu equipo con su perfil, su QR y su WhatsApp, bajo tu identidad corporativa. PerfilaPro para empresas, despachos y redes de agentes.">
+  <link rel="canonical" href="https://perfilapro.es/es/empresas">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/empresas">
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/es/empresas">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PerfilaPro">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="PerfilaPro para empresas · Tu red profesional, con tu marca">
+  <meta property="og:description" content="Cada miembro de tu equipo con su perfil, su QR y su WhatsApp, bajo tu identidad corporativa.">
+  <meta property="og:url" content="https://perfilapro.es/es/empresas">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    body { background: var(--color-crema, #FAF7F0); margin: 0; font-family: var(--font-sans); color: var(--color-tinta, #0A1F44); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+
+    /* ── Top nav ──────────────────────────────────────────── */
+    .pp-nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); position: sticky; top: 0; z-index: 10; }
+    .pp-nav__logo { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; }
+    .pp-nav__logo em { color: var(--color-verde-match, #00C277); font-style: italic; }
+    .pp-nav__right { display: flex; align-items: center; gap: 1.25rem; font-size: 13px; }
+    .pp-nav__right a { text-decoration: none; color: var(--color-gris-500, #6B7280); font-weight: 600; }
+    .pp-nav__right a:hover { color: var(--color-tinta); }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .pp-hero { max-width: 880px; margin: 0 auto; padding: 4.5rem 1.5rem 3.5rem; text-align: center; }
+    .pp-hero__eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); margin-bottom: 1rem; }
+    .pp-hero__h1 { font-family: var(--font-serif); font-size: clamp(2rem, 5.5vw, 3.5rem); line-height: 1.1; font-weight: 400; letter-spacing: -0.025em; margin: 0 0 1.25rem; color: var(--color-tinta); }
+    .pp-hero__sub { font-size: clamp(1rem, 2vw, 1.125rem); color: var(--color-gris-500, #6B7280); line-height: 1.6; max-width: 60ch; margin: 0 auto 2rem; }
+    .pp-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+    .pp-hero__cta .pp-btn { min-width: 200px; }
+
+    /* ── Sector switcher ──────────────────────────────────── */
+    .pp-sectors { max-width: 1000px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-sectors__tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-bottom: 2rem; }
+    .pp-sectors__tab { background: #fff; border: 1.5px solid var(--color-gris-200, #E5E7EB); padding: .75rem 1.5rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--color-tinta, #0A1F44); transition: all .15s; }
+    .pp-sectors__tab:hover { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); }
+    .pp-sectors__tab.is-active { background: var(--color-tinta, #0A1F44); color: #fff; border-color: var(--color-tinta, #0A1F44); }
+    .pp-sectors__icon { display: inline-block; margin-right: .35rem; }
+
+    .pp-sector-panel { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 2.5rem 2rem; box-shadow: var(--pp-sh-md, 0 8px 24px rgba(0,0,0,.04)); display: none; }
+    .pp-sector-panel.is-active { display: block; }
+    .pp-sector-panel__h2 { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 1rem; color: var(--color-tinta); }
+    .pp-sector-panel__body { font-size: 16px; color: var(--color-gris-500, #6B7280); line-height: 1.75; max-width: 65ch; }
+    .pp-sector-panel__body p { margin: 0 0 1rem; }
+    .pp-sector-panel__body strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-sector-panel__cases { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-gris-200, #E5E7EB); font-family: var(--font-mono); font-size: 12px; color: var(--color-gris-500, #6B7280); letter-spacing: .02em; }
+    .pp-sector-panel__cases strong { color: var(--color-tinta, #0A1F44); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+
+    /* ── Steps ────────────────────────────────────────────── */
+    .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
+    .pp-section-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); text-align: center; margin-bottom: 1rem; }
+    .pp-section-sub { text-align: center; font-size: 15px; color: var(--color-gris-500, #6B7280); max-width: 50ch; margin: 0 auto 3rem; line-height: 1.6; }
+
+    .pp-steps { max-width: 1000px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-steps__grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; margin-top: 2rem; }
+    @media (min-width: 800px) { .pp-steps__grid { grid-template-columns: repeat(3, 1fr); } }
+    .pp-step { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.75rem 1.5rem; }
+    .pp-step__n { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); font-family: var(--font-mono); font-weight: 700; font-size: 14px; margin-bottom: 1rem; }
+    .pp-step__title { font-family: var(--font-serif); font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .5rem; }
+    .pp-step__body { font-size: 14px; color: var(--color-gris-500, #6B7280); line-height: 1.65; }
+
+    /* ── Video ────────────────────────────────────────────── */
+    .pp-video-section { background: var(--color-tinta, #0A1F44); color: #fff; padding: 4rem 1.5rem; }
+    .pp-video-wrap { max-width: 900px; margin: 0 auto; }
+    .pp-video-section .pp-section-title { color: #fff; }
+    .pp-video-section .pp-section-eyebrow { color: var(--color-verde-match, #00C277); }
+    .pp-video-section .pp-section-sub { color: rgba(255,255,255,.65); }
+    .pp-video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: var(--pp-r-lg, 16px); overflow: hidden; position: relative; }
+    .pp-video video { width: 100%; height: 100%; display: block; }
+    .pp-video__fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; padding: 2rem; text-align: center; color: rgba(255,255,255,.6); background: linear-gradient(135deg, #0A1F44, #1A3060); }
+    .pp-video__fallback strong { display: block; color: #fff; font-family: var(--font-serif); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin-bottom: .5rem; }
+    .pp-video__fallback small { font-family: var(--font-mono); font-size: 11px; opacity: .55; max-width: 380px; line-height: 1.5; }
+
+    /* ── Trust signals ────────────────────────────────────── */
+    .pp-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2.5rem; padding: 2.5rem 1.5rem; max-width: 1000px; margin: 0 auto; font-size: 13px; color: var(--color-gris-500, #6B7280); }
+    .pp-trust span { display: inline-flex; align-items: center; gap: .4rem; }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .pp-form-section { background: #fff; border-top: 1px solid var(--color-gris-200, #E5E7EB); padding: 4rem 1.5rem; }
+    .pp-form-wrap { max-width: 560px; margin: 0 auto; }
+    .pp-form-grid { display: grid; gap: 1rem; margin-top: 2rem; }
+    .pp-form-row { display: grid; gap: .35rem; }
+    .pp-form-row--inline { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 540px) { .pp-form-row--inline { grid-template-columns: 1fr; } }
+    .pp-form-label { font-size: 12px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-form-required { color: var(--color-coral, #E0633F); }
+    .pp-form-honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .pp-form-status { padding: .75rem 1rem; border-radius: 8px; font-size: 14px; margin-top: 1rem; display: none; }
+    .pp-form-status--ok { background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border: 1px solid #BFE9D0; }
+    .pp-form-status--err { background: #FDECEA; color: #B0392A; border: 1px solid #F4C2BC; }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .pp-foot { padding: 2rem 1.5rem; text-align: center; font-size: 12px; color: var(--color-gris-500, #6B7280); background: var(--color-crema, #FAF7F0); border-top: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-foot a { color: var(--color-verde-dark, #00A865); text-decoration: none; font-weight: 600; }
+    .pp-foot__b2c { background: #fff; padding: 1.5rem 1rem; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); max-width: 540px; margin: 0 auto 1.5rem; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────── Top nav ─────────── -->
+<header class="pp-nav">
+  <a class="pp-nav__logo" href="/es/">Perfila<em>Pro</em></a>
+  <div class="pp-nav__right">
+    <a href="/es/">Soy autónomo →</a>
+  </div>
+</header>
+
+<!-- ─────────── Hero ─────────── -->
+<section class="pp-hero">
+  <div class="pp-hero__eyebrow">Para empresas y redes profesionales</div>
+  <h1 class="pp-hero__h1">Tu red profesional,<br>con tu marca</h1>
+  <p class="pp-hero__sub">Cada miembro de tu equipo con su perfil, su QR y su WhatsApp.
+  Bajo tu identidad corporativa. En cinco minutos por persona.</p>
+  <div class="pp-hero__cta">
+    <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Solicita una demo →</a>
+    <a href="#demo" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Ver demo en vivo</a>
+  </div>
+</section>
+
+<!-- ─────────── Sector switcher ─────────── -->
+<section class="pp-sectors" id="sectores">
+  <div class="pp-section-eyebrow">Encaja con cómo trabaja tu equipo</div>
+  <h2 class="pp-section-title">Tres formas de usarlo</h2>
+  <p class="pp-section-sub">El producto es el mismo. El ángulo cambia según tu sector.</p>
+
+  <div class="pp-sectors__tabs" role="tablist">
+    <button class="pp-sectors__tab is-active" data-tab="seguros"   role="tab" aria-selected="true">
+      <span class="pp-sectors__icon">🛡️</span>Seguros y agentes
+    </button>
+    <button class="pp-sectors__tab" data-tab="despacho"  role="tab" aria-selected="false">
+      <span class="pp-sectors__icon">📋</span>Despachos y asesorías
+    </button>
+    <button class="pp-sectors__tab" data-tab="comercial" role="tab" aria-selected="false">
+      <span class="pp-sectors__icon">🚚</span>Redes comerciales
+    </button>
+  </div>
+
+  <article class="pp-sector-panel is-active" data-panel="seguros">
+    <h3 class="pp-sector-panel__h2">Cuando un agente se va, sus contactos se quedan</h3>
+    <div class="pp-sector-panel__body">
+      <p>En seguros, la rotación de agentes es alta. El contacto que un cliente tiene con tu red es,
+      casi siempre, un número de teléfono guardado a nombre del agente. Cuando ese agente cambia
+      de compañía, esos contactos se van con él.</p>
+      <p>PerfilaPro pone <strong>tu marca encima</strong> de cada perfil. Cuando alguien comparte
+      la URL del agente, ve "<strong>Tu Marca · Juan García</strong>", no solo a Juan. El día que Juan
+      se va, su perfil queda inactivo y las URLs que se compartieron siguen siendo tuyas.</p>
+    </div>
+    <div class="pp-sector-panel__cases"><strong>Casos de uso:</strong> red de mediadores · agentes exclusivos · brokers afiliados</div>
+  </article>
+
+  <article class="pp-sector-panel" data-panel="despacho">
+    <h3 class="pp-sector-panel__h2">Tu equipo deja de parecer un grupo de WhatsApp</h3>
+    <div class="pp-sector-panel__body">
+      <p>Si tienes un despacho con 5, 20 o 80 profesionales, probablemente cada uno tiene su forma de
+      presentarse. Algunos usan firmas de email cuidadas, otros mandan una captura del LinkedIn,
+      otros directamente un número de móvil.</p>
+      <p>Con PerfilaPro cada miembro tiene la <strong>misma estructura visual</strong> y la misma marca.
+      Un cliente que escanee el QR de cualquiera de tus socios o asociados ve la misma identidad
+      corporativa. La red parece red, no suma de individuos.</p>
+    </div>
+    <div class="pp-sector-panel__cases"><strong>Casos de uso:</strong> despachos jurídicos · asesorías fiscales · clínicas con varios profesionales</div>
+  </article>
+
+  <article class="pp-sector-panel" data-panel="comercial">
+    <h3 class="pp-sector-panel__h2">Equipa a tu fuerza comercial con presencia digital</h3>
+    <div class="pp-sector-panel__body">
+      <p>Tus comerciales captan por WhatsApp y boca a boca. Funciona, pero cuando un cliente potencial
+      los googlea, no encuentran nada profesional — o peor, encuentran el LinkedIn personal con foto de
+      la barbacoa de 2017.</p>
+      <p>PerfilaPro le da a cada comercial una <strong>página web propia, con tu marca</strong> y un QR
+      para imprimir en la furgo, el escaparate o la pegatina del casco. No hay que diseñar nada: tu
+      admin sube el logo de la marca, elige los colores, y todos los perfiles heredan ese branding.</p>
+    </div>
+    <div class="pp-sector-panel__cases"><strong>Casos de uso:</strong> redes de comerciales · franquicias · cadenas de servicios técnicos</div>
+  </article>
+</section>
+
+<!-- ─────────── Steps ─────────── -->
+<section class="pp-steps">
+  <div class="pp-section-eyebrow">Cómo funciona</div>
+  <h2 class="pp-section-title">En 5 minutos por persona</h2>
+  <p class="pp-section-sub">Tres pasos. Sin instalación, sin app, sin migración de nada.</p>
+
+  <div class="pp-steps__grid">
+    <div class="pp-step">
+      <div class="pp-step__n">1</div>
+      <h3 class="pp-step__title">Tú creas la organización</h3>
+      <p class="pp-step__body">Subes el logo, eliges color, escribes una frase corta. Tu URL <code style="font-family:var(--font-mono);font-size:12px">/e/tu-marca</code> queda lista. Lo gestionas desde un panel propio.</p>
+    </div>
+    <div class="pp-step">
+      <div class="pp-step__n">2</div>
+      <h3 class="pp-step__title">Cada profesional crea su perfil</h3>
+      <p class="pp-step__body">Servicios, WhatsApp, zona, descripción. Hereda tu marca arriba y abajo de la tarjeta. Sin diseño, sin curva de aprendizaje.</p>
+    </div>
+    <div class="pp-step">
+      <div class="pp-step__n">3</div>
+      <h3 class="pp-step__title">Comparten su perfil con clientes</h3>
+      <p class="pp-step__body">Por WhatsApp, QR impreso, vinilo en la furgo, firma de email. Cada visita refuerza tu marca, no solo a la persona.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Video ─────────── -->
+<section class="pp-video-section" id="demo">
+  <div class="pp-video-wrap">
+    <div class="pp-section-eyebrow">Demo en vivo</div>
+    <h2 class="pp-section-title">Cómo se monta una org en 60 segundos</h2>
+    <p class="pp-section-sub">Grabación del panel: crear organización, subir logo, asignar profesionales, ver el resultado.</p>
+    <div class="pp-video">
+      <video controls preload="metadata" playsinline poster="/videos/b2b-studio-demo-poster.png">
+        <source src="/videos/b2b-studio-demo.mp4" type="video/mp4">
+        Tu navegador no soporta vídeo HTML5.
+      </video>
+      <div class="pp-video__fallback" id="videoFallback">
+        <strong>Vídeo en breve</strong>
+        <small>La grabación del panel B2B Demo Studio se publica en los próximos días. Mientras tanto puedes <a href="#contacto" style="color:#fff;text-decoration:underline">solicitar una demo personal</a>.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Trust signals ─────────── -->
+<section class="pp-trust">
+  <span>🇪🇸 Servidores en Europa</span>
+  <span>🔒 GDPR</span>
+  <span>📄 Facturación legal española</span>
+  <span>⚡ Sin instalación, sin app</span>
+  <span>🔄 Exportas tus datos en JSON cuando quieras</span>
+</section>
+
+<!-- ─────────── Form ─────────── -->
+<section class="pp-form-section" id="contacto">
+  <div class="pp-form-wrap">
+    <div class="pp-section-eyebrow">Contacto</div>
+    <h2 class="pp-section-title">Hablemos de tu red</h2>
+    <p class="pp-section-sub">Cuéntame cuántos profesionales tiene tu equipo y qué buscas. Te respondo en menos de 24 h.</p>
+
+    <form class="pp-form-grid" id="leadForm" autocomplete="on" novalidate>
+      <!-- Honeypot · invisible · si se rellena, asumimos bot -->
+      <input class="pp-form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <div class="pp-form-row pp-form-row--inline">
+        <div>
+          <label class="pp-form-label" for="f-name">Nombre <span class="pp-form-required">*</span></label>
+          <input class="pp-input" type="text" id="f-name" name="name" required maxlength="100" autocomplete="name">
+        </div>
+        <div>
+          <label class="pp-form-label" for="f-company">Empresa <span class="pp-form-required">*</span></label>
+          <input class="pp-input" type="text" id="f-company" name="company" required maxlength="120" autocomplete="organization">
+        </div>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-email">Email <span class="pp-form-required">*</span></label>
+        <input class="pp-input" type="email" id="f-email" name="email" required maxlength="200" autocomplete="email">
+      </div>
+
+      <div class="pp-form-row pp-form-row--inline">
+        <div>
+          <label class="pp-form-label" for="f-team">Tamaño del equipo <span class="pp-form-required">*</span></label>
+          <select class="pp-input pp-input--select" id="f-team" name="team_size" required>
+            <option value="">— Elige —</option>
+            <option value="5-20">5 a 20 personas</option>
+            <option value="20-100">20 a 100 personas</option>
+            <option value="100-500">100 a 500 personas</option>
+            <option value="500+">Más de 500</option>
+          </select>
+        </div>
+        <div>
+          <label class="pp-form-label" for="f-sector">Sector <span class="pp-form-required">*</span></label>
+          <select class="pp-input pp-input--select" id="f-sector" name="sector" required>
+            <option value="">— Elige —</option>
+            <option value="seguros">Seguros y agentes</option>
+            <option value="despacho">Despachos / asesorías</option>
+            <option value="comercial">Red comercial / franquicia</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-message">Mensaje <small style="font-weight:500;color:var(--color-gris-500)">· opcional</small></label>
+        <textarea class="pp-input pp-input--textarea" id="f-message" name="message" rows="4" maxlength="2000" placeholder="Cuéntame qué problema quieres resolver"></textarea>
+      </div>
+
+      <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" type="submit" id="submitBtn">Enviar →</button>
+
+      <div class="pp-form-status" id="formStatus"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ─────────── Footer ─────────── -->
+<footer class="pp-foot">
+  <div class="pp-foot__b2c">
+    ¿Eres autónomo individual? <a href="/es/">Crea tu perfil gratis →</a>
+  </div>
+  <p>© PerfilaPro · <a href="/es/terminos">Términos</a> · <a href="/es/privacidad">Privacidad</a> · <a href="/es/legal">Aviso legal</a></p>
+</footer>
+
+<script>
+'use strict';
+
+/* ── Sector tabs ─────────────────────────────────────────── */
+document.querySelectorAll('.pp-sectors__tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.tab;
+    document.querySelectorAll('.pp-sectors__tab').forEach(t => {
+      const active = t.dataset.tab === target;
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.pp-sector-panel').forEach(p => {
+      p.classList.toggle('is-active', p.dataset.panel === target);
+    });
+  });
+});
+
+/* ── Video fallback ──────────────────────────────────────── */
+// Si el archivo de vídeo no existe (404), muestra el mensaje placeholder.
+(function () {
+  const video    = document.querySelector('.pp-video video');
+  const fallback = document.getElementById('videoFallback');
+  if (!video || !fallback) return;
+
+  video.addEventListener('loadeddata', () => {
+    fallback.style.display = 'none';
+  });
+  video.addEventListener('error', () => {
+    video.style.display = 'none';
+    fallback.style.display = 'flex';
+  });
+  // Si en 2.5 s no ha cargado metadata, asumimos que no hay archivo
+  setTimeout(() => {
+    if (video.readyState === 0) {
+      video.style.display = 'none';
+      fallback.style.display = 'flex';
+    }
+  }, 2500);
+})();
+
+/* ── Form submit ─────────────────────────────────────────── */
+const form       = document.getElementById('leadForm');
+const submitBtn  = document.getElementById('submitBtn');
+const formStatus = document.getElementById('formStatus');
+
+function setStatus(msg, kind) {
+  formStatus.textContent = msg;
+  formStatus.className   = 'pp-form-status pp-form-status--' + kind;
+  formStatus.style.display = 'block';
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  formStatus.style.display = 'none';
+
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  if (!data.name || !data.company || !data.email || !data.team_size || !data.sector) {
+    setStatus('Faltan campos obligatorios.', 'err');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  const originalLabel = submitBtn.textContent;
+  submitBtn.textContent = 'Enviando…';
+
+  try {
+    const res = await fetch('/api/lead-b2b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Error de servidor');
+    }
+    setStatus('¡Gracias! Te respondo en menos de 24 h.', 'ok');
+    form.reset();
+  } catch (err) {
+    setStatus('No se pudo enviar: ' + err.message + '. Si persiste, escríbeme a hola@perfilapro.es.', 'err');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+  }
+});
+</script>
+
+</body>
+</html>

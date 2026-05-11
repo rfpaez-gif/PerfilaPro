@@ -263,6 +263,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/lead-b2b"
+  to     = "/.netlify/functions/lead-b2b"
+  status = 200
+
+[[redirects]]
   from   = "/api/export-data"
   to     = "/.netlify/functions/export-data"
   status = 200

@@ -198,6 +198,22 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 - `organizations.idioma` o multilingüismo por org → diferido hasta tener cliente.
 - Tab integrada en `admin.html` para gestión de orgs → vive en su propia página `/admin-orgs.html` para no abultar el dashboard principal. Cuando el B2B sea producto estable se valora consolidar.
 
+### Landing B2B (`/es/empresas`)
+
+Página pública (indexable, no requiere auth) que vende el producto a empresas / redes profesionales. Hermana de la landing B2C de `/es/` pero con mensaje, copy y CTA distintos:
+- **Hero** con un claim único + 2 CTAs: form de demo (primario) + scroll al vídeo.
+- **Switcher sectorial** con 3 ángulos preconfigurados — Seguros y agentes (retención), Despachos (imagen de red), Redes comerciales (productividad). Cada uno con su copy, sin reload — vanilla JS.
+- **Sección de vídeo** `<video>` apuntando a `/videos/b2b-studio-demo.mp4`. Si el archivo no existe (404 o timeout 2.5 s), se muestra un fallback "Vídeo en breve" en lugar de un reproductor roto. Para activar la demo en vídeo: grabar Studio en acción → exportar MP4 < 5 MB → subir a `public/videos/b2b-studio-demo.mp4` + poster a `public/videos/b2b-studio-demo-poster.png`.
+- **Form** con honeypot (campo `website` oculto; si viene relleno, devolvemos 200 sin enviar). Campos: nombre, empresa, email, tamaño de equipo (enum), sector (enum), mensaje opcional.
+- **Trust signals** + **footer** con enlace cruzado a la landing B2C ("¿Eres autónomo individual?").
+
+**Endpoint `lead-b2b.js`** (`POST /api/lead-b2b`): valida campos, ejecuta el honeypot, manda email vía Resend a `B2B_LEAD_INBOX` con `replyTo` apuntando al email del lead. Sin auth (es un form público), pero defensa via honeypot + validación estricta de enums + tamaño máximo de campos.
+
+**Env vars**:
+- `B2B_LEAD_INBOX` — email que recibe los leads (ej. `leads@perfilapro.es`, o un Forward del founder). Si no está configurado, el endpoint devuelve 500.
+
+**Reversibilidad**: si el ángulo B2B no encaja, basta con borrar `public/es/empresas.html` + la route `/api/lead-b2b` en `netlify.toml` + `lead-b2b.js`. Sin BD, sin dependencias.
+
 ### Observability (PostHog)
 
 Sprint 1: analítica de producto vía PostHog Cloud (región EU). Carga **solo tras consentimiento explícito** del usuario en el banner de privacidad.
@@ -245,6 +261,7 @@ SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
 POSTHOG_API_KEY       # PostHog project key — empty disables analytics
 POSTHOG_HOST          # default https://eu.i.posthog.com
+B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas
 LAUNCH_PROMO_ACTIVE   # "1" activa la promo de lanzamiento 100% bonificada
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3
@@ -266,6 +283,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/admin-agents` | `admin-agents` |
 | `/api/admin-orgs` | `admin-orgs` |
 | `/api/upload-org-logo` | `upload-org-logo` |
+| `/api/lead-b2b` | `lead-b2b` |
 | `/api/legal-settings` | `legal-settings` |
 | `/api/card-status` | `card-status` |
 | `/api/edit-card` | `edit-card` |
