@@ -174,10 +174,11 @@ Acción comercial reversible para que los primeros usuarios completen el flujo d
 
 Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" de profesionales bajo una organización. Activa el scaffolding dormido de la migración 007 (`organizations` + `cards.organization_id`) añadiendo branding (logo + color + slug público + tagline) en migración 019.
 
-**Flujo de gestión** (admin manual, una semana de scope):
-1. Admin crea org → `POST /api/admin-orgs` con `action='create'`, body `{slug, name, tagline?, logo_url?, color_primary?, nif?, email?}`. Mismo auth que el resto del admin (password + TOTP).
-2. Admin asigna cards → `POST /api/admin-orgs` con `action='assign_card'`, body `{card_slug, org_slug}` (o `org_slug=null` para desvincular).
-3. La página `/e/:slug` queda servida automáticamente.
+**Flujo de gestión** (white-label, marca de cliente configurable sin tocar código):
+- **B2B Demo Studio** en `/admin-orgs.html` — UI dedicada protegida por `ADMIN_PASSWORD` + TOTP. Permite crear/editar/eliminar orgs, subir logo con drag-and-drop, elegir color con picker nativo, asignar cards con selector buscable y ver vista previa en vivo de `/e/:slug` en un iframe lateral. Pensado para que el founder o admin demo monte una org branded en 30 segundos durante una conversación comercial.
+- Endpoint `POST /api/admin-orgs` (acciones: `list`, `create`, `update`, `delete_org`, `assign_card`, `list_cards_for_assignment`). Mismo auth que el resto del admin (password + TOTP).
+- Endpoint `POST /api/upload-org-logo` (auth password + TOTP): recibe `{slug, base64, contentType}`, sube al bucket `Avatars` bajo `org-logos/{slug}-{timestamp}.{ext}` y hace `UPDATE organizations.logo_url` en una sola llamada. Acepta png/jpg/webp/svg, máx 2 MB. La org debe existir antes de subir el logo (404 si no).
+- `delete_org` es soft-delete (`deleted_at = NOW()`). Antes de marcar la org, desvincula todas sus cards (`organization_id = NULL`) para que ninguna quede colgando.
 
 **Render público**:
 - `/e/:slug` (función `org.js`) — hero con fondo `color_primary`, logo de la org y tagline; debajo, grid de profesionales activos (`pp-dir-grid` reusado de `dir-utils`). 404 si la org no existe o está soft-deleted. Solo español por ahora. Emite `<meta name="robots" content="noindex,nofollow">` siempre — las páginas B2B se difunden por URL directa, no via Google, y noindex protege de fugas de branding de terceros mientras el piloto no esté cerrado.
@@ -193,9 +194,9 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 
 **Fuera de scope** (deuda consciente):
 - Stripe billing B2B / facturación a la organización en lugar de al autónomo → Sprint 3.
-- UI completa en `admin.html` para CRUD de orgs → solo si Iris (u otro lead B2B) se confirma como piloto. Por ahora, el endpoint `admin-orgs` se opera vía `curl` o desde una consola admin temporal.
 - Catalán en `/e/:slug` → la página solo renderiza en español; se añade cuando haya un lead B2B catalanoparlante real.
 - `organizations.idioma` o multilingüismo por org → diferido hasta tener cliente.
+- Tab integrada en `admin.html` para gestión de orgs → vive en su propia página `/admin-orgs.html` para no abultar el dashboard principal. Cuando el B2B sea producto estable se valora consolidar.
 
 ### Observability (PostHog)
 
@@ -264,6 +265,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/admin-invoices` | `admin-invoices` |
 | `/api/admin-agents` | `admin-agents` |
 | `/api/admin-orgs` | `admin-orgs` |
+| `/api/upload-org-logo` | `upload-org-logo` |
 | `/api/legal-settings` | `legal-settings` |
 | `/api/card-status` | `card-status` |
 | `/api/edit-card` | `edit-card` |

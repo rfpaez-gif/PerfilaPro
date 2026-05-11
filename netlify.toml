@@ -228,6 +228,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/upload-org-logo"
+  to     = "/.netlify/functions/upload-org-logo"
+  status = 200
+
+[[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
   status = 200

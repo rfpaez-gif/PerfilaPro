@@ -262,4 +262,93 @@ describe('admin-orgs handler', () => {
       expect(res.statusCode).toBe(400);
     });
   });
+
+  // ── delete_org ──
+  describe('delete_org', () => {
+    it('soft-deleta la org y desvincula sus cards', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'uuid-iris' }, error: null }),
+      };
+      const cardsUpdateEq = vi.fn().mockResolvedValue({ error: null });
+      const orgUpdateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = { eq: cardsUpdateEq };
+      const orgUpdate   = { eq: orgUpdateEq };
+
+      let updateCallCount = 0;
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: vi.fn(() => orgLookup),
+            update: vi.fn((payload) => {
+              updateCallCount++;
+              return orgUpdate;
+            }),
+          };
+        }
+        if (table === 'cards') {
+          return { update: vi.fn(() => cardsUpdate) };
+        }
+        return {};
+      });
+
+      const res = await handler(buildEvent({ body: { action: 'delete_org', slug: 'iris' } }));
+      expect(res.statusCode).toBe(200);
+      expect(cardsUpdateEq).toHaveBeenCalledWith('organization_id', 'uuid-iris');
+      expect(orgUpdateEq).toHaveBeenCalledWith('id', 'uuid-iris');
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      const res = await handler(buildEvent({ body: { action: 'delete_org', slug: 'no-existe' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza slug inválido', async () => {
+      const res = await handler(buildEvent({ body: { action: 'delete_org', slug: 'IRIS' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── list_cards_for_assignment ──
+  describe('list_cards_for_assignment', () => {
+    it('devuelve cards activas con slug, nombre, organization_id', async () => {
+      const cards = [
+        { slug: 'ana', nombre: 'Ana', organization_id: 'uuid-iris', plan: 'pro', status: 'active' },
+        { slug: 'beto', nombre: 'Beto', organization_id: null, plan: 'base', status: 'active' },
+      ];
+      const select = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn(() => Promise.resolve({ data: cards, error: null })),
+      };
+      mockFrom.mockReturnValue({ select: vi.fn(() => select) });
+
+      const res = await handler(buildEvent({ body: { action: 'list_cards_for_assignment' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.cards).toEqual(cards);
+    });
+
+    it('devuelve 500 si la query falla', async () => {
+      const select = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn(() => Promise.resolve({ data: null, error: { message: 'db down' } })),
+      };
+      mockFrom.mockReturnValue({ select: vi.fn(() => select) });
+
+      const res = await handler(buildEvent({ body: { action: 'list_cards_for_assignment' } }));
+      expect(res.statusCode).toBe(500);
+    });
+  });
 });

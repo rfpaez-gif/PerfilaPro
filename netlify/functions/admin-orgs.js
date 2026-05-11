@@ -134,6 +134,51 @@ function makeHandler(db) {
       return jsonResponse(200, { ok: true });
     }
 
+    // ── delete_org: soft-delete (setea deleted_at) ──
+    if (action === 'delete_org') {
+      const { slug } = body;
+      if (!isValidOrgSlug(slug)) return jsonResponse(400, { error: 'slug inválido' });
+
+      // Primero desvinculamos las cards para que no queden colgando con
+      // un organization_id que apunta a una org borrada.
+      const { data: org } = await db
+        .from('organizations')
+        .select('id')
+        .eq('slug', slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
+
+      const { error: cardsErr } = await db
+        .from('cards')
+        .update({ organization_id: null })
+        .eq('organization_id', org.id);
+      if (cardsErr) return jsonResponse(500, { error: cardsErr.message });
+
+      const { error: orgErr } = await db
+        .from('organizations')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', org.id);
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+
+      return jsonResponse(200, { ok: true });
+    }
+
+    // ── list_cards_for_assignment: cards activas con su org actual ──
+    // Lightweight: solo los campos que el studio necesita para mostrar
+    // cards en el selector de asignación. No reusa admin-data (que es
+    // pesado y devuelve toda la tabla con campos sensibles).
+    if (action === 'list_cards_for_assignment') {
+      const { data, error } = await db
+        .from('cards')
+        .select('slug, nombre, organization_id, plan, status')
+        .eq('status', 'active')
+        .is('deleted_at', null)
+        .order('nombre', { ascending: true });
+      if (error) return jsonResponse(500, { error: error.message });
+      return jsonResponse(200, { ok: true, cards: data || [] });
+    }
+
     // ── assign_card: vincula (o desvincula) una card a una org ──
     if (action === 'assign_card') {
       const { card_slug, org_slug } = body;

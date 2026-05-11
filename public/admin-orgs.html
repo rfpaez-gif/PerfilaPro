@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>B2B Demo Studio — PerfilaPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    body { background: var(--color-crema, #FAF7F0); min-height: 100dvh; margin: 0; font-family: var(--font-sans); color: var(--color-tinta, #0A1F44); }
+
+    /* ── Login ────────────────────────────────────────────── */
+    .pp-login { display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 1rem; }
+    .pp-login__box { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); box-shadow: var(--pp-sh-md, 0 8px 24px rgba(0,0,0,.06)); padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center; }
+    .pp-login__title { font-family: var(--font-serif); font-size: 1.625rem; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .25rem; }
+    .pp-login__sub { color: var(--color-gris-500, #6B7280); font-size: 13px; margin: 0 0 1.5rem; }
+    .pp-login__error { color: var(--color-coral, #E0633F); font-size: 13px; margin-top: .75rem; display: none; }
+    .pp-login__totp { letter-spacing: .2em; font-size: 1.125rem; text-align: center; }
+    .pp-login .pp-input { margin-bottom: .75rem; }
+
+    /* ── Studio shell ─────────────────────────────────────── */
+    .pp-studio { display: none; }
+    .pp-topbar { background: var(--color-tinta, #0A1F44); color: #fff; padding: .9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .pp-topbar__title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; }
+    .pp-topbar__title small { display: block; font-family: var(--font-sans); font-size: 11px; opacity: .65; font-weight: 500; margin-top: 2px; letter-spacing: .02em; }
+    .pp-topbar__logout { background: rgba(255,255,255,.18); border: none; color: #fff; padding: .4rem 1rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font-size: 13px; font-weight: 600; }
+    .pp-topbar__logout:hover { background: rgba(255,255,255,.32); }
+
+    .pp-shell { display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding: 1.5rem; max-width: 1480px; margin: 0 auto; }
+    @media (min-width: 1100px) { .pp-shell { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: flex-start; } }
+
+    /* ── Notification banner ──────────────────────────────── */
+    .pp-toast { padding: .65rem 1rem; border-radius: 10px; font-size: 13px; margin-bottom: .75rem; display: none; line-height: 1.45; }
+    .pp-toast--ok    { background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border: 1px solid #BFE9D0; }
+    .pp-toast--err   { background: #FDECEA; color: #B0392A; border: 1px solid #F4C2BC; }
+    .pp-toast--info  { background: #F3F4F6; color: var(--color-gris-500, #6B7280); border: 1px solid #E5E7EB; }
+
+    /* ── Sections ─────────────────────────────────────────── */
+    .pp-section { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.25rem 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .pp-section__h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; gap: 1rem; flex-wrap: wrap; }
+    .pp-section__title { font-family: var(--font-serif); font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; }
+    .pp-section__hint { font-size: 12px; color: var(--color-gris-500, #6B7280); }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .pp-form { display: grid; gap: .9rem; }
+    .pp-form__row { display: grid; gap: .35rem; }
+    .pp-form__row--inline { display: grid; grid-template-columns: 1fr auto; gap: .75rem; align-items: end; }
+    .pp-form__label { font-size: 12px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-form__label small { color: var(--color-gris-500, #6B7280); font-weight: 500; margin-left: .35rem; }
+    .pp-form__hint { font-size: 11px; color: var(--color-gris-500, #6B7280); line-height: 1.45; }
+
+    .pp-color-row { display: grid; grid-template-columns: 56px 1fr; gap: .65rem; align-items: center; }
+    .pp-color-picker { width: 56px; height: 38px; padding: 0; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; cursor: pointer; background: #fff; }
+
+    /* ── Logo drop ────────────────────────────────────────── */
+    .pp-logo-drop { display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px dashed var(--color-gris-200, #E5E7EB); border-radius: 12px; background: #FAFAFA; transition: border-color .15s, background .15s; }
+    .pp-logo-drop.is-drag { border-color: var(--color-verde-dark, #00A865); background: var(--color-verde-light, #E6F9F0); }
+    .pp-logo-drop__preview { width: 60px; height: 60px; border-radius: 10px; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+    .pp-logo-drop__preview img { max-width: 100%; max-height: 100%; }
+    .pp-logo-drop__txt { font-size: 13px; color: var(--color-gris-500, #6B7280); flex: 1; line-height: 1.4; }
+    .pp-logo-drop__txt strong { color: var(--color-tinta, #0A1F44); font-weight: 600; display: block; margin-bottom: 2px; }
+    .pp-logo-drop input[type="file"] { display: none; }
+
+    /* ── Orgs table ───────────────────────────────────────── */
+    .pp-orgs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .pp-orgs-table th { text-align: left; font-family: var(--font-mono); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-gris-500, #6B7280); border-bottom: 1px solid var(--color-gris-200, #E5E7EB); padding: .55rem .5rem; }
+    .pp-orgs-table td { padding: .65rem .5rem; border-bottom: 1px solid #F1F3F5; vertical-align: middle; }
+    .pp-orgs-table tr:hover td { background: #FAFBFC; }
+    .pp-orgs-table tr.is-active td { background: var(--color-verde-light, #E6F9F0); }
+    .pp-orgs-table__logo { width: 36px; height: 36px; border-radius: 8px; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .pp-orgs-table__logo img { max-width: 100%; max-height: 100%; }
+    .pp-orgs-table__swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,.1); display: inline-block; vertical-align: middle; margin-right: .35rem; }
+    .pp-orgs-table__name { font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-orgs-table__slug { font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); margin-top: 2px; }
+    .pp-orgs-table__actions { display: flex; gap: .35rem; flex-wrap: wrap; }
+
+    /* ── Cards assignment ─────────────────────────────────── */
+    .pp-cards-list { display: grid; gap: .4rem; max-height: 360px; overflow-y: auto; padding-right: .25rem; }
+    .pp-cards-list__item { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: center; padding: .55rem .75rem; background: #FAFBFC; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; font-size: 13px; }
+    .pp-cards-list__name { font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-cards-list__meta { font-size: 11px; color: var(--color-gris-500, #6B7280); font-family: var(--font-mono); margin-top: 2px; }
+    .pp-cards-list__btn { font-size: 12px; padding: .35rem .75rem; border-radius: var(--pp-r-pill, 999px); border: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; cursor: pointer; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-cards-list__btn:hover { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); }
+    .pp-cards-list__btn--unassign { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); color: var(--color-verde-dark, #00A865); }
+    .pp-cards-list__btn--other { color: var(--color-gris-500, #6B7280); }
+    .pp-cards-list__search { width: 100%; margin-bottom: .65rem; }
+
+    /* ── Preview ──────────────────────────────────────────── */
+    .pp-preview { position: sticky; top: 1.5rem; }
+    .pp-preview__frame { width: 100%; height: 70vh; min-height: 520px; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); background: #fff; }
+    .pp-preview__bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: .65rem; gap: .5rem; }
+    .pp-preview__url { font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pp-preview__empty { padding: 4rem 1.5rem; text-align: center; color: var(--color-gris-500, #6B7280); font-size: 13px; background: #fff; border: 1px dashed var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); }
+
+    .pp-empty { text-align: center; color: var(--color-gris-500, #6B7280); padding: 1.5rem .5rem; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- Login                                                       -->
+<!-- ─────────────────────────────────────────────────────────── -->
+<div class="pp-login" id="loginWrap">
+  <div class="pp-login__box">
+    <h1 class="pp-login__title">B2B Demo <em>Studio</em></h1>
+    <p class="pp-login__sub">Crea y gestiona organizaciones · marca blanca</p>
+    <input type="password" class="pp-input" id="pwdInput" placeholder="Contraseña admin" autocomplete="current-password">
+    <input type="text" class="pp-input pp-login__totp" id="totpInput" placeholder="Código 2FA (6 dígitos)" autocomplete="one-time-code" inputmode="numeric" maxlength="6">
+    <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--block pp-btn--pill" onclick="login()">Entrar</button>
+    <div class="pp-login__error" id="loginError">Contraseña o código incorrectos.</div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- Studio                                                      -->
+<!-- ─────────────────────────────────────────────────────────── -->
+<div class="pp-studio" id="studioWrap">
+  <header class="pp-topbar">
+    <h1 class="pp-topbar__title">B2B Demo Studio<small>PerfilaPro · marca blanca</small></h1>
+    <button class="pp-topbar__logout" onclick="logout()">Cerrar sesión</button>
+  </header>
+
+  <main class="pp-shell">
+    <!-- ── Columna izquierda: forms + tablas ─────────── -->
+    <div>
+      <div id="toast" class="pp-toast"></div>
+
+      <!-- Formulario de creación / edición -->
+      <section class="pp-section">
+        <div class="pp-section__h">
+          <h2 class="pp-section__title" id="formTitle">Nueva organización</h2>
+          <button class="pp-btn pp-btn--ghost pp-btn--sm" id="resetFormBtn" type="button" onclick="resetForm()" style="display:none">Cancelar edición</button>
+        </div>
+
+        <div class="pp-form">
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="nameInput">Nombre <small>visible en /e/:slug</small></label>
+            <input type="text" class="pp-input" id="nameInput" placeholder="Allianz Agentes" maxlength="120">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="slugInput">Slug <small>2-40 chars · a-z 0-9 -</small></label>
+            <input type="text" class="pp-input" id="slugInput" placeholder="allianz-agentes" maxlength="40">
+            <p class="pp-form__hint">URL pública: <span id="slugUrlPreview" style="font-family:var(--font-mono);color:var(--color-tinta)">https://perfilapro.es/e/…</span></p>
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="taglineInput">Tagline <small>opcional · máx 140</small></label>
+            <input type="text" class="pp-input" id="taglineInput" placeholder="Cartera de agentes Allianz España" maxlength="140">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label">Color primario</label>
+            <div class="pp-color-row">
+              <input type="color" class="pp-color-picker" id="colorInput" value="#003781">
+              <input type="text" class="pp-input" id="colorHexInput" placeholder="#003781" maxlength="7">
+            </div>
+            <p class="pp-form__hint">Hex #RRGGBB. Se pinta el fondo del hero de /e/:slug y la franja superior en /c/:slug.</p>
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label">Logo <small>opcional · PNG/JPG/SVG · máx 2 MB</small></label>
+            <label class="pp-logo-drop" id="logoDrop">
+              <div class="pp-logo-drop__preview" id="logoPreview">
+                <span style="font-size:10px;color:var(--color-gris-500);text-align:center;line-height:1.2">sin<br>logo</span>
+              </div>
+              <div class="pp-logo-drop__txt">
+                <strong>Suelta una imagen o pulsa para elegir</strong>
+                Se sube al bucket Avatars y enlaza automáticamente. La org debe existir ya en BD para subir un logo.
+              </div>
+              <input type="file" id="logoFileInput" accept="image/*">
+            </label>
+            <p class="pp-form__hint" id="logoStatus" style="display:none"></p>
+          </div>
+
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="pp-btn pp-btn--primary" id="saveBtn" onclick="saveOrg()">Crear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lista de orgs -->
+      <section class="pp-section">
+        <div class="pp-section__h">
+          <h2 class="pp-section__title">Organizaciones</h2>
+          <span class="pp-section__hint" id="orgCount">—</span>
+        </div>
+        <table class="pp-orgs-table" id="orgsTable">
+          <thead><tr><th>Org</th><th>Slug</th><th>Color</th><th>Acciones</th></tr></thead>
+          <tbody><tr><td colspan="4" class="pp-empty">Cargando…</td></tr></tbody>
+        </table>
+      </section>
+
+      <!-- Asignación de cards -->
+      <section class="pp-section" id="assignSection" style="display:none">
+        <div class="pp-section__h">
+          <h2 class="pp-section__title">Asignar profesionales · <span id="assignOrgName" style="font-style:italic"></span></h2>
+          <span class="pp-section__hint">Click para vincular/desvincular</span>
+        </div>
+        <input type="text" class="pp-input pp-cards-list__search" id="cardsSearch" placeholder="Buscar por nombre o slug…">
+        <div class="pp-cards-list" id="cardsList">
+          <p class="pp-empty">Carga una org para ver sus profesionales.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Columna derecha: preview ─────────────────── -->
+    <aside>
+      <div class="pp-preview">
+        <div class="pp-preview__bar">
+          <div>
+            <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-gris-500)">Vista previa</div>
+            <div class="pp-preview__url" id="previewUrl">— elige una org para previsualizar —</div>
+          </div>
+          <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="reloadPreview()">↻ Recargar</button>
+        </div>
+        <iframe class="pp-preview__frame" id="previewFrame" src="about:blank" loading="lazy" sandbox="allow-same-origin allow-scripts"></iframe>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+/* ─────────────────────────────────────────────────────────────
+   Auth (sessionStorage · mismo patrón que admin.html)
+   ─────────────────────────────────────────────────────────── */
+function getPwd()  { return sessionStorage.getItem('adminPwd')  || ''; }
+function getTotp() { return sessionStorage.getItem('adminTotp') || ''; }
+function authHeaders(extra) {
+  return Object.assign({}, extra || {}, {
+    'x-admin-password': getPwd(),
+    'x-admin-totp':     getTotp(),
+  });
+}
+
+document.getElementById('pwdInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('totpInput').focus();
+});
+document.getElementById('totpInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+async function login() {
+  const pwd  = document.getElementById('pwdInput').value.trim();
+  const totp = document.getElementById('totpInput').value.trim();
+  sessionStorage.setItem('adminPwd', pwd);
+  sessionStorage.setItem('adminTotp', totp);
+  document.getElementById('loginError').style.display = 'none';
+
+  // Probamos la auth llamando a list (ligero)
+  try {
+    const res = await fetch('/.netlify/functions/admin-orgs', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ action: 'list' }),
+    });
+    if (!res.ok) throw new Error(res.status);
+  } catch {
+    document.getElementById('loginError').style.display = 'block';
+    sessionStorage.removeItem('adminPwd');
+    sessionStorage.removeItem('adminTotp');
+    return;
+  }
+
+  document.getElementById('loginWrap').style.display  = 'none';
+  document.getElementById('studioWrap').style.display = 'block';
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('totpInput').value = '';
+  loadOrgs();
+  loadCards();
+}
+
+function logout() {
+  sessionStorage.removeItem('adminPwd');
+  sessionStorage.removeItem('adminTotp');
+  location.reload();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Toast notifications
+   ─────────────────────────────────────────────────────────── */
+let toastTimer = null;
+function toast(msg, kind) {
+  const el = document.getElementById('toast');
+  el.className = 'pp-toast pp-toast--' + (kind || 'info');
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Form helpers
+   ─────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+let editingSlug   = null;   // null = creando, string = editando esa org
+let currentLogoUrl = null;  // logo actualmente asignado a la org en edición
+let cachedOrgs   = [];
+let cachedCards  = [];
+let selectedOrgSlug = null; // org seleccionada para asignación + preview
+
+function slugify(s) {
+  return (s || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
+$('nameInput').addEventListener('input', e => {
+  // Solo auto-derivamos slug si el usuario aún no lo ha tocado manualmente
+  if (!$('slugInput').dataset.touched) {
+    $('slugInput').value = slugify(e.target.value);
+    updateSlugPreview();
+  }
+});
+$('slugInput').addEventListener('input', e => {
+  e.target.dataset.touched = '1';
+  e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  updateSlugPreview();
+});
+$('colorInput').addEventListener('input', e => {
+  $('colorHexInput').value = e.target.value.toUpperCase();
+});
+$('colorHexInput').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) $('colorInput').value = v;
+});
+
+function updateSlugPreview() {
+  const s = $('slugInput').value;
+  $('slugUrlPreview').textContent = s ? `https://perfilapro.es/e/${s}` : 'https://perfilapro.es/e/…';
+}
+
+function resetForm() {
+  editingSlug = null;
+  currentLogoUrl = null;
+  $('formTitle').textContent = 'Nueva organización';
+  $('saveBtn').textContent = 'Crear';
+  $('resetFormBtn').style.display = 'none';
+  $('nameInput').value = '';
+  $('slugInput').value = '';
+  $('slugInput').dataset.touched = '';
+  $('taglineInput').value = '';
+  $('colorInput').value = '#003781';
+  $('colorHexInput').value = '#003781';
+  setLogoPreview(null);
+  $('logoStatus').style.display = 'none';
+  updateSlugPreview();
+}
+
+function loadForm(org) {
+  editingSlug = org.slug;
+  currentLogoUrl = org.logo_url || null;
+  $('formTitle').textContent = `Editar · ${org.name}`;
+  $('saveBtn').textContent = 'Guardar cambios';
+  $('resetFormBtn').style.display = 'inline-flex';
+  $('nameInput').value = org.name || '';
+  $('slugInput').value = org.slug || '';
+  $('slugInput').dataset.touched = '1';
+  $('taglineInput').value = org.tagline || '';
+  $('colorInput').value = org.color_primary || '#003781';
+  $('colorHexInput').value = (org.color_primary || '#003781').toUpperCase();
+  setLogoPreview(org.logo_url);
+  $('logoStatus').style.display = 'none';
+  updateSlugPreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setLogoPreview(url) {
+  const box = $('logoPreview');
+  box.innerHTML = url
+    ? `<img src="${url}" alt="logo">`
+    : `<span style="font-size:10px;color:var(--color-gris-500);text-align:center;line-height:1.2">sin<br>logo</span>`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Logo drag & drop
+   ─────────────────────────────────────────────────────────── */
+const drop = $('logoDrop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('is-drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('is-drag'));
+drop.addEventListener('drop', async e => {
+  e.preventDefault();
+  drop.classList.remove('is-drag');
+  if (e.dataTransfer.files.length) await uploadLogoFile(e.dataTransfer.files[0]);
+});
+$('logoFileInput').addEventListener('change', async e => {
+  if (e.target.files.length) await uploadLogoFile(e.target.files[0]);
+});
+
+async function uploadLogoFile(file) {
+  if (!file.type.startsWith('image/')) {
+    toast('El archivo debe ser una imagen', 'err');
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast('Imagen demasiado grande (máx 2 MB)', 'err');
+    return;
+  }
+  if (!editingSlug) {
+    toast('Crea primero la org (con su slug) y luego sube el logo', 'err');
+    return;
+  }
+  $('logoStatus').textContent = 'Subiendo logo…';
+  $('logoStatus').style.display = 'block';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await fetch('/.netlify/functions/upload-org-logo', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ slug: editingSlug, base64, contentType: file.type }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || `HTTP ${res.status}`);
+    }
+    currentLogoUrl = json.logo_url;
+    setLogoPreview(json.logo_url);
+    $('logoStatus').textContent = `OK · ${(json.bytes / 1024).toFixed(0)} KB`;
+    toast('Logo subido y enlazado', 'ok');
+    await loadOrgs(); // refrescar lista para que la columna logo se actualice
+    reloadPreview();
+  } catch (err) {
+    $('logoStatus').textContent = 'Error: ' + err.message;
+    toast('Error subiendo logo: ' + err.message, 'err');
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const s = r.result;
+      const i = s.indexOf(',');
+      resolve(i >= 0 ? s.slice(i + 1) : s);
+    };
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CRUD de orgs
+   ─────────────────────────────────────────────────────────── */
+async function callAdmin(payload) {
+  const res = await fetch('/.netlify/functions/admin-orgs', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.ok) {
+    throw new Error(json.error || `HTTP ${res.status}`);
+  }
+  return json;
+}
+
+async function saveOrg() {
+  const name = $('nameInput').value.trim();
+  const slug = $('slugInput').value.trim();
+  const tagline = $('taglineInput').value.trim();
+  const color = $('colorHexInput').value.trim() || $('colorInput').value;
+
+  if (!name) return toast('Falta el nombre', 'err');
+  if (!slug) return toast('Falta el slug', 'err');
+
+  $('saveBtn').disabled = true;
+  try {
+    if (editingSlug) {
+      await callAdmin({
+        action: 'update', slug: editingSlug,
+        name, tagline: tagline || null, color_primary: color,
+      });
+      toast(`Org "${name}" actualizada`, 'ok');
+    } else {
+      await callAdmin({
+        action: 'create',
+        slug, name, tagline: tagline || null, color_primary: color,
+      });
+      editingSlug = slug; // permite subir logo justo después
+      $('formTitle').textContent = `Editar · ${name}`;
+      $('saveBtn').textContent = 'Guardar cambios';
+      $('resetFormBtn').style.display = 'inline-flex';
+      toast(`Org "${name}" creada · ya puedes subir el logo`, 'ok');
+    }
+    await loadOrgs();
+    selectOrg(editingSlug);
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+}
+
+async function loadOrgs() {
+  try {
+    const json = await callAdmin({ action: 'list' });
+    cachedOrgs = json.orgs || [];
+    renderOrgsTable();
+  } catch (err) {
+    toast('Error cargando orgs: ' + err.message, 'err');
+  }
+}
+
+function renderOrgsTable() {
+  const tbody = document.querySelector('#orgsTable tbody');
+  $('orgCount').textContent = `${cachedOrgs.length} org${cachedOrgs.length === 1 ? '' : 's'}`;
+
+  if (!cachedOrgs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="pp-empty">Sin organizaciones · crea la primera arriba</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = cachedOrgs.map(o => {
+    const isSel = selectedOrgSlug === o.slug;
+    const safeName = escapeHtml(o.name || '');
+    const safeSlug = escapeHtml(o.slug || '');
+    const cardCount = cachedCards.filter(c => c.organization_id && cachedOrgs.find(x => x.id === c.organization_id)?.slug === o.slug).length;
+    const logoCell = o.logo_url
+      ? `<div class="pp-orgs-table__logo"><img src="${escapeAttr(o.logo_url)}" alt=""></div>`
+      : '<div class="pp-orgs-table__logo" style="background:#FAFBFC"><span style="font-size:9px;color:var(--color-gris-500)">—</span></div>';
+    const color = o.color_primary || '#0A1F44';
+    return `<tr class="${isSel ? 'is-active' : ''}">
+      <td><div style="display:flex;align-items:center;gap:.65rem">
+        ${logoCell}
+        <div>
+          <div class="pp-orgs-table__name">${safeName}</div>
+          <div class="pp-orgs-table__slug">${cardCount} card${cardCount === 1 ? '' : 's'} asignada${cardCount === 1 ? '' : 's'}</div>
+        </div>
+      </div></td>
+      <td><span class="pp-orgs-table__slug">${safeSlug}</span></td>
+      <td><span class="pp-orgs-table__swatch" style="background:${escapeAttr(color)}"></span><span style="font-family:var(--font-mono);font-size:11px">${escapeHtml(color)}</span></td>
+      <td><div class="pp-orgs-table__actions">
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="selectOrg('${safeSlug}')">Editar</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/e/${safeSlug}','_blank')">Abrir</button>
+        <button class="pp-btn pp-btn--danger pp-btn--sm" onclick="deleteOrg('${safeSlug}','${safeName}')">Eliminar</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function selectOrg(slug) {
+  const org = cachedOrgs.find(o => o.slug === slug);
+  if (!org) return;
+  selectedOrgSlug = slug;
+  loadForm(org);
+  showAssignSection(org);
+  renderOrgsTable();
+  setPreview(slug);
+}
+
+async function deleteOrg(slug, name) {
+  if (!confirm(`¿Eliminar la org "${name}"?\n\nLas cards quedarán desvinculadas (organization_id = NULL). La org se soft-deleta y deja libre el slug.`)) return;
+  try {
+    await callAdmin({ action: 'delete_org', slug });
+    if (editingSlug === slug) resetForm();
+    if (selectedOrgSlug === slug) { selectedOrgSlug = null; setPreview(null); $('assignSection').style.display = 'none'; }
+    await loadOrgs();
+    await loadCards();
+    toast(`Org "${name}" eliminada`, 'ok');
+  } catch (err) {
+    toast('Error borrando: ' + err.message, 'err');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Asignación de cards
+   ─────────────────────────────────────────────────────────── */
+async function loadCards() {
+  try {
+    const json = await callAdmin({ action: 'list_cards_for_assignment' });
+    cachedCards = json.cards || [];
+    if (selectedOrgSlug) {
+      const org = cachedOrgs.find(o => o.slug === selectedOrgSlug);
+      if (org) showAssignSection(org);
+    }
+    renderOrgsTable();
+  } catch (err) {
+    toast('Error cargando cards: ' + err.message, 'err');
+  }
+}
+
+function showAssignSection(org) {
+  $('assignSection').style.display = 'block';
+  $('assignOrgName').textContent = org.name;
+  renderCardsList();
+}
+
+$('cardsSearch').addEventListener('input', renderCardsList);
+
+function renderCardsList() {
+  if (!selectedOrgSlug) return;
+  const org = cachedOrgs.find(o => o.slug === selectedOrgSlug);
+  if (!org) return;
+  const q = $('cardsSearch').value.trim().toLowerCase();
+  const list = $('cardsList');
+
+  const filtered = cachedCards.filter(c =>
+    !q || c.nombre.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = '<p class="pp-empty">Sin resultados</p>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(c => {
+    const assignedHere = c.organization_id === org.id;
+    const assignedElse = c.organization_id && c.organization_id !== org.id;
+    let btnLabel, btnClass;
+    if (assignedHere) { btnLabel = 'Quitar'; btnClass = 'pp-cards-list__btn pp-cards-list__btn--unassign'; }
+    else if (assignedElse) { btnLabel = 'Mover aquí'; btnClass = 'pp-cards-list__btn pp-cards-list__btn--other'; }
+    else { btnLabel = 'Asignar'; btnClass = 'pp-cards-list__btn'; }
+
+    return `<div class="pp-cards-list__item">
+      <div>
+        <div class="pp-cards-list__name">${escapeHtml(c.nombre)}</div>
+        <div class="pp-cards-list__meta">${escapeHtml(c.slug)} · ${escapeHtml(c.plan || '')}</div>
+      </div>
+      <button class="${btnClass}" onclick="toggleCard('${escapeAttr(c.slug)}', ${assignedHere ? 'null' : `'${escapeAttr(org.slug)}'`})">${btnLabel}</button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleCard(cardSlug, orgSlug) {
+  try {
+    await callAdmin({
+      action: 'assign_card',
+      card_slug: cardSlug,
+      org_slug: orgSlug === null || orgSlug === 'null' ? null : orgSlug,
+    });
+    await loadCards();
+    reloadPreview();
+    toast('Asignación actualizada', 'ok');
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Preview iframe
+   ─────────────────────────────────────────────────────────── */
+function setPreview(slug) {
+  const frame = $('previewFrame');
+  const urlBox = $('previewUrl');
+  if (!slug) {
+    frame.src = 'about:blank';
+    urlBox.textContent = '— elige una org para previsualizar —';
+    return;
+  }
+  const url = `/e/${slug}?_t=${Date.now()}`;
+  frame.src = url;
+  urlBox.textContent = url.split('?')[0];
+}
+function reloadPreview() {
+  if (!selectedOrgSlug) return;
+  setPreview(selectedOrgSlug);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Helpers
+   ─────────────────────────────────────────────────────────── */
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function escapeAttr(s) {
+  // Para insertar en atributos con comillas simples (onclick='X')
+  return String(s || '').replace(/['"<>&]/g, c => ({ "'": '&#39;', '"': '&quot;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+}
+
+// Auto-login si ya hay credenciales en sessionStorage (refresh de página)
+if (getPwd()) {
+  (async () => {
+    try {
+      const res = await fetch('/.netlify/functions/admin-orgs', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action: 'list' }),
+      });
+      if (!res.ok) throw new Error();
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('studioWrap').style.display = 'block';
+      loadOrgs();
+      loadCards();
+    } catch {
+      sessionStorage.removeItem('adminPwd');
+      sessionStorage.removeItem('adminTotp');
+    }
+  })();
+}
+</script>
+
+</body>
+</html>
