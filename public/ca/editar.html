@@ -1442,7 +1442,10 @@
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       const launchPromoActive = card.launch_promo_active === true;
-      if (freeBanner && !card.stripe_session_id && !card.kit_email_sent_at) {
+      // Sprint 3 · pieça A: els perfils del carril B2B (plan='b2b') no veuen
+      // el banner d'upgrade — el seu cicle de vida el gestiona la subscripció
+      // de l'organització, no el pla individual de 9€/19€.
+      if (freeBanner && !card.stripe_session_id && !card.kit_email_sent_at && card.plan !== 'b2b') {
         // Personalizar headline + showcase con datos del usuario.
         const firstName = (card.nombre || '').split(/\s+/)[0] || 'La teva feina';
         document.getElementById('upgradeName').textContent = firstName;
