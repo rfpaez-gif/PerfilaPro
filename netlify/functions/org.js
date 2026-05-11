@@ -1,7 +1,7 @@
 'use strict';
 
 const { getDb } = require('./lib/supabase-client');
-const { esc, renderCard, htmlPage } = require('./lib/dir-utils');
+const { esc, renderCard, htmlPage, buildShowcaseCta } = require('./lib/dir-utils');
 const { getOrgBySlug, listCardsByOrg, isValidHex, isSafeLogoUrl } = require('./lib/org-utils');
 
 function makeHandler(deps) {
@@ -79,7 +79,7 @@ function makeHandler(deps) {
         title,
         desc,
         canonical,
-        body: `${heroHtml}\n${cardsHtml}`,
+        body: `${heroHtml}\n${cardsHtml}\n${buildShowcaseCta(siteUrl)}`,
         crumbs: null,
         siteUrl,
         jsonLd: null,
