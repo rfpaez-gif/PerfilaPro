@@ -3,13 +3,15 @@
 const { Resend } = require('resend');
 
 const TEAM_SIZES = new Set(['5-20', '20-100', '100-500', '500+']);
-const SECTORS    = new Set(['seguros', 'despacho', 'comercial', 'otro']);
+const SECTORS    = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'otro']);
 
 const SECTOR_LABEL = {
-  seguros:   'Seguros y agentes',
-  despacho:  'Despachos y asesorías',
-  comercial: 'Redes comerciales y franquicias',
-  otro:      'Otro',
+  empresa:  'Empresa / red comercial',
+  despacho: 'Despacho / consultora / clínica',
+  colegio:  'Colegio / asociación / cámara',
+  publico:  'Administración / organismo público',
+  ong:      'ONG / fundación',
+  otro:     'Otro',
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

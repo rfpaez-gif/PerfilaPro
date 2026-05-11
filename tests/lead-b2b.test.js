@@ -19,7 +19,7 @@ const validPayload = {
   company: 'Allianz España',
   email: 'carlos@example.com',
   team_size: '100-500',
-  sector: 'seguros',
+  sector: 'empresa',
   message: 'Tenemos 200 agentes y queremos digitalizarlos.',
 };
 
@@ -45,9 +45,23 @@ describe('lead-b2b handler', () => {
     expect(sent.to).toBe('leads@perfilapro.es');
     expect(sent.replyTo).toBe('carlos@example.com');
     expect(sent.subject).toContain('Allianz España');
-    expect(sent.subject).toContain('Seguros y agentes');
+    expect(sent.subject).toContain('Empresa');
     expect(sent.html).toContain('Carlos García');
     expect(sent.html).toContain('Tenemos 200 agentes');
+  });
+
+  it.each([
+    ['empresa',  'Empresa'],
+    ['despacho', 'Despacho'],
+    ['colegio',  'Colegio'],
+    ['publico',  'Administración'],
+    ['ong',      'ONG'],
+    ['otro',     'Otro'],
+  ])('acepta el sector "%s" y lo etiqueta como "%s" en el subject', async (sector, label) => {
+    const res = await handler(buildEvent({ body: { ...validPayload, sector } }));
+    expect(res.statusCode).toBe(200);
+    const sent = mockSend.mock.calls[0][0];
+    expect(sent.subject).toContain(label);
   });
 
   it('honeypot: si "website" viene relleno, devuelve 200 SIN enviar email', async () => {

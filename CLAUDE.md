@@ -200,11 +200,12 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 
 ### Landing B2B (`/es/empresas`)
 
-Página pública (indexable, no requiere auth) que vende el producto a empresas / redes profesionales. Hermana de la landing B2C de `/es/` pero con mensaje, copy y CTA distintos:
-- **Hero** con un claim único + 2 CTAs: form de demo (primario) + scroll al vídeo.
-- **Switcher sectorial** con 3 ángulos preconfigurados — Seguros y agentes (retención), Despachos (imagen de red), Redes comerciales (productividad). Cada uno con su copy, sin reload — vanilla JS.
+Página pública (indexable, no requiere auth) que vende el producto a **organizaciones con red profesional**: empresas, despachos, colegios profesionales, asociaciones, administraciones públicas, ONGs. URL `/es/empresas` por SEO ("empresas" tiene volumen de búsqueda, "organizaciones" no), pero el copy es de amplio espectro.
+- **Hero** con un claim único + 2 CTAs: form de demo (primario) + scroll al vídeo. Subtítulo enumera explícitamente los tipos de organización para que el visitante "se vea" en el primer scroll.
+- **Switcher sectorial** con 4 ángulos preconfigurados — Empresas y redes (retención de marca), Despachos y consultoras (imagen homogénea), Colegios y asociaciones (pertenencia como activo digital), Sector público y ONGs (identidad institucional sin CMS interno). Cada uno con su copy, sin reload — vanilla JS.
+- **Disclaimer del sector público**: el panel "Sector público y ONGs" incluye una nota visible advirtiendo que requisitos específicos (ENS, residencia de datos en España, accesibilidad WCAG AA, contratación por pliego) se evalúan caso por caso. Evita sobre-prometer compliance que el producto no tiene certificado.
 - **Sección de vídeo** `<video>` apuntando a `/videos/b2b-studio-demo.mp4`. Si el archivo no existe (404 o timeout 2.5 s), se muestra un fallback "Vídeo en breve" en lugar de un reproductor roto. Para activar la demo en vídeo: grabar Studio en acción → exportar MP4 < 5 MB → subir a `public/videos/b2b-studio-demo.mp4` + poster a `public/videos/b2b-studio-demo-poster.png`.
-- **Form** con honeypot (campo `website` oculto; si viene relleno, devolvemos 200 sin enviar). Campos: nombre, empresa, email, tamaño de equipo (enum), sector (enum), mensaje opcional.
+- **Form** con honeypot (campo `website` oculto; si viene relleno, devolvemos 200 sin enviar). Campos: nombre, organización, email, tamaño de equipo (enum), tipo de organización (enum: `empresa`, `despacho`, `colegio`, `publico`, `ong`, `otro`), mensaje opcional.
 - **Trust signals** + **footer** con enlace cruzado a la landing B2C ("¿Eres autónomo individual?").
 
 **Endpoint `lead-b2b.js`** (`POST /api/lead-b2b`): valida campos, ejecuta el honeypot, manda email vía Resend a `B2B_LEAD_INBOX` con `replyTo` apuntando al email del lead. Sin auth (es un form público), pero defensa via honeypot + validación estricta de enums + tamaño máximo de campos.
