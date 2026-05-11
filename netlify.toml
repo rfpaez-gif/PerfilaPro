@@ -160,6 +160,13 @@
   status = 200
   force  = true
 
+# B2B demo: página de organización con grid branded de sus profesionales.
+[[redirects]]
+  from   = "/e/:slug"
+  to     = "/.netlify/functions/org"
+  status = 200
+  force  = true
+
 [[redirects]]
   from   = "/api/admin-data"
   to     = "/.netlify/functions/admin-data"
@@ -216,6 +223,16 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/admin-orgs"
+  to     = "/.netlify/functions/admin-orgs"
+  status = 200
+
+[[redirects]]
+  from   = "/api/upload-org-logo"
+  to     = "/.netlify/functions/upload-org-logo"
+  status = 200
+
+[[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
   status = 200
@@ -243,6 +260,11 @@
 [[redirects]]
   from   = "/api/register-free"
   to     = "/.netlify/functions/register-free"
+  status = 200
+
+[[redirects]]
+  from   = "/api/lead-b2b"
+  to     = "/.netlify/functions/lead-b2b"
   status = 200
 
 [[redirects]]

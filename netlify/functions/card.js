@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { buildQrSvg } = require('./lib/qr-svg.js');
+const { isValidHex, isSafeLogoUrl } = require('./lib/org-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -194,6 +195,23 @@ exports.handler = async (event) => {
     visitCount = count ?? 0;
   }
 
+  // B2B demo: si la card pertenece a una organización, traemos su branding
+  // (logo + color primario) para pintar una franja superior + atribución al
+  // pie con link a /e/:slug. Sin organization_id la card se renderiza igual
+  // que siempre — la rama es defensiva, no introduce cambios visuales.
+  let org = null;
+  if (data.organization_id) {
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('slug, name, logo_url, color_primary')
+      .eq('id', data.organization_id)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (orgData) org = orgData;
+  }
+  const orgAccent = org && isValidHex(org.color_primary) ? org.color_primary : null;
+  const orgLogo   = org && isSafeLogoUrl(org.logo_url) ? org.logo_url : null;
+
   const zonaParts = (data.zona || '').split(' · ');
   const zonaLocal = esc(zonaParts[0] || '');
   const zonaRange = zonaParts[1] ? esc(zonaParts[1]) : null;
@@ -206,6 +224,7 @@ exports.handler = async (event) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${org ? '<meta name="robots" content="noindex,nofollow">' : ''}
   <title>${esc(data.nombre) || T.metaProfile} — PerfilaPro</title>
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
@@ -310,12 +329,20 @@ exports.handler = async (event) => {
     .pp-page-foot{margin-top:1.5rem;font-size:.75rem;color:var(--color-gris-500);text-align:center}
     .pp-page-foot a{color:var(--color-verde-match);text-decoration:none}
     :focus-visible{outline:2px solid var(--color-verde-match);outline-offset:2px}
+    /* B2B branding: strip superior + atribución al pie. Solo se pintan
+       cuando la card tiene organization_id resuelta. */
+    .pp-card__org-strip{height:6px;width:100%}
+    .pp-card__org{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;background:var(--color-crema);border-top:1px solid var(--color-gris-200);font-size:.6875rem;color:var(--color-gris-500);text-decoration:none;text-transform:uppercase;letter-spacing:.06em;font-weight:600;transition:background .15s}
+    .pp-card__org:hover{background:#FFFFFF}
+    .pp-card__org img{display:block;max-height:18px;max-width:80px;width:auto;height:auto}
+    .pp-card__org span{line-height:1}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
 </head>
 <body>
   <div class="pp-card">
+    ${org ? `<div class="pp-card__org-strip" style="background:${orgAccent || 'var(--color-verde-match)'}"></div>` : ''}
     <div class="pp-card__header">
       <div class="pp-card__avatar">
         ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="pp-card__avatar-init">${avatarInitial}</span>`}
@@ -385,6 +412,10 @@ exports.handler = async (event) => {
         ${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
         <a href="https://perfilapro.es">${T.pwOwn}</a>
       </div>
+      ${org ? `<a class="pp-card__org" href="/e/${esc(org.slug)}">
+        ${orgLogo ? `<img src="${esc(orgLogo)}" alt="${esc(org.name)}">` : ''}
+        <span>Parte de ${esc(org.name)}</span>
+      </a>` : ''}
     </div>
   </div>
   <div class="pp-page-foot">
