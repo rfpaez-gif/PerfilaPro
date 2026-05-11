@@ -12,8 +12,12 @@
 -- indexa (la página /e/:slug emite robots noindex,nofollow) y
 -- debe retirarse del entorno si la conversación piloto no avanza.
 --
--- Idempotencia: ON CONFLICT (slug) DO NOTHING. Re-ejecutar la
--- migración no duplica ni sobreescribe el row existente.
+-- Idempotencia: INSERT ... SELECT ... WHERE NOT EXISTS. No se usa
+-- ON CONFLICT (slug) porque el índice UNIQUE de 019 es parcial
+-- (WHERE slug IS NOT NULL AND deleted_at IS NULL) y Postgres exige
+-- replicar la cláusula WHERE en el ON CONFLICT, lo que oscurece la
+-- intención. Re-ejecutar la migración inserta 0 filas si la org ya
+-- existe viva.
 --
 -- Reversibilidad: para limpiar, ejecutar:
 --   UPDATE cards SET organization_id = NULL
@@ -22,16 +26,17 @@
 -- ============================================================
 
 INSERT INTO organizations (slug, name, tagline, logo_url, color_primary, nif, email)
-VALUES (
-  'allianz-agentes',
-  'Allianz Agentes',
-  'Cartera de agentes Allianz España · piloto PerfilaPro',
-  NULL,                            -- ver sección "Subir logo" más abajo
-  '#003781',                       -- Allianz corporate navy
-  NULL,
-  NULL
-)
-ON CONFLICT (slug) DO NOTHING;
+SELECT 'allianz-agentes',
+       'Allianz Agentes',
+       'Cartera de agentes Allianz España · piloto PerfilaPro',
+       NULL,                       -- ver sección "Subir logo" más abajo
+       '#003781',                  -- Allianz corporate navy
+       NULL,
+       NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM organizations
+  WHERE slug = 'allianz-agentes' AND deleted_at IS NULL
+);
 
 -- ============================================================
 -- Subir logo y enlazarlo (manual, fuera de esta migración):
