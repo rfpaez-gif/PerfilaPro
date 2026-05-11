@@ -194,6 +194,30 @@
         </table>
       </section>
 
+      <!-- Leads B2B pendientes de redimir -->
+      <section class="pp-section">
+        <div class="pp-section__h">
+          <h2 class="pp-section__title">Leads B2B</h2>
+          <span class="pp-section__hint" id="leadsHint">
+            <label style="display:inline-flex;align-items:center;gap:.35rem;font-size:11px;color:var(--color-gris-500)">
+              <input type="checkbox" id="leadsOnlyPending" checked> solo pendientes
+            </label>
+          </span>
+        </div>
+        <table class="pp-orgs-table" id="leadsTable">
+          <thead>
+            <tr>
+              <th>Lead</th>
+              <th>Equipo / sector</th>
+              <th>Org asociada</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="5" class="pp-empty">Cargando…</td></tr></tbody>
+        </table>
+      </section>
+
       <!-- Asignación de cards -->
       <section class="pp-section" id="assignSection" style="display:none">
         <div class="pp-section__h">
@@ -273,6 +297,7 @@ async function login() {
   document.getElementById('totpInput').value = '';
   loadOrgs();
   loadCards();
+  loadLeads();
 }
 
 function logout() {
@@ -647,6 +672,96 @@ async function toggleCard(cardSlug, orgSlug) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Leads B2B (sprint 3 · pieza A)
+   ─────────────────────────────────────────────────────────── */
+let cachedLeads = [];
+
+$('leadsOnlyPending').addEventListener('change', loadLeads);
+
+async function loadLeads() {
+  try {
+    const json = await callAdmin({
+      action: 'leads_list',
+      only_pending: $('leadsOnlyPending').checked,
+    });
+    cachedLeads = json.leads || [];
+    renderLeadsTable();
+  } catch (err) {
+    toast('Error cargando leads: ' + err.message, 'err');
+  }
+}
+
+function renderLeadsTable() {
+  const tbody = document.querySelector('#leadsTable tbody');
+  if (!cachedLeads.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="pp-empty">Sin leads · cuando alguien envíe el form /es/empresas aparece aquí</td></tr>';
+    return;
+  }
+
+  // Mostramos las orgs disponibles como <select>: el admin reasigna sin
+  // teclear el slug a mano. NULL = sin asociar.
+  const orgOpts = ['<option value="">— sin asociar —</option>']
+    .concat(cachedOrgs.map(o => `<option value="${escapeAttr(o.slug)}">${escapeHtml(o.name)}</option>`))
+    .join('');
+
+  tbody.innerHTML = cachedLeads.map(l => {
+    const safeName = escapeHtml(l.name || '');
+    const safeCompany = escapeHtml(l.company || '');
+    const safeEmail = escapeHtml(l.email || '');
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '';
+    const team = escapeHtml(l.team_size || '');
+    const sector = escapeHtml(l.sector || '');
+    const currentOrgSlug = l.org?.slug || '';
+    const status = l.redeemed_at
+      ? `<span style="color:var(--color-verde-dark);font-weight:600">✓ redimido</span><div class="pp-orgs-table__slug">${escapeHtml(l.redeemed_card_slug || '')}</div>`
+      : `<span style="color:var(--color-gris-500)">pendiente</span><div class="pp-orgs-table__slug">${date}</div>`;
+    const disabledIfRedeemed = l.redeemed_at ? 'disabled' : '';
+    const orgSelect = `<select class="pp-input" style="font-size:12px;padding:.35rem .5rem" data-lead-id="${escapeAttr(l.id)}" onchange="assignLead(this)" ${disabledIfRedeemed}>${
+      orgOpts.replace(`value="${escapeAttr(currentOrgSlug)}"`, `value="${escapeAttr(currentOrgSlug)}" selected`)
+    }</select>`;
+
+    return `<tr>
+      <td>
+        <div class="pp-orgs-table__name">${safeName}</div>
+        <div class="pp-orgs-table__slug">${safeCompany} · ${safeEmail}</div>
+      </td>
+      <td>
+        <div style="font-size:12px;color:var(--color-tinta)">${team}</div>
+        <div class="pp-orgs-table__slug">${sector}</div>
+      </td>
+      <td>${orgSelect}</td>
+      <td>${status}</td>
+      <td><div class="pp-orgs-table__actions">
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="resendLead('${escapeAttr(l.id)}','${escapeAttr(safeName)}')" ${disabledIfRedeemed}>Reenviar link</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function assignLead(selectEl) {
+  const leadId = selectEl.dataset.leadId;
+  const orgSlug = selectEl.value || null;
+  try {
+    await callAdmin({ action: 'leads_assign', lead_id: leadId, org_slug: orgSlug });
+    toast(orgSlug ? `Lead asociado a ${orgSlug}` : 'Lead desvinculado', 'ok');
+    await loadLeads();
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+    await loadLeads();
+  }
+}
+
+async function resendLead(leadId, name) {
+  if (!confirm(`¿Reenviar magic-link a ${name || 'este lead'}?\n\nMismo token (no expira hasta que se redime). Llega como "[Reenvío] …".`)) return;
+  try {
+    await callAdmin({ action: 'leads_resend', lead_id: leadId });
+    toast('Magic-link reenviado', 'ok');
+  } catch (err) {
+    toast('Error reenviando: ' + err.message, 'err');
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    Preview iframe
    ─────────────────────────────────────────────────────────── */
 function setPreview(slug) {
@@ -691,6 +806,7 @@ if (getPwd()) {
       document.getElementById('studioWrap').style.display = 'block';
       loadOrgs();
       loadCards();
+      loadLeads();
     } catch {
       sessionStorage.removeItem('adminPwd');
       sessionStorage.removeItem('adminTotp');

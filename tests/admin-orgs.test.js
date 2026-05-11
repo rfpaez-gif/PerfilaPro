@@ -319,6 +319,177 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── leads_list / leads_assign / leads_resend (Sprint 3 · pieza A) ──
+  describe('leads endpoints', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const leadsHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+
+    it('leads_list devuelve leads pendientes con la org asociada resuelta', async () => {
+      const leads = [
+        { id: 'l1', invite_token: 'a'.repeat(48), name: 'Carlos', company: 'Allianz', email: 'c@a.com',
+          team_size: '100-500', sector: 'empresa', message: null, idioma: 'es',
+          organization_id: 'org1', created_at: '2026-05-01T00:00:00Z', redeemed_at: null, redeemed_card_slug: null },
+      ];
+      const leadsSelect = {
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        is:    vi.fn(() => Promise.resolve({ data: leads, error: null })),
+      };
+      const orgsSelect = {
+        in: vi.fn(() => Promise.resolve({ data: [{ id: 'org1', slug: 'allianz', name: 'Allianz' }], error: null })),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads')     return { select: vi.fn(() => leadsSelect) };
+        if (table === 'organizations') return { select: vi.fn(() => orgsSelect) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({ body: { action: 'leads_list' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.leads).toHaveLength(1);
+      expect(json.leads[0].org.slug).toBe('allianz');
+    });
+
+    it('leads_list sin only_pending=false incluye también redimidos', async () => {
+      // Validamos que NO se aplica .is('redeemed_at', null) cuando only_pending=false.
+      // El handler en ese caso retorna directamente desde .limit() (no llega a .is()).
+      // Lo modelamos haciendo que .limit() devuelva la promesa con los datos.
+      const allLeads = [
+        { id: 'l1', invite_token: 'x'.repeat(48), name: 'A', company: 'B', email: 'a@b.com',
+          team_size: '5-20', sector: 'empresa', message: null, idioma: 'es',
+          organization_id: null, created_at: '2026-05-01T00:00:00Z',
+          redeemed_at: '2026-05-02T00:00:00Z', redeemed_card_slug: 'a-b' },
+      ];
+      // Trick: nuestro builder en el handler hace `q.is(...)` solo si only_pending.
+      // Para only_pending=false, el `await` cae sobre el builder devuelto por .limit(),
+      // que debe ser then-able.
+      const builder = {
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({ data: allLeads, error: null }),
+        is:    vi.fn().mockResolvedValue({ data: allLeads, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads')     return { select: vi.fn(() => builder) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({ body: { action: 'leads_list', only_pending: false } }));
+      expect(res.statusCode).toBe(200);
+      expect(builder.is).not.toHaveBeenCalled();
+    });
+
+    it('leads_assign vincula un lead a una org existente', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1' }, error: null }),
+      };
+      const leadUpdate = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'b2b_leads')     return { update: vi.fn(() => leadUpdate) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_assign', lead_id: '11111111-1111-1111-1111-111111111111', org_slug: 'allianz' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).organization_id).toBe('org1');
+    });
+
+    it('leads_assign con org_slug=null desvincula sin pasar por organizations', async () => {
+      const leadUpdate = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads') return { update: vi.fn(() => leadUpdate) };
+        return {};
+      });
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_assign', lead_id: '11111111-1111-1111-1111-111111111111', org_slug: null },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).organization_id).toBeNull();
+    });
+
+    it('leads_assign rechaza lead_id no-UUID', async () => {
+      const res = await leadsHandler(buildEvent({ body: { action: 'leads_assign', lead_id: 'x', org_slug: 'allianz' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('leads_resend reenvía email con prefix [Reenvío]', async () => {
+      const leadLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            id: 'l1', name: 'Carlos', company: 'Allianz', email: 'c@a.com',
+            idioma: 'es', invite_token: 'a'.repeat(48), redeemed_at: null,
+          },
+          error: null,
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads') return { select: vi.fn(() => leadLookup) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.to).toBe('c@a.com');
+      expect(sent.subject).toContain('[Reenvío]');
+      expect(sent.html).toContain('/es/onboarding?token=' + 'a'.repeat(48));
+    });
+
+    it('leads_resend devuelve 409 si el lead ya está redimido', async () => {
+      const leadLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            id: 'l1', name: 'Carlos', company: 'Allianz', email: 'c@a.com',
+            idioma: 'es', invite_token: 'a'.repeat(48), redeemed_at: '2026-05-02T00:00:00Z',
+          },
+          error: null,
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads') return { select: vi.fn(() => leadLookup) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
+      }));
+      expect(res.statusCode).toBe(409);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('leads_resend devuelve 404 si el lead no existe', async () => {
+      const leadLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads') return { select: vi.fn(() => leadLookup) };
+        return {};
+      });
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
+      }));
+      expect(res.statusCode).toBe(404);
+    });
+  });
+
   // ── list_cards_for_assignment ──
   describe('list_cards_for_assignment', () => {
     it('devuelve cards activas con slug, nombre, organization_id', async () => {

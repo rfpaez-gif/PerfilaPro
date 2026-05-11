@@ -121,8 +121,33 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken } = body;
     const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
+
+    // organization_id (opcional) — solo válido si la org existe viva. Si llega
+    // un id pero no resuelve, persistimos el perfil sin vincular en vez de
+    // rechazar — el admin puede reasignar desde el Studio.
+    const orgIdRaw = (rawOrgId == null || rawOrgId === '') ? null : String(rawOrgId);
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let organization_id = null;
+    if (orgIdRaw && UUID_RE.test(orgIdRaw)) {
+      const { data: org } = await db
+        .from('organizations')
+        .select('id')
+        .eq('id', orgIdRaw)
+        .is('deleted_at', null)
+        .maybeSingle();
+      organization_id = org?.id || null;
+    }
+
+    // redeemed_token (opcional) — token del lead B2B. Lo validamos antes del
+    // insert para no consumirlo si el alta falla por otra razón. Si el token
+    // ya está redeemed_at != NULL, lo ignoramos silenciosamente (el perfil
+    // se crea sin vincular al lead).
+    const TOKEN_RE = /^[a-f0-9]{48}$/;
+    const redeemedToken = typeof rawRedeemedToken === 'string' && TOKEN_RE.test(rawRedeemedToken.toLowerCase())
+      ? rawRedeemedToken.toLowerCase()
+      : null;
 
     if (!nombre || !whatsapp || !cp || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
@@ -246,12 +271,26 @@ function makeHandler(db, emailClient = resend) {
       edit_token_expires_at: editTokenExpiresAt,
       idioma,
     };
+    if (organization_id) row.organization_id = organization_id;
 
     const { error } = await db.from('cards').insert(row);
 
     if (error) {
       console.error('Supabase insert error:', error.message, error.code);
       return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Error al crear el perfil: ' + error.message }) };
+    }
+
+    // Redención del lead B2B: solo después de que la card existe. Update
+    // condicional (redeemed_at IS NULL) para que un token usado en paralelo
+    // no se sobreescriba — gana el primer post. No es fatal si falla, así
+    // que ignoramos el error.
+    if (redeemedToken) {
+      const { error: redErr } = await db
+        .from('b2b_leads')
+        .update({ redeemed_at: new Date().toISOString(), redeemed_card_slug: slug })
+        .eq('invite_token', redeemedToken)
+        .is('redeemed_at', null);
+      if (redErr) console.warn('No se pudo marcar lead redimido (no fatal):', redErr.message);
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
