@@ -48,8 +48,9 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 - Kit tracking (migration 011): `kit_email_sent_at` — timestamp del último envío del welcome email post-pago con tarjeta + QR + factura. Lo setea `stripe-webhook` en el envío inicial; lo refresca `resend-kit` cuando un admin reenvía desde el panel.
 - Dirección física + visibilidad (migración 015 + `direccion` desde 003): `direccion` (text, nullable) y `local_publico` (boolean, default false). El render público en `/c/:slug` solo muestra la dirección + link a Google Maps cuando **ambos** están activos — un autónomo a domicilio queda con `local_publico=false` por defecto y nunca expone su casa aunque rellene el campo. El toggle vive en alta.html (Step 3) y editar.html. Backend fuerza `local_publico=false` si la dirección viene vacía o solo whitespace.
 
-**`organizations` table** — defensive scaffolding for phase 3 (B2B teams). Empty in phases 1-2:
-- `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at`
+**`organizations` table** — usado por la página B2B demo `/e/:slug` (migración 019). Empty hasta que se crea la primera org desde admin:
+- `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at` (originales de migración 007)
+- Branding (migración 019): `slug` text UNIQUE (índice parcial donde `slug IS NOT NULL AND deleted_at IS NULL`), `logo_url` text (whitelist Supabase storage en backend), `color_primary` text con CHECK `^#[0-9a-fA-F]{6}$`, `tagline` text (máx 140 chars, lo limita el backend).
 
 **`settings` table** — key/value store for site config:
 - `key` (PK), `value`
@@ -169,6 +170,33 @@ Acción comercial reversible para que los primeros usuarios completen el flujo d
 
 **Apagado**: borrar la env var. El editor vuelve a llamar a `create-checkout` (Stripe), el endpoint `/api/claim-launch-promo` devuelve 410 Gone, los perfiles ya redimidos conservan su plan + expires_at sin cambios.
 
+### B2B demo (organizations + /e/:slug)
+
+Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" de profesionales bajo una organización. Activa el scaffolding dormido de la migración 007 (`organizations` + `cards.organization_id`) añadiendo branding (logo + color + slug público + tagline) en migración 019.
+
+**Flujo de gestión** (admin manual, una semana de scope):
+1. Admin crea org → `POST /api/admin-orgs` con `action='create'`, body `{slug, name, tagline?, logo_url?, color_primary?, nif?, email?}`. Mismo auth que el resto del admin (password + TOTP).
+2. Admin asigna cards → `POST /api/admin-orgs` con `action='assign_card'`, body `{card_slug, org_slug}` (o `org_slug=null` para desvincular).
+3. La página `/e/:slug` queda servida automáticamente.
+
+**Render público**:
+- `/e/:slug` (función `org.js`) — hero con fondo `color_primary`, logo de la org y tagline; debajo, grid de profesionales activos (`pp-dir-grid` reusado de `dir-utils`). 404 si la org no existe o está soft-deleted. Solo español por ahora. Emite `<meta name="robots" content="noindex,nofollow">` siempre — las páginas B2B se difunden por URL directa, no via Google, y noindex protege de fugas de branding de terceros mientras el piloto no esté cerrado.
+- `/c/:slug` (función `card.js`) — cuando la card tiene `organization_id` resuelto, pinta una franja superior de 6px con `color_primary`, una atribución al pie ("Parte de [Org]") que enlaza a `/e/:slug`, y emite `robots noindex,nofollow`. Sin `organization_id` la card se renderiza idéntica que antes y se indexa normalmente (cambios gateados defensivamente).
+
+**Validaciones backend** (`lib/org-utils.js`):
+- `isValidOrgSlug` — `[a-z0-9-]{2,40}`, sin guiones al inicio/fin.
+- `isValidHex` — solo `#RRGGBB`.
+- `isSafeLogoUrl` — solo `https://` + sufijo `supabase.co/storage` o `supabase.in/storage` (mismo whitelist que `cards.foto_url` en `edit-card.js`).
+- `isValidTagline` — string ≤140 chars.
+
+**Reversibilidad**: si la demo se descarta basta con (a) borrar la route `/e/:slug` y `/api/admin-orgs` en `netlify.toml`, (b) quitar el bloque condicional `if (data.organization_id) { ... }` en `card.js`. Las columnas SQL pueden dejarse dormidas sin coste o eliminarse con una contramigración. Como `organization_id` es NULL por defecto, cero cards existentes se ven afectadas si nunca se asigna.
+
+**Fuera de scope** (deuda consciente):
+- Stripe billing B2B / facturación a la organización en lugar de al autónomo → Sprint 3.
+- UI completa en `admin.html` para CRUD de orgs → solo si Iris (u otro lead B2B) se confirma como piloto. Por ahora, el endpoint `admin-orgs` se opera vía `curl` o desde una consola admin temporal.
+- Catalán en `/e/:slug` → la página solo renderiza en español; se añade cuando haya un lead B2B catalanoparlante real.
+- `organizations.idioma` o multilingüismo por org → diferido hasta tener cliente.
+
 ### Observability (PostHog)
 
 Sprint 1: analítica de producto vía PostHog Cloud (región EU). Carga **solo tras consentimiento explícito** del usuario en el banner de privacidad.
@@ -228,12 +256,14 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | Public path | Netlify Function |
 |---|---|
 | `/c/:slug` | `card` |
+| `/e/:slug` | `org` |
 | `/api/create-checkout` | `create-checkout` |
 | `/api/stripe-webhook` | `stripe-webhook` |
 | `/api/admin-data` | `admin-data` |
 | `/api/admin-actions` | `admin-actions` |
 | `/api/admin-invoices` | `admin-invoices` |
 | `/api/admin-agents` | `admin-agents` |
+| `/api/admin-orgs` | `admin-orgs` |
 | `/api/legal-settings` | `legal-settings` |
 | `/api/card-status` | `card-status` |
 | `/api/edit-card` | `edit-card` |

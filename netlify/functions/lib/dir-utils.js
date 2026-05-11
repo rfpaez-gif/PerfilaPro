@@ -239,12 +239,13 @@ function paginationLinks(page, totalPages, baseUrl) {
 </nav>`;
 }
 
-function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '', ogImage = null, ogType = 'website' }) {
+function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '', ogImage = null, ogType = 'website', noindex = false }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <link rel="canonical" href="${esc(canonical)}">
