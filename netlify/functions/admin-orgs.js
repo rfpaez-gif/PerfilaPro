@@ -290,6 +290,75 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       return jsonResponse(200, { ok: true, card_slug, organization_id });
     }
 
+    // ── get_edit_url: devuelve el magic-link de edición de una card ──
+    // Reusa el edit_token vigente si lo hay; si está ausente o expirado lo
+    // regenera (32 bytes hex, 7 días). Evita invalidar links que el agente
+    // pueda estar usando ya. Solo cards no soft-deleted.
+    if (action === 'get_edit_url') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug, idioma, edit_token, edit_token_expires_at')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+
+      let token = card.edit_token;
+      const expires = card.edit_token_expires_at;
+      const expired = !expires || new Date(expires) < new Date();
+      if (!token || expired) {
+        token = crypto.randomBytes(32).toString('hex');
+        const newExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { error: updErr } = await db
+          .from('cards')
+          .update({ edit_token: token, edit_token_expires_at: newExpires })
+          .eq('slug', card_slug);
+        if (updErr) return jsonResponse(500, { error: updErr.message });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+      return jsonResponse(200, {
+        ok: true,
+        edit_url: `${siteUrl}/${idioma}/editar?slug=${card.slug}&token=${token}`,
+      });
+    }
+
+    // ── delete_card: soft-delete (deleted_at = NOW()) de una card ──
+    // Mismo patrón que delete-account.js: marca deleted_at y deja que el job
+    // purge-deleted haga el hard-delete cascada a los 30 días. Esto preserva
+    // facturas (AEAT) y visits hasta la purga, y da un grace period por si
+    // el admin se equivoca. 404 si la card no existe o ya está borrada.
+    if (action === 'delete_card') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+
+      const { error: updErr } = await db
+        .from('cards')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('slug', card_slug);
+      if (updErr) return jsonResponse(500, { error: updErr.message });
+
+      return jsonResponse(200, { ok: true, card_slug });
+    }
+
     // ── leads_list: leads B2B persistidos (filtrables) ──
     // Devuelve los leads del form /es/empresas para que el admin los gestione
     // (asociar a org, reenviar magic-link). Por defecto solo pendientes.

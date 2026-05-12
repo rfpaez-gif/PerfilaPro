@@ -82,10 +82,13 @@
     .pp-cards-list__item { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: center; padding: .55rem .75rem; background: #FAFBFC; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; font-size: 13px; }
     .pp-cards-list__name { font-weight: 600; color: var(--color-tinta, #0A1F44); }
     .pp-cards-list__meta { font-size: 11px; color: var(--color-gris-500, #6B7280); font-family: var(--font-mono); margin-top: 2px; }
+    .pp-cards-list__btns { display: flex; gap: .35rem; align-items: center; }
     .pp-cards-list__btn { font-size: 12px; padding: .35rem .75rem; border-radius: var(--pp-r-pill, 999px); border: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; cursor: pointer; font-weight: 600; color: var(--color-tinta, #0A1F44); }
     .pp-cards-list__btn:hover { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); }
     .pp-cards-list__btn--unassign { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); color: var(--color-verde-dark, #00A865); }
     .pp-cards-list__btn--other { color: var(--color-gris-500, #6B7280); }
+    .pp-cards-list__btn--icon { padding: .35rem .55rem; font-size: 13px; line-height: 1; }
+    .pp-cards-list__btn--danger:hover { background: #FEF2F2; border-color: #DC2626; color: #DC2626; }
     .pp-cards-list__search { width: 100%; margin-bottom: .65rem; }
 
     /* ── Preview ──────────────────────────────────────────── */
@@ -751,7 +754,11 @@ function renderCardsList() {
         <div class="pp-cards-list__name">${escapeHtml(c.nombre)}</div>
         <div class="pp-cards-list__meta">${escapeHtml(c.slug)} · ${escapeHtml(c.plan || '')}</div>
       </div>
-      <button class="${btnClass}" onclick="toggleCard('${escapeAttr(c.slug)}', ${assignedHere ? 'null' : `'${escapeAttr(org.slug)}'`})">${btnLabel}</button>
+      <div class="pp-cards-list__btns">
+        <button class="pp-cards-list__btn pp-cards-list__btn--icon" title="Editar tarjeta" aria-label="Editar tarjeta de ${escapeAttr(c.nombre)}" onclick="openCardEditor('${escapeAttr(c.slug)}')">✏️</button>
+        <button class="pp-cards-list__btn pp-cards-list__btn--icon pp-cards-list__btn--danger" title="Borrar tarjeta" aria-label="Borrar tarjeta de ${escapeAttr(c.nombre)}" onclick="deleteCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')">🗑️</button>
+        <button class="${btnClass}" onclick="toggleCard('${escapeAttr(c.slug)}', ${assignedHere ? 'null' : `'${escapeAttr(org.slug)}'`})">${btnLabel}</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -766,6 +773,33 @@ async function toggleCard(cardSlug, orgSlug) {
     await loadCards();
     reloadPreview();
     toast('Asignación actualizada', 'ok');
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+// Abre /es|ca/editar?slug=&token= en una pestaña nueva. La ventana se abre
+// SÍNCRONA al click (popup blocker friendly) y la URL real llega después.
+async function openCardEditor(cardSlug) {
+  const win = window.open('about:blank', '_blank');
+  try {
+    const json = await callAdmin({ action: 'get_edit_url', card_slug: cardSlug });
+    if (win) win.location.href = json.edit_url;
+    else toast('Permite popups o abre manualmente: ' + json.edit_url, 'ok');
+  } catch (err) {
+    if (win) win.close();
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+async function deleteCard(cardSlug, cardNombre) {
+  const label = cardNombre || cardSlug;
+  if (!confirm(`¿Borrar la tarjeta de "${label}"?\n\nSe marca como borrada (deleted_at = ahora) y el job de purga limpia visits + facturas a los 30 días. Reversible hasta entonces editando la BD.`)) return;
+  try {
+    await callAdmin({ action: 'delete_card', card_slug: cardSlug });
+    toast(`Tarjeta de "${label}" borrada`, 'ok');
+    await loadCards();
+    reloadPreview();
   } catch (err) {
     toast('Error: ' + err.message, 'err');
   }

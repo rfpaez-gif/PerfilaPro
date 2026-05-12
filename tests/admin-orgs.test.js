@@ -263,6 +263,137 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── get_edit_url ──
+  describe('get_edit_url', () => {
+    function mockCardRead(card) {
+      const lookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return { select: vi.fn(() => lookup), update: cardsUpdate };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('reusa token vigente sin regenerar', async () => {
+      const futureExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const { cardsUpdate } = mockCardRead({
+        slug: 'carlos-perez',
+        idioma: 'es',
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: futureExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'carlos-perez' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.edit_url).toContain('/es/editar?slug=carlos-perez&token=' + 'a'.repeat(64));
+      expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+
+    it('regenera token si está expirado', async () => {
+      const pastExpires = new Date(Date.now() - 60_000).toISOString();
+      const { cardsUpdate, updateEq } = mockCardRead({
+        slug: 'ana-ruiz',
+        idioma: 'es',
+        edit_token: 'old-token',
+        edit_token_expires_at: pastExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'ana-ruiz' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.edit_url).toMatch(/\/es\/editar\?slug=ana-ruiz&token=[a-f0-9]{64}$/);
+      expect(json.edit_url).not.toContain('old-token');
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.edit_token).toMatch(/^[a-f0-9]{64}$/);
+      expect(new Date(payload.edit_token_expires_at).getTime()).toBeGreaterThan(Date.now());
+      expect(updateEq).toHaveBeenCalledWith('slug', 'ana-ruiz');
+    });
+
+    it('regenera token si la card no tiene token', async () => {
+      const { cardsUpdate } = mockCardRead({
+        slug: 'sin-token',
+        idioma: 'es',
+        edit_token: null,
+        edit_token_expires_at: null,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'sin-token' } }));
+      expect(res.statusCode).toBe(200);
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+    });
+
+    it('respeta idioma=ca en la URL', async () => {
+      const futureExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      mockCardRead({
+        slug: 'pere-cat',
+        idioma: 'ca',
+        edit_token: 'b'.repeat(64),
+        edit_token_expires_at: futureExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'pere-cat' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).edit_url).toContain('/ca/editar?');
+    });
+
+    it('devuelve 404 si la card no existe o está soft-deleted', async () => {
+      mockCardRead(null);
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── delete_card ──
+  describe('delete_card', () => {
+    function mockCardLookup(card) {
+      const lookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return { select: vi.fn(() => lookup), update: cardsUpdate };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('soft-deleta la card (marca deleted_at, deja visits/facturas)', async () => {
+      const { cardsUpdate, updateEq } = mockCardLookup({ slug: 'carlos-perez' });
+      const res = await handler(buildEvent({ body: { action: 'delete_card', card_slug: 'carlos-perez' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).card_slug).toBe('carlos-perez');
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.deleted_at).toBeTruthy();
+      expect(new Date(payload.deleted_at).getTime()).toBeLessThanOrEqual(Date.now());
+      expect(updateEq).toHaveBeenCalledWith('slug', 'carlos-perez');
+    });
+
+    it('devuelve 404 si la card no existe o ya está borrada', async () => {
+      const { cardsUpdate } = mockCardLookup(null);
+      const res = await handler(buildEvent({ body: { action: 'delete_card', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+      expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await handler(buildEvent({ body: { action: 'delete_card' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {
