@@ -167,7 +167,11 @@ exports.handler = async (event) => {
   // (promo de lanzamiento redimida). Mismo criterio que el #freeBanner del editor
   // y la idempotencia de claim-launch-promo. Sin esto las promos quedan como
   // "Perfil básico" en el render público y pierden el QR.
-  const isFree = !data.stripe_session_id && !data.kit_email_sent_at;
+  // Las cards del carril B2B (plan='b2b') NO pasan por Stripe ni reciben kit
+  // — su ciclo de vida lo gestiona la suscripción de la organización. Aún así
+  // no son "free": cuentan como activas, llevan QR y no deben mostrar el
+  // banner de upsell ("Perfil básico"). Lo gateamos aquí en la base.
+  const isFree = !data.stripe_session_id && !data.kit_email_sent_at && data.plan !== 'b2b';
   const isPaid = isDemo || !isFree;
   const proto   = (event.headers && event.headers['x-forwarded-proto']) || 'https';
   const host    = (event.headers && event.headers.host) || 'perfilapro.es';
