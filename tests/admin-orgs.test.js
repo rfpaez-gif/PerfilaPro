@@ -394,6 +394,164 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── offboard_card ──
+  describe('offboard_card', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const offboardHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+
+    function mockOffboardLookups({ card, orgName = 'Special Trainer' }) {
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { name: orgName }, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+
+      let cardsSelectCount = 0;
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') {
+          cardsSelectCount++;
+          return { select: vi.fn(() => cardLookup), update: cardsUpdate };
+        }
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('aplica cortesía 90 días: organization_id=null, plan=base, expires_at=NOW+90, reset reminders', async () => {
+      const card = {
+        slug: 'olga', nombre: 'Olga Cardona', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st', expires_at: null,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockOffboardLookups({ card });
+      const res = await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.courtesy_days).toBe(90);
+
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.organization_id).toBeNull();
+      expect(payload.plan).toBe('base');
+      expect(payload.reminder_30_sent).toBe(false);
+      expect(payload.reminder_15_sent).toBe(false);
+      expect(payload.reminder_7_sent).toBe(false);
+
+      const expiresAt = new Date(payload.expires_at).getTime();
+      const target = Date.now() + 90 * 86400000;
+      expect(Math.abs(expiresAt - target)).toBeLessThan(5000);
+    });
+
+    it('envía email al trabajador con copy en castellano por defecto', async () => {
+      const card = {
+        slug: 'olga', nombre: 'Olga Cardona', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st', expires_at: null,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      mockOffboardLookups({ card, orgName: 'Special Trainer' });
+      await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const args = mockEmailSend.mock.calls[0][0];
+      expect(args.to).toBe('olga@gmail.com');
+      expect(args.subject).toContain('Special Trainer');
+      expect(args.subject).toContain('cortesía');
+      expect(args.html).toContain('90 días');
+    });
+
+    it('respeta idioma catalán en el email', async () => {
+      const card = {
+        slug: 'olga', nombre: 'Olga Cardona', email: 'olga@gmail.com', idioma: 'ca',
+        organization_id: 'org-st', expires_at: null,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      mockOffboardLookups({ card, orgName: 'Special Trainer' });
+      await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      const args = mockEmailSend.mock.calls[0][0];
+      expect(args.subject).toContain('cortesia');
+      expect(args.html).toContain('90 dies');
+    });
+
+    it('regenera edit_token si está caducado', async () => {
+      const card = {
+        slug: 'olga', nombre: 'Olga', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st', expires_at: null,
+        edit_token: 'old',
+        edit_token_expires_at: new Date(Date.now() - 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockOffboardLookups({ card });
+      await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.edit_token).toMatch(/^[a-f0-9]{64}$/);
+      expect(payload.edit_token).not.toBe('old');
+    });
+
+    it('preserva expires_at existente si es posterior a NOW+90d', async () => {
+      const farFuture = new Date(Date.now() + 365 * 86400000).toISOString();
+      const card = {
+        slug: 'olga', nombre: 'Olga', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st', expires_at: farFuture,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockOffboardLookups({ card });
+      await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      expect(cardsUpdate.mock.calls[0][0].expires_at).toBe(farFuture);
+    });
+
+    it('devuelve 400 si la card no está asignada a ninguna org', async () => {
+      const card = {
+        slug: 'olga', nombre: 'Olga', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: null, expires_at: null,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      mockOffboardLookups({ card });
+      const res = await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 404 si la card no existe', async () => {
+      mockOffboardLookups({ card: null });
+      const res = await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await offboardHandler(buildEvent({ body: { action: 'offboard_card' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('aplica el offboard aunque el email falle (defensivo)', async () => {
+      mockEmailSend.mockRejectedValueOnce(new Error('Resend down'));
+      const card = {
+        slug: 'olga', nombre: 'Olga', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st', expires_at: null,
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockOffboardLookups({ card });
+      const res = await offboardHandler(buildEvent({ body: { action: 'offboard_card', card_slug: 'olga' } }));
+      expect(res.statusCode).toBe(200);
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {

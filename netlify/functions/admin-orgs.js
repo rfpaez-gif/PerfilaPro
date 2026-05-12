@@ -102,6 +102,71 @@ function buildInviteEmail({ orgName, orgLogoUrl, orgColor, nombre, editUrl }) {
   };
 }
 
+/**
+ * Email de offboarding · "Has salido del equipo, tienes 90 días de cortesía".
+ * Respeta cards.idioma (es/ca). El editUrl es el magic-link vigente del
+ * trabajador para que pueda seguir editando su tarjeta como autónomo.
+ */
+function buildOffboardEmail({ orgName, nombre, idioma, cardUrl, editUrl }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const firstName = (nombre || '').split(' ')[0] || (lang === 'ca' ? 'Hola' : 'Hola');
+  const safeOrgName = esc(orgName);
+
+  const t = lang === 'ca' ? {
+    preheader: `Has sortit de l'equip de ${orgName} · 90 dies de cortesia per al teu perfil`,
+    title: `Hola ${firstName}`,
+    intro: `Has sortit de l'equip de <strong>${safeOrgName}</strong> a PerfilaPro. La teva targeta segueix activa <strong>com a autònom individual</strong> durant els pròxims <strong>90 dies de cortesia</strong>.`,
+    explain: `Durant aquest temps pots seguir editant-la, repartint-la i utilitzant-la amb total normalitat. Si vols mantenir-la més enllà dels 90 dies, podràs activar un pla des de l'editor abans que caduqui.`,
+    yourCardLabel: 'La teva targeta:',
+    cta: 'Editar el meu perfil →',
+    footer: `Si tens dubtes, respon a aquest email i et contestem.`,
+    subject: `${firstName}, has sortit de l'equip de ${orgName} · 90 dies de cortesia`,
+  } : {
+    preheader: `Has salido del equipo de ${orgName} · 90 días de cortesía para tu perfil`,
+    title: `Hola ${firstName}`,
+    intro: `Has salido del equipo de <strong>${safeOrgName}</strong> en PerfilaPro. Tu tarjeta sigue activa <strong>como autónomo individual</strong> durante los próximos <strong>90 días de cortesía</strong>.`,
+    explain: `Durante ese tiempo puedes seguir editándola, repartiéndola y usándola con total normalidad. Si quieres mantenerla más allá de los 90 días, podrás activar un plan desde el editor antes de que caduque.`,
+    yourCardLabel: 'Tu tarjeta:',
+    cta: 'Editar mi perfil →',
+    footer: `Si tienes dudas, responde a este email y te contestamos.`,
+    subject: `${firstName}, has salido del equipo de ${orgName} · 90 días de cortesía`,
+  };
+
+  const bodyHtml = `
+            <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              ${t.intro}
+            </p>
+
+            <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              ${t.explain}
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+              <tr><td style="background:#FAF7F0;border-radius:8px;padding:14px 16px;font-size:13px;color:${COLORS.inkSoft};line-height:1.5">
+                <strong>${t.yourCardLabel}</strong> <a href="${esc(cardUrl)}" style="color:${COLORS.accent};text-decoration:none">${esc(cardUrl)}</a>
+              </td></tr>
+            </table>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+              <tr><td align="center">
+                <a href="${esc(editUrl)}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">${t.cta}</a>
+              </td></tr>
+            </table>
+
+            <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              ${t.footer}
+            </p>`;
+
+  const html = buildEmailLayout({
+    preheader: t.preheader,
+    title: t.title,
+    bodyHtml,
+    idioma: lang,
+  });
+
+  return { subject: t.subject, html };
+}
+
 function makeHandler(db, emailClient = defaultEmailClient) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -288,6 +353,106 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         .eq('slug', card_slug);
       if (error) return jsonResponse(500, { error: error.message });
       return jsonResponse(200, { ok: true, card_slug, organization_id });
+    }
+
+    // ── offboard_card: "Quitar del equipo" con cortesía 90 días ──
+    // Diferente de assign_card(null) que solo desvincula seco. Esta acción
+    // hace la salida humana del trabajador: organization_id=NULL + plan='base'
+    // + expires_at=NOW+90d + reset reminders + email "tienes 90 días de
+    // cortesía". El cron remind-expiry ya envía avisos a 30/15/7 días antes
+    // del fin del periodo. Si la card tenía un expires_at posterior (caso
+    // edge: ya pagó algo previo), preservamos el más generoso.
+    if (action === 'offboard_card') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug, nombre, email, idioma, organization_id, expires_at, edit_token, edit_token_expires_at')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+      if (!card.organization_id) {
+        return jsonResponse(400, { error: 'la card no está asignada a ninguna organización' });
+      }
+
+      // Resolvemos el nombre de la org antes del UPDATE para meterlo en el email.
+      const { data: org } = await db
+        .from('organizations')
+        .select('name')
+        .eq('id', card.organization_id)
+        .maybeSingle();
+      const orgName = org?.name || 'la empresa';
+
+      const courtesyEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+      const existingExpires = card.expires_at ? new Date(card.expires_at) : null;
+      const expiresAt = existingExpires && existingExpires > courtesyEnd
+        ? existingExpires.toISOString()
+        : courtesyEnd.toISOString();
+
+      // Garantizamos edit_token vigente para que el trabajador pueda editar.
+      let editToken = card.edit_token;
+      const tokenExpired = !card.edit_token_expires_at || new Date(card.edit_token_expires_at) < new Date();
+      const tokenUpdate = {};
+      if (!editToken || tokenExpired) {
+        editToken = crypto.randomBytes(32).toString('hex');
+        tokenUpdate.edit_token = editToken;
+        tokenUpdate.edit_token_expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const { error: updErr } = await db
+        .from('cards')
+        .update({
+          organization_id: null,
+          plan: 'base',
+          expires_at: expiresAt,
+          reminder_30_sent: false,
+          reminder_15_sent: false,
+          reminder_7_sent: false,
+          ...tokenUpdate,
+        })
+        .eq('slug', card_slug);
+      if (updErr) return jsonResponse(500, { error: updErr.message });
+
+      // Email al trabajador (no bloqueante: si Resend falla, el offboard
+      // ya está aplicado en BD, devolvemos ok igualmente y logueamos).
+      if (card.email) {
+        const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+        const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+        const cardUrl = `${siteUrl}/c/${card.slug}`;
+        const editUrl = `${siteUrl}/${idioma}/editar?slug=${card.slug}&token=${editToken}`;
+        const { subject, html } = buildOffboardEmail({
+          orgName,
+          nombre: card.nombre,
+          idioma,
+          cardUrl,
+          editUrl,
+        });
+        try {
+          await emailClient.emails.send({
+            from: 'PerfilaPro <hola@perfilapro.es>',
+            to: card.email,
+            subject,
+            html,
+          });
+        } catch (err) {
+          console.error(`admin-orgs offboard_card: email a ${card.email} falló:`, err.message);
+        }
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        card_slug,
+        expires_at: expiresAt,
+        courtesy_days: 90,
+      });
     }
 
     // ── get_edit_url: devuelve el magic-link de edición de una card ──
@@ -619,3 +784,4 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 exports.handler = makeHandler(supabase);
 exports.makeHandler = makeHandler;
 exports.buildInviteEmail = buildInviteEmail;
+exports.buildOffboardEmail = buildOffboardEmail;
