@@ -1042,4 +1042,322 @@ describe('admin-orgs handler', () => {
       expect(res.statusCode).toBe(500);
     });
   });
+
+  // ── send_edit_link · reenviar magic-link al miembro desde admin-orgs ──
+  describe('send_edit_link', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const sendHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+
+    // Lookup chain compartido: cards.select.eq.is.maybeSingle (card lookup) +
+    // organizations.select.eq.maybeSingle (branding) + cards.update.eq (stamp).
+    function mockSendLookups({ card, org = null }) {
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') {
+          return { select: vi.fn(() => cardLookup), update: cardsUpdate };
+        }
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('manda email branded con logo + color cuando la card está en una org', async () => {
+      const card = {
+        slug: 'olga-cardona', nombre: 'Olga Cardona', email: 'olga@gmail.com', idioma: 'es',
+        organization_id: 'org-st',
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      const org = { name: 'Special Trainer', logo_url: 'https://x.supabase.co/storage/v1/logo.png', color_primary: '#FFA500' };
+      mockSendLookups({ card, org });
+
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'olga-cardona' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.branded).toBe(true);
+      expect(json.email).toBe('olga@gmail.com');
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.to).toBe('olga@gmail.com');
+      expect(sent.subject).toContain('[Reenvío]');
+      expect(sent.subject).toContain('Special Trainer');
+      expect(sent.html).toContain('#FFA500');
+      expect(sent.html).toContain('Special Trainer');
+    });
+
+    it('manda email genérico cuando la card no tiene organización', async () => {
+      const card = {
+        slug: 'autonomo', nombre: 'Pedro Sin', email: 'pedro@x.es', idioma: 'es',
+        organization_id: null,
+        edit_token: 'b'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      mockSendLookups({ card });
+
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'autonomo' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).branded).toBe(false);
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).toContain('[Reenvío]');
+      expect(sent.subject).toContain('Pedro');
+      // El email genérico NO incluye banner de org
+      expect(sent.html).not.toContain('Equipo de');
+    });
+
+    it('regenera token si está caducado y lo persiste con el timestamp', async () => {
+      const card = {
+        slug: 'caducado', nombre: 'X', email: 'x@y.es', idioma: 'es',
+        organization_id: null,
+        edit_token: 'old-token',
+        edit_token_expires_at: new Date(Date.now() - 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockSendLookups({ card });
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'caducado' } }));
+      expect(res.statusCode).toBe(200);
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.edit_token).toMatch(/^[a-f0-9]{64}$/);
+      expect(payload.edit_token).not.toBe('old-token');
+      expect(payload.edit_link_sent_at).toBeTruthy();
+      // El email lleva el token nuevo, no el viejo
+      expect(mockEmailSend.mock.calls[0][0].html).toContain(payload.edit_token);
+    });
+
+    it('reusa token vigente y solo marca edit_link_sent_at', async () => {
+      const card = {
+        slug: 'vigente', nombre: 'X', email: 'x@y.es', idioma: 'es',
+        organization_id: null,
+        edit_token: 'c'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+      };
+      const { cardsUpdate } = mockSendLookups({ card });
+      await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'vigente' } }));
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.edit_token).toBeUndefined();
+      expect(payload.edit_link_sent_at).toBeTruthy();
+    });
+
+    it('respeta idioma=ca en subject y prefix', async () => {
+      const card = {
+        slug: 'pere', nombre: 'Pere', email: 'pere@x.cat', idioma: 'ca',
+        organization_id: null,
+        edit_token: 'd'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 86400000).toISOString(),
+      };
+      mockSendLookups({ card });
+      await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'pere' } }));
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).toContain('[Reenviament]');
+    });
+
+    it('devuelve 400 si la card no tiene email registrado', async () => {
+      const card = { slug: 'sin', nombre: 'X', email: null, idioma: 'es', organization_id: null, edit_token: null, edit_token_expires_at: null };
+      mockSendLookups({ card });
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'sin' } }));
+      expect(res.statusCode).toBe(400);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('devuelve 404 si la card no existe', async () => {
+      mockSendLookups({ card: null });
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 500 si Resend falla', async () => {
+      mockEmailSend.mockRejectedValueOnce(new Error('Resend down'));
+      const card = {
+        slug: 'x', nombre: 'X', email: 'x@y.es', idioma: 'es', organization_id: null,
+        edit_token: 'e'.repeat(64),
+        edit_token_expires_at: new Date(Date.now() + 86400000).toISOString(),
+      };
+      mockSendLookups({ card });
+      const res = await sendHandler(buildEvent({ body: { action: 'send_edit_link', card_slug: 'x' } }));
+      expect(res.statusCode).toBe(500);
+    });
+  });
+
+  // ── org_card_stats · agregado de visitas + último email por card ──
+  describe('org_card_stats', () => {
+    function mockStatsLookups({ org, cards = [], visits = [] }) {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const cardsSelect = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn(() => Promise.resolve({ data: cards, error: null })),
+      };
+      const visitsSelect = {
+        in:  vi.fn().mockReturnThis(),
+        gte: vi.fn(() => Promise.resolve({ data: visits, error: null })),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards')         return { select: vi.fn(() => cardsSelect) };
+        if (table === 'visits')        return { select: vi.fn(() => visitsSelect) };
+        return {};
+      });
+    }
+
+    it('devuelve stats por card con conteo agregado de visitas', async () => {
+      const org = { id: 'org-st' };
+      const cards = [
+        { slug: 'olga',  kit_email_sent_at: '2026-05-01T10:00:00Z', edit_link_sent_at: null },
+        { slug: 'juan',  kit_email_sent_at: null,                    edit_link_sent_at: '2026-05-09T10:00:00Z' },
+        { slug: 'maria', kit_email_sent_at: null,                    edit_link_sent_at: null },
+      ];
+      // 3 visitas para olga, 1 para juan, 0 para maria
+      const visits = [
+        { slug: 'olga' }, { slug: 'olga' }, { slug: 'olga' },
+        { slug: 'juan' },
+      ];
+      mockStatsLookups({ org, cards, visits });
+
+      const res = await handler(buildEvent({ body: { action: 'org_card_stats', org_slug: 'special-trainer' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.cards).toHaveLength(3);
+      const bySlug = Object.fromEntries(json.cards.map(c => [c.slug, c]));
+      expect(bySlug.olga.visits_30d).toBe(3);
+      expect(bySlug.juan.visits_30d).toBe(1);
+      expect(bySlug.maria.visits_30d).toBe(0);
+      expect(bySlug.olga.kit_email_sent_at).toBe('2026-05-01T10:00:00Z');
+      expect(bySlug.juan.edit_link_sent_at).toBe('2026-05-09T10:00:00Z');
+      expect(bySlug.maria.kit_email_sent_at).toBeNull();
+    });
+
+    it('devuelve cards vacía si la org no tiene profesionales asignados', async () => {
+      mockStatsLookups({ org: { id: 'vacia' }, cards: [], visits: [] });
+      const res = await handler(buildEvent({ body: { action: 'org_card_stats', org_slug: 'vacia' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).cards).toEqual([]);
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      mockStatsLookups({ org: null });
+      const res = await handler(buildEvent({ body: { action: 'org_card_stats', org_slug: 'no-existe' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza org_slug inválido', async () => {
+      const res = await handler(buildEvent({ body: { action: 'org_card_stats', org_slug: 'BAD UPPER' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── invite_team · timestamp kit_email_sent_at en la card tras email OK ──
+  describe('invite_team kit_email_sent_at stamping', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const inviteHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+
+    it('marca kit_email_sent_at en cada card tras un email exitoso', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', slug: 'st', name: 'ST', logo_url: null, color_primary: null }, error: null }),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      const cardInsert = vi.fn().mockResolvedValue({ error: null });
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards') {
+          return { select: vi.fn(() => cardLookup), insert: cardInsert, update: cardsUpdate };
+        }
+        return {};
+      });
+
+      const res = await inviteHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'st',
+          template: {},
+          team: [
+            { email: 'olga@st.es', nombre: 'Olga' },
+            { email: 'juan@st.es', nombre: 'Juan' },
+          ],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      // 2 invitaciones OK → 2 updates de kit_email_sent_at
+      expect(cardsUpdate).toHaveBeenCalledTimes(2);
+      cardsUpdate.mock.calls.forEach((call) => {
+        const payload = call[0];
+        expect(payload.kit_email_sent_at).toBeTruthy();
+        expect(new Date(payload.kit_email_sent_at).getTime()).toBeLessThanOrEqual(Date.now());
+      });
+    });
+
+    it('NO marca kit_email_sent_at cuando el email falla', async () => {
+      mockEmailSend.mockRejectedValue(new Error('Resend down'));
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', slug: 'st', name: 'ST', logo_url: null, color_primary: null }, error: null }),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      const cardInsert = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }));
+
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards') {
+          return { select: vi.fn(() => cardLookup), insert: cardInsert, update: cardsUpdate };
+        }
+        return {};
+      });
+
+      const res = await inviteHandler(buildEvent({
+        body: {
+          action: 'invite_team', org_slug: 'st', template: {},
+          team: [{ email: 'olga@st.es', nombre: 'Olga' }],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.results.failed).toHaveLength(1);
+      expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+  });
 });

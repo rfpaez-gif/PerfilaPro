@@ -12,6 +12,7 @@ const {
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
+const { buildEditLinkEmail, EDIT_LINK_STRINGS } = require('./send-edit-link');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -495,6 +496,164 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       });
     }
 
+    // ── send_edit_link: reenviar magic-link al miembro del equipo por email ──
+    // Pensado para el flujo "el operario perdió su email de invitación / no
+    // encuentra el enlace". Detecta el contexto: si la card pertenece a una
+    // org, manda el email branded con el banner de la marca (buildInviteEmail).
+    // Si no, manda el genérico de edición (buildEditLinkEmail). En ambos casos
+    // marca cards.edit_link_sent_at para que el panel muestre "Reenviado hace Xd".
+    if (action === 'send_edit_link') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug, nombre, email, idioma, organization_id, edit_token, edit_token_expires_at')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+      if (!card.email) {
+        return jsonResponse(400, { error: 'la card no tiene email registrado' });
+      }
+
+      // Regenera token si está ausente o expirado (mismo criterio que get_edit_url).
+      let token = card.edit_token;
+      const expired = !card.edit_token_expires_at || new Date(card.edit_token_expires_at) < new Date();
+      const tokenUpdate = {};
+      if (!token || expired) {
+        token = crypto.randomBytes(32).toString('hex');
+        tokenUpdate.edit_token = token;
+        tokenUpdate.edit_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+      const editUrl = `${siteUrl}/${idioma}/editar?slug=${card.slug}&token=${token}`;
+
+      // Email branded si hay org, genérico si no. El subject lleva prefix de
+      // reenvío para que el destinatario sepa que no es una invitación nueva.
+      let subject, html;
+      if (card.organization_id) {
+        const { data: org } = await db
+          .from('organizations')
+          .select('name, logo_url, color_primary')
+          .eq('id', card.organization_id)
+          .maybeSingle();
+        const orgName = org?.name || 'tu equipo';
+        const invite = buildInviteEmail({
+          orgName,
+          orgLogoUrl: org?.logo_url || null,
+          orgColor:   org?.color_primary || null,
+          nombre:     card.nombre,
+          editUrl,
+        });
+        subject = invite.subject;
+        html    = invite.html;
+      } else {
+        const T = EDIT_LINK_STRINGS[idioma];
+        const firstName = (card.nombre || '').split(' ')[0];
+        subject = T.subject(firstName);
+        html = buildEditLinkEmail({ nombre: card.nombre, editUrl, idioma });
+      }
+
+      const prefix = idioma === 'ca' ? '[Reenviament]' : '[Reenvío]';
+      try {
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>',
+          to: card.email,
+          subject: `${prefix} ${subject}`,
+          html,
+        });
+      } catch (err) {
+        console.error(`admin-orgs send_edit_link: email a ${card.email} falló:`, err.message);
+        return jsonResponse(500, { error: 'No se pudo enviar el email' });
+      }
+
+      // Persistimos el timestamp + token nuevo (si lo hubo) en una sola escritura.
+      const { error: updErr } = await db
+        .from('cards')
+        .update({ edit_link_sent_at: new Date().toISOString(), ...tokenUpdate })
+        .eq('slug', card_slug);
+      if (updErr) {
+        console.warn('admin-orgs send_edit_link: no se pudo marcar edit_link_sent_at:', updErr.message);
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        card_slug,
+        email: card.email,
+        sent_at: new Date().toISOString(),
+        branded: !!card.organization_id,
+      });
+    }
+
+    // ── org_card_stats: visits 30d + timestamps de email por card ──
+    // El admin-orgs studio necesita contexto rápido por card en el listado
+    // de profesionales asignados: cuántas visitas tuvo en los últimos 30 días
+    // y cuándo fue el último email (invitación o reenvío de link). Permite
+    // detectar miembros inactivos o que nunca recibieron su email de bienvenida.
+    //
+    // Scope: solo las cards de UNA org concreta. No es global a propósito —
+    // visitar 'visits' globalmente sería caro y no aporta nada al flujo B2B.
+    if (action === 'org_card_stats') {
+      const { org_slug } = body;
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+
+      const { data: org } = await db
+        .from('organizations')
+        .select('id')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
+
+      const { data: cards, error: cardsErr } = await db
+        .from('cards')
+        .select('slug, kit_email_sent_at, edit_link_sent_at')
+        .eq('organization_id', org.id)
+        .is('deleted_at', null);
+      if (cardsErr) return jsonResponse(500, { error: cardsErr.message });
+
+      const slugs = (cards || []).map(c => c.slug);
+      if (!slugs.length) {
+        return jsonResponse(200, { ok: true, cards: [] });
+      }
+
+      // Visits de los últimos 30 días para todos los slugs en una sola query.
+      // Agregamos en JS — cardinalidad realista (<100 cards × <100 visitas/30d)
+      // mantiene esto barato y no necesitamos un RPC.
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: visits, error: visitsErr } = await db
+        .from('visits')
+        .select('slug')
+        .in('slug', slugs)
+        .gte('visited_at', thirtyDaysAgo);
+      if (visitsErr) return jsonResponse(500, { error: visitsErr.message });
+
+      const visitsBySlug = {};
+      for (const v of (visits || [])) {
+        visitsBySlug[v.slug] = (visitsBySlug[v.slug] || 0) + 1;
+      }
+
+      const stats = (cards || []).map(c => ({
+        slug: c.slug,
+        visits_30d: visitsBySlug[c.slug] || 0,
+        kit_email_sent_at:  c.kit_email_sent_at  || null,
+        edit_link_sent_at:  c.edit_link_sent_at  || null,
+      }));
+
+      return jsonResponse(200, { ok: true, cards: stats });
+    }
+
     // ── delete_card: soft-delete (deleted_at = NOW()) de una card ──
     // Mismo patrón que delete-account.js: marca deleted_at y deja que el job
     // purge-deleted haga el hard-delete cascada a los 30 días. Esto preserva
@@ -766,6 +925,20 @@ function makeHandler(db, emailClient = defaultEmailClient) {
             html,
           });
           ok.push({ email: rawEmail, slug });
+          // Marcamos el timestamp del email de bienvenida (mismo semántico que
+          // kit_email_sent_at en B2C-paid: "el welcome email para esta card se
+          // envió en esta fecha"). El studio lo usa para mostrar un chip
+          // "Invitado hace Xd" en el listado de miembros. Best-effort: si falla
+          // el UPDATE, la invitación ya está enviada y la consideramos OK.
+          try {
+            const { error: stampErr } = await db
+              .from('cards')
+              .update({ kit_email_sent_at: new Date().toISOString() })
+              .eq('slug', slug);
+            if (stampErr) console.warn(`invite_team: no marqué kit_email_sent_at para ${slug}:`, stampErr.message);
+          } catch (stampErr) {
+            console.warn(`invite_team: no marqué kit_email_sent_at para ${slug}:`, stampErr.message);
+          }
         } catch (err) {
           // Card creada pero email falló — lo apuntamos como fail.
           // El admin puede reenviar desde "Asignar profesionales" si quiere
