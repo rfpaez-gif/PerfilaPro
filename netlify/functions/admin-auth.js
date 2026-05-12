@@ -1,7 +1,36 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000;
+
+// TTL de la sesión admin (cuando se intercambia TOTP por JWT).
+// Default 60 min para no interrumpir flujos largos como crear una org,
+// subir logo, asignar leads, invitar agentes en una misma sesión.
+const SESSION_TTL_MIN = Math.max(5, parseInt(process.env.ADMIN_SESSION_TTL_MINUTES || '60', 10));
+const SESSION_PURPOSE = 'admin-session';
+
+function adminJwtSecret() {
+  return process.env.ADMIN_JWT_SECRET || process.env.AGENT_JWT_SECRET || 'changeme';
+}
+
+function signAdminSession() {
+  return jwt.sign(
+    { purpose: SESSION_PURPOSE },
+    adminJwtSecret(),
+    { expiresIn: `${SESSION_TTL_MIN}m` }
+  );
+}
+
+function verifyAdminSession(token) {
+  if (!token || typeof token !== 'string') return false;
+  try {
+    const decoded = jwt.verify(token, adminJwtSecret());
+    return decoded && decoded.purpose === SESSION_PURPOSE;
+  } catch {
+    return false;
+  }
+}
 
 const failures = new Map();
 
@@ -64,12 +93,21 @@ function checkAdminAuth(event, opts = {}) {
 
   const pwd        = event.headers['x-admin-password'];
   const totpCode   = event.headers['x-admin-totp'];
+  const session    = event.headers['x-admin-session'];
   const totpSecret = process.env.ADMIN_TOTP_SECRET;
 
   const validPassword = pwd && pwd === process.env.ADMIN_PASSWORD;
   // opts.requireTotp: true → la función exige TOTP (acciones destructivas: refund, reactivar, etc.)
   // false (default) → solo contraseña; el código TOTP expira en 30s y rompería el auto-refresh
-  const validTotp = !totpSecret || !opts.requireTotp || verifyTotp(totpSecret, totpCode);
+  //
+  // Cuando requireTotp=true, aceptamos como alternativa al código TOTP un JWT
+  // de sesión emitido por /api/admin-session tras un login con TOTP válido.
+  // Esto permite sesiones admin de varios minutos sin que el código TOTP
+  // (válido solo ~90s) bloquee acciones legítimas. La sesión JWT solo se emite
+  // cuando ya hubo un TOTP válido, así que la propiedad de "segundo factor"
+  // se mantiene al inicio de la sesión.
+  const sessionValid = opts.requireTotp && session && verifyAdminSession(session);
+  const validTotp = !totpSecret || !opts.requireTotp || sessionValid || verifyTotp(totpSecret, totpCode);
 
   if (!validPassword || !validTotp) {
     const rec = failures.get(ip) || { count: 0, firstAt: now };
@@ -93,4 +131,12 @@ function unauthorizedResponse(blocked) {
   };
 }
 
-module.exports = { checkAdminAuth, unauthorizedResponse, verifyTotp, base32Decode };
+module.exports = {
+  checkAdminAuth,
+  unauthorizedResponse,
+  verifyTotp,
+  base32Decode,
+  signAdminSession,
+  verifyAdminSession,
+  SESSION_TTL_MIN,
+};

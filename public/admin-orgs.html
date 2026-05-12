@@ -283,14 +283,19 @@
 'use strict';
 
 /* ─────────────────────────────────────────────────────────────
-   Auth (sessionStorage · mismo patrón que admin.html)
+   Auth · sesión JWT (60 min default)
+   El admin valida password + TOTP UNA vez vía /api/admin-session
+   y recibe un token. Las acciones subsiguientes envían password +
+   token (header x-admin-session). Sin esto el TOTP de la pantalla
+   de login expiraba en ~90s y rompía cualquier acción que tardase
+   más de un minuto en hacerse.
    ─────────────────────────────────────────────────────────── */
-function getPwd()  { return sessionStorage.getItem('adminPwd')  || ''; }
-function getTotp() { return sessionStorage.getItem('adminTotp') || ''; }
+function getPwd()     { return sessionStorage.getItem('adminPwd')     || ''; }
+function getSession() { return sessionStorage.getItem('adminSession') || ''; }
 function authHeaders(extra) {
   return Object.assign({}, extra || {}, {
     'x-admin-password': getPwd(),
-    'x-admin-totp':     getTotp(),
+    'x-admin-session':  getSession(),
   });
 }
 
@@ -304,22 +309,29 @@ document.getElementById('totpInput').addEventListener('keydown', e => {
 async function login() {
   const pwd  = document.getElementById('pwdInput').value.trim();
   const totp = document.getElementById('totpInput').value.trim();
-  sessionStorage.setItem('adminPwd', pwd);
-  sessionStorage.setItem('adminTotp', totp);
   document.getElementById('loginError').style.display = 'none';
 
-  // Probamos la auth llamando a list (ligero)
+  // Intercambiamos password + TOTP por un JWT de sesión. /api/admin-session
+  // exige TOTP válido (~30s de vida) pero a partir de ahí trabajamos con
+  // el JWT (60 min por defecto, configurable con ADMIN_SESSION_TTL_MINUTES).
   try {
-    const res = await fetch('/.netlify/functions/admin-orgs', {
+    const res = await fetch('/.netlify/functions/admin-session', {
       method: 'POST',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ action: 'list' }),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': pwd,
+        'x-admin-totp': totp,
+      },
     });
     if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    if (!json.token) throw new Error('Sin token');
+    sessionStorage.setItem('adminPwd', pwd);
+    sessionStorage.setItem('adminSession', json.token);
   } catch {
     document.getElementById('loginError').style.display = 'block';
     sessionStorage.removeItem('adminPwd');
-    sessionStorage.removeItem('adminTotp');
+    sessionStorage.removeItem('adminSession');
     return;
   }
 
@@ -334,8 +346,24 @@ async function login() {
 
 function logout() {
   sessionStorage.removeItem('adminPwd');
-  sessionStorage.removeItem('adminTotp');
+  sessionStorage.removeItem('adminSession');
+  sessionStorage.removeItem('adminTotp'); // limpieza de la versión vieja
   location.reload();
+}
+
+// Si una acción devuelve 401 (sesión expirada), volvemos a la pantalla de
+// login con un aviso claro. Evita que el admin haga 5 clicks pensando
+// que algo está roto cuando lo único que pasa es que el JWT caducó.
+function handleAuthExpired() {
+  sessionStorage.removeItem('adminPwd');
+  sessionStorage.removeItem('adminSession');
+  const err = document.getElementById('loginError');
+  if (err) {
+    err.textContent = 'Sesión expirada. Vuelve a entrar con un código TOTP fresco.';
+    err.style.display = 'block';
+  }
+  document.getElementById('studioWrap').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'flex';
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -476,6 +504,10 @@ async function uploadLogoFile(file) {
       headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ slug: editingSlug, base64, contentType: file.type }),
     });
+    if (res.status === 401) {
+      handleAuthExpired();
+      throw new Error('Sesión expirada');
+    }
     const json = await res.json();
     if (!res.ok || !json.ok) {
       throw new Error(json.error || `HTTP ${res.status}`);
@@ -514,6 +546,10 @@ async function callAdmin(payload) {
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
   });
+  if (res.status === 401) {
+    handleAuthExpired();
+    throw new Error('Sesión expirada');
+  }
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.ok) {
     throw new Error(json.error || `HTTP ${res.status}`);
@@ -882,8 +918,10 @@ function escapeAttr(s) {
   return String(s || '').replace(/['"<>&]/g, c => ({ "'": '&#39;', '"': '&quot;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 }
 
-// Auto-login si ya hay credenciales en sessionStorage (refresh de página)
-if (getPwd()) {
+// Auto-login si ya hay JWT válido en sessionStorage (refresh de página).
+// Si el JWT expiró el backend devuelve 401, el catch limpia el storage y
+// el usuario aterriza en la pantalla de login.
+if (getPwd() && getSession()) {
   (async () => {
     try {
       const res = await fetch('/.netlify/functions/admin-orgs', {
@@ -899,7 +937,7 @@ if (getPwd()) {
       loadLeads();
     } catch {
       sessionStorage.removeItem('adminPwd');
-      sessionStorage.removeItem('adminTotp');
+      sessionStorage.removeItem('adminSession');
     }
   })();
 }
