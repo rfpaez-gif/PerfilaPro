@@ -263,6 +263,137 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── get_edit_url ──
+  describe('get_edit_url', () => {
+    function mockCardRead(card) {
+      const lookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return { select: vi.fn(() => lookup), update: cardsUpdate };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('reusa token vigente sin regenerar', async () => {
+      const futureExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const { cardsUpdate } = mockCardRead({
+        slug: 'carlos-perez',
+        idioma: 'es',
+        edit_token: 'a'.repeat(64),
+        edit_token_expires_at: futureExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'carlos-perez' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.edit_url).toContain('/es/editar?slug=carlos-perez&token=' + 'a'.repeat(64));
+      expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+
+    it('regenera token si está expirado', async () => {
+      const pastExpires = new Date(Date.now() - 60_000).toISOString();
+      const { cardsUpdate, updateEq } = mockCardRead({
+        slug: 'ana-ruiz',
+        idioma: 'es',
+        edit_token: 'old-token',
+        edit_token_expires_at: pastExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'ana-ruiz' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.edit_url).toMatch(/\/es\/editar\?slug=ana-ruiz&token=[a-f0-9]{64}$/);
+      expect(json.edit_url).not.toContain('old-token');
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.edit_token).toMatch(/^[a-f0-9]{64}$/);
+      expect(new Date(payload.edit_token_expires_at).getTime()).toBeGreaterThan(Date.now());
+      expect(updateEq).toHaveBeenCalledWith('slug', 'ana-ruiz');
+    });
+
+    it('regenera token si la card no tiene token', async () => {
+      const { cardsUpdate } = mockCardRead({
+        slug: 'sin-token',
+        idioma: 'es',
+        edit_token: null,
+        edit_token_expires_at: null,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'sin-token' } }));
+      expect(res.statusCode).toBe(200);
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+    });
+
+    it('respeta idioma=ca en la URL', async () => {
+      const futureExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      mockCardRead({
+        slug: 'pere-cat',
+        idioma: 'ca',
+        edit_token: 'b'.repeat(64),
+        edit_token_expires_at: futureExpires,
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'pere-cat' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).edit_url).toContain('/ca/editar?');
+    });
+
+    it('devuelve 404 si la card no existe o está soft-deleted', async () => {
+      mockCardRead(null);
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await handler(buildEvent({ body: { action: 'get_edit_url' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── delete_card ──
+  describe('delete_card', () => {
+    function mockCardLookup(card) {
+      const lookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: updateEq }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return { select: vi.fn(() => lookup), update: cardsUpdate };
+        return {};
+      });
+      return { cardsUpdate, updateEq };
+    }
+
+    it('soft-deleta la card (marca deleted_at, deja visits/facturas)', async () => {
+      const { cardsUpdate, updateEq } = mockCardLookup({ slug: 'carlos-perez' });
+      const res = await handler(buildEvent({ body: { action: 'delete_card', card_slug: 'carlos-perez' } }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).card_slug).toBe('carlos-perez');
+      expect(cardsUpdate).toHaveBeenCalledOnce();
+      const payload = cardsUpdate.mock.calls[0][0];
+      expect(payload.deleted_at).toBeTruthy();
+      expect(new Date(payload.deleted_at).getTime()).toBeLessThanOrEqual(Date.now());
+      expect(updateEq).toHaveBeenCalledWith('slug', 'carlos-perez');
+    });
+
+    it('devuelve 404 si la card no existe o ya está borrada', async () => {
+      const { cardsUpdate } = mockCardLookup(null);
+      const res = await handler(buildEvent({ body: { action: 'delete_card', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+      expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rechaza si falta card_slug', async () => {
+      const res = await handler(buildEvent({ body: { action: 'delete_card' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {
@@ -487,144 +618,6 @@ describe('admin-orgs handler', () => {
         body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
       }));
       expect(res.statusCode).toBe(404);
-    });
-  });
-
-  // ── invite_agent ──
-  describe('invite_agent', () => {
-    const mockEmailSend = vi.fn();
-    const mockEmail = { emails: { send: mockEmailSend } };
-    const inviteHandler = makeHandler(mockDb, mockEmail);
-
-    beforeEach(() => {
-      vi.clearAllMocks();
-      process.env.ADMIN_PASSWORD = 'admin123';
-      mockEmailSend.mockResolvedValue({ id: 'msg' });
-    });
-
-    function mockOrgLookupAndInsert({ org = { id: 'org1', slug: 'allianz', name: 'Allianz', logo_url: null, color_primary: '#003781' }, existingCard = null, insertError = null } = {}) {
-      const orgLookup = {
-        eq: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
-      };
-      const cardLookup = {
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: existingCard, error: null }),
-      };
-      const cardInsert = vi.fn().mockResolvedValue({ error: insertError });
-      mockFrom.mockImplementation((table) => {
-        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
-        if (table === 'cards')         return { select: vi.fn(() => cardLookup), insert: cardInsert };
-        return {};
-      });
-      return { orgLookup, cardLookup, cardInsert };
-    }
-
-    it('crea card B2B y envía email cuando todo es válido', async () => {
-      const { cardInsert } = mockOrgLookupAndInsert();
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'carlos@allianz.es', nombre: 'Carlos Pérez' },
-      }));
-      expect(res.statusCode).toBe(200);
-      const json = JSON.parse(res.body);
-      expect(json.ok).toBe(true);
-      expect(json.slug).toBe('carlos-perez');
-      expect(json.edit_url).toContain('/es/editar?slug=carlos-perez&token=');
-      expect(json.org.slug).toBe('allianz');
-
-      // La card debe entrar con plan='b2b', organization_id pre-seteado y token de 64 chars
-      expect(cardInsert).toHaveBeenCalledOnce();
-      const inserted = cardInsert.mock.calls[0][0];
-      expect(inserted.plan).toBe('b2b');
-      expect(inserted.status).toBe('active');
-      expect(inserted.organization_id).toBe('org1');
-      expect(inserted.email).toBe('carlos@allianz.es');
-      expect(inserted.nombre).toBe('Carlos Pérez');
-      expect(inserted.edit_token).toMatch(/^[a-f0-9]{64}$/);
-      expect(inserted.idioma).toBe('es');
-
-      // Email a la dirección correcta, con branding de la org en el body
-      expect(mockEmailSend).toHaveBeenCalledOnce();
-      const sent = mockEmailSend.mock.calls[0][0];
-      expect(sent.to).toBe('carlos@allianz.es');
-      expect(sent.subject).toContain('Allianz');
-      expect(sent.html).toContain('Allianz');
-      expect(sent.html).toContain('#003781'); // color_primary visible en el banner
-      expect(sent.html).toContain(inserted.edit_token);
-    });
-
-    it('genera slug aleatorio cuando no se pasa nombre', async () => {
-      const { cardInsert } = mockOrgLookupAndInsert();
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'pendiente@allianz.es' },
-      }));
-      expect(res.statusCode).toBe(200);
-      const json = JSON.parse(res.body);
-      expect(json.slug).toMatch(/^agente-/);
-      const inserted = cardInsert.mock.calls[0][0];
-      expect(inserted.nombre).toBe('Nuevo profesional');
-    });
-
-    it('renombra el slug con sufijo cuando ya existe una card con ese slug', async () => {
-      const { cardInsert } = mockOrgLookupAndInsert({
-        existingCard: { slug: 'carlos-perez' },
-      });
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'c@a.com', nombre: 'Carlos Pérez' },
-      }));
-      expect(res.statusCode).toBe(200);
-      const json = JSON.parse(res.body);
-      expect(json.slug).toMatch(/^carlos-perez-\d{4}$/);
-      expect(cardInsert.mock.calls[0][0].slug).toBe(json.slug);
-    });
-
-    it('devuelve 400 si el email es inválido', async () => {
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'no-es-email' },
-      }));
-      expect(res.statusCode).toBe(400);
-      expect(JSON.parse(res.body).error).toContain('email');
-    });
-
-    it('devuelve 400 si el org_slug es inválido', async () => {
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'MAYUS', email: 'c@a.com' },
-      }));
-      expect(res.statusCode).toBe(400);
-    });
-
-    it('devuelve 404 si la org no existe (o está soft-deleted)', async () => {
-      const orgLookup = {
-        eq: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-      };
-      mockFrom.mockImplementation((table) => {
-        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
-        return {};
-      });
-      const res = await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'no-existe', email: 'c@a.com' },
-      }));
-      expect(res.statusCode).toBe(404);
-    });
-
-    it('devuelve 500 si Resend no está configurado', async () => {
-      const handlerSinEmail = makeHandler(mockDb, null);
-      const res = await handlerSinEmail(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'c@a.com' },
-      }));
-      expect(res.statusCode).toBe(500);
-      expect(JSON.parse(res.body).error).toContain('Resend');
-    });
-
-    it('normaliza el email a lowercase', async () => {
-      const { cardInsert } = mockOrgLookupAndInsert();
-      await inviteHandler(buildEvent({
-        body: { action: 'invite_agent', org_slug: 'allianz', email: 'Carlos@Allianz.ES', nombre: 'Carlos' },
-      }));
-      expect(cardInsert.mock.calls[0][0].email).toBe('carlos@allianz.es');
     });
   });
 

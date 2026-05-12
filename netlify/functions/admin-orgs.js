@@ -290,6 +290,75 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       return jsonResponse(200, { ok: true, card_slug, organization_id });
     }
 
+    // ── get_edit_url: devuelve el magic-link de edición de una card ──
+    // Reusa el edit_token vigente si lo hay; si está ausente o expirado lo
+    // regenera (32 bytes hex, 7 días). Evita invalidar links que el agente
+    // pueda estar usando ya. Solo cards no soft-deleted.
+    if (action === 'get_edit_url') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug, idioma, edit_token, edit_token_expires_at')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+
+      let token = card.edit_token;
+      const expires = card.edit_token_expires_at;
+      const expired = !expires || new Date(expires) < new Date();
+      if (!token || expired) {
+        token = crypto.randomBytes(32).toString('hex');
+        const newExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { error: updErr } = await db
+          .from('cards')
+          .update({ edit_token: token, edit_token_expires_at: newExpires })
+          .eq('slug', card_slug);
+        if (updErr) return jsonResponse(500, { error: updErr.message });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+      return jsonResponse(200, {
+        ok: true,
+        edit_url: `${siteUrl}/${idioma}/editar?slug=${card.slug}&token=${token}`,
+      });
+    }
+
+    // ── delete_card: soft-delete (deleted_at = NOW()) de una card ──
+    // Mismo patrón que delete-account.js: marca deleted_at y deja que el job
+    // purge-deleted haga el hard-delete cascada a los 30 días. Esto preserva
+    // facturas (AEAT) y visits hasta la purga, y da un grace period por si
+    // el admin se equivoca. 404 si la card no existe o ya está borrada.
+    if (action === 'delete_card') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: selErr } = await db
+        .from('cards')
+        .select('slug')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (selErr) return jsonResponse(500, { error: selErr.message });
+      if (!card)  return jsonResponse(404, { error: 'card no encontrada' });
+
+      const { error: updErr } = await db
+        .from('cards')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('slug', card_slug);
+      if (updErr) return jsonResponse(500, { error: updErr.message });
+
+      return jsonResponse(200, { ok: true, card_slug });
+    }
+
     // ── leads_list: leads B2B persistidos (filtrables) ──
     // Devuelve los leads del form /es/empresas para que el admin los gestione
     // (asociar a org, reenviar magic-link). Por defecto solo pendientes.
@@ -400,114 +469,6 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       }
 
       return jsonResponse(200, { ok: true });
-    }
-
-    // ── invite_agent: crea una card B2B vacía + magic-link para el agente ──
-    // El admin invita a un email; el backend pre-crea la card con plan='b2b'
-    // ya asignada a la org y manda un email con un edit_token de 7 días.
-    // El agente abre el link y completa su perfil desde /es/editar.
-    if (action === 'invite_agent') {
-      const { org_slug, email: rawEmail, nombre: rawNombre } = body;
-
-      if (!isValidOrgSlug(org_slug)) {
-        return jsonResponse(400, { error: 'org_slug inválido' });
-      }
-      const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
-      if (!EMAIL_RE.test(email)) {
-        return jsonResponse(400, { error: 'email inválido' });
-      }
-      if (rawNombre != null && typeof rawNombre !== 'string') {
-        return jsonResponse(400, { error: 'nombre debe ser string' });
-      }
-      if (!emailClient) {
-        return jsonResponse(500, { error: 'Resend no configurado' });
-      }
-
-      // Resolvemos la org primero para tener nombre/logo/color para el email
-      // y el id para la FK. Una org soft-deleted no debe poder recibir invitados.
-      const { data: org, error: orgErr } = await db
-        .from('organizations')
-        .select('id, slug, name, logo_url, color_primary')
-        .eq('slug', org_slug)
-        .is('deleted_at', null)
-        .maybeSingle();
-      if (orgErr) return jsonResponse(500, { error: orgErr.message });
-      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
-
-      // Slug: si el admin pasa nombre, derivamos; si no, "agente-{timestamp36}-{rnd}".
-      // El nombre visible en la card (que el agente verá y editará en /editar)
-      // sigue el mismo principio: nombre limpio si lo hay, placeholder si no.
-      const cleanNombre = rawNombre ? stripTagsInline(rawNombre).substring(0, 100) : '';
-      const displayName = cleanNombre || 'Nuevo profesional';
-      let slug = cleanNombre ? toSlug(cleanNombre) : '';
-      if (!slug) {
-        slug = `agente-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
-      }
-
-      // Slug uniqueness — incluye soft-deleted para no colisionar con la PK.
-      // Mismo patrón que register-b2b.
-      const { data: existing } = await db
-        .from('cards')
-        .select('slug')
-        .eq('slug', slug)
-        .maybeSingle();
-      if (existing) {
-        slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}`;
-      }
-
-      const editToken = crypto.randomBytes(32).toString('hex');
-      const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const row = {
-        slug,
-        nombre:                displayName,
-        email,
-        plan:                  'b2b',
-        status:                'active',
-        organization_id:       org.id,
-        edit_token:            editToken,
-        edit_token_expires_at: editTokenExpiresAt,
-        whatsapp:              '',
-        servicios:             [],
-        idioma:                'es',
-      };
-
-      const { error: insErr } = await db.from('cards').insert(row);
-      if (insErr) {
-        console.error('admin-orgs invite_agent: error insertando card:', insErr.message);
-        return jsonResponse(500, { error: 'No se pudo crear la card: ' + insErr.message });
-      }
-
-      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
-      const editUrl = `${siteUrl}/es/editar?slug=${slug}&token=${editToken}`;
-      const { subject, html } = buildInviteEmail({
-        orgName:    org.name,
-        orgLogoUrl: org.logo_url,
-        orgColor:   org.color_primary,
-        nombre:     cleanNombre,
-        editUrl,
-      });
-
-      try {
-        await emailClient.emails.send({
-          from: 'PerfilaPro <hola@perfilapro.es>',
-          to: email,
-          subject,
-          html,
-        });
-      } catch (err) {
-        // Card creada pero email falló: devolvemos 500 con info útil para que
-        // el admin sepa que tiene que reenviar (o eliminar la card huérfana).
-        console.error('admin-orgs invite_agent: error enviando email:', err.message);
-        return jsonResponse(500, { error: 'Card creada pero el email falló. Slug: ' + slug });
-      }
-
-      return jsonResponse(200, {
-        ok: true,
-        slug,
-        edit_url: editUrl,
-        org: { slug: org.slug, name: org.name },
-      });
     }
 
     // ── invite_team: alta en bloque de varios agentes con datos comunes ──
