@@ -146,3 +146,4 @@ function makeHandler(db, emailClient) {
 exports.handler = makeHandler(supabase, resend);
 exports.makeHandler = makeHandler;
 exports.buildEditLinkEmail = buildEditLinkEmail;
+exports.EDIT_LINK_STRINGS = EDIT_LINK_STRINGS;

@@ -78,10 +78,19 @@
     .pp-orgs-table__actions { display: flex; gap: .35rem; flex-wrap: wrap; }
 
     /* ── Cards assignment ─────────────────────────────────── */
-    .pp-cards-list { display: grid; gap: .4rem; max-height: 360px; overflow-y: auto; padding-right: .25rem; }
-    .pp-cards-list__item { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: center; padding: .55rem .75rem; background: #FAFBFC; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; font-size: 13px; }
+    .pp-cards-list { display: grid; gap: .4rem; max-height: 540px; overflow-y: auto; padding-right: .25rem; }
+    .pp-cards-list__item { display: grid; grid-template-columns: 1fr auto; gap: .65rem; align-items: center; padding: .55rem .75rem; background: #FAFBFC; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; font-size: 13px; transition: border-color .12s; }
+    .pp-cards-list__item.is-expanded { border-color: var(--color-tinta, #0A1F44); background: #fff; }
+    .pp-cards-list__head { display: contents; }
+    .pp-cards-list__namebtn { background: none; border: none; padding: 0; margin: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; display: block; min-width: 0; }
+    .pp-cards-list__namebtn:hover .pp-cards-list__name { text-decoration: underline; text-decoration-color: var(--color-gris-200, #E5E7EB); text-underline-offset: 3px; }
     .pp-cards-list__name { font-weight: 600; color: var(--color-tinta, #0A1F44); }
     .pp-cards-list__meta { font-size: 11px; color: var(--color-gris-500, #6B7280); font-family: var(--font-mono); margin-top: 2px; }
+    .pp-cards-list__chips { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .35rem; }
+    .pp-cards-list__chip { display: inline-flex; align-items: center; gap: .25rem; font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; color: var(--color-gris-500, #6B7280); font-weight: 500; line-height: 1.4; font-family: var(--font-sans); }
+    .pp-cards-list__chip--ok { background: var(--color-verde-light, #E6F9F0); border-color: #BFE9D0; color: var(--color-verde-dark, #00A865); }
+    .pp-cards-list__chip--warn { background: #FEF6E7; border-color: #F4D88A; color: #B47B00; }
+    .pp-cards-list__chip strong { color: var(--color-tinta, #0A1F44); font-weight: 700; }
     .pp-cards-list__btns { display: flex; gap: .35rem; align-items: center; }
     .pp-cards-list__btn { font-size: 12px; padding: .35rem .75rem; border-radius: var(--pp-r-pill, 999px); border: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; cursor: pointer; font-weight: 600; color: var(--color-tinta, #0A1F44); }
     .pp-cards-list__btn:hover { background: var(--color-verde-light, #E6F9F0); border-color: var(--color-verde-dark, #00A865); }
@@ -90,6 +99,21 @@
     .pp-cards-list__btn--icon { padding: .35rem .55rem; font-size: 13px; line-height: 1; }
     .pp-cards-list__btn--danger:hover { background: #FEF2F2; border-color: #DC2626; color: #DC2626; }
     .pp-cards-list__search { width: 100%; margin-bottom: .65rem; }
+
+    /* ── Inline card preview drawer (dentro de la lista de cards) ── */
+    .pp-card-drawer { grid-column: 1 / -1; margin-top: .65rem; border-top: 1px solid var(--color-gris-200, #E5E7EB); padding-top: .85rem; display: grid; gap: .75rem; }
+    .pp-card-drawer__bar { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .pp-card-drawer__url { font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+    .pp-card-drawer__frame { width: 100%; height: 420px; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 10px; background: #fff; }
+    .pp-card-drawer__actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .pp-card-drawer__actions .pp-btn { white-space: nowrap; }
+
+    /* ── Breadcrumb / volver ──────────────────────────────── */
+    .pp-crumb { display: flex; align-items: center; gap: .5rem; font-size: 12px; color: var(--color-gris-500, #6B7280); margin-bottom: .85rem; flex-wrap: wrap; }
+    .pp-crumb__back { background: none; border: none; padding: .25rem .55rem; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--color-tinta, #0A1F44); display: inline-flex; align-items: center; gap: .25rem; }
+    .pp-crumb__back:hover { background: #F1F3F5; }
+    .pp-crumb__sep { color: var(--color-gris-200, #E5E7EB); }
+    .pp-crumb__current { color: var(--color-tinta, #0A1F44); font-weight: 600; font-family: var(--font-serif); font-style: italic; font-size: 13px; }
 
     /* ── Preview ──────────────────────────────────────────── */
     .pp-preview { position: sticky; top: 1.5rem; }
@@ -286,9 +310,15 @@
 
       <!-- Asignación de cards -->
       <section class="pp-section" id="assignSection" style="display:none">
+        <div class="pp-crumb">
+          <button type="button" class="pp-crumb__back" onclick="exitOrgContext()" aria-label="Volver al listado de organizaciones">← Volver</button>
+          <span>Organizaciones</span>
+          <span class="pp-crumb__sep">›</span>
+          <span class="pp-crumb__current" id="assignOrgName"></span>
+        </div>
         <div class="pp-section__h">
-          <h2 class="pp-section__title">Asignar profesionales · <span id="assignOrgName" style="font-style:italic"></span></h2>
-          <span class="pp-section__hint">Click para vincular/desvincular</span>
+          <h2 class="pp-section__title">Profesionales del equipo</h2>
+          <span class="pp-section__hint">Click en el nombre para ver su tarjeta</span>
         </div>
         <input type="text" class="pp-input pp-cards-list__search" id="cardsSearch" placeholder="Buscar por nombre o slug…">
         <div class="pp-cards-list" id="cardsList">
@@ -422,6 +452,8 @@ let currentLogoUrl = null;  // logo actualmente asignado a la org en edición
 let cachedOrgs   = [];
 let cachedCards  = [];
 let selectedOrgSlug = null; // org seleccionada para asignación + preview
+let cardStatsBySlug = {};   // { slug: { visits_30d, kit_email_sent_at, edit_link_sent_at } }
+let expandedCardSlug = null; // slug de la card cuyo drawer (iframe /c/:slug) está abierto
 
 function slugify(s) {
   return (s || '')
@@ -684,6 +716,24 @@ function selectOrg(slug) {
   showAssignSection(org);
   renderOrgsTable();
   setPreview(slug);
+  // Cargamos stats en background; el listado se re-renderiza cuando llegan.
+  loadOrgCardStats(slug);
+  // Al cambiar de org colapsamos cualquier drawer abierto (era de la org anterior).
+  expandedCardSlug = null;
+}
+
+// Cierra el contexto de "estoy dentro de una org": colapsa el panel de
+// asignación, limpia el preview, resetea el form y vuelve al listado puro.
+// Es el handler del botón "← Volver" del breadcrumb.
+function exitOrgContext() {
+  selectedOrgSlug = null;
+  expandedCardSlug = null;
+  cardStatsBySlug = {};
+  resetForm();
+  $('assignSection').style.display = 'none';
+  setPreview(null);
+  renderOrgsTable();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function deleteOrg(slug, name) {
@@ -762,18 +812,125 @@ function renderCardsList() {
       btnOnclick = `toggleCard('${escapeAttr(c.slug)}', '${escapeAttr(org.slug)}')`;
     }
 
-    return `<div class="pp-cards-list__item">
-      <div>
-        <div class="pp-cards-list__name">${escapeHtml(c.nombre)}</div>
-        <div class="pp-cards-list__meta">${escapeHtml(c.slug)} · ${escapeHtml(c.plan || '')}</div>
-      </div>
+    // Chips solo para los miembros del equipo actual (assignedHere). Para
+    // cards ajenas o sueltas no aporta contexto y abultaría el listado.
+    const stats = assignedHere ? cardStatsBySlug[c.slug] : null;
+    const chipsHtml = stats ? renderCardChips(stats) : '';
+    const isExpanded = expandedCardSlug === c.slug && assignedHere;
+    const drawerHtml = isExpanded ? renderCardDrawer(c) : '';
+    const itemClass = isExpanded ? 'pp-cards-list__item is-expanded' : 'pp-cards-list__item';
+    // Solo los miembros asignados a esta org abren preview (los demás no son
+    // gestionables desde aquí — el click en su nombre no aporta nada útil).
+    const nameInner = `
+      <div class="pp-cards-list__name">${escapeHtml(c.nombre)}</div>
+      <div class="pp-cards-list__meta">${escapeHtml(c.slug)} · ${escapeHtml(c.plan || '')}</div>
+      ${chipsHtml}
+    `;
+    const nameBlock = assignedHere
+      ? `<button class="pp-cards-list__namebtn" type="button" onclick="toggleCardDrawer('${escapeAttr(c.slug)}')" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Ver tarjeta de ${escapeAttr(c.nombre)}">${nameInner}</button>`
+      : `<div>${nameInner}</div>`;
+
+    return `<div class="${itemClass}">
+      ${nameBlock}
       <div class="pp-cards-list__btns">
         <button class="pp-cards-list__btn pp-cards-list__btn--icon" title="Editar tarjeta" aria-label="Editar tarjeta de ${escapeAttr(c.nombre)}" onclick="openCardEditor('${escapeAttr(c.slug)}')">✏️</button>
         <button class="pp-cards-list__btn pp-cards-list__btn--icon pp-cards-list__btn--danger" title="Borrar tarjeta" aria-label="Borrar tarjeta de ${escapeAttr(c.nombre)}" onclick="deleteCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')">🗑️</button>
         <button class="${btnClass}" onclick="${btnOnclick}">${btnLabel}</button>
       </div>
+      ${drawerHtml}
     </div>`;
   }).join('');
+}
+
+// Renderiza los chips contextuales debajo del nombre: visitas 30d y último
+// touchpoint de email. Mantenemos el HTML compacto — son 1-2 chips, no más.
+function renderCardChips(stats) {
+  const chips = [];
+  if (stats.visits_30d != null) {
+    const v = stats.visits_30d;
+    const cls = v > 0 ? 'pp-cards-list__chip pp-cards-list__chip--ok' : 'pp-cards-list__chip';
+    chips.push(`<span class="${cls}" title="Visitas únicas registradas en los últimos 30 días"><strong>${v}</strong> visita${v === 1 ? '' : 's'} · 30d</span>`);
+  }
+  const lastEmailAt = pickLastEmailTimestamp(stats);
+  if (lastEmailAt) {
+    const ago = humanAgo(lastEmailAt);
+    chips.push(`<span class="pp-cards-list__chip pp-cards-list__chip--ok" title="Último email transaccional (invitación o reenvío de link)">📧 ${ago}</span>`);
+  } else {
+    chips.push(`<span class="pp-cards-list__chip pp-cards-list__chip--warn" title="Esta card nunca recibió email de bienvenida ni reenvío de link">⚠️ Sin email</span>`);
+  }
+  return `<div class="pp-cards-list__chips">${chips.join('')}</div>`;
+}
+
+function pickLastEmailTimestamp(stats) {
+  const candidates = [stats.kit_email_sent_at, stats.edit_link_sent_at].filter(Boolean);
+  if (!candidates.length) return null;
+  return candidates.reduce((a, b) => new Date(a) > new Date(b) ? a : b);
+}
+
+// Formato compacto "hace Xd" / "hace Xh". Para >30d → fecha corta dd mmm.
+function humanAgo(iso) {
+  const then = new Date(iso).getTime();
+  if (!then) return '—';
+  const diff = Date.now() - then;
+  const d = Math.floor(diff / 86400000);
+  if (d >= 30) return new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+  if (d >= 1)  return `hace ${d}d`;
+  const h = Math.floor(diff / 3600000);
+  if (h >= 1)  return `hace ${h}h`;
+  return 'ahora';
+}
+
+// El drawer es la tarjeta /c/:slug embebida + acciones rápidas que ahorran
+// al admin abrir 3 pestañas para tareas comunes (mandar el enlace al
+// miembro, ver cómo le queda la card, editarla él mismo).
+function renderCardDrawer(card) {
+  const previewUrl = `/c/${card.slug}?_t=${Date.now()}`;
+  return `<div class="pp-card-drawer">
+    <div class="pp-card-drawer__bar">
+      <div class="pp-card-drawer__url">${escapeHtml(previewUrl.split('?')[0])}</div>
+      <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="toggleCardDrawer('${escapeAttr(card.slug)}')">Cerrar ✕</button>
+    </div>
+    <iframe class="pp-card-drawer__frame" src="${escapeAttr(previewUrl)}" loading="lazy" sandbox="allow-same-origin allow-scripts"></iframe>
+    <div class="pp-card-drawer__actions">
+      <button type="button" class="pp-btn pp-btn--primary pp-btn--sm" onclick="sendEditLinkToMember('${escapeAttr(card.slug)}','${escapeAttr(card.nombre)}')">📧 Enviar enlace al miembro</button>
+      <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openCardEditor('${escapeAttr(card.slug)}')">✏️ Editar yo mismo</button>
+      <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/c/${escapeAttr(card.slug)}','_blank')">↗ Abrir en pestaña</button>
+    </div>
+  </div>`;
+}
+
+function toggleCardDrawer(slug) {
+  expandedCardSlug = expandedCardSlug === slug ? null : slug;
+  renderCardsList();
+}
+
+// Pide al backend que mande el magic-link al email del miembro. El backend
+// detecta si la card está en una org y manda el email branded; si no, el
+// genérico. Refresca el chip de "último email" con el timestamp nuevo.
+async function sendEditLinkToMember(cardSlug, cardNombre) {
+  const label = cardNombre || cardSlug;
+  if (!confirm(`¿Enviar el enlace de edición a "${label}"?\n\nLlega a su email registrado en la card con el magic-link de edición (válido 7 días). Si la card ya tenía un token vigente lo reusa, si no, genera uno nuevo.`)) return;
+  try {
+    const json = await callAdmin({ action: 'send_edit_link', card_slug: cardSlug });
+    toast(`Enlace enviado a ${json.email}`, 'ok');
+    if (selectedOrgSlug) await loadOrgCardStats(selectedOrgSlug);
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+// Trae stats por card de una org concreta. Errores se loguean pero no
+// bloquean — sin stats el listado se sigue mostrando, solo sin chips.
+async function loadOrgCardStats(orgSlug) {
+  try {
+    const json = await callAdmin({ action: 'org_card_stats', org_slug: orgSlug });
+    const map = {};
+    for (const s of (json.cards || [])) map[s.slug] = s;
+    cardStatsBySlug = map;
+    renderCardsList();
+  } catch (err) {
+    console.warn('No se pudieron cargar stats por card:', err.message);
+  }
 }
 
 // "Quitar del equipo" con cortesía 90 días. Diferente de toggleCard(null)
@@ -789,7 +946,9 @@ async function offboardCard(cardSlug, cardNombre) {
   try {
     await callAdmin({ action: 'offboard_card', card_slug: cardSlug });
     toast(`"${label}" ha salido del equipo con 90 días de cortesía`, 'ok');
+    if (expandedCardSlug === cardSlug) expandedCardSlug = null;
     await loadCards();
+    if (selectedOrgSlug) await loadOrgCardStats(selectedOrgSlug);
     reloadPreview();
   } catch (err) {
     toast('Error: ' + err.message, 'err');
@@ -804,6 +963,7 @@ async function toggleCard(cardSlug, orgSlug) {
       org_slug: orgSlug === null || orgSlug === 'null' ? null : orgSlug,
     });
     await loadCards();
+    if (selectedOrgSlug) await loadOrgCardStats(selectedOrgSlug);
     reloadPreview();
     toast('Asignación actualizada', 'ok');
   } catch (err) {
@@ -831,7 +991,9 @@ async function deleteCard(cardSlug, cardNombre) {
   try {
     await callAdmin({ action: 'delete_card', card_slug: cardSlug });
     toast(`Tarjeta de "${label}" borrada`, 'ok');
+    if (expandedCardSlug === cardSlug) expandedCardSlug = null;
     await loadCards();
+    if (selectedOrgSlug) await loadOrgCardStats(selectedOrgSlug);
     reloadPreview();
   } catch (err) {
     toast('Error: ' + err.message, 'err');
