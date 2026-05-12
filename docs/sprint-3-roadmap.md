@@ -103,6 +103,99 @@ acabar la revisión visual del deploy):
 - [ ] Click ✏️ en una card → abre el editor en nueva pestaña con la card cargada.
 - [ ] Click 🗑️ → confirm → card desaparece del listado y queda con `deleted_at` en BD.
 
+## Estado tras #100-#103 — branded hero, white-label y offboarding humano
+
+Cuatro PRs squash-mergeados a `main` el 2026-05-12, todos sobre el flujo
+B2B (`/e/:slug`, `/c/:slug`, `admin-orgs.html`). El paquete sube la
+calidad B2B del "puedo asignar una card a una org" a un mini-producto
+white-label coherente para el primer cliente de pago.
+
+1. **Branded hero en `/c/:slug` (#100, `35f03b7`).** Cuando la card tiene
+   `organization_id` resuelto, se pinta un hero completo arriba (logo en
+   pill blanco + nombre serif + tagline opcional sobre `color_primary`).
+   Mismo lenguaje visual que el hero de `/e/:slug` escalado al ancho de
+   la card. El cliente B2B siente la marca como dueña del espacio. La
+   atribución al pie ("Parte de [Org]") quedó absorbida — el hero es
+   ahora la cabecera clickeable hacia `/e/:slug`. Fetch de la org usa
+   `getOrgById` (con `tagline`) en vez del SELECT inline previo.
+
+2. **White-label en contexto B2B (#101, `41d7345`).** `dir-utils.htmlPage`
+   acepta `noPromo` (default false). Cuando true, oculta el CTA
+   *"Crea tu perfil →"* del header y el link *"Directorio"* del footer;
+   deja el logo PerfilaPro y los links legales (Términos/Privacidad) como
+   atribución SaaS mínima. `org.js` pasa `noPromo: true` siempre y elimina
+   `buildShowcaseCta` del body. `card.js` cuando hay `organization_id`:
+   oculta `pp-free-banner`, sustituye el bloque "Creado con PerfilaPro ·
+   Crea tu propio perfil" por un escueto `Powered by PerfilaPro` sin link,
+   y oculta el `pp-page-foot`. Cards sin org se renderizan idénticas a
+   antes. El visitante de Special Trainer ya no recibe ofertas de
+   PerfilaPro B2C compitiendo por su atención.
+
+3. **"Quitar del equipo" con cortesía 90 días (#102, `9053763`).** Nueva
+   acción `offboard_card` en `admin-orgs.js`. No es desvincular seco:
+   setea `organization_id=NULL`, `plan='base'`, `expires_at=NOW+90d`,
+   resetea `reminder_30/15/7_sent`. El cron `remind-expiry` ya envía
+   automáticamente los avisos a 30/15/7 días antes del fin de cortesía —
+   **cero código nuevo en el cron**, todo es reuso. Si la card tenía un
+   `expires_at` posterior, se preserva el más generoso. Regenera
+   `edit_token` si está caducado (30 días TTL). Email transaccional al
+   trabajador respetando `cards.idioma` (es/ca) con URL de su tarjeta +
+   magic-link para seguir editando. Email no-bloqueante: si Resend falla,
+   el offboard ya está en BD. El botón "Quitar" del listado de
+   profesionales asignados ahora llama a `offboardCard()` con modal
+   explicativo que diferencia "Quitar (cortesía 90d)" de "Eliminar
+   definitivamente" (🗑️ sigue siendo `delete_card`/soft-delete).
+
+4. **Cargo individual per-miembro en `invite_team` (#103, `d14ef25`).**
+   El array `team` ahora acepta `ocupacion` por miembro (sanitizada,
+   140 chars max). Si está, gana sobre `template.tagline`; si no, fallback
+   al template. Compatibilidad total con invitaciones previas. UI:
+   `parseTeamList` extrae la 3ª columna como `ocupacion` desde CSV/Excel
+   paste; placeholder y hint actualizados con ejemplo realista
+   (Entrenadora / Recepcionista / Fisioterapeuta). En `/e/:slug` cada
+   profesional aparece bajo su nombre con su rol específico en lugar de
+   un tagline genérico común.
+
+### Deuda B2B explícita parqueada (re-evaluar antes de Sprint 3)
+
+Tres piezas que el usuario y yo discutimos y aparcamos conscientemente
+porque hoy no aportan al caso de uso real (founder operando como
+super-admin de confianza). Re-evaluar cuando arranque el self-service B2B
+real (cliente B2B se loguea solo en su panel sin pasar por el founder).
+
+- **Form admin dedicado para editar cards desde admin-orgs.** Hoy el
+  botón ✏️ llama a `get_edit_url` y abre el `/{lang}/editar` del
+  trabajador en pestaña nueva. Funciona y deja al admin tocar todos los
+  campos. Falta separación de capas: admin = marca-cara (foto, tagline,
+  servicios, ocupación, zona, descripción); trabajador = canales
+  personales (WhatsApp, email, teléfono, dirección, idioma). Construir
+  cuando entre el self-service B2B con auth de "dueño de organización"
+  (que no es admin global) — entonces sí hace falta limitar qué puede
+  tocar el cliente B2B sobre sus propios empleados.
+
+- **Consent flow para invitar trabajador con email ya existente.** Hoy
+  `invite_team` no detecta colisión de email — si Olga ya tiene una card
+  como autónoma con `olga@gmail.com`, una invitación a ese email crea una
+  segunda card con slug sufijado. Doble identidad. El diseño consensuado
+  es: detectar email existente → enviar email *"Special Trainer quiere
+  añadirte a su equipo. Tu perfil pasaría a mostrarse bajo su marca. ¿Aceptas?
+  [Aceptar/Rechazar]"* con token-link al endpoint nuevo `/api/org-invite-accept`.
+  Identidad portable (Olga conserva slug, foto, visits acumuladas). Construir
+  con el primer caso real en producción (lo veremos cuando aparezca).
+
+- **Migrar `assign_card` (admin-orgs) al mismo flujo de consent.** La
+  acción actual "Asignar card existente a esta org" no pide consentimiento
+  al dueño de la card. Hoy funciona porque el founder opera en modo
+  confianza, pero no es B2B-correct para producción. Misma solución que
+  el punto anterior: reusar el endpoint de consent. Hacer en el mismo
+  sprint que el consent flow del invite.
+
+Sin bloqueador alguno: los cuatro PRs de hoy están en producción y
+funcionan end-to-end para Special Trainer (la primera org de prueba real
+con Olga Cardona como entrenadora). El usuario validó visualmente el
+branded hero — feedback explícito *"Tienen que sentir la presencia de su
+marca, la exclusividad"* fue lo que disparó el paquete completo.
+
 ## Sprint 3 — el sprint de monetización + onboarding B2B real
 
 Tres piezas que se necesitan mutuamente. **Empezar por A**: sin
