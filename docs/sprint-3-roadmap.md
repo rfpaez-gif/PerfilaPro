@@ -15,6 +15,16 @@ Todo lo que sigue está en `main`. No queda nada en ramas sin mergear.
 |---|---|---|
 | `1f781c5` | #92 | Sprint B2B completo: `/es/empresas` (form leads), `/e/:slug` (org pages), `/admin-orgs.html` (B2B Demo Studio), endpoints `admin-orgs` + `upload-org-logo` + `lead-b2b`, atribución gated en `card.js`, migraciones 019 + 020. |
 | `6ea56e9` | #93 | CTA "Crea tu perfil gratis →" al pie de `/e/:slug` (reusa `buildShowcaseCta` de `dir-utils`). |
+| `3f89426` | #95 | Sprint 3 · pieza A: onboarding B2B con pre-relleno desde el lead. Migración `021_b2b_leads.sql`, endpoint `onboarding-prefill`, página `public/es/onboarding.html`, integración en `register-free` / `create-checkout`, sección "Leads B2B" en Studio. |
+| `8c21fc2` | #96 | Carril propio `plan='b2b'` para perfiles de empresa. Migración `022_cards_plan_b2b.sql`. Resuelve que las cards B2B no se confundieran con free/base. |
+| `5369fc1` | – | Action `invite_agent` en `admin-orgs` (preámbulo de #97). |
+| `0d0a7f4` | – | Hotfix: expandir `cards_plan_check` para aceptar `'b2b'`. |
+| `5c92001` | – | Hotfix: render público no marcaba cards b2b como Free. |
+| `b8468e8` | – | **Resuelve la deuda "alta" del TOTP**: admin-session emite JWT de 60 min al primer login válido (password + TOTP). Las acciones siguientes envían sólo el token. Ya no caducaba la sesión a los 90s. |
+| `550bd63` | – | Hotfix: grid de `/e/:slug` enlaza a `/c/` (no a `/p/`) y trata b2b como paid. |
+| `821c8ab` | – | Preámbulo de #97: invitar equipo en bloque + candado de campos en `/editar`. |
+| `28a9d05` | #97 | Sprint 3 · pieza B (parcial): invitar equipo end-to-end con candado + sesión JWT. |
+| `193124f` | #98 | Pulido del panel B2B (este hilo). Ver "Estado tras #98" abajo. |
 
 Env vars añadidas en Netlify durante esta sesión:
 - `B2B_LEAD_INBOX = hola@perfilapro.es` ✓
@@ -41,6 +51,57 @@ en producción antes de construir encima.
 - [ ] Si todo cuadra, decidir si dejar la org en producción (dogfood público) o borrarla (soft-delete desde Studio).
 
 Si algo falla, anotar en este archivo antes de seguir a Sprint 3.
+
+## Estado tras #98 — pulido del panel B2B
+
+Hilo cerrado el 2026-05-12. Cuatro commits squasheados en un único `193124f`:
+
+1. **CSV/Excel paste en el bulk invite** (`public/admin-orgs.html`).
+   El parser `parseTeamList` ahora auto-detecta separador (tab > `;` > `,`),
+   salta cabeceras CSV si la primera celda no contiene `@`, respeta comillas
+   dobles tipo RFC 4180 y preserva el legacy de "Pérez, Pedro" sin
+   entrecomillar. Botón **📄 Subir CSV** lee `.csv/.tsv/.txt` (máx 200 KB) y
+   vuelca al textarea. El contador en vivo usa el parser → refleja
+   exactamente lo que se enviará al backend.
+
+2. **Modal unificado a un solo modo**. Las pestañas "Uno solo" / "Equipo
+   (varios)" hacían lo mismo: el modo equipo ya permite rellenar campos
+   comunes y soporta 1..100 invitaciones. Eliminadas las tabs, el bloque
+   "Uno solo" del HTML, la action `invite_agent` del backend y sus 8 tests
+   redundantes. `invite_team` con array de 1 elemento es el camino único.
+   Diff neto: −345 / +39 líneas.
+
+3. **Editar y borrar tarjeta desde el Studio**. Cada card del listado tiene
+   ✏️ Editar (abre `/{idioma}/editar?slug=&token=` en nueva pestaña;
+   ventana abierta síncrona al click para no caer en popup blocker; el
+   backend reusa `edit_token` vigente y solo regenera si está ausente o
+   expirado, sin romper magic-links activos del agente) y 🗑️ Borrar
+   (soft-delete con `deleted_at = NOW()` siguiendo el patrón de
+   `delete-account.js` — el job `purge-deleted` se encarga de visits +
+   facturas a los 30 días, preservando AEAT y dando ventana de
+   recuperación). Dos nuevas actions en `admin-orgs.js`: `get_edit_url`
+   + `delete_card`, con 9 tests cubriendo token vigente reusado, regeneración
+   por ausencia y caducidad, idioma `ca`, 404 y validación.
+
+4. **Fix edge function en deploy previews**. `lang-detect.js` tenía un
+   whitelist estricto a `perfilapro.es` / `www.perfilapro.es` para evitar
+   el doble prefijo `/ca/ca/` de #83. Como efecto colateral los previews
+   `deploy-preview-N--perfilapro.netlify.app` caían en `context.next()` y
+   Netlify intentaba servir `public/index.html` (que no existe en el repo).
+   Ahora `*.netlify.app` está incluido en el whitelist; los previews reciben
+   detección por cookie + Accept-Language. Los hosts `perfilapro.cat/.com`
+   siguen excluidos, conservando el fix de #83.
+
+**Tests**: 51 archivos, 731 tests verdes. Los 9 nuevos cubren las actions
+`get_edit_url` y `delete_card`.
+
+**Smoke tests manuales pendientes** (no bloqueantes, los marca el usuario al
+acabar la revisión visual del deploy):
+- [ ] Pegar lista desde Google Sheets en el textarea → contador refleja N.
+- [ ] Subir CSV con cabecera `Email,Nombre` → se importa sin la fila de header.
+- [ ] Invitar 1 persona desde el modal unificado → idéntico al antiguo `invite_agent`.
+- [ ] Click ✏️ en una card → abre el editor en nueva pestaña con la card cargada.
+- [ ] Click 🗑️ → confirm → card desaparece del listado y queda con `deleted_at` en BD.
 
 ## Sprint 3 — el sprint de monetización + onboarding B2B real
 
@@ -163,8 +224,10 @@ accidente desde el código actual.
 
 ### Deudas conocidas (Sprint 3 o antes, según prioridad)
 
-**Alta**:
-- TOTP del Studio caduca y rompe la segunda acción. Patrón actual: el frontend cachea TOTP en `sessionStorage` para todas las acciones, pero un código TOTP vive ~90s. Fix: tras el primer TOTP válido, el backend emite un mini-session-token (15 min de TTL) firmado, el frontend lo guarda en lugar del TOTP crudo. Refactor pequeño en `admin-auth.js` + admin-*.html. **Tocar antes que llegue cualquier cliente B2B real al Studio**.
+**Resueltas en este intervalo**:
+- ✅ TOTP del Studio caducaba a los ~90s y rompía la segunda acción → `b8468e8` introdujo `admin-session` con JWT de 60 min emitido tras el primer login válido (password + TOTP). Las acciones del Studio envían sólo el token; el TOTP fresco solo se pide al login.
+- ✅ Action `invite_agent` redundante → eliminada en #98. `invite_team` con N=1 es el camino único.
+- ✅ Deploy previews devolvían 404 en `/` → `0a25bfe` (incluido en squash #98) amplía el whitelist de `lang-detect.js`.
 
 **Media**:
 - `organizations.show_cta` (default `true`) para suprimir el CTA "Crea tu perfil" en orgs white-label que paguen por exclusividad de marca. Migración trivial + cambio gated en `org.js`.
@@ -205,7 +268,7 @@ Patrones del repo que conviene reusar literal:
 - **Auth admin**: `lib/admin-auth.js` con `checkAdminAuth(event, { requireTotp: true })`. NO inventar otra cosa.
 - **Auth profesional / owner-of-card**: edit-token de 32 bytes hex en `cards`, mismo mecanismo que `edit-card`, `download-card`, `delete-account`. Para Sprint 3 piezas que necesiten auth de "dueño de organización" (no admin global), inventar mecanismo paralelo basado en magic-link (no inventar passwords).
 - **Emails transaccionales**: `lib/email-layout.js` con `idioma`. Todo email nuevo debe respetar `cards.idioma` (o el idioma del lead si es onboarding pre-card).
-- **Migraciones**: numeración secuencial. La próxima libre es `021`.
+- **Migraciones**: numeración secuencial. Aplicadas en este intervalo `021_b2b_leads.sql` (#95) y `022_cards_plan_b2b.sql` (#96). La próxima libre es `023`.
 - **Rate limiting**: `lib/rate-limit.js` con map en memoria. Sufficient para el volumen actual.
 
 ## Convención de ramas para el próximo hilo
@@ -219,3 +282,5 @@ Patrones del repo que conviene reusar literal:
 5. **No declarar "está en producción" hasta confirmar deploy en Netlify**.
 
 Las ramas de esta sesión (`claude/perfilapro-strategy-b2b-gthJ9`, `claude/org-cta-perfil`, `claude/docs-sprint-3-handoff`) ya pueden borrarse — mergeadas todas.
+
+Tras este intervalo, todas las ramas de PRs cerrados (#95 → #98, más la de #98 `claude/polish-bulk-invite-modal-0lxcX`) son borrables — el squash deja los commits en `main` con sufijo `(#N)`. Limpieza en bloque desde GitHub o `git branch -d` local.
