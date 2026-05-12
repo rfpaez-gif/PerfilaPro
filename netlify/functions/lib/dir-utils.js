@@ -247,7 +247,7 @@ function paginationLinks(page, totalPages, baseUrl) {
 </nav>`;
 }
 
-function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '', ogImage = null, ogType = 'website', noindex = false }) {
+function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, siteUrl, jsonLd, extraCss = '', ogImage = null, ogType = 'website', noindex = false, noPromo = false }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -279,12 +279,12 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
 <body>
   <header class="pp-site-hd">
     <a href="${esc(siteUrl)}" class="pp-site-hd__logo">Perfila<span class="pp-site-hd__logo-pro">Pro</span></a>
-    <a href="${esc(siteUrl)}/#crear" class="pp-site-hd__cta">Crea tu perfil →</a>
+    ${noPromo ? '' : `<a href="${esc(siteUrl)}/#crear" class="pp-site-hd__cta">Crea tu perfil →</a>`}
   </header>
   ${crumbs ? breadcrumb(crumbs) : ''}
   <main>${body}</main>
   <footer class="pp-site-ft">
-    <p>© PerfilaPro &nbsp;·&nbsp; <a href="${esc(siteUrl)}/directorio">Directorio</a> &nbsp;·&nbsp; <a href="${esc(siteUrl)}/terminos.html">Términos</a> &nbsp;·&nbsp; <a href="${esc(siteUrl)}/privacidad.html">Privacidad</a></p>
+    <p>© PerfilaPro${noPromo ? '' : ` &nbsp;·&nbsp; <a href="${esc(siteUrl)}/directorio">Directorio</a>`} &nbsp;·&nbsp; <a href="${esc(siteUrl)}/terminos.html">Términos</a> &nbsp;·&nbsp; <a href="${esc(siteUrl)}/privacidad.html">Privacidad</a></p>
   </footer>
 </body>
 </html>`;

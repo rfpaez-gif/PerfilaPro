@@ -51,6 +51,7 @@ const CARD_T = {
     pwCreated: 'Creado con',
     pwOwn: 'Crea tu propio perfil',
     footOwn: '¿Quieres tu propio perfil? &rarr; PerfilaPro.es',
+    poweredBy: 'Powered by',
     copied: '¡Copiado!',
     generating: 'Generando…',
     canvasServices: 'SERVICIOS',
@@ -81,6 +82,7 @@ const CARD_T = {
     pwCreated: 'Creat amb',
     pwOwn: 'Crea el teu propi perfil',
     footOwn: 'Vols el teu propi perfil? &rarr; PerfilaPro.es',
+    poweredBy: 'Powered by',
     copied: 'Copiat!',
     generating: 'Generant…',
     canvasServices: 'SERVEIS',
@@ -408,18 +410,20 @@ exports.handler = async (event) => {
           </a>`}
         </div>
       </div>` : ''}
-      ${isFree ? `<div class="pp-free-banner">
+      ${isFree && !org ? `<div class="pp-free-banner">
         <p>${T.freeBanner}</p>
       </div>` : ''}
       <div class="pp-card__pw">
-        ${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
-        <a href="https://perfilapro.es">${T.pwOwn}</a>
+        ${org
+          ? `${T.poweredBy} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong>`
+          : `${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
+        <a href="https://perfilapro.es">${T.pwOwn}</a>`}
       </div>
     </div>
   </div>
-  <div class="pp-page-foot">
+  ${org ? '' : `<div class="pp-page-foot">
     <a href="https://perfilapro.es" target="_blank">${T.footOwn}</a>
-  </div>
+  </div>`}
   <script>
     var CARD = ${safeJson({
       nombre:      data.nombre      || '',
