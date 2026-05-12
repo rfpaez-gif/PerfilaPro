@@ -133,34 +133,15 @@
     <button class="pp-topbar__logout" onclick="logout()">Cerrar sesión</button>
   </header>
 
-  <!-- Modal: invitar agente(s) a una org · dos modos -->
+  <!-- Modal: invitar a una org · uno o varios miembros con datos comunes -->
   <div class="pp-modal-backdrop" id="inviteModal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
     <div class="pp-modal" style="max-width:560px">
       <h3 class="pp-modal__title" id="inviteModalTitle">Invitar a <span id="inviteOrgName" style="font-style:italic">—</span></h3>
       <p class="pp-modal__sub">Crea una o varias cards B2B pre-asignadas a la organización. Cada miembro recibe un magic-link con branding de la org y completa solo su foto + WhatsApp (los demás datos los fijas tú).</p>
 
-      <!-- Tabs / modo -->
-      <div role="tablist" style="display:flex;gap:.4rem;margin-bottom:1rem;border-bottom:1px solid #E5E7EB">
-        <button type="button" id="inviteTabOne"  role="tab" aria-selected="true"  onclick="switchInviteMode('one')"  style="flex:1;padding:.55rem .25rem;background:none;border:none;border-bottom:2px solid var(--color-verde-dark);color:var(--color-tinta);font-weight:600;font-size:13px;cursor:pointer">Uno solo</button>
-        <button type="button" id="inviteTabTeam" role="tab" aria-selected="false" onclick="switchInviteMode('team')" style="flex:1;padding:.55rem .25rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--color-gris-500);font-weight:600;font-size:13px;cursor:pointer">Equipo (varios)</button>
-      </div>
-
-      <!-- Modo 1: uno solo (lo de siempre) -->
-      <div id="inviteModeOne">
-        <div class="pp-form__row">
-          <label class="pp-form__label" for="inviteEmail">Email <small>obligatorio</small></label>
-          <input type="email" class="pp-input" id="inviteEmail" placeholder="agente@ejemplo.com" autocomplete="off">
-        </div>
-        <div class="pp-form__row">
-          <label class="pp-form__label" for="inviteNombre">Nombre <small>opcional · ayuda a derivar el slug</small></label>
-          <input type="text" class="pp-input" id="inviteNombre" placeholder="Carlos Pérez" maxlength="100">
-        </div>
-      </div>
-
-      <!-- Modo 2: equipo bulk -->
-      <div id="inviteModeTeam" hidden>
+      <div id="inviteModeTeam">
         <p style="font-size:11px;color:var(--color-gris-500);margin:0 0 .85rem;line-height:1.5">
-          <strong style="color:var(--color-tinta)">Datos comunes del equipo</strong> · se aplican a todas las cards y quedan bloqueadas para el operario (solo edita su foto + WhatsApp).
+          <strong style="color:var(--color-tinta)">Datos comunes</strong> · se aplican a todas las cards y quedan bloqueadas para el operario (solo edita su foto + WhatsApp). Si solo invitas a una persona, déjalos vacíos o úsalos igualmente.
         </p>
         <div class="pp-form__row">
           <label class="pp-form__label" for="tplTagline">Rol / tagline <small>opcional · max 140</small></label>
@@ -200,7 +181,7 @@
 
       <div class="pp-modal__actions">
         <button class="pp-btn pp-btn--ghost" type="button" onclick="closeInviteModal()">Cancelar</button>
-        <button class="pp-btn pp-btn--primary" id="inviteSendBtn" type="button" onclick="sendInvite()">Enviar invitación</button>
+        <button class="pp-btn pp-btn--primary" id="inviteSendBtn" type="button" onclick="sendInvite()">Enviar invitaciones</button>
       </div>
     </div>
   </div>
@@ -881,18 +862,13 @@ async function resendLead(leadId, name) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Invitar agente(s) a una org · dos modos en el mismo modal
+   Invitar a una org · datos comunes + lista de miembros (1..100)
    ─────────────────────────────────────────────────────────── */
 let inviteOrgSlug = null;
-let inviteMode = 'one';  // 'one' | 'team'
 
 function openInviteModal(slug, name) {
   inviteOrgSlug = slug;
   $('inviteOrgName').textContent = name || slug;
-  // Reset campos modo "uno"
-  $('inviteEmail').value = '';
-  $('inviteNombre').value = '';
-  // Reset campos modo "team"
   $('tplTagline').value = '';
   $('tplCp').value = '';
   $('tplZona').value = '';
@@ -900,34 +876,13 @@ function openInviteModal(slug, name) {
   $('tplDescripcion').value = '';
   $('teamList').value = '';
   $('teamCounter').textContent = '0 operarios';
-  // Volver al modo "uno solo" por defecto
-  switchInviteMode('one');
   $('inviteModal').classList.add('is-open');
-  setTimeout(() => $('inviteEmail').focus(), 50);
+  setTimeout(() => $('tplTagline').focus(), 50);
 }
 
 function closeInviteModal() {
   $('inviteModal').classList.remove('is-open');
   inviteOrgSlug = null;
-}
-
-function switchInviteMode(mode) {
-  inviteMode = mode;
-  const isOne = mode === 'one';
-  $('inviteModeOne').hidden = !isOne;
-  $('inviteModeTeam').hidden = isOne;
-
-  const tabOne  = $('inviteTabOne');
-  const tabTeam = $('inviteTabTeam');
-  tabOne.setAttribute('aria-selected',  isOne ? 'true' : 'false');
-  tabTeam.setAttribute('aria-selected', isOne ? 'false' : 'true');
-  tabOne.style.borderBottomColor  = isOne ? 'var(--color-verde-dark)' : 'transparent';
-  tabTeam.style.borderBottomColor = isOne ? 'transparent' : 'var(--color-verde-dark)';
-  tabOne.style.color  = isOne ? 'var(--color-tinta)' : 'var(--color-gris-500)';
-  tabTeam.style.color = isOne ? 'var(--color-gris-500)' : 'var(--color-tinta)';
-
-  $('inviteSendBtn').textContent = isOne ? 'Enviar invitación' : 'Enviar invitaciones';
-  setTimeout(() => (isOne ? $('inviteEmail') : $('tplTagline')).focus(), 50);
 }
 
 // Contador en vivo del textarea de operarios. Usa el parser para que coincida
@@ -1027,55 +982,40 @@ async function sendInvite() {
   btn.textContent = 'Enviando…';
 
   try {
-    if (inviteMode === 'one') {
-      const email = $('inviteEmail').value.trim();
-      const nombre = $('inviteNombre').value.trim();
-      if (!email) throw new Error('Falta el email');
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Email no válido');
+    const team = parseTeamList($('teamList').value);
+    if (!team.length) throw new Error('Añade al menos un email');
+    if (team.length > 100) throw new Error('Máximo 100 por lote');
 
-      const json = await callAdmin({
-        action: 'invite_agent',
-        org_slug: inviteOrgSlug,
-        email,
-        nombre: nombre || null,
-      });
-      toast(`Invitación enviada a ${email} · slug ${json.slug}`, 'ok');
+    // Validación previa de emails para fallar rápido sin pegar al backend
+    const malformed = team.filter(t => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email));
+    if (malformed.length) {
+      throw new Error(`${malformed.length} email${malformed.length === 1 ? '' : 's'} mal formado${malformed.length === 1 ? '' : 's'} (revisa la lista)`);
+    }
+
+    const servicios = $('tplServicios').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const template = {
+      tagline:     $('tplTagline').value.trim()     || null,
+      cp:          $('tplCp').value.trim()          || null,
+      zona:        $('tplZona').value.trim()        || null,
+      descripcion: $('tplDescripcion').value.trim() || null,
+      servicios,
+    };
+
+    const json = await callAdmin({
+      action: 'invite_team',
+      org_slug: inviteOrgSlug,
+      team,
+      template,
+    });
+    const okN = json.results?.ok?.length || 0;
+    const failN = json.results?.failed?.length || 0;
+    if (failN === 0) {
+      toast(`✅ ${okN} invitación${okN === 1 ? '' : 'es'} enviadas`, 'ok');
     } else {
-      const team = parseTeamList($('teamList').value);
-      if (!team.length) throw new Error('Añade al menos un operario');
-      if (team.length > 100) throw new Error('Máximo 100 por lote');
-
-      // Validación previa de emails para fallar rápido sin pegar al backend
-      const malformed = team.filter(t => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email));
-      if (malformed.length) {
-        throw new Error(`${malformed.length} email${malformed.length === 1 ? '' : 's'} mal formado${malformed.length === 1 ? '' : 's'} (revisa la lista)`);
-      }
-
-      const servicios = $('tplServicios').value.split('\n').map(s => s.trim()).filter(Boolean);
-      const template = {
-        tagline:     $('tplTagline').value.trim()     || null,
-        cp:          $('tplCp').value.trim()          || null,
-        zona:        $('tplZona').value.trim()        || null,
-        descripcion: $('tplDescripcion').value.trim() || null,
-        servicios,
-      };
-
-      const json = await callAdmin({
-        action: 'invite_team',
-        org_slug: inviteOrgSlug,
-        team,
-        template,
-      });
-      const okN = json.results?.ok?.length || 0;
-      const failN = json.results?.failed?.length || 0;
-      if (failN === 0) {
-        toast(`✅ ${okN} invitación${okN === 1 ? '' : 'es'} enviadas`, 'ok');
-      } else {
-        const detail = json.results.failed.map(f => `${f.email}: ${f.error}`).join('\n');
-        toast(`${okN} OK · ${failN} con error`, 'err');
-        console.warn('Invitaciones fallidas:\n' + detail);
-        alert(`Resumen: ${okN} OK, ${failN} con error.\n\nFallos:\n${detail}`);
-      }
+      const detail = json.results.failed.map(f => `${f.email}: ${f.error}`).join('\n');
+      toast(`${okN} OK · ${failN} con error`, 'err');
+      console.warn('Invitaciones fallidas:\n' + detail);
+      alert(`Resumen: ${okN} OK, ${failN} con error.\n\nFallos:\n${detail}`);
     }
 
     closeInviteModal();
