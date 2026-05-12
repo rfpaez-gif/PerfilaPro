@@ -6,14 +6,18 @@ export default async (request, context) => {
   const url = new URL(request.url);
   if (url.pathname !== '/') return context.next();
 
-  // Solo aplica al dominio canónico perfilapro.es. Los demás hosts
-  // (perfilapro.cat, perfilapro.com y sus www) tienen reglas de
-  // redirect propias en netlify.toml que harán el hop de host + path
-  // en un solo salto. Si esta función disparara aquí, añadiría /ca/ o
-  // /es/ al path antes del host-swap y produciría un doble prefijo
-  // (p.ej. perfilapro.cat/ → /ca/ → perfilapro.es/ca/ca/ → 404).
+  // Aplica al dominio canónico perfilapro.es y a los hosts de deploy
+  // preview (*.netlify.app). El resto (perfilapro.cat, perfilapro.com
+  // y sus www) tienen reglas de redirect propias en netlify.toml que
+  // hacen el hop de host + path en un solo salto. Si esta función
+  // disparara ahí añadiría /ca/ o /es/ al path antes del host-swap y
+  // produciría un doble prefijo (perfilapro.cat/ → /ca/ →
+  // perfilapro.es/ca/ca/ → 404). Los previews sí necesitan detección
+  // porque sirven public/ directamente y no hay index.html en la raíz.
   const host = url.host.toLowerCase();
-  if (host !== 'perfilapro.es' && host !== 'www.perfilapro.es') {
+  const isCanonical = host === 'perfilapro.es' || host === 'www.perfilapro.es';
+  const isNetlifyPreview = host.endsWith('.netlify.app');
+  if (!isCanonical && !isNetlifyPreview) {
     return context.next();
   }
 
