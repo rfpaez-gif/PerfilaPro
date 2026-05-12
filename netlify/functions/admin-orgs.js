@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
@@ -10,6 +11,7 @@ const {
   isValidTagline,
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
+const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,12 +21,84 @@ const supabase = createClient(
 const defaultEmailClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function jsonResponse(statusCode, payload) {
   return {
     statusCode,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  };
+}
+
+function stripTagsInline(str) {
+  return String(str || '').replace(/<[^>]*>/g, '').trim();
+}
+
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function toSlug(name) {
+  return String(name || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    .substring(0, 40);
+}
+
+/**
+ * Construye el email de invitación a un agente B2B. El header de
+ * email-layout.js mantiene la marca PerfilaPro (consistencia con el
+ * resto de emails transaccionales). El branding de la org vive
+ * dentro del bodyHtml como un banner que el agente ve en cuanto
+ * abre el correo: barra superior con color_primary + logo + nombre
+ * de la org, justo encima del título "Te han invitado…".
+ */
+function buildInviteEmail({ orgName, orgLogoUrl, orgColor, nombre, editUrl }) {
+  const firstName = (nombre || '').split(' ')[0] || 'Hola';
+  const safeOrgName = esc(orgName);
+  const headerColor = orgColor && /^#[0-9a-fA-F]{6}$/.test(orgColor) ? orgColor : COLORS.ink;
+  const logoCell = orgLogoUrl
+    ? `<img src="${esc(orgLogoUrl)}" alt="${safeOrgName}" style="max-height:40px;max-width:140px;display:block;margin:0 auto 8px">`
+    : '';
+
+  const bodyHtml = `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+              <tr>
+                <td style="background:${headerColor};border-radius:12px;padding:24px 20px;text-align:center">
+                  ${logoCell}
+                  <p style="margin:0;font-size:13px;font-weight:600;color:#ffffff;letter-spacing:.04em;text-transform:uppercase;opacity:.92">Equipo de</p>
+                  <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:#ffffff">${safeOrgName}</p>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              Te han invitado a unirte al equipo de <strong>${safeOrgName}</strong> en PerfilaPro. Tu perfil profesional ya está pre-creado dentro de la organización — solo tienes que completar tus datos (servicios, foto, contacto) para que esté visible online con la marca del equipo.
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+              <tr><td align="center">
+                <a href="${esc(editUrl)}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Completar mi perfil →</a>
+              </td></tr>
+            </table>
+
+            <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              El enlace es válido durante <strong>7 días</strong>. Si no lo esperabas, puedes ignorar este email — nadie ha accedido a tu perfil.
+            </p>`;
+
+  const html = buildEmailLayout({
+    preheader: `Invitación al equipo de ${orgName} en PerfilaPro · completa tu perfil`,
+    title: `Bienvenido, ${firstName}`,
+    bodyHtml,
+    idioma: 'es',
+  });
+
+  return {
+    subject: `${firstName}, te han invitado al equipo de ${orgName} en PerfilaPro`,
+    html,
   };
 }
 
@@ -328,9 +402,118 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       return jsonResponse(200, { ok: true });
     }
 
+    // ── invite_agent: crea una card B2B vacía + magic-link para el agente ──
+    // El admin invita a un email; el backend pre-crea la card con plan='b2b'
+    // ya asignada a la org y manda un email con un edit_token de 7 días.
+    // El agente abre el link y completa su perfil desde /es/editar.
+    if (action === 'invite_agent') {
+      const { org_slug, email: rawEmail, nombre: rawNombre } = body;
+
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+      const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
+      if (!EMAIL_RE.test(email)) {
+        return jsonResponse(400, { error: 'email inválido' });
+      }
+      if (rawNombre != null && typeof rawNombre !== 'string') {
+        return jsonResponse(400, { error: 'nombre debe ser string' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      // Resolvemos la org primero para tener nombre/logo/color para el email
+      // y el id para la FK. Una org soft-deleted no debe poder recibir invitados.
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, logo_url, color_primary')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
+
+      // Slug: si el admin pasa nombre, derivamos; si no, "agente-{timestamp36}-{rnd}".
+      // El nombre visible en la card (que el agente verá y editará en /editar)
+      // sigue el mismo principio: nombre limpio si lo hay, placeholder si no.
+      const cleanNombre = rawNombre ? stripTagsInline(rawNombre).substring(0, 100) : '';
+      const displayName = cleanNombre || 'Nuevo profesional';
+      let slug = cleanNombre ? toSlug(cleanNombre) : '';
+      if (!slug) {
+        slug = `agente-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
+      }
+
+      // Slug uniqueness — incluye soft-deleted para no colisionar con la PK.
+      // Mismo patrón que register-b2b.
+      const { data: existing } = await db
+        .from('cards')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle();
+      if (existing) {
+        slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}`;
+      }
+
+      const editToken = crypto.randomBytes(32).toString('hex');
+      const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const row = {
+        slug,
+        nombre:                displayName,
+        email,
+        plan:                  'b2b',
+        status:                'active',
+        organization_id:       org.id,
+        edit_token:            editToken,
+        edit_token_expires_at: editTokenExpiresAt,
+        whatsapp:              '',
+        servicios:             [],
+        idioma:                'es',
+      };
+
+      const { error: insErr } = await db.from('cards').insert(row);
+      if (insErr) {
+        console.error('admin-orgs invite_agent: error insertando card:', insErr.message);
+        return jsonResponse(500, { error: 'No se pudo crear la card: ' + insErr.message });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const editUrl = `${siteUrl}/es/editar?slug=${slug}&token=${editToken}`;
+      const { subject, html } = buildInviteEmail({
+        orgName:    org.name,
+        orgLogoUrl: org.logo_url,
+        orgColor:   org.color_primary,
+        nombre:     cleanNombre,
+        editUrl,
+      });
+
+      try {
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>',
+          to: email,
+          subject,
+          html,
+        });
+      } catch (err) {
+        // Card creada pero email falló: devolvemos 500 con info útil para que
+        // el admin sepa que tiene que reenviar (o eliminar la card huérfana).
+        console.error('admin-orgs invite_agent: error enviando email:', err.message);
+        return jsonResponse(500, { error: 'Card creada pero el email falló. Slug: ' + slug });
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        slug,
+        edit_url: editUrl,
+        org: { slug: org.slug, name: org.name },
+      });
+    }
+
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
   };
 }
 
 exports.handler = makeHandler(supabase);
 exports.makeHandler = makeHandler;
+exports.buildInviteEmail = buildInviteEmail;

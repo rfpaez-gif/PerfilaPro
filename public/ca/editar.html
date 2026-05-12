@@ -860,6 +860,17 @@
         <p class="pp-edit-card__sub" id="editSubtitle">Actualitza les teves dades professionals.</p>
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
+        <!-- Org branding banner — visible quan la card pertany a una organització (carril B2B) -->
+        <div id="orgBanner" hidden style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;border:1px solid #E5E7EB;background:#fff;margin-bottom:1.25rem;border-left-width:6px">
+          <div id="orgBannerLogo" style="width:48px;height:48px;border-radius:8px;background:#FAFBFC;border:1px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+            <span style="font-size:9px;color:#6B7280;text-align:center;line-height:1.1">org</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <p style="margin:0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#6B7280">Equip de</p>
+            <p style="margin:2px 0 0;font-size:15px;font-weight:700;color:#0A1F44" id="orgBannerName">—</p>
+          </div>
+        </div>
+
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__eyebrow">Activa el teu pla</p>
           <h2 class="pp-upgrade__title"><span id="upgradeName">La teva feina</span>, <em>així es veurà</em></h2>
@@ -1434,6 +1445,35 @@
         }
 
         kitBanner.classList.add('is-visible');
+      }
+
+      // Org branding banner — visible quan la card pertany a una org
+      // (carril B2B). edit-card.GET retorna organization a {slug,name,logo_url,
+      // color_primary} quan hi ha organization_id vàlid (no soft-deleted).
+      // Pinta una franja esquerra amb el color_primary de l'org i el logo
+      // a l'esquerra — reforça la sensació de "canal" des del primer segon
+      // de l'agent a /editar.
+      if (card.organization && card.organization.name) {
+        const ob = document.getElementById('orgBanner');
+        const obName = document.getElementById('orgBannerName');
+        const obLogo = document.getElementById('orgBannerLogo');
+        if (ob && obName && obLogo) {
+          obName.textContent = card.organization.name;
+          const color = /^#[0-9a-fA-F]{6}$/.test(card.organization.color_primary || '')
+            ? card.organization.color_primary
+            : '#0A1F44';
+          ob.style.borderLeftColor = color;
+          if (card.organization.logo_url) {
+            obLogo.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = card.organization.logo_url;
+            img.alt = card.organization.name;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            obLogo.appendChild(img);
+          }
+          ob.hidden = false;
+        }
       }
 
       // Upgrade banner — visible mentre la card no tingui ni session

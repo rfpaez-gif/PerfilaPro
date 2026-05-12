@@ -25,7 +25,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at, organization_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -64,10 +64,27 @@ function makeHandler(db) {
       // Si LAUNCH_PROMO_ACTIVE no está, el frontend mantiene el flujo
       // de Stripe normal sin tocar nada.
       const launch_promo_active = process.env.LAUNCH_PROMO_ACTIVE === '1';
+
+      // Organization branding — si la card está asignada a una org
+      // (carril B2B), devolvemos los campos visibles para que /editar
+      // pinte un banner "Formas parte de [Org]" arriba del formulario.
+      // Lookup defensivo: si la org está soft-deleted o no existe,
+      // simplemente no devolvemos branding y el banner queda oculto.
+      let organization = null;
+      if (card.organization_id) {
+        const { data: org } = await db
+          .from('organizations')
+          .select('slug, name, logo_url, color_primary')
+          .eq('id', card.organization_id)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (org) organization = org;
+      }
+
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...card, category_sector, category_specialty, launch_promo_active }),
+        body: JSON.stringify({ ...card, category_sector, category_specialty, launch_promo_active, organization }),
       };
     }
 

@@ -96,6 +96,16 @@
     .pp-preview__empty { padding: 4rem 1.5rem; text-align: center; color: var(--color-gris-500, #6B7280); font-size: 13px; background: #fff; border: 1px dashed var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); }
 
     .pp-empty { text-align: center; color: var(--color-gris-500, #6B7280); padding: 1.5rem .5rem; font-size: 13px; }
+
+    /* ── Invite modal ─────────────────────────────────────── */
+    .pp-modal-backdrop { position: fixed; inset: 0; background: rgba(10,31,68,.48); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+    .pp-modal-backdrop.is-open { display: flex; }
+    .pp-modal { background: #fff; border-radius: var(--pp-r-xl, 20px); width: 100%; max-width: 460px; padding: 1.75rem; box-shadow: 0 24px 64px rgba(0,0,0,.18); }
+    .pp-modal__title { font-family: var(--font-serif); font-size: 1.375rem; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .25rem; }
+    .pp-modal__sub { color: var(--color-gris-500, #6B7280); font-size: 13px; margin: 0 0 1.25rem; line-height: 1.5; }
+    .pp-modal__sub strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-modal .pp-form__row { margin-bottom: .85rem; }
+    .pp-modal__actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.25rem; }
   </style>
 </head>
 <body>
@@ -122,6 +132,28 @@
     <h1 class="pp-topbar__title">B2B Demo Studio<small>PerfilaPro · marca blanca</small></h1>
     <button class="pp-topbar__logout" onclick="logout()">Cerrar sesión</button>
   </header>
+
+  <!-- Modal: invitar agente a una org -->
+  <div class="pp-modal-backdrop" id="inviteModal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
+    <div class="pp-modal">
+      <h3 class="pp-modal__title" id="inviteModalTitle">Invitar agente</h3>
+      <p class="pp-modal__sub">Crea una card B2B vacía pre-asignada a <strong id="inviteOrgName">—</strong> y envía un magic-link al email. El agente completará su perfil desde el enlace. Token válido 7 días.</p>
+
+      <div class="pp-form__row">
+        <label class="pp-form__label" for="inviteEmail">Email <small>obligatorio</small></label>
+        <input type="email" class="pp-input" id="inviteEmail" placeholder="agente@ejemplo.com" autocomplete="off">
+      </div>
+      <div class="pp-form__row">
+        <label class="pp-form__label" for="inviteNombre">Nombre <small>opcional · ayuda a derivar el slug</small></label>
+        <input type="text" class="pp-input" id="inviteNombre" placeholder="Carlos Pérez" maxlength="100">
+      </div>
+
+      <div class="pp-modal__actions">
+        <button class="pp-btn pp-btn--ghost" type="button" onclick="closeInviteModal()">Cancelar</button>
+        <button class="pp-btn pp-btn--primary" id="inviteSendBtn" type="button" onclick="sendInvite()">Enviar invitación</button>
+      </div>
+    </div>
+  </div>
 
   <main class="pp-shell">
     <!-- ── Columna izquierda: forms + tablas ─────────── -->
@@ -567,6 +599,7 @@ function renderOrgsTable() {
       <td><div class="pp-orgs-table__actions">
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="selectOrg('${safeSlug}')">Editar</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/e/${safeSlug}','_blank')">Abrir</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openInviteModal('${safeSlug}','${safeName}')">Invitar</button>
         <button class="pp-btn pp-btn--danger pp-btn--sm" onclick="deleteOrg('${safeSlug}','${safeName}')">Eliminar</button>
       </div></td>
     </tr>`;
@@ -760,6 +793,63 @@ async function resendLead(leadId, name) {
     toast('Error reenviando: ' + err.message, 'err');
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Invitar agente a una org
+   ─────────────────────────────────────────────────────────── */
+let inviteOrgSlug = null;
+
+function openInviteModal(slug, name) {
+  inviteOrgSlug = slug;
+  $('inviteOrgName').textContent = name || slug;
+  $('inviteEmail').value = '';
+  $('inviteNombre').value = '';
+  $('inviteModal').classList.add('is-open');
+  setTimeout(() => $('inviteEmail').focus(), 50);
+}
+
+function closeInviteModal() {
+  $('inviteModal').classList.remove('is-open');
+  inviteOrgSlug = null;
+}
+
+async function sendInvite() {
+  if (!inviteOrgSlug) return;
+  const email = $('inviteEmail').value.trim();
+  const nombre = $('inviteNombre').value.trim();
+  if (!email) return toast('Falta el email', 'err');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Email no válido', 'err');
+
+  const btn = $('inviteSendBtn');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Enviando…';
+
+  try {
+    const json = await callAdmin({
+      action: 'invite_agent',
+      org_slug: inviteOrgSlug,
+      email,
+      nombre: nombre || null,
+    });
+    toast(`Invitación enviada a ${email} · slug ${json.slug}`, 'ok');
+    closeInviteModal();
+    await loadCards(); // refresca el contador de cards de la org
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+// Cerrar modal con Escape o click en backdrop
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('inviteModal').classList.contains('is-open')) closeInviteModal();
+});
+$('inviteModal').addEventListener('click', e => {
+  if (e.target === $('inviteModal')) closeInviteModal();
+});
 
 /* ─────────────────────────────────────────────────────────────
    Preview iframe

@@ -41,6 +41,15 @@ function makePostalBuilder() {
   return b;
 }
 
+const mockOrgMaybeSingle = vi.fn();
+function makeOrgBuilder() {
+  const b = { select: vi.fn(), eq: vi.fn(), is: vi.fn(), maybeSingle: mockOrgMaybeSingle };
+  b.select.mockReturnValue(b);
+  b.eq.mockReturnValue(b);
+  b.is.mockReturnValue(b);
+  return b;
+}
+
 let currentBuilder;
 
 // --- Helpers ---
@@ -83,9 +92,12 @@ describe('edit-card handler', () => {
       error: null,
     });
 
+    mockOrgMaybeSingle.mockResolvedValue({ data: null, error: null });
+
     mockFrom.mockImplementation((table) => {
-      if (table === 'categories')   return makeCategoriesBuilder();
-      if (table === 'postal_codes') return makePostalBuilder();
+      if (table === 'categories')    return makeCategoriesBuilder();
+      if (table === 'postal_codes')  return makePostalBuilder();
+      if (table === 'organizations') return makeOrgBuilder();
       currentBuilder = makeCardsBuilder();
       return currentBuilder;
     });
@@ -298,6 +310,51 @@ describe('edit-card handler', () => {
     const data = JSON.parse(res.body);
     expect(data.plan).toBe('base');
     expect(data.status).toBe('active');
+  });
+
+  // ── Branding de organización (carril B2B) ──
+
+  describe('GET con organization_id', () => {
+    it('resuelve y devuelve los campos de branding de la org', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...baseCard, organization_id: 'org-uuid-1', plan: 'b2b', status: 'active' },
+        error: null,
+      });
+      mockOrgMaybeSingle.mockResolvedValue({
+        data: { slug: 'allianz', name: 'Allianz', logo_url: 'https://abc.supabase.co/storage/v1/object/public/Avatars/org-logos/allianz.png', color_primary: '#003781' },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.organization).toEqual({
+        slug: 'allianz',
+        name: 'Allianz',
+        logo_url: 'https://abc.supabase.co/storage/v1/object/public/Avatars/org-logos/allianz.png',
+        color_primary: '#003781',
+      });
+    });
+
+    it('devuelve organization=null cuando la org está soft-deleted o no existe', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...baseCard, organization_id: 'org-uuid-1', plan: 'b2b' },
+        error: null,
+      });
+      mockOrgMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).organization).toBeNull();
+    });
+
+    it('NO consulta organizations cuando organization_id es null', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, organization_id: null }, error: null });
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).organization).toBeNull();
+      expect(mockOrgMaybeSingle).not.toHaveBeenCalled();
+    });
   });
 
   // ── Método no permitido ──
