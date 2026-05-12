@@ -870,6 +870,75 @@ describe('admin-orgs handler', () => {
       expect(mockEmailSend.mock.calls[0][0].html).toContain('#FFA500');
     });
 
+    it('aplica el cargo individual (ocupacion) por miembro · prevalece sobre template.tagline', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      const res = await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: { tagline: 'Equipo Special Trainer' },
+          team: [
+            { email: 'olga@st.es',   nombre: 'Olga Cardona', ocupacion: 'Entrenadora' },
+            { email: 'juan@st.es',   nombre: 'Juan García',  ocupacion: 'Recepcionista' },
+            { email: 'maria@st.es',  nombre: 'María López',  ocupacion: 'Fisioterapeuta' },
+          ],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(cardInsert).toHaveBeenCalledTimes(3);
+      expect(cardInsert.mock.calls[0][0].tagline).toBe('Entrenadora');
+      expect(cardInsert.mock.calls[1][0].tagline).toBe('Recepcionista');
+      expect(cardInsert.mock.calls[2][0].tagline).toBe('Fisioterapeuta');
+    });
+
+    it('cae al template.tagline cuando un miembro no trae ocupacion · mezcla OK', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: { tagline: 'Operario CCH' },
+          team: [
+            { email: 'pedro@cch.es', nombre: 'Pedro', ocupacion: 'Capataz' },
+            { email: 'ana@cch.es',   nombre: 'Ana' },
+            { email: 'juan@cch.es',  nombre: 'Juan', ocupacion: '' },
+          ],
+        },
+      }));
+      expect(cardInsert.mock.calls[0][0].tagline).toBe('Capataz');
+      expect(cardInsert.mock.calls[1][0].tagline).toBe('Operario CCH');
+      expect(cardInsert.mock.calls[2][0].tagline).toBe('Operario CCH');
+    });
+
+    it('sin template.tagline y sin ocupacion individual no añade tagline al row', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: {},
+          team: [{ email: 'pedro@cch.es', nombre: 'Pedro' }],
+        },
+      }));
+      expect(cardInsert.mock.calls[0][0].tagline).toBeUndefined();
+    });
+
+    it('sanitiza HTML y trunca la ocupacion individual a 140 chars', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      const long = 'X'.repeat(200);
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: {},
+          team: [{ email: 'a@cch.es', nombre: 'A', ocupacion: `<script>alert(1)</script>${long}` }],
+        },
+      }));
+      const tagline = cardInsert.mock.calls[0][0].tagline;
+      expect(tagline).not.toContain('<script>');
+      expect(tagline.length).toBeLessThanOrEqual(140);
+    });
+
     it('reporta éxito parcial cuando un email del lote es inválido', async () => {
       const { cardInsert } = mockBulkOrgAndCards();
       const res = await inviteTeamHandler(buildEvent({

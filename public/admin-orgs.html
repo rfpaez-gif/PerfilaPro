@@ -171,13 +171,13 @@
 
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin:1rem 0 .5rem;gap:.5rem">
           <p style="font-size:11px;color:var(--color-gris-500);margin:0;line-height:1.5;flex:1">
-            <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro. Acepta <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre</code>, pegado desde Excel/Sheets (tabs) o CSV con cabecera. El nombre es opcional.
+            <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro. Acepta <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre, cargo</code>, pegado desde Excel/Sheets (tabs) o CSV con cabecera. Nombre y cargo son opcionales. <strong>El cargo individual</strong> (Entrenadora, Recepcionista, Fisio…) <strong>aparece bajo cada nombre en /e/:slug</strong> y prevalece sobre el tagline del template.
           </p>
           <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="teamCsvBtn" onclick="document.getElementById('teamCsvInput').click()" style="white-space:nowrap;flex:0 0 auto">📄 Subir CSV</button>
           <input type="file" id="teamCsvInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>
         </div>
         <div class="pp-form__row">
-          <textarea class="pp-input" id="teamList" rows="6" placeholder="pedro@cch.es, Pedro Pérez&#10;ana@cch.es, Ana Ruiz&#10;juan@cch.es" style="font-family:var(--font-mono,Menlo,monospace);font-size:12px;resize:vertical"></textarea>
+          <textarea class="pp-input" id="teamList" rows="6" placeholder="olga@special-trainer.es, Olga Cardona, Entrenadora&#10;juan@special-trainer.es, Juan García, Recepcionista&#10;maria@special-trainer.es, María López, Fisioterapeuta" style="font-family:var(--font-mono,Menlo,monospace);font-size:12px;resize:vertical"></textarea>
         </div>
         <p id="teamCounter" style="font-size:11px;color:var(--color-gris-500);margin:.25rem 0 0">0 operarios</p>
       </div>
@@ -1015,7 +1015,7 @@ function parseTeamList(raw) {
   const startIdx = (rows[0][0] && !rows[0][0].includes('@')) ? 1 : 0;
 
   return rows.slice(startIdx)
-    .map(cols => ({ email: cols[0] || '', nombre: cols[1] || '' }))
+    .map(cols => ({ email: cols[0] || '', nombre: cols[1] || '', ocupacion: cols[2] || '' }))
     .filter(t => t.email);
 }
 
