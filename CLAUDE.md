@@ -203,9 +203,9 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 - `organizations.idioma` o multilingüismo por org → diferido hasta tener cliente.
 - Tab integrada en `admin.html` para gestión de orgs → vive en su propia página `/admin-orgs.html` para no abultar el dashboard principal. Cuando el B2B sea producto estable se valora consolidar.
 
-### Landing B2B (`/es/empresas`)
+### Landing B2B (`/es/empresas` + `/ca/empresas`)
 
-Página pública (indexable, no requiere auth) que vende el producto a **organizaciones con red profesional**: empresas, despachos, colegios profesionales, asociaciones, administraciones públicas, ONGs. URL `/es/empresas` por SEO ("empresas" tiene volumen de búsqueda, "organizaciones" no), pero el copy es de amplio espectro.
+Página pública (indexable, no requiere auth) que vende el producto a **organizaciones con red profesional**: empresas, despachos, colegios profesionales, asociaciones, administraciones públicas, ONGs. URL `/es/empresas` por SEO ("empresas" tiene volumen de búsqueda, "organizaciones" no), pero el copy es de amplio espectro. La versión catalana `/ca/empresas` es traducción 1:1; ambas se cruzan con `<link rel="alternate" hreflang>` + `og:locale:alternate`. El header B2C (es y ca) enlaza directo a su versión del landing — espejo simétrico del "Soy autónomo / Sóc autònom →" que el landing B2B tiene hacia el B2C.
 - **Hero** con un claim único + 2 CTAs: form de demo (primario) + scroll al vídeo. Subtítulo enumera explícitamente los tipos de organización para que el visitante "se vea" en el primer scroll.
 - **Switcher sectorial** con 4 ángulos preconfigurados — Empresas y redes (retención de marca), Despachos y consultoras (imagen homogénea), Colegios y asociaciones (pertenencia como activo digital), Sector público y ONGs (identidad institucional sin CMS interno). Cada uno con su copy, sin reload — vanilla JS.
 - **Disclaimer del sector público**: el panel "Sector público y ONGs" incluye una nota visible advirtiendo que requisitos específicos (ENS, residencia de datos en España, accesibilidad WCAG AA, contratación por pliego) se evalúan caso por caso. Evita sobre-prometer compliance que el producto no tiene certificado.
@@ -213,12 +213,12 @@ Página pública (indexable, no requiere auth) que vende el producto a **organiz
 - **Form** con honeypot (campo `website` oculto; si viene relleno, devolvemos 200 sin enviar). Campos: nombre, organización, email, tamaño de equipo (enum), tipo de organización (enum: `empresa`, `despacho`, `colegio`, `publico`, `ong`, `otro`), mensaje opcional.
 - **Trust signals** + **footer** con enlace cruzado a la landing B2C ("¿Eres autónomo individual?").
 
-**Endpoint `lead-b2b.js`** (`POST /api/lead-b2b`): valida campos, ejecuta el honeypot, manda email vía Resend a `B2B_LEAD_INBOX` con `replyTo` apuntando al email del lead. Sin auth (es un form público), pero defensa via honeypot + validación estricta de enums + tamaño máximo de campos.
+**Endpoint `lead-b2b.js`** (`POST /api/lead-b2b`): valida campos, ejecuta el honeypot, manda dos emails vía Resend — uno interno a `B2B_LEAD_INBOX` (siempre en español, lo lee el founder) y otro magic-link al propio lead localizado según `body.idioma` (`LEAD_EMAIL_STRINGS = { es, ca }`). Los mensajes de validación HTTP devueltos al frontend también respetan el idioma (`ERROR_STRINGS = { es, ca }`) — un lead catalán que se equivoque al rellenar el form recibe el error en catalán. Sin auth (es un form público), pero defensa via honeypot + validación estricta de enums + tamaño máximo de campos.
 
 **Env vars**:
 - `B2B_LEAD_INBOX` — email que recibe los leads (ej. `leads@perfilapro.es`, o un Forward del founder). Si no está configurado, el endpoint devuelve 500.
 
-**Reversibilidad**: si el ángulo B2B no encaja, basta con borrar `public/es/empresas.html` + la route `/api/lead-b2b` en `netlify.toml` + `lead-b2b.js`. Sin BD, sin dependencias.
+**Reversibilidad**: si el ángulo B2B no encaja, basta con borrar `public/es/empresas.html` + `public/ca/empresas.html` + la route `/api/lead-b2b` en `netlify.toml` + `lead-b2b.js`. Sin BD, sin dependencias.
 
 ### Observability (PostHog)
 
@@ -267,7 +267,7 @@ SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
 POSTHOG_API_KEY       # PostHog project key — empty disables analytics
 POSTHOG_HOST          # default https://eu.i.posthog.com
-B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas
+B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas y /ca/empresas
 LAUNCH_PROMO_ACTIVE   # "1" activa la promo de lanzamiento 100% bonificada
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3

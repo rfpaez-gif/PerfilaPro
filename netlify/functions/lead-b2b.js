@@ -18,6 +18,27 @@ const SECTOR_LABEL = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const ERROR_STRINGS = {
+  es: {
+    invalidJson:     'JSON inválido',
+    missingFields:   'Faltan campos: nombre, empresa, email',
+    invalidEmail:    'Email inválido',
+    invalidTeamSize: 'Tamaño de equipo no válido',
+    invalidSector:   'Sector no válido',
+    misconfigured:   'Endpoint mal configurado',
+    insertFailed:    'No se pudo registrar el lead',
+  },
+  ca: {
+    invalidJson:     'JSON invàlid',
+    missingFields:   'Falten camps: nom, empresa, email',
+    invalidEmail:    'Email invàlid',
+    invalidTeamSize: 'Mida d\'equip no vàlida',
+    invalidSector:   'Sector no vàlid',
+    misconfigured:   'Endpoint mal configurat',
+    insertFailed:    'No s\'ha pogut registrar el lead',
+  },
+};
+
 function jsonResponse(statusCode, payload) {
   return {
     statusCode,
@@ -147,8 +168,14 @@ function makeHandler(deps) {
     try {
       body = JSON.parse(event.body || '{}');
     } catch {
-      return jsonResponse(400, { error: 'JSON inválido' });
+      // Sin body parseado no podemos saber el idioma — default es.
+      return jsonResponse(400, { error: ERROR_STRINGS.es.invalidJson });
     }
+
+    // Resolver idioma antes de validar para que los mensajes de error
+    // viajen al frontend en el idioma correcto.
+    const idioma = body.idioma === 'ca' ? 'ca' : 'es';
+    const E = ERROR_STRINGS[idioma];
 
     // Honeypot: si el campo "website" viene relleno, es bot. Devolvemos
     // 200 sin enviar email para no darle al bot información de que el
@@ -163,25 +190,24 @@ function makeHandler(deps) {
     const team_size = (body.team_size || '').toString().trim();
     const sector    = (body.sector    || '').toString().trim().toLowerCase();
     const message   = (body.message   || '').toString().trim().slice(0, 2000);
-    const idioma    = body.idioma === 'ca' ? 'ca' : 'es';
 
     if (!name || !company || !email) {
-      return jsonResponse(400, { error: 'Faltan campos: nombre, empresa, email' });
+      return jsonResponse(400, { error: E.missingFields });
     }
     if (!EMAIL_RE.test(email)) {
-      return jsonResponse(400, { error: 'Email inválido' });
+      return jsonResponse(400, { error: E.invalidEmail });
     }
     if (!TEAM_SIZES.has(team_size)) {
-      return jsonResponse(400, { error: 'Tamaño de equipo no válido' });
+      return jsonResponse(400, { error: E.invalidTeamSize });
     }
     if (!SECTORS.has(sector)) {
-      return jsonResponse(400, { error: 'Sector no válido' });
+      return jsonResponse(400, { error: E.invalidSector });
     }
 
     const inbox = process.env.B2B_LEAD_INBOX;
     if (!inbox) {
       console.error('lead-b2b: B2B_LEAD_INBOX no configurada');
-      return jsonResponse(500, { error: 'Endpoint mal configurado' });
+      return jsonResponse(500, { error: E.misconfigured });
     }
 
     // Persistir el lead ANTES de enviar emails — si la BD falla, no
@@ -200,7 +226,7 @@ function makeHandler(deps) {
 
     if (insertErr || !leadRow) {
       console.error('lead-b2b: error persistiendo lead:', insertErr?.message);
-      return jsonResponse(500, { error: 'No se pudo registrar el lead' });
+      return jsonResponse(500, { error: E.insertFailed });
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
