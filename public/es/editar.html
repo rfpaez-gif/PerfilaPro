@@ -806,6 +806,38 @@
       color: var(--color-gris-500);
       margin: .35rem 0 0;
     }
+
+    /* Carril B2B · candado en campos fijados por la organización */
+    .pp-field.is-locked .pp-input,
+    .pp-field.is-locked .pp-input--textarea,
+    .pp-field.is-locked input[type="checkbox"] {
+      background: #F7F8F9;
+      color: var(--color-gris-500);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .pp-field__lock {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 8px;
+      padding: 2px 7px;
+      background: #F1F3F5;
+      border: 1px solid var(--color-gris-200);
+      border-radius: 100px;
+      color: var(--color-gris-500);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      vertical-align: middle;
+      cursor: help;
+    }
+    .pp-field__lock-note {
+      font-size: 11px;
+      color: var(--color-gris-500);
+      margin: .35rem 0 0;
+      font-style: italic;
+    }
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
@@ -1476,6 +1508,57 @@
         }
       }
 
+      // Carril B2B con candado · campos fijados por la organización.
+      // Si la card es plan='b2b' con organization_id, bloqueamos visualmente
+      // los inputs que la org gestiona (nombre, tagline, CP, descripción,
+      // dirección, servicios). El backend ignora cualquier intento de
+      // updateForzar esos campos en cards B2B (defensa de fondo).
+      window._ppIsB2BLocked = card.plan === 'b2b' && card.organization && !!card.organization.name;
+      if (window._ppIsB2BLocked) {
+        const orgName = card.organization.name;
+        // Campos input cuyo .pp-field padre marcamos como is-locked.
+        const lockedInputs = ['nombre', 'tagline', 'cp', 'descripcion', 'direccion', 'local_publico'];
+        lockedInputs.forEach(function(id) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.setAttribute('disabled', 'disabled');
+          el.setAttribute('readonly', 'readonly');
+          const field = el.closest('.pp-field');
+          if (!field) return;
+          field.classList.add('is-locked');
+          const label = field.querySelector('.pp-field__label, .pp-toggle-row__label');
+          if (label && !label.querySelector('.pp-field__lock')) {
+            const lock = document.createElement('span');
+            lock.className = 'pp-field__lock';
+            lock.title = 'Fijado por ' + orgName + ' — contacta con tu organización para modificar';
+            lock.innerHTML = '🔒 Fijado por ' + orgName;
+            label.appendChild(lock);
+          }
+        });
+        // Servicios: ocultamos el bloque entero porque addService/removeService
+        // permitirían añadir elementos al DOM aunque el backend los descartase.
+        const servicesList = document.getElementById('servicesList');
+        if (servicesList) {
+          const svcField = servicesList.closest('.pp-field');
+          if (svcField) {
+            svcField.classList.add('is-locked');
+            // Deshabilitar inputs existentes y el botón "+ Añadir servicio".
+            svcField.querySelectorAll('input, button').forEach(function(b) {
+              b.setAttribute('disabled', 'disabled');
+              b.style.pointerEvents = 'none';
+            });
+            const svcLabel = svcField.querySelector('.pp-field__label');
+            if (svcLabel && !svcLabel.querySelector('.pp-field__lock')) {
+              const lock = document.createElement('span');
+              lock.className = 'pp-field__lock';
+              lock.title = 'Fijados por ' + orgName + ' — contacta con tu organización para modificar';
+              lock.innerHTML = '🔒 Fijados por ' + orgName;
+              svcLabel.appendChild(lock);
+            }
+          }
+        }
+      }
+
       // Upgrade banner — visible mientras la card no tenga ni session
       // de Stripe ni kit ya enviado (promo redimida también marca
       // kit_email_sent_at, así que post-promo el banner se oculta solo).
@@ -1705,13 +1788,22 @@
     const msg = document.getElementById('editMsg');
     msg.style.display = 'none';
 
-    if (!nombre || !cp || !whatsapp || !servicios.length) {
-      showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
-      return;
-    }
-    if (!/^\d{5}$/.test(cp)) {
-      showMsg(msg, 'err', 'El código postal debe tener 5 dígitos.');
-      return;
+    // Cards B2B con candado: nombre/CP/servicios los fija la organización
+    // (y el backend los ignora en update). Aquí solo validamos WhatsApp.
+    if (window._ppIsB2BLocked) {
+      if (!whatsapp) {
+        showMsg(msg, 'err', 'Tu WhatsApp es obligatorio para que tus clientes te contacten.');
+        return;
+      }
+    } else {
+      if (!nombre || !cp || !whatsapp || !servicios.length) {
+        showMsg(msg, 'err', 'Completa los campos obligatorios: nombre, CP, WhatsApp y al menos un servicio.');
+        return;
+      }
+      if (!/^\d{5}$/.test(cp)) {
+        showMsg(msg, 'err', 'El código postal debe tener 5 dígitos.');
+        return;
+      }
     }
 
     const btn = document.getElementById('saveBtn');

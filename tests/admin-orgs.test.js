@@ -628,6 +628,168 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── invite_team (bulk) ──
+  describe('invite_team', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const inviteTeamHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+
+    function mockBulkOrgAndCards({ org = { id: 'org1', slug: 'cch', name: 'CCH', logo_url: null, color_primary: '#FFA500' }, existingCards = {}, insertErrors = {} } = {}) {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn(),
+      };
+      // Por cada llamada a maybeSingle (chequeo de slug existente), responder
+      // con lo que indique el mapa existingCards (clave = slug, valor = card).
+      let lookupIdx = 0;
+      cardLookup.maybeSingle.mockImplementation(() => {
+        const slugs = Object.keys(existingCards);
+        const data = lookupIdx < slugs.length && existingCards[slugs[lookupIdx]] ? existingCards[slugs[lookupIdx]] : null;
+        lookupIdx++;
+        return Promise.resolve({ data, error: null });
+      });
+      const cardInsert = vi.fn();
+      let insertIdx = 0;
+      cardInsert.mockImplementation((row) => {
+        const err = insertErrors[insertIdx] || null;
+        insertIdx++;
+        return Promise.resolve({ error: err });
+      });
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards')         return { select: vi.fn(() => cardLookup), insert: cardInsert };
+        return {};
+      });
+      return { orgLookup, cardLookup, cardInsert };
+    }
+
+    it('crea N cards con datos comunes y envía N emails con branding de la org', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      const res = await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: {
+            tagline: 'Operario de obra · CCH',
+            cp: '03300',
+            zona: 'Orihuela',
+            servicios: ['Albañilería', 'Reformas integrales'],
+            descripcion: 'Equipo CCH',
+          },
+          team: [
+            { email: 'pedro@cch.es', nombre: 'Pedro Pérez' },
+            { email: 'ana@cch.es',   nombre: 'Ana Ruiz' },
+            { email: 'juan@cch.es' }, // sin nombre → slug derivado
+          ],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.results.ok).toHaveLength(3);
+      expect(json.results.failed).toHaveLength(0);
+      expect(cardInsert).toHaveBeenCalledTimes(3);
+      // Datos comunes aplicados a todas
+      cardInsert.mock.calls.forEach((call) => {
+        const row = call[0];
+        expect(row.plan).toBe('b2b');
+        expect(row.organization_id).toBe('org1');
+        expect(row.tagline).toBe('Operario de obra · CCH');
+        expect(row.cp).toBe('03300');
+        expect(row.zona).toBe('Orihuela');
+        expect(row.servicios).toEqual(['Albañilería', 'Reformas integrales']);
+        expect(row.descripcion).toBe('Equipo CCH');
+        expect(row.edit_token).toMatch(/^[a-f0-9]{64}$/);
+      });
+      // El tercero (sin nombre) tiene slug agente-{ts36}-{rnd}
+      expect(cardInsert.mock.calls[2][0].slug).toMatch(/^agente-/);
+      expect(mockEmailSend).toHaveBeenCalledTimes(3);
+      expect(mockEmailSend.mock.calls[0][0].subject).toContain('CCH');
+      expect(mockEmailSend.mock.calls[0][0].html).toContain('#FFA500');
+    });
+
+    it('reporta éxito parcial cuando un email del lote es inválido', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      const res = await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: {},
+          team: [
+            { email: 'pedro@cch.es', nombre: 'Pedro' },
+            { email: 'no-es-email', nombre: 'Malo' },
+            { email: 'ana@cch.es',   nombre: 'Ana' },
+          ],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.results.ok).toHaveLength(2);
+      expect(json.results.failed).toHaveLength(1);
+      expect(json.results.failed[0].email).toBe('no-es-email');
+      expect(cardInsert).toHaveBeenCalledTimes(2); // solo los válidos
+    });
+
+    it('rechaza team vacío con 400', async () => {
+      const res = await inviteTeamHandler(buildEvent({
+        body: { action: 'invite_team', org_slug: 'cch', team: [] },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza team mayor de 100 con 400', async () => {
+      const team = Array.from({ length: 101 }, (_, i) => ({ email: `a${i}@cch.es` }));
+      const res = await inviteTeamHandler(buildEvent({
+        body: { action: 'invite_team', org_slug: 'cch', team },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      const res = await inviteTeamHandler(buildEvent({
+        body: { action: 'invite_team', org_slug: 'no-existe', team: [{ email: 'a@b.com' }] },
+      }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('plantilla vacía es válida (los operarios entran con datos mínimos)', async () => {
+      const { cardInsert } = mockBulkOrgAndCards();
+      const res = await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          team: [{ email: 'pedro@cch.es', nombre: 'Pedro' }],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const row = cardInsert.mock.calls[0][0];
+      expect(row.plan).toBe('b2b');
+      expect(row.organization_id).toBe('org1');
+      expect(row.tagline).toBeUndefined();
+      expect(row.servicios).toBeUndefined();
+    });
+  });
+
   // ── list_cards_for_assignment ──
   describe('list_cards_for_assignment', () => {
     it('devuelve cards activas con slug, nombre, organization_id', async () => {

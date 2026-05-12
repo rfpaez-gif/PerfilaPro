@@ -109,6 +109,71 @@ function makeHandler(db) {
       ];
       const fotoUrlClean = foto_url && ALLOWED_FOTO_HOSTS.some(h => foto_url.includes(h)) ? foto_url : null;
 
+      // ── Carril B2B con candado ──
+      // Si la card pertenece a una organización (plan='b2b' + organization_id),
+      // la mayoría de campos están fijados por la org y NO los puede tocar el
+      // operario. El operario solo añade su contacto personal: foto, WhatsApp,
+      // teléfono y descripción libre. Cualquier intento de mandar nombre/tagline/
+      // servicios/CP/dirección se ignora silenciosamente (defensa de fondo
+      // independiente del frontend, por si alguien edita el HTML).
+      const isB2BLocked = card.plan === 'b2b' && !!card.organization_id;
+      if (isB2BLocked) {
+        if (!whatsapp) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'WhatsApp es obligatorio' }),
+          };
+        }
+        const waNorm = normalizeSpanishPhone(whatsapp);
+        if (!waNorm.ok) {
+          return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'WhatsApp inválido (9 dígitos, móvil 6/7 o fijo 8/9)' }),
+          };
+        }
+        let telefonoCleanB2B = null;
+        if (telefono) {
+          const tNorm = normalizeSpanishPhone(telefono);
+          if (!tNorm.ok) {
+            return {
+              statusCode: 400,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ error: 'Teléfono inválido (9 dígitos, móvil 6/7 o fijo 8/9)' }),
+            };
+          }
+          telefonoCleanB2B = tNorm.local;
+        }
+
+        const updateB2B = {
+          whatsapp:    waNorm.e164,
+          telefono:    telefonoCleanB2B,
+          foto_url:    fotoUrlClean,
+          descripcion: descripcion ? stripTags(descripcion).substring(0, 200) : null,
+        };
+
+        const { error: updateError } = await db
+          .from('cards')
+          .update(updateB2B)
+          .eq('slug', slug);
+
+        if (updateError) {
+          console.error('Error actualizando perfil B2B:', updateError.message);
+          return {
+            statusCode: 500,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ error: 'Error actualizando perfil' }),
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ok: true, locked: true }),
+        };
+      }
+
       if (!nombre || !cp || !whatsapp || !Array.isArray(servicios)) {
         return {
           statusCode: 400,

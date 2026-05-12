@@ -510,6 +510,147 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       });
     }
 
+    // ── invite_team: alta en bloque de varios agentes con datos comunes ──
+    // Para empresas que envían 5-30 operarios de golpe. El founder rellena
+    // los datos compartidos (tagline, CP, servicios, descripción) una vez,
+    // y una lista de {email, nombre}. El backend crea N cards B2B con esos
+    // datos prerellenados y envía N emails de invitación en paralelo.
+    //
+    // El operario después solo añade foto + WhatsApp desde /editar. Los
+    // datos comunes (los que mete CCH) quedan bloqueados en edit-card.POST
+    // para que el operario no los pueda tocar.
+    //
+    // Devuelve { ok: [...], failed: [...] } para que el admin vea el
+    // resumen y pueda reintentar solo los fallos.
+    if (action === 'invite_team') {
+      const { org_slug, team, template } = body;
+
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+      if (!Array.isArray(team) || team.length === 0) {
+        return jsonResponse(400, { error: 'team debe ser un array no vacío' });
+      }
+      if (team.length > 100) {
+        return jsonResponse(400, { error: 'máximo 100 invitaciones por lote' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, logo_url, color_primary')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
+
+      // Sanitizamos la plantilla común. Cada campo es opcional — si el
+      // founder no rellena tagline, ningún operario lo lleva. Igual para
+      // servicios (array) y resto.
+      const tpl = template || {};
+      const tplTagline     = tpl.tagline ? stripTagsInline(tpl.tagline).substring(0, 140) : null;
+      const tplDescripcion = tpl.descripcion ? stripTagsInline(tpl.descripcion).substring(0, 300) : null;
+      const tplCp          = tpl.cp ? String(tpl.cp).trim().replace(/\D/g, '').substring(0, 5) : null;
+      const tplZona        = tpl.zona ? stripTagsInline(tpl.zona).substring(0, 100) : null;
+      const tplServicios   = Array.isArray(tpl.servicios)
+        ? tpl.servicios.map(s => stripTagsInline(s).substring(0, 100)).filter(Boolean).slice(0, 20)
+        : [];
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const ok = [];
+      const failed = [];
+
+      for (const raw of team) {
+        const rawEmail  = raw && typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : '';
+        const rawNombre = raw && typeof raw.nombre === 'string' ? raw.nombre : '';
+
+        if (!EMAIL_RE.test(rawEmail)) {
+          failed.push({ email: rawEmail || '(sin email)', error: 'email inválido' });
+          continue;
+        }
+
+        const cleanNombre = rawNombre ? stripTagsInline(rawNombre).substring(0, 100) : '';
+        const displayName = cleanNombre || 'Nuevo profesional';
+        let slug = cleanNombre ? toSlug(cleanNombre) : '';
+        if (!slug) {
+          slug = `agente-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
+        }
+
+        const { data: existing } = await db
+          .from('cards')
+          .select('slug')
+          .eq('slug', slug)
+          .maybeSingle();
+        if (existing) {
+          slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}-${crypto.randomBytes(1).toString('hex')}`;
+        }
+
+        const editToken = crypto.randomBytes(32).toString('hex');
+        const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+        const row = {
+          slug,
+          nombre:                displayName,
+          email:                 rawEmail,
+          plan:                  'b2b',
+          status:                'active',
+          organization_id:       org.id,
+          edit_token:            editToken,
+          edit_token_expires_at: editTokenExpiresAt,
+          whatsapp:              '',
+          idioma:                'es',
+        };
+        // Solo añadimos los campos de la plantilla que el founder rellenó.
+        // Sin sobrescribir con null campos que la BD pueda tener con default.
+        if (tplTagline)     row.tagline     = tplTagline;
+        if (tplDescripcion) row.descripcion = tplDescripcion;
+        if (tplCp)          row.cp          = tplCp;
+        if (tplZona)        row.zona        = tplZona;
+        if (tplServicios.length) row.servicios = tplServicios;
+
+        const { error: insErr } = await db.from('cards').insert(row);
+        if (insErr) {
+          failed.push({ email: rawEmail, error: insErr.message });
+          continue;
+        }
+
+        const editUrl = `${siteUrl}/es/editar?slug=${slug}&token=${editToken}`;
+        const { subject, html } = buildInviteEmail({
+          orgName:    org.name,
+          orgLogoUrl: org.logo_url,
+          orgColor:   org.color_primary,
+          nombre:     cleanNombre,
+          editUrl,
+        });
+
+        try {
+          await emailClient.emails.send({
+            from: 'PerfilaPro <hola@perfilapro.es>',
+            to: rawEmail,
+            subject,
+            html,
+          });
+          ok.push({ email: rawEmail, slug });
+        } catch (err) {
+          // Card creada pero email falló — lo apuntamos como fail.
+          // El admin puede reenviar desde "Asignar profesionales" si quiere
+          // (la card existe, solo le falta llegar el magic-link).
+          console.error(`admin-orgs invite_team: email a ${rawEmail} falló:`, err.message);
+          failed.push({ email: rawEmail, slug, error: 'card creada pero email falló' });
+        }
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        org: { slug: org.slug, name: org.name },
+        results: { ok, failed },
+        summary: `${ok.length} de ${team.length} invitaciones enviadas${failed.length ? `, ${failed.length} con error` : ''}`,
+      });
+    }
+
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
   };
 }

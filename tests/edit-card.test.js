@@ -357,6 +357,100 @@ describe('edit-card handler', () => {
     });
   });
 
+  // ── Carril B2B con candado ──
+
+  describe('POST con card B2B locked', () => {
+    const b2bCard = {
+      ...baseCard,
+      plan: 'b2b',
+      organization_id: 'org-uuid-1',
+      // Datos fijados por la organización
+      nombre: 'Pedro Pérez',
+      tagline: 'Operario de obra · CCH',
+      cp: '03300',
+      servicios: ['Albañilería', 'Reformas integrales'],
+      descripcion: 'Datos de CCH',
+    };
+
+    beforeEach(() => {
+      mockSingle.mockResolvedValue({ data: b2bCard, error: null });
+    });
+
+    it('actualiza solo whatsapp, telefono, foto_url, descripcion en cards B2B', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: {
+          // El operario manda todo, pero el backend solo usa los 4 campos editables
+          nombre:    'Pedro HACKED',
+          tagline:   'CEO autoproclamado',
+          cp:        '99999',
+          servicios: ['Robar la empresa'],
+          direccion: 'Calle Falsa 123',
+          whatsapp:  '34611222333',
+          telefono:  '961234567',
+          foto_url:  'https://abc.supabase.co/storage/v1/object/public/Avatars/pedro.jpg',
+          descripcion: 'Mi nueva descripción personal',
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.locked).toBe(true);
+
+      // El update debe haber tocado SOLO los 4 campos editables
+      const updateCall = currentBuilder.update.mock.calls[0][0];
+      expect(updateCall).toEqual({
+        whatsapp:    '34611222333',
+        telefono:    '961234567',
+        foto_url:    'https://abc.supabase.co/storage/v1/object/public/Avatars/pedro.jpg',
+        descripcion: 'Mi nueva descripción personal',
+      });
+      // Y NO los datos que la org gestiona
+      expect(updateCall.nombre).toBeUndefined();
+      expect(updateCall.tagline).toBeUndefined();
+      expect(updateCall.cp).toBeUndefined();
+      expect(updateCall.servicios).toBeUndefined();
+      expect(updateCall.direccion).toBeUndefined();
+    });
+
+    it('rechaza si falta whatsapp', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { foto_url: null },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza whatsapp con formato inválido', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '123' },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('acepta payload mínimo (solo whatsapp) sin exigir cp/servicios/nombre', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+    });
+
+    it('card b2b SIN organization_id sigue el flujo normal (no bloqueo)', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...baseCard, plan: 'b2b', organization_id: null },
+        error: null,
+      });
+      // Sin organization_id no es "locked": el flujo normal exige nombre+cp+servicios
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(400); // falta nombre/cp/servicios → 400 del flujo normal
+    });
+  });
+
   // ── Método no permitido ──
 
   it('devuelve 405 para métodos no permitidos', async () => {
