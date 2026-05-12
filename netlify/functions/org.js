@@ -1,7 +1,7 @@
 'use strict';
 
 const { getDb } = require('./lib/supabase-client');
-const { esc, renderCard, htmlPage, buildShowcaseCta } = require('./lib/dir-utils');
+const { esc, renderCard, htmlPage } = require('./lib/dir-utils');
 const { getOrgBySlug, listCardsByOrg, isValidHex, isSafeLogoUrl } = require('./lib/org-utils');
 
 function makeHandler(deps) {
@@ -83,7 +83,7 @@ function makeHandler(deps) {
         title,
         desc,
         canonical,
-        body: `${heroHtml}\n${cardsHtml}\n${buildShowcaseCta(siteUrl)}`,
+        body: `${heroHtml}\n${cardsHtml}`,
         crumbs: null,
         siteUrl,
         jsonLd: null,
@@ -91,6 +91,9 @@ function makeHandler(deps) {
         // Las páginas B2B no son target SEO mientras el piloto no se cierre.
         // Cuando una org pase a producción de pago se puede pasar a true por org.
         noindex: true,
+        // White-label B2B: nada de CTAs de captación de PerfilaPro al visitante.
+        // El cliente B2B paga por la exclusividad del espacio.
+        noPromo: true,
       }),
     };
   };
