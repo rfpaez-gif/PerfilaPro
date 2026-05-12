@@ -51,6 +51,7 @@ PerfilaPro is a **serverless digital business card platform** deployed on Netlif
 **`organizations` table** — usado por la página B2B demo `/e/:slug` (migración 019). Empty hasta que se crea la primera org desde admin:
 - `id` (PK), `name`, `nif`, `email`, `created_at`, `deleted_at` (originales de migración 007)
 - Branding (migración 019): `slug` text UNIQUE (índice parcial donde `slug IS NOT NULL AND deleted_at IS NULL`), `logo_url` text (whitelist Supabase storage en backend), `color_primary` text con CHECK `^#[0-9a-fA-F]{6}$`, `tagline` text (máx 140 chars, lo limita el backend).
+- Contacto físico para tarjeta de visita B2B (migración 023): `address` text (máx 200, sanitizado en backend), `phone` text (máx 40). Sin CHECK a nivel DB. Sirven de **fallback** para la tarjeta de visita 85×55mm del miembro cuando éste no rellena su propia `cards.direccion` — caso típico: despacho con sede única que reparte tarjetas a 20 empleados con la misma dirección.
 
 **`settings` table** — key/value store for site config:
 - `key` (PK), `value`
@@ -129,6 +130,9 @@ PDF generation is triggered non-blocking from `stripe-webhook` after card upsert
 
 Exports:
 - `buildPrintableCardPDF({ nombre, tagline, whatsapp, slug, cardUrl })` — A6 vertical PDF (105×148mm), no photo, with a prominent QR + identity (name, tagline, WhatsApp, URL). Helvetica only (no font loading). The PDF is vector + embedded high-res QR PNG, so it scales cleanly: print as-is for pocket size, ×2 for A5 wall poster, ×0.5 for ~A7 hand-out.
+- `buildBusinessCardPDF({ card, org, logoBuffer, siteUrl })` — variante B2B formal en formato tarjeta de visita ISO 7810 (85×55mm horizontal). Franja superior con `color_primary` + logo + nombre de la org; cuerpo con nombre del miembro en serif grande + cargo + 3 líneas de contacto (☎ ✉ 📍); QR auxiliar de ~14mm en la esquina (no protagonista). Single-side, listo para mandar a cualquier imprenta digital. La dirección cae a `org.address` si la card no tiene `direccion` propia (fallback equipo distribuido vs sede única).
+- `buildBusinessCardsBookletPDF({ cards, org, siteUrl })` — PDF multi-página con una tarjeta de visita por miembro (mismo formato 85×55mm). Pensado para descarga masiva del admin desde Studio antes de un evento. Logo fetched una sola vez y reusado en todas las páginas.
+- `fetchLogoAsPngBuffer(url, opts)` — fetch defensivo del logo de la org a Buffer PNG para embeber en el PDF. Acepta PNG/JPG nativos y SVG (vía Resvg); WEBP y formatos no soportados → null. Timeout 3s, try/catch silencioso (si falla devuelve null, el PDF sigue sin logo).
 - `generateQrPngBuffer(cardUrl, size)` — standalone QR PNG (default 1024px, max 2048px) for use in Instagram bios, escaparates, vinilos.
 - `formatSpanishPhone(phone)` — pretty-prints Spanish numbers (`34633816729` → `+34 633 81 67 29`).
 
@@ -176,7 +180,8 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 
 **Flujo de gestión** (white-label, marca de cliente configurable sin tocar código):
 - **B2B Demo Studio** en `/admin-orgs.html` — UI dedicada protegida por `ADMIN_PASSWORD` + TOTP. Permite crear/editar/eliminar orgs, subir logo con drag-and-drop, elegir color con picker nativo, asignar cards con selector buscable y ver vista previa en vivo de `/e/:slug` en un iframe lateral. Pensado para que el founder o admin demo monte una org branded en 30 segundos durante una conversación comercial.
-- Endpoint `POST /api/admin-orgs` (acciones: `list`, `create`, `update`, `delete_org`, `assign_card`, `list_cards_for_assignment`). Mismo auth que el resto del admin (password + TOTP).
+- Endpoint `POST /api/admin-orgs` (acciones: `list`, `create`, `update`, `delete_org`, `assign_card`, `list_cards_for_assignment`, `org_card_stats`, `send_edit_link`, `get_edit_url`, `delete_card`, `offboard_card`, `invite_team`, `leads_list`, `leads_assign`, `leads_resend`, `download_team_cards`). Mismo auth que el resto del admin (password + TOTP).
+- Tarjeta de visita 85×55mm para miembros del equipo: cada `invite_team` adjunta `tarjeta-{slug}.pdf` (branded con `color_primary` + logo de la org + nombre + cargo + email del miembro + QR) al email de invitación. El admin puede descargar todas las tarjetas del equipo en un PDF booklet único desde el botón "📥 Descargar tarjetas del equipo (PDF)" del panel de profesionales — action `download_team_cards`. El render reusa `buildBusinessCardPDF` / `buildBusinessCardsBookletPDF` de `printable-card-utils.js`.
 - Endpoint `POST /api/upload-org-logo` (auth password + TOTP): recibe `{slug, base64, contentType}`, sube al bucket `Avatars` bajo `org-logos/{slug}-{timestamp}.{ext}` y hace `UPDATE organizations.logo_url` en una sola llamada. Acepta png/jpg/webp/svg, máx 2 MB. La org debe existir antes de subir el logo (404 si no).
 - `delete_org` es soft-delete (`deleted_at = NOW()`). Antes de marcar la org, desvincula todas sus cards (`organization_id = NULL`) para que ninguna quede colgando.
 

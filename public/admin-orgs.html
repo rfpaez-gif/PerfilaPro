@@ -242,6 +242,18 @@
             <input type="text" class="pp-input" id="taglineInput" placeholder="Cartera de agentes Allianz España" maxlength="140">
           </div>
 
+          <div class="pp-form__row" style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+            <div>
+              <label class="pp-form__label" for="phoneInput">Teléfono corporativo <small>opcional</small></label>
+              <input type="text" class="pp-input" id="phoneInput" placeholder="+34 965 12 34 56" maxlength="40">
+            </div>
+            <div>
+              <label class="pp-form__label" for="addressInput">Dirección corporativa <small>opcional</small></label>
+              <input type="text" class="pp-input" id="addressInput" placeholder="C/ Mayor 12, Orihuela" maxlength="200">
+            </div>
+          </div>
+          <p class="pp-form__hint">Fallback para las tarjetas de visita de los miembros: si un miembro no rellena su propia dirección, sale la de la organización.</p>
+
           <div class="pp-form__row">
             <label class="pp-form__label">Color primario</label>
             <div class="pp-color-row">
@@ -318,7 +330,10 @@
         </div>
         <div class="pp-section__h">
           <h2 class="pp-section__title">Profesionales del equipo</h2>
-          <span class="pp-section__hint">Click en el nombre para ver su tarjeta</span>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="downloadCardsBtn" onclick="downloadTeamCards()" title="Genera un PDF con la tarjeta de visita 85×55mm de cada miembro del equipo">📥 Descargar tarjetas del equipo (PDF)</button>
+            <span class="pp-section__hint">Click en el nombre para ver su tarjeta</span>
+          </div>
         </div>
         <input type="text" class="pp-input pp-cards-list__search" id="cardsSearch" placeholder="Buscar por nombre o slug…">
         <div class="pp-cards-list" id="cardsList">
@@ -500,6 +515,8 @@ function resetForm() {
   $('slugInput').value = '';
   $('slugInput').dataset.touched = '';
   $('taglineInput').value = '';
+  $('phoneInput').value = '';
+  $('addressInput').value = '';
   $('colorInput').value = '#003781';
   $('colorHexInput').value = '#003781';
   setLogoPreview(null);
@@ -517,6 +534,8 @@ function loadForm(org) {
   $('slugInput').value = org.slug || '';
   $('slugInput').dataset.touched = '1';
   $('taglineInput').value = org.tagline || '';
+  $('phoneInput').value = org.phone || '';
+  $('addressInput').value = org.address || '';
   $('colorInput').value = org.color_primary || '#003781';
   $('colorHexInput').value = (org.color_primary || '#003781').toUpperCase();
   setLogoPreview(org.logo_url);
@@ -627,6 +646,8 @@ async function saveOrg() {
   const name = $('nameInput').value.trim();
   const slug = $('slugInput').value.trim();
   const tagline = $('taglineInput').value.trim();
+  const phone   = $('phoneInput').value.trim();
+  const address = $('addressInput').value.trim();
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
 
   if (!name) return toast('Falta el nombre', 'err');
@@ -638,12 +659,14 @@ async function saveOrg() {
       await callAdmin({
         action: 'update', slug: editingSlug,
         name, tagline: tagline || null, color_primary: color,
+        phone: phone || null, address: address || null,
       });
       toast(`Org "${name}" actualizada`, 'ok');
     } else {
       await callAdmin({
         action: 'create',
         slug, name, tagline: tagline || null, color_primary: color,
+        phone: phone || null, address: address || null,
       });
       editingSlug = slug; // permite subir logo justo después
       $('formTitle').textContent = `Editar · ${name}`;
@@ -916,6 +939,42 @@ async function sendEditLinkToMember(cardSlug, cardNombre) {
     if (selectedOrgSlug) await loadOrgCardStats(selectedOrgSlug);
   } catch (err) {
     toast('Error: ' + err.message, 'err');
+  }
+}
+
+// Pide al backend un PDF booklet (una página por miembro activo del equipo,
+// 85×55mm cada una) y dispara la descarga en el browser. El backend devuelve
+// base64 dentro de JSON — lo decodificamos y construimos un Blob para
+// `URL.createObjectURL`. Botón deshabilitado durante la generación para
+// evitar dobles clicks (rasterizar QRs + render PDF + base64 puede tardar
+// segundos con equipos grandes).
+async function downloadTeamCards() {
+  if (!selectedOrgSlug) { toast('Selecciona una org primero', 'err'); return; }
+  const btn = $('downloadCardsBtn');
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  try {
+    const json = await callAdmin({ action: 'download_team_cards', org_slug: selectedOrgSlug });
+    if (!json.base64) throw new Error('Respuesta sin PDF');
+    // Decodificación base64 → Uint8Array → Blob. Single-shot, sin streaming.
+    const binary = atob(json.base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = json.filename || `tarjetas-${selectedOrgSlug}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Liberamos el ObjectURL tras el click para no fugar memoria.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`PDF con ${json.count} tarjeta${json.count === 1 ? '' : 's'} descargado`, 'ok');
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
 }
 

@@ -127,6 +127,26 @@ describe('admin-orgs handler', () => {
       expect(inserted.name).toBe('Iris');
     });
 
+    it('persiste address y phone sanitizados al crear (campos opcionales)', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+        address: '  C/ Mayor 12, <b>Orihuela</b>  ',
+        phone:   '+34 965 12 34 56',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.address).toBe('C/ Mayor 12, Orihuela'); // tags stripeados + trim
+      expect(inserted.phone).toBe('+34 965 12 34 56');
+    });
+
+    it('persiste address/phone como null si vienen vacíos', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris', address: '', phone: '',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.address).toBeNull();
+      expect(inserted.phone).toBeNull();
+    });
+
     it('rechaza slug inválido con 400', async () => {
       const res = await handler(buildEvent({ body: { action: 'create', slug: 'IRIS-MAYUS', name: 'Iris' } }));
       expect(res.statusCode).toBe(400);
@@ -1271,6 +1291,65 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── download_team_cards · PDF booklet con tarjeta de visita por miembro ──
+  describe('download_team_cards', () => {
+    function mockDownloadLookups({ org, cards = [] }) {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const cardsSelect = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn(() => Promise.resolve({ data: cards, error: null })),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards')         return { select: vi.fn(() => cardsSelect) };
+        return {};
+      });
+    }
+
+    it('devuelve PDF base64 con todas las cards activas del equipo', async () => {
+      const org = { id: 'org-st', slug: 'st', name: 'ST', logo_url: null, color_primary: '#FFA500', address: 'C/ X 1', phone: null };
+      const cards = [
+        { slug: 'olga', nombre: 'Olga', tagline: 'Entrenadora', whatsapp: '34633816729', email: 'olga@st.es', direccion: null },
+        { slug: 'juan', nombre: 'Juan', tagline: 'Recepcionista', whatsapp: null, email: 'juan@st.es', direccion: 'C/ Propia 4' },
+      ];
+      mockDownloadLookups({ org, cards });
+      const res = await handler(buildEvent({ body: { action: 'download_team_cards', org_slug: 'st' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.filename).toBe('tarjetas-st.pdf');
+      expect(json.count).toBe(2);
+      // Validamos que base64 decodifica a un PDF válido (header %PDF-)
+      const pdfBytes = Buffer.from(json.base64, 'base64');
+      expect(pdfBytes.slice(0, 5).toString()).toBe('%PDF-');
+      // Multi-página: 2 cards → 2 marcadores /Type /Page
+      const matches = pdfBytes.toString('binary').match(/\/Type\s*\/Page[^s]/g) || [];
+      expect(matches.length).toBe(2);
+    });
+
+    it('devuelve 400 si la org no tiene profesionales activos', async () => {
+      mockDownloadLookups({ org: { id: 'vacia', slug: 'vacia', name: 'V' }, cards: [] });
+      const res = await handler(buildEvent({ body: { action: 'download_team_cards', org_slug: 'vacia' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      mockDownloadLookups({ org: null });
+      const res = await handler(buildEvent({ body: { action: 'download_team_cards', org_slug: 'no-existe' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza org_slug inválido', async () => {
+      const res = await handler(buildEvent({ body: { action: 'download_team_cards', org_slug: '!!BAD!!' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   // ── invite_team · timestamp kit_email_sent_at en la card tras email OK ──
   describe('invite_team kit_email_sent_at stamping', () => {
     const mockEmailSend = vi.fn();
@@ -1324,6 +1403,40 @@ describe('admin-orgs handler', () => {
         expect(payload.kit_email_sent_at).toBeTruthy();
         expect(new Date(payload.kit_email_sent_at).getTime()).toBeLessThanOrEqual(Date.now());
       });
+    });
+
+    it('adjunta la tarjeta de visita PDF (tarjeta-{slug}.pdf) al email de invitación', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', slug: 'st', name: 'ST', logo_url: null, color_primary: '#FFA500', address: 'C/ X 1', phone: null }, error: null }),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      const cardInsert = vi.fn().mockResolvedValue({ error: null });
+      const cardsUpdate = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }));
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards') return { select: vi.fn(() => cardLookup), insert: cardInsert, update: cardsUpdate };
+        return {};
+      });
+
+      await inviteHandler(buildEvent({
+        body: {
+          action: 'invite_team', org_slug: 'st', template: { tagline: 'Entrenadora' },
+          team: [{ email: 'olga@st.es', nombre: 'Olga' }],
+        },
+      }));
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.attachments).toBeDefined();
+      expect(sent.attachments).toHaveLength(1);
+      const att = sent.attachments[0];
+      expect(att.filename).toMatch(/^tarjeta-olga.*\.pdf$/);
+      expect(Buffer.isBuffer(att.content)).toBe(true);
+      expect(att.content.slice(0, 5).toString()).toBe('%PDF-');
     });
 
     it('NO marca kit_email_sent_at cuando el email falla', async () => {
