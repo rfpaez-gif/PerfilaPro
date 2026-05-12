@@ -690,15 +690,17 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       const failed = [];
 
       for (const raw of team) {
-        const rawEmail  = raw && typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : '';
-        const rawNombre = raw && typeof raw.nombre === 'string' ? raw.nombre : '';
+        const rawEmail     = raw && typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : '';
+        const rawNombre    = raw && typeof raw.nombre === 'string' ? raw.nombre : '';
+        const rawOcupacion = raw && typeof raw.ocupacion === 'string' ? raw.ocupacion : '';
 
         if (!EMAIL_RE.test(rawEmail)) {
           failed.push({ email: rawEmail || '(sin email)', error: 'email inválido' });
           continue;
         }
 
-        const cleanNombre = rawNombre ? stripTagsInline(rawNombre).substring(0, 100) : '';
+        const cleanNombre    = rawNombre    ? stripTagsInline(rawNombre).substring(0, 100)    : '';
+        const cleanOcupacion = rawOcupacion ? stripTagsInline(rawOcupacion).substring(0, 140) : '';
         const displayName = cleanNombre || 'Nuevo profesional';
         let slug = cleanNombre ? toSlug(cleanNombre) : '';
         if (!slug) {
@@ -731,7 +733,11 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         };
         // Solo añadimos los campos de la plantilla que el founder rellenó.
         // Sin sobrescribir con null campos que la BD pueda tener con default.
-        if (tplTagline)     row.tagline     = tplTagline;
+        // El cargo individual (cleanOcupacion) prevalece sobre tplTagline para
+        // que cada miembro aparezca en /e/:slug con su rol específico
+        // (Entrenadora, Recepcionista, Fisio…) en lugar de un tagline común.
+        const memberTagline = cleanOcupacion || tplTagline;
+        if (memberTagline)  row.tagline     = memberTagline;
         if (tplDescripcion) row.descripcion = tplDescripcion;
         if (tplCp)          row.cp          = tplCp;
         if (tplZona)        row.zona        = tplZona;
