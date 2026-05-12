@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { buildQrSvg } = require('./lib/qr-svg.js');
-const { isValidHex, isSafeLogoUrl } = require('./lib/org-utils');
+const { isValidHex, isSafeLogoUrl, getOrgById } = require('./lib/org-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -199,20 +199,11 @@ exports.handler = async (event) => {
     visitCount = count ?? 0;
   }
 
-  // B2B demo: si la card pertenece a una organización, traemos su branding
-  // (logo + color primario) para pintar una franja superior + atribución al
-  // pie con link a /e/:slug. Sin organization_id la card se renderiza igual
-  // que siempre — la rama es defensiva, no introduce cambios visuales.
-  let org = null;
-  if (data.organization_id) {
-    const { data: orgData } = await supabase
-      .from('organizations')
-      .select('slug, name, logo_url, color_primary')
-      .eq('id', data.organization_id)
-      .is('deleted_at', null)
-      .maybeSingle();
-    if (orgData) org = orgData;
-  }
+  // B2B branding: si la card pertenece a una organización, levantamos el
+  // branded hero arriba de la tarjeta (logo + nombre + tagline sobre
+  // color_primary). Sin organization_id la card se renderiza igual que
+  // siempre — la rama es defensiva, no introduce cambios visuales.
+  const org = data.organization_id ? await getOrgById(supabase, data.organization_id) : null;
   const orgAccent = org && isValidHex(org.color_primary) ? org.color_primary : null;
   const orgLogo   = org && isSafeLogoUrl(org.logo_url) ? org.logo_url : null;
 
@@ -333,20 +324,28 @@ exports.handler = async (event) => {
     .pp-page-foot{margin-top:1.5rem;font-size:.75rem;color:var(--color-gris-500);text-align:center}
     .pp-page-foot a{color:var(--color-verde-match);text-decoration:none}
     :focus-visible{outline:2px solid var(--color-verde-match);outline-offset:2px}
-    /* B2B branding: strip superior + atribución al pie. Solo se pintan
-       cuando la card tiene organization_id resuelta. */
-    .pp-card__org-strip{height:6px;width:100%}
-    .pp-card__org{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem 1rem;background:var(--color-crema);border-top:1px solid var(--color-gris-200);font-size:.6875rem;color:var(--color-gris-500);text-decoration:none;text-transform:uppercase;letter-spacing:.06em;font-weight:600;transition:background .15s}
-    .pp-card__org:hover{background:#FFFFFF}
-    .pp-card__org img{display:block;max-height:18px;max-width:80px;width:auto;height:auto}
-    .pp-card__org span{line-height:1}
+    /* B2B branding: branded hero arriba de la card. Solo se pinta cuando
+       la card tiene organization_id resuelta. Replica el lenguaje visual
+       del hero de /e/:slug (fondo color_primary, logo en pill blanco,
+       serif blanco) escalado al ancho de la card para que el visitante
+       sienta la marca como dueña del espacio. */
+    .pp-card__org-hero{display:block;padding:1.5rem 1.25rem 1.25rem;text-align:center;text-decoration:none;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.14)}
+    .pp-card__org-hero__logo{display:inline-flex;align-items:center;justify-content:center;background:#FFFFFF;padding:.5rem .875rem;border-radius:.75rem;margin-bottom:.75rem;box-shadow:0 4px 12px rgba(0,0,0,.14);transition:transform .18s}
+    .pp-card__org-hero__logo img{display:block;max-height:48px;max-width:180px;width:auto;height:auto}
+    .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.25rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
+    .pp-card__org-hero__tagline{font-size:.8125rem;opacity:.9;margin-top:.375rem;line-height:1.5}
+    .pp-card__org-hero:hover .pp-card__org-hero__logo{transform:translateY(-1px)}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
 </head>
 <body>
   <div class="pp-card">
-    ${org ? `<div class="pp-card__org-strip" style="background:${orgAccent || 'var(--color-verde-match)'}"></div>` : ''}
+    ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
+      ${orgLogo ? `<div class="pp-card__org-hero__logo"><img src="${esc(orgLogo)}" alt="${esc(org.name)}" loading="eager" decoding="async"></div>` : ''}
+      <h2 class="pp-card__org-hero__name">${esc(org.name)}</h2>
+      ${org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : ''}
+    </a>` : ''}
     <div class="pp-card__header">
       <div class="pp-card__avatar">
         ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="pp-card__avatar-init">${avatarInitial}</span>`}
@@ -416,10 +415,6 @@ exports.handler = async (event) => {
         ${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
         <a href="https://perfilapro.es">${T.pwOwn}</a>
       </div>
-      ${org ? `<a class="pp-card__org" href="/e/${esc(org.slug)}">
-        ${orgLogo ? `<img src="${esc(orgLogo)}" alt="${esc(org.name)}">` : ''}
-        <span>Parte de ${esc(org.name)}</span>
-      </a>` : ''}
     </div>
   </div>
   <div class="pp-page-foot">
