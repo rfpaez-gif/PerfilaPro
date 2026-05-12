@@ -13,6 +13,11 @@ const {
 const { buildLeadEmail } = require('./lead-b2b');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { buildEditLinkEmail, EDIT_LINK_STRINGS } = require('./send-edit-link');
+const {
+  buildBusinessCardPDF,
+  buildBusinessCardsBookletPDF,
+  fetchLogoAsPngBuffer,
+} = require('./printable-card-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -190,7 +195,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, logo_url, color_primary, created_at')
+        .select('id, slug, name, tagline, logo_url, color_primary, address, phone, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -199,7 +204,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, logo_url, color_primary, nif, email } = body;
+      const { slug, name, tagline, logo_url, color_primary, nif, email, address, phone } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
@@ -227,8 +232,10 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           color_primary: color_primary || null,
           nif: nif ? String(nif).trim() : null,
           email: email ? String(email).trim() : null,
+          address: address ? stripTagsInline(address).substring(0, 200) : null,
+          phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
         })
-        .select('id, slug, name, tagline, logo_url, color_primary')
+        .select('id, slug, name, tagline, logo_url, color_primary, address, phone')
         .single();
 
       if (error) {
@@ -241,7 +248,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, logo_url, color_primary } = body;
+      const { slug, name, tagline, logo_url, color_primary, address, phone } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
@@ -266,6 +273,11 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       if (tagline !== undefined)       updates.tagline       = tagline ? String(tagline).trim() : null;
       if (logo_url !== undefined)      updates.logo_url      = logo_url || null;
       if (color_primary !== undefined) updates.color_primary = color_primary || null;
+      // address / phone son tolerantes: el admin los puede vaciar mandando ''
+      // o null. Sanitización idéntica que en `create`. Sin CHECK constraint
+      // a nivel DB (ver migración 023): los validamos aquí en backend.
+      if (address !== undefined) updates.address = address ? stripTagsInline(address).substring(0, 200) : null;
+      if (phone   !== undefined) updates.phone   = phone   ? stripTagsInline(phone).substring(0, 40)    : null;
 
       if (!Object.keys(updates).length) {
         return jsonResponse(400, { error: 'nada para actualizar' });
@@ -594,6 +606,58 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       });
     }
 
+    // ── download_team_cards: PDF booklet con la tarjeta de visita de cada miembro ──
+    // Power-feature para el admin que reparte tarjetas en eventos. Una sola
+    // descarga, una página por miembro activo de la org (85×55mm cada una),
+    // listo para mandar a imprenta. Si la org no tiene miembros, 400.
+    //
+    // Devolvemos base64 dentro de JSON (no streaming binario) porque el admin
+    // dispatcher ya está en modo JSON-only y el volumen real es bajo (1-50
+    // miembros, <500KB el PDF resultante). El frontend hace `atob` + Blob.
+    if (action === 'download_team_cards') {
+      const { org_slug } = body;
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, logo_url, color_primary, address, phone, email')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
+
+      // Solo cards activas (no soft-deleted) del equipo. Ordenadas por nombre
+      // para que el booklet salga alfabético — facilita repartir en imprenta.
+      const { data: cards, error: cardsErr } = await db
+        .from('cards')
+        .select('slug, nombre, tagline, whatsapp, email, direccion')
+        .eq('organization_id', org.id)
+        .is('deleted_at', null)
+        .eq('status', 'active')
+        .order('nombre', { ascending: true });
+      if (cardsErr) return jsonResponse(500, { error: cardsErr.message });
+      if (!cards || !cards.length) {
+        return jsonResponse(400, { error: 'la org no tiene profesionales activos' });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      try {
+        const pdfBuffer = await buildBusinessCardsBookletPDF({ cards, org, siteUrl });
+        return jsonResponse(200, {
+          ok: true,
+          filename: `tarjetas-${org.slug}.pdf`,
+          base64: pdfBuffer.toString('base64'),
+          count: cards.length,
+        });
+      } catch (err) {
+        console.error('download_team_cards: render del booklet falló:', err.message);
+        return jsonResponse(500, { error: 'No se pudo generar el PDF' });
+      }
+    }
+
     // ── org_card_stats: visits 30d + timestamps de email por card ──
     // El admin-orgs studio necesita contexto rápido por card en el listado
     // de profesionales asignados: cuántas visitas tuvo en los últimos 30 días
@@ -825,7 +889,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: org, error: orgErr } = await db
         .from('organizations')
-        .select('id, slug, name, logo_url, color_primary')
+        .select('id, slug, name, logo_url, color_primary, address, phone, email')
         .eq('slug', org_slug)
         .is('deleted_at', null)
         .maybeSingle();
@@ -843,6 +907,14 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       const tplServicios   = Array.isArray(tpl.servicios)
         ? tpl.servicios.map(s => stripTagsInline(s).substring(0, 100)).filter(Boolean).slice(0, 20)
         : [];
+
+      // Logo de la org cacheado para adjuntar la tarjeta de visita a cada
+      // email del lote. Una sola petición HTTP para los N miembros. Si el
+      // fetch falla el booklet sale sin logo, el nombre de la org queda
+      // de cabecera y la invitación se manda igual (defensivo).
+      const orgLogoBuffer = org.logo_url
+        ? await fetchLogoAsPngBuffer(org.logo_url).catch(() => null)
+        : null;
 
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
       const ok = [];
@@ -917,13 +989,43 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           editUrl,
         });
 
+        // Generamos tarjeta de visita 85×55mm con branding de la org y la
+        // adjuntamos al email. El logo se cachea fuera del loop. Si el render
+        // falla por cualquier motivo seguimos enviando la invitación sin
+        // adjunto (defensivo: la invitación es lo crítico, la tarjeta es bonus).
+        let bizCardAttachment = null;
         try {
-          await emailClient.emails.send({
+          const cardForPdf = {
+            slug,
+            nombre:    displayName,
+            tagline:   memberTagline || null,
+            whatsapp:  null,    // el miembro aún no tiene número — campo vacío
+            email:     rawEmail,
+            direccion: null,    // el miembro aún no editó; cae a org.address
+          };
+          const pdfBuffer = await buildBusinessCardPDF({
+            card: cardForPdf,
+            org,
+            logoBuffer: orgLogoBuffer,
+            siteUrl,
+          });
+          bizCardAttachment = {
+            filename: `tarjeta-${slug}.pdf`,
+            content: pdfBuffer,
+          };
+        } catch (err) {
+          console.warn(`invite_team: render de tarjeta de visita para ${slug} falló (no fatal):`, err.message);
+        }
+
+        try {
+          const sendPayload = {
             from: 'PerfilaPro <hola@perfilapro.es>',
             to: rawEmail,
             subject,
             html,
-          });
+          };
+          if (bizCardAttachment) sendPayload.attachments = [bizCardAttachment];
+          await emailClient.emails.send(sendPayload);
           ok.push({ email: rawEmail, slug });
           // Marcamos el timestamp del email de bienvenida (mismo semántico que
           // kit_email_sent_at en B2C-paid: "el welcome email para esta card se

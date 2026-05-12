@@ -284,11 +284,293 @@ async function buildPrintableCardPDF({ nombre, tagline, profesion, whatsapp, dir
   });
 }
 
+// ============================================================
+// Tarjeta de visita B2B · 85×55mm horizontal, formato cartera
+// ============================================================
+//
+// Variante formal del kit imprimible para perfiles que viven dentro de
+// una organización. Diferencias clave vs `buildPrintableCardPDF` (A6 B2C):
+//
+//  · Tamaño tarjeta de visita estándar (ISO/IEC 7810 ID-1, 85×55mm).
+//    Es lo que cabe en cartera y se entrega en mano en eventos
+//    corporativos. La A6 del B2C es un flyer de bolsillo — distinto
+//    caso de uso.
+//
+//  · Branding de la organización manda: franja superior con
+//    `color_primary` + logo + nombre de la org en serif blanco. Es lo
+//    primero que el receptor ve cuando coge la tarjeta.
+//
+//  · Protagonismo a los datos del miembro: nombre grande, cargo
+//    debajo, contactos (teléfono · email · dirección) en cuerpo sans.
+//
+//  · QR auxiliar (~14mm) en la esquina, no protagonista. La tarjeta
+//    YA da los datos físicos completos; el QR es la extensión al perfil
+//    digital para quien quiera más (servicios, fotos, WhatsApp).
+//
+//  · Single-side. La idea es que cualquier imprenta digital la imprima
+//    en un click; doble cara exigiría briefing de impresor.
+//
+// El fallback de `direccion` (card → org) cubre dos casos reales:
+//  - Equipo distribuido (cada miembro su sede) → usa la del card.
+//  - Despacho con sede única (20 empleados misma dirección) → usa la
+//    de la org porque las cards individuales no la llenarán.
+
+const BIZCARD_WIDTH  = 240.94; // 85 mm en puntos PDF
+const BIZCARD_HEIGHT = 155.91; // 55 mm
+
+// Fetch + normalización del logo de la org a PNG buffer para embeberlo
+// en el PDF. PDFKit solo digiere PNG y JPG nativos — los SVG los pasamos
+// por Resvg (ya en deps), los WEBP y resto los descartamos en silencio.
+// Timeout 3s + try/catch defensivo: si el logo está caído o no es válido,
+// el PDF sigue generándose sin él (la marca queda en el nombre de la org).
+async function fetchLogoAsPngBuffer(logoUrl, { timeoutMs = 3000, targetWidth = 400 } = {}) {
+  if (!logoUrl || typeof logoUrl !== 'string') return null;
+  if (!/^https:\/\//.test(logoUrl)) return null;
+  let controller;
+  let timer;
+  try {
+    controller = new AbortController();
+    timer = setTimeout(() => controller.abort(), timeoutMs);
+    const res = await fetch(logoUrl, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (ct.includes('image/png') || ct.includes('image/jpeg') || ct.includes('image/jpg')) {
+      return buf;
+    }
+    if (ct.includes('image/svg')) {
+      try {
+        const resvg = new Resvg(buf.toString('utf8'), {
+          fitTo: { mode: 'width', value: targetWidth },
+          font: { fontDirs: [FONTS_DIR], loadSystemFonts: false, defaultFontFamily: 'Inter' },
+        });
+        return resvg.render().asPng();
+      } catch (err) {
+        console.warn('fetchLogoAsPngBuffer: SVG render falló:', err.message);
+        return null;
+      }
+    }
+    // image/webp u otros — los saltamos para no inyectar formato no soportado.
+    return null;
+  } catch (err) {
+    if (timer) clearTimeout(timer);
+    console.warn('fetchLogoAsPngBuffer: fetch falló:', err.message);
+    return null;
+  }
+}
+
+// Renderiza UNA tarjeta de visita en la página activa del documento.
+// Aislado para poder reusarlo en el booklet multi-página sin duplicar lógica.
+// El `logoBuffer` se inyecta ya resuelto desde fuera — fetcheo de logo
+// es lento, los callers que iteran sobre N miembros lo cachean.
+function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
+  const orgName     = org && org.name     ? String(org.name).trim()     : '';
+  const orgColor    = org && org.color_primary && /^#[0-9a-fA-F]{6}$/.test(org.color_primary)
+    ? org.color_primary : COLORS.ink;
+  const nombre      = card.nombre  ? String(card.nombre).trim()  : '—';
+  const tagline     = card.tagline ? String(card.tagline).trim() : '';
+  // Address fallback: card.direccion → org.address. Cubre los dos casos
+  // (equipo distribuido vs sede única). Si ninguno, se omite la línea.
+  const direccion   = card.direccion ? String(card.direccion).trim()
+                                     : (org && org.address ? String(org.address).trim() : '');
+  const telefono    = card.whatsapp  ? formatSpanishPhone(card.whatsapp) : '';
+  const email       = card.email     ? String(card.email).trim()         : '';
+
+  const W = BIZCARD_WIDTH;
+  const H = BIZCARD_HEIGHT;
+
+  // Fondo blanco
+  doc.rect(0, 0, W, H).fill(COLORS.surface);
+
+  // Franja superior con color de la org · 17pt alto ≈ 6mm.
+  // Logo en píldora blanca a la izquierda + nombre de la org centrado/derecha.
+  const STRIP_H = 17;
+  doc.rect(0, 0, W, STRIP_H).fill(orgColor);
+
+  let orgNameX = 10;
+  if (logoBuffer) {
+    try {
+      // Píldora blanca con padding para que un logo oscuro siga siendo legible
+      // sobre la franja de color. Altura ajustada a la franja, ancho variable.
+      const logoPadY = 2;
+      const logoBoxH = STRIP_H - logoPadY * 2;
+      const logoBoxW = 38;
+      doc.roundedRect(6, logoPadY, logoBoxW, logoBoxH, 2).fill('#FFFFFF');
+      doc.image(logoBuffer, 8, logoPadY + 1.5, {
+        fit: [logoBoxW - 4, logoBoxH - 3],
+        align: 'center',
+        valign: 'center',
+      });
+      orgNameX = 6 + logoBoxW + 6;
+    } catch (err) {
+      console.warn('renderBusinessCard: doc.image del logo falló:', err.message);
+      orgNameX = 10;
+    }
+  }
+
+  if (orgName) {
+    const orgNameMaxW = W - orgNameX - 10;
+    doc.font('PP-Serif').fontSize(10).fillColor('#FFFFFF')
+       .text(orgName.substring(0, 60), orgNameX, 4.5, {
+         width: orgNameMaxW, align: logoBuffer ? 'left' : 'center',
+         lineBreak: false, ellipsis: true,
+       });
+  }
+
+  // Cuerpo. Columna izquierda: identidad + contactos. Derecha: QR + URL.
+  const BODY_TOP    = STRIP_H + 10;
+  const PAD_X       = 12;
+  const QR_SIZE     = 40;          // ≈ 14mm, suficiente para escanear con móvil
+  const QR_X        = W - QR_SIZE - 10;
+  const QR_Y        = BODY_TOP;
+  const LEFT_W      = QR_X - PAD_X - 6;
+
+  // Nombre del miembro · serif grande, peso. Es el protagonista del cuerpo.
+  doc.fillColor(COLORS.ink).font('PP-Serif').fontSize(14)
+     .text(nombre.substring(0, 50), PAD_X, BODY_TOP, {
+       width: LEFT_W, lineBreak: false, ellipsis: true,
+     });
+
+  // Cargo · uppercase tracking en verde-match. Línea inmediata bajo nombre.
+  let cursorY = BODY_TOP + 17;
+  if (tagline) {
+    doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(7)
+       .text(tagline.toUpperCase().substring(0, 50), PAD_X, cursorY, {
+         width: LEFT_W, lineBreak: false, characterSpacing: 1.1, ellipsis: true,
+       });
+    cursorY += 13;
+  } else {
+    cursorY += 4;
+  }
+
+  // Datos de contacto · sans, una línea por canal. Iconografía texto-Unicode
+  // (☎ ✉ 📍) para no depender de glifos de emoji que no embeben todas las
+  // imprentas. Si la imprenta no tiene la fuente, cae a un cuadrado neutro
+  // sin romper layout — es preferible a una imagen que no escala.
+  const lineH = 11.5;
+  function contactLine(label) {
+    doc.fillColor(COLORS.ink).font('PP-Sans').fontSize(8)
+       .text(label, PAD_X, cursorY, { width: LEFT_W, lineBreak: false, ellipsis: true });
+    cursorY += lineH;
+  }
+  if (telefono)  contactLine(`☎  ${telefono}`);
+  if (email)     contactLine(`✉  ${email.substring(0, 50)}`);
+  if (direccion) contactLine(`📍 ${direccion.substring(0, 60)}`);
+
+  // QR (esquina superior derecha del cuerpo). Borde fino para que destaque
+  // visualmente sin ser dominante.
+  doc.image(qrBuffer, QR_X, QR_Y, { width: QR_SIZE, height: QR_SIZE });
+  doc.rect(QR_X - 0.5, QR_Y - 0.5, QR_SIZE + 1, QR_SIZE + 1)
+     .lineWidth(0.3).strokeColor(COLORS.border).stroke();
+
+  // URL corta bajo el QR (sin protocolo, peso normal pero color match).
+  // Usamos `perfilapro.es/c/<slug>` — cabe en el ancho del QR si el slug
+  // es razonable, y permite que alguien teclee la URL si no puede escanear.
+  const slug = card.slug || '';
+  const urlLabel = `perfilapro.es/c/${slug}`;
+  doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(6)
+     .text(urlLabel, QR_X - 10, QR_Y + QR_SIZE + 3, {
+       width: QR_SIZE + 20, align: 'center', lineBreak: false, ellipsis: true,
+     });
+
+  // Footer · línea sutil + atribución mínima. Cumple "Powered by"
+  // sin competir visualmente con la marca de la org.
+  const FOOTER_Y = H - 12;
+  doc.moveTo(PAD_X, FOOTER_Y - 4).lineTo(W - PAD_X, FOOTER_Y - 4)
+     .strokeColor(COLORS.border).lineWidth(0.3).stroke();
+  doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(6)
+     .text('Powered by PerfilaPro', PAD_X, FOOTER_Y, {
+       width: W - PAD_X * 2, align: 'right', lineBreak: false,
+     });
+}
+
+// PDF single-card. Recibe la card + la org resuelta + el logoBuffer ya
+// cacheado (si lo hay) y devuelve un Buffer con UNA página tarjeta de visita.
+// `siteUrl` permite que el caller controle el dominio (en tests pasamos un
+// stub; en prod, el siteUrl del entorno).
+async function buildBusinessCardPDF({ card, org, logoBuffer = null, siteUrl } = {}) {
+  if (!card || !card.slug) {
+    throw new Error('buildBusinessCardPDF: card.slug es obligatorio');
+  }
+  const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+  const cardUrl = `${baseUrl}/c/${card.slug}`;
+  const qrBuffer = rasterizeQrSvgToPng(cardUrl, 600); // 600px sobra para 14mm
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: [BIZCARD_WIDTH, BIZCARD_HEIGHT],
+      margin: 0,
+      info: {
+        Title: `Tarjeta visita ${card.slug} - PerfilaPro`,
+        Author: 'PerfilaPro',
+        Creator: 'PerfilaPro',
+      },
+    });
+    registerFonts(doc, FONTS_DIR);
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl });
+    doc.end();
+  });
+}
+
+// PDF booklet — una página por miembro del equipo. Pensado para que el admin
+// descargue de un click todas las tarjetas y las lleve a la imprenta en un
+// único documento. El `logoBuffer` se fetch una sola vez y se reusa en cada
+// página (ahorra N peticiones HTTP idénticas). Si la lista está vacía,
+// genera un PDF de una página en blanco — el caller decide si rechazar.
+async function buildBusinessCardsBookletPDF({ cards, org, siteUrl } = {}) {
+  if (!Array.isArray(cards) || !cards.length) {
+    throw new Error('buildBusinessCardsBookletPDF: cards debe ser un array no vacío');
+  }
+  const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+
+  // Cacheamos el fetch del logo: idéntico para todas las páginas. Si falla
+  // se genera el booklet sin logo (el nombre de la org sigue arriba).
+  const logoBuffer = org && org.logo_url ? await fetchLogoAsPngBuffer(org.logo_url) : null;
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: [BIZCARD_WIDTH, BIZCARD_HEIGHT],
+      margin: 0,
+      autoFirstPage: false,
+      info: {
+        Title: `Tarjetas de visita ${org && org.slug ? org.slug : 'equipo'} - PerfilaPro`,
+        Author: 'PerfilaPro',
+        Creator: 'PerfilaPro',
+      },
+    });
+    registerFonts(doc, FONTS_DIR);
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    for (const card of cards) {
+      if (!card || !card.slug) continue;
+      doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
+      const cardUrl = `${baseUrl}/c/${card.slug}`;
+      const qrBuffer = rasterizeQrSvgToPng(cardUrl, 600);
+      renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl });
+    }
+    doc.end();
+  });
+}
+
 module.exports = {
   buildPrintableCardPDF,
+  buildBusinessCardPDF,
+  buildBusinessCardsBookletPDF,
   generateQrPngBuffer,
   buildEscaparateQrPng,
   formatSpanishPhone,
+  fetchLogoAsPngBuffer,
   A6_WIDTH,
   A6_HEIGHT,
+  BIZCARD_WIDTH,
+  BIZCARD_HEIGHT,
 };
