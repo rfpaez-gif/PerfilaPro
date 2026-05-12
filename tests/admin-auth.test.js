@@ -97,6 +97,88 @@ describe('verifyTotp', () => {
   });
 });
 
+describe('sesión admin (JWT)', () => {
+  const { signAdminSession, verifyAdminSession, checkAdminAuth } = require('../netlify/functions/admin-auth.js');
+
+  beforeEach(() => {
+    process.env.ADMIN_PASSWORD = 'admin123';
+    process.env.ADMIN_TOTP_SECRET = TEST_SECRET;
+    process.env.ADMIN_JWT_SECRET = 'test-jwt-secret';
+    delete process.env.ADMIN_SESSION_TTL_MINUTES;
+  });
+
+  afterEach(() => {
+    delete process.env.ADMIN_TOTP_SECRET;
+    delete process.env.ADMIN_JWT_SECRET;
+  });
+
+  it('signAdminSession emite un JWT que verifyAdminSession valida', () => {
+    const token = signAdminSession();
+    expect(typeof token).toBe('string');
+    expect(token.split('.').length).toBe(3); // header.payload.sig
+    expect(verifyAdminSession(token)).toBe(true);
+  });
+
+  it('verifyAdminSession rechaza tokens vacíos o con purpose incorrecto', () => {
+    const jwt = require('jsonwebtoken');
+    expect(verifyAdminSession('')).toBe(false);
+    expect(verifyAdminSession(null)).toBe(false);
+    expect(verifyAdminSession('not.a.jwt')).toBe(false);
+    // Token con purpose distinto NO debe pasar
+    const wrong = jwt.sign({ purpose: 'agent' }, 'test-jwt-secret');
+    expect(verifyAdminSession(wrong)).toBe(false);
+  });
+
+  it('verifyAdminSession rechaza tokens firmados con otro secret', () => {
+    const jwt = require('jsonwebtoken');
+    const fake = jwt.sign({ purpose: 'admin-session' }, 'otro-secret');
+    expect(verifyAdminSession(fake)).toBe(false);
+  });
+
+  it('checkAdminAuth acepta password + x-admin-session JWT válido (sin TOTP)', () => {
+    const token = signAdminSession();
+    const event = {
+      headers: {
+        'x-admin-password': 'admin123',
+        'x-admin-session':  token,
+        'x-forwarded-for':  '5.5.5.1',
+      },
+    };
+    expect(checkAdminAuth(event, { requireTotp: true }).authorized).toBe(true);
+  });
+
+  it('checkAdminAuth rechaza JWT inválido aunque haya password (acción destructiva)', () => {
+    const event = {
+      headers: {
+        'x-admin-password': 'admin123',
+        'x-admin-session':  'token.fake.session',
+        'x-forwarded-for':  '5.5.5.2',
+      },
+    };
+    expect(checkAdminAuth(event, { requireTotp: true }).authorized).toBe(false);
+  });
+
+  it('JWT cuenta como segundo factor — sin TOTP pero con sesión válida pasa', () => {
+    // Caso típico: el admin hizo login con TOTP hace 10 min, ahora sigue
+    // trabajando con el JWT, el código TOTP ya expiró.
+    const token = signAdminSession();
+    const event = {
+      headers: {
+        'x-admin-password': 'admin123',
+        'x-admin-session':  token,
+        // sin x-admin-totp
+        'x-forwarded-for':  '5.5.5.3',
+      },
+    };
+    expect(checkAdminAuth(event, { requireTotp: true }).authorized).toBe(true);
+  });
+
+  it('TTL por defecto 60 min', () => {
+    const { SESSION_TTL_MIN } = require('../netlify/functions/admin-auth.js');
+    expect(SESSION_TTL_MIN).toBe(60);
+  });
+});
+
 describe('checkAdminAuth con TOTP', () => {
   const { checkAdminAuth } = require('../netlify/functions/admin-auth.js');
 

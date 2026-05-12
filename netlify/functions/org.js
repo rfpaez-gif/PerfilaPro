@@ -64,9 +64,13 @@ function makeHandler(deps) {
   ${org.tagline ? `<p class="pp-org-hero__tagline">${esc(org.tagline)}</p>` : ''}
 </section>`;
 
+    // En el grid de una org enlazamos a la tarjeta personal de cada miembro
+    // (/c/:slug), no al perfil-publico SEO (/p/:slug). Queremos que el visitante
+    // que abre /e/:slug y hace click en un miembro aterrice en su tarjeta con
+    // WhatsApp y QR directo, no en la página del directorio.
     const cardsHtml = cards.length
       ? `<p class="pp-org-count">${cards.length} ${cards.length === 1 ? 'profesional' : 'profesionales'}</p>
-<div class="pp-dir-grid">${cards.map(c => renderCard(c, siteUrl)).join('\n')}</div>`
+<div class="pp-dir-grid">${cards.map(c => renderCard(c, siteUrl, { linkPrefix: '/c/' })).join('\n')}</div>`
       : `<div class="pp-dir-empty"><h2>Aún no hay profesionales</h2><p>Esta organización todavía no tiene perfiles publicados en PerfilaPro.</p></div>`;
 
     const title = `${org.name} — PerfilaPro`;

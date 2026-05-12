@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { htmlPage } from '../netlify/functions/lib/dir-utils.js';
+import { htmlPage, renderCard } from '../netlify/functions/lib/dir-utils.js';
 
 const baseArgs = {
   title: 'Test page',
@@ -45,5 +45,43 @@ describe('htmlPage Open Graph + Twitter Cards', () => {
     expect(html).toContain('<meta property="og:title" content="A &amp; &quot;B&quot;">');
     expect(html).toContain('<meta property="og:description" content="&lt;script&gt;x&lt;/script&gt;">');
     expect(html).not.toContain('<script>x</script>');
+  });
+});
+
+describe('renderCard', () => {
+  const baseCard = {
+    slug: 'ana',
+    nombre: 'Ana López',
+    specialty_label: 'Electricista',
+    city_name: 'Madrid',
+    province: 'Madrid',
+    plan: 'pro',
+    foto_url: 'https://abc.supabase.co/storage/v1/object/public/Avatars/ana.jpg',
+  };
+
+  it('enlaza por defecto a /p/:slug (perfil-publico SEO)', () => {
+    const html = renderCard(baseCard, 'https://perfilapro.es');
+    expect(html).toContain('href="https://perfilapro.es/p/ana"');
+  });
+
+  it('respeta opts.linkPrefix para enlazar a /c/:slug en contexto org', () => {
+    const html = renderCard(baseCard, 'https://perfilapro.es', { linkPrefix: '/c/' });
+    expect(html).toContain('href="https://perfilapro.es/c/ana"');
+    expect(html).not.toContain('/p/ana');
+  });
+
+  it('considera plan=b2b como paid y muestra la foto', () => {
+    const b2b = { ...baseCard, plan: 'b2b' };
+    const html = renderCard(b2b, 'https://perfilapro.es', { linkPrefix: '/c/' });
+    expect(html).toContain('<img src="https://abc.supabase.co');
+    // No debe caer al avatar-initial (la inicial A)
+    expect(html).not.toContain('pp-dir-card__av-init');
+  });
+
+  it('cae al avatar-initial cuando plan no es paid', () => {
+    const free = { ...baseCard, plan: 'free' };
+    const html = renderCard(free, 'https://perfilapro.es');
+    expect(html).toContain('pp-dir-card__av-init');
+    expect(html).not.toContain('<img src=');
   });
 });

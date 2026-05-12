@@ -93,9 +93,10 @@ describe('org handler (/e/:slug)', () => {
     expect(res.body).toContain('Iris Comercializadora');
   });
 
-  it('renderiza el grid con las cards de la org', async () => {
+  it('renderiza el grid con las cards de la org enlazando a /c/:slug (tarjeta personal)', async () => {
     const res = await handler(buildEvent('/e/iris'));
-    expect(res.body).toContain('/p/ana-electricista');
+    expect(res.body).toContain('/c/ana-electricista');
+    expect(res.body).not.toContain('/p/ana-electricista');
     expect(res.body).toContain('Ana López');
   });
 

@@ -178,6 +178,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/admin-session"
+  to     = "/.netlify/functions/admin-session"
+  status = 200
+
+[[redirects]]
   from   = "/api/legal-settings"
   to     = "/.netlify/functions/legal-settings"
   status = 200

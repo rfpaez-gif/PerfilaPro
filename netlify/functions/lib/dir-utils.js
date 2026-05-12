@@ -173,12 +173,20 @@ const PROFILE_CSS = `
 const PIN_SVG = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 const ARROW_SVG = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
 
-function renderCard(p, siteUrl) {
-  const isPaid = !!p.stripe_session_id || p.plan === 'pro' || p.plan === 'base';
+function renderCard(p, siteUrl, opts) {
+  // Por defecto enlazamos a /p/:slug (perfil-publico SEO del directorio).
+  // El grid de /e/:slug (organizaciones B2B) pasa { linkPrefix: '/c/' }
+  // para enlazar a la tarjeta personal de cada miembro — ahí queremos
+  // WhatsApp + QR directo, no la página SEO con "reclama tu perfil".
+  const linkPrefix = (opts && opts.linkPrefix) || '/p/';
+  // 'b2b' es paid de facto: aunque no pase por Stripe, su ciclo de vida
+  // lo gestiona la suscripción de la organización. Sin esto, las fotos
+  // de miembros B2B no aparecen en el grid de /e/:slug.
+  const isPaid = !!p.stripe_session_id || p.plan === 'pro' || p.plan === 'base' || p.plan === 'b2b';
   const avatarInitial = esc((p.nombre || '').trim().charAt(0).toUpperCase() || '?');
   const loc = p.city_name ? `${esc(p.city_name)}${p.province && p.province !== p.city_name ? `, ${esc(p.province)}` : ''}` : '';
 
-  return `<a href="${esc(siteUrl)}/p/${esc(p.slug)}" class="pp-dir-card${p.directory_featured ? ' pp-dir-card--featured' : ''}">
+  return `<a href="${esc(siteUrl)}${linkPrefix}${esc(p.slug)}" class="pp-dir-card${p.directory_featured ? ' pp-dir-card--featured' : ''}">
   <div class="pp-dir-card__av">${isPaid && p.foto_url
     ? `<img src="${esc(p.foto_url)}" alt="${esc(p.nombre)}" loading="lazy" width="56" height="56">`
     : `<span class="pp-dir-card__av-init">${avatarInitial}</span>`}</div>
