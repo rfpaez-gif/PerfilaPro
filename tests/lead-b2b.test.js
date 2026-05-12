@@ -141,6 +141,22 @@ describe('lead-b2b handler', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('con idioma=ca devuelve los errores de validación en catalán', async () => {
+    const res = await handler()(buildEvent({
+      body: { idioma: 'ca', name: 'X', company: 'Y' },
+    }));
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body).error).toBe('Falten camps: nom, empresa, email');
+  });
+
+  it('con idioma=ca el error de email también vuelve en catalán', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, idioma: 'ca', email: 'no-email' },
+    }));
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body).error).toBe('Email invàlid');
+  });
+
   it('escapa HTML en el mensaje para evitar inyección en el email interno', async () => {
     const res = await handler()(buildEvent({
       body: { ...validPayload, message: '<script>alert(1)</script>' },
