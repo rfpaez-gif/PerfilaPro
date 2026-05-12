@@ -185,9 +185,13 @@
           <textarea class="pp-input" id="tplDescripcion" rows="2" placeholder="Empresa de construcción con sede en Orihuela…" maxlength="300" style="font-family:inherit;resize:vertical"></textarea>
         </div>
 
-        <p style="font-size:11px;color:var(--color-gris-500);margin:1rem 0 .5rem;line-height:1.5">
-          <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro, formato <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre</code> (el nombre es opcional).
-        </p>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin:1rem 0 .5rem;gap:.5rem">
+          <p style="font-size:11px;color:var(--color-gris-500);margin:0;line-height:1.5;flex:1">
+            <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro. Acepta <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre</code>, pegado desde Excel/Sheets (tabs) o CSV con cabecera. El nombre es opcional.
+          </p>
+          <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="teamCsvBtn" onclick="document.getElementById('teamCsvInput').click()" style="white-space:nowrap;flex:0 0 auto">📄 Subir CSV</button>
+          <input type="file" id="teamCsvInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>
+        </div>
         <div class="pp-form__row">
           <textarea class="pp-input" id="teamList" rows="6" placeholder="pedro@cch.es, Pedro Pérez&#10;ana@cch.es, Ana Ruiz&#10;juan@cch.es" style="font-family:var(--font-mono,Menlo,monospace);font-size:12px;resize:vertical"></textarea>
         </div>
@@ -926,19 +930,93 @@ function switchInviteMode(mode) {
   setTimeout(() => (isOne ? $('inviteEmail') : $('tplTagline')).focus(), 50);
 }
 
-// Contador en vivo del textarea de operarios
+// Contador en vivo del textarea de operarios. Usa el parser para que coincida
+// con lo que se enviará (descuenta cabecera CSV si la hay, ignora filas vacías).
 function updateTeamCounter() {
-  const lines = $('teamList').value.split('\n').map(l => l.trim()).filter(Boolean);
-  $('teamCounter').textContent = `${lines.length} operario${lines.length === 1 ? '' : 's'}`;
+  const n = parseTeamList($('teamList').value).length;
+  $('teamCounter').textContent = `${n} operario${n === 1 ? '' : 's'}`;
+}
+
+// Auto-detecta separador: prioriza tab (Excel/Sheets paste), después ';' (CSV es-locale)
+// y finalmente ',' (legacy). Si la primera celda no contiene '@' la trata como cabecera
+// y la salta. Comillas dobles tipo CSV se respetan (campos con coma dentro).
+function detectSeparator(line) {
+  if (line.includes('\t')) return '\t';
+  // ';' solo si no hay coma a la vista — un nombre como "Pérez, Pedro; col2" sería ambiguo
+  if (line.includes(';') && !line.includes(',')) return ';';
+  return ',';
+}
+
+function splitRow(line, sep) {
+  // Si la línea trae comillas, usamos parser CSV mini (RFC 4180 básico).
+  if (line.includes('"')) {
+    const out = [];
+    let cur = '';
+    let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuote) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') { cur += '"'; i++; }
+          else inQuote = false;
+        } else cur += ch;
+      } else {
+        if (ch === '"') inQuote = true;
+        else if (ch === sep) { out.push(cur); cur = ''; }
+        else cur += ch;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+  // Sin comillas + separador coma: split solo en la primera para preservar nombres
+  // con comas ("Pérez, Pedro" sin entrecomillar — comportamiento legacy del modal).
+  if (sep === ',') {
+    const i = line.indexOf(',');
+    if (i === -1) return [line];
+    return [line.slice(0, i), line.slice(i + 1)];
+  }
+  return line.split(sep);
 }
 
 function parseTeamList(raw) {
-  // Cada línea: "email" o "email, nombre". Trim espacios, ignora vacías.
-  return raw.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
-    const i = line.indexOf(',');
-    if (i === -1) return { email: line, nombre: '' };
-    return { email: line.slice(0, i).trim(), nombre: line.slice(i + 1).trim() };
-  });
+  if (!raw) return [];
+  // BOM (﻿) lo añaden algunos Excel al exportar UTF-8 CSV
+  const text = raw.replace(/^﻿/, '');
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+
+  const sep = detectSeparator(lines[0]);
+  const rows = lines.map(line => splitRow(line, sep).map(c => c.trim()));
+
+  // Si la primera fila no parece tener email en la col 0, la trato como cabecera.
+  const startIdx = (rows[0][0] && !rows[0][0].includes('@')) ? 1 : 0;
+
+  return rows.slice(startIdx)
+    .map(cols => ({ email: cols[0] || '', nombre: cols[1] || '' }))
+    .filter(t => t.email);
+}
+
+// Carga CSV/TSV desde archivo y lo vuelca al textarea
+function handleCsvFile(file) {
+  if (!file) return;
+  // 200 KB es de sobra para 100 filas (límite backend) — si llega más, algo va mal
+  if (file.size > 200 * 1024) {
+    toast('Archivo demasiado grande (máx 200 KB)', 'err');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || '').replace(/^﻿/, '');
+    const list = $('teamList');
+    list.value = text.trim();
+    updateTeamCounter();
+    list.focus();
+    const parsed = parseTeamList(list.value);
+    toast(`CSV cargado · ${parsed.length} operario${parsed.length === 1 ? '' : 's'} detectado${parsed.length === 1 ? '' : 's'}`, 'ok');
+  };
+  reader.onerror = () => toast('Error leyendo el archivo', 'err');
+  reader.readAsText(file);
 }
 
 async function sendInvite() {
@@ -1011,14 +1089,24 @@ async function sendInvite() {
   }
 }
 
-// Bind del contador en vivo y del Escape
+// Bind del contador en vivo, del file picker CSV y del Escape
 document.addEventListener('DOMContentLoaded', () => {
   const list = $('teamList');
   if (list) list.addEventListener('input', updateTeamCounter);
+  const csv = $('teamCsvInput');
+  if (csv) csv.addEventListener('change', e => {
+    handleCsvFile(e.target.files && e.target.files[0]);
+    e.target.value = '';  // permite re-subir el mismo archivo
+  });
 });
 // El DOMContentLoaded ya pasó si el script está al final del body — bind directo
 const _tl = $('teamList');
 if (_tl) _tl.addEventListener('input', updateTeamCounter);
+const _csv = $('teamCsvInput');
+if (_csv) _csv.addEventListener('change', e => {
+  handleCsvFile(e.target.files && e.target.files[0]);
+  e.target.value = '';
+});
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && $('inviteModal').classList.contains('is-open')) closeInviteModal();
