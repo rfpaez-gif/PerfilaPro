@@ -744,10 +744,23 @@ function renderCardsList() {
   list.innerHTML = filtered.map(c => {
     const assignedHere = c.organization_id === org.id;
     const assignedElse = c.organization_id && c.organization_id !== org.id;
-    let btnLabel, btnClass;
-    if (assignedHere) { btnLabel = 'Quitar'; btnClass = 'pp-cards-list__btn pp-cards-list__btn--unassign'; }
-    else if (assignedElse) { btnLabel = 'Mover aquí'; btnClass = 'pp-cards-list__btn pp-cards-list__btn--other'; }
-    else { btnLabel = 'Asignar'; btnClass = 'pp-cards-list__btn'; }
+    let btnLabel, btnClass, btnOnclick;
+    if (assignedHere) {
+      // "Quitar" en contexto B2B = offboarding humano (cortesía 90d + email).
+      // No es solo desvincular: el trabajador pasa a ser autónomo con un
+      // periodo de cortesía y recibe un email explicando el cambio.
+      btnLabel = 'Quitar';
+      btnClass = 'pp-cards-list__btn pp-cards-list__btn--unassign';
+      btnOnclick = `offboardCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')`;
+    } else if (assignedElse) {
+      btnLabel = 'Mover aquí';
+      btnClass = 'pp-cards-list__btn pp-cards-list__btn--other';
+      btnOnclick = `toggleCard('${escapeAttr(c.slug)}', '${escapeAttr(org.slug)}')`;
+    } else {
+      btnLabel = 'Asignar';
+      btnClass = 'pp-cards-list__btn';
+      btnOnclick = `toggleCard('${escapeAttr(c.slug)}', '${escapeAttr(org.slug)}')`;
+    }
 
     return `<div class="pp-cards-list__item">
       <div>
@@ -757,10 +770,30 @@ function renderCardsList() {
       <div class="pp-cards-list__btns">
         <button class="pp-cards-list__btn pp-cards-list__btn--icon" title="Editar tarjeta" aria-label="Editar tarjeta de ${escapeAttr(c.nombre)}" onclick="openCardEditor('${escapeAttr(c.slug)}')">✏️</button>
         <button class="pp-cards-list__btn pp-cards-list__btn--icon pp-cards-list__btn--danger" title="Borrar tarjeta" aria-label="Borrar tarjeta de ${escapeAttr(c.nombre)}" onclick="deleteCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')">🗑️</button>
-        <button class="${btnClass}" onclick="toggleCard('${escapeAttr(c.slug)}', ${assignedHere ? 'null' : `'${escapeAttr(org.slug)}'`})">${btnLabel}</button>
+        <button class="${btnClass}" onclick="${btnOnclick}">${btnLabel}</button>
       </div>
     </div>`;
   }).join('');
+}
+
+// "Quitar del equipo" con cortesía 90 días. Diferente de toggleCard(null)
+// que solo desvincula. Esta acción es la salida humana: el trabajador pasa
+// a autónomo individual con 90 días gratis y recibe un email explicándolo.
+async function offboardCard(cardSlug, cardNombre) {
+  const label = cardNombre || cardSlug;
+  const msg = `¿Quitar a "${label}" del equipo?\n\n` +
+    `Su tarjeta dejará de aparecer bajo la marca de la org y pasará a ser autónoma individual con 90 días gratis de cortesía.\n\n` +
+    `Recibirá un email explicándolo y con el enlace para seguir editando su tarjeta.\n\n` +
+    `Si quieres eliminarla definitivamente (sin cortesía), usa el botón 🗑️.`;
+  if (!confirm(msg)) return;
+  try {
+    await callAdmin({ action: 'offboard_card', card_slug: cardSlug });
+    toast(`"${label}" ha salido del equipo con 90 días de cortesía`, 'ok');
+    await loadCards();
+    reloadPreview();
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
 }
 
 async function toggleCard(cardSlug, orgSlug) {
