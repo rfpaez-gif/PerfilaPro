@@ -7,16 +7,26 @@ y bajo qué circunstancias debería revisitarse.
 
 PerfilaPro accede a Supabase **exclusivamente desde Netlify
 Functions** usando `SUPABASE_SERVICE_KEY` (service_role). El
-service_role salta RLS por diseño, por lo que la postura por
-defecto del proyecto es:
+service_role salta RLS por diseño, y `SUPABASE_ANON_KEY` no se usa
+en ningún sitio del repo.
 
-- **RLS desactivada** en todas las tablas del esquema `public`
-  excepto en `admin_audit_log`, que tiene RLS activada sin
-  policies (blindado por defecto).
-- **Ningún acceso anónimo directo** desde el frontend a Supabase:
-  `SUPABASE_ANON_KEY` no se usa en este repo.
+Aun así, desde la migración `024_enable_rls_all_tables.sql` la
+postura del proyecto es **RLS activada en todas las tablas del
+esquema `public`, sin policies**. Es la misma estrategia que ya se
+aplicaba a `admin_audit_log` desde la migración 002, generalizada al
+resto del modelo:
 
-Tablas con RLS desactivada (acceso vía service_role únicamente):
+- `service_role` salta RLS  → las funciones Netlify siguen funcionando
+  sin cambios.
+- `anon` y `authenticated` sin policies  → denegado por defecto.
+
+Esto silencia al Security Advisor de Supabase (que marca CRITICAL
+cualquier tabla en `public` sin RLS) y aporta defense-in-depth: si
+la anon key se filtra o si en el futuro alguien expone una ruta
+directa desde el frontend, las tablas no quedan abiertas.
+
+Tablas con RLS activada (sin policies, solo accesibles via
+service_role):
 
 - `cards`
 - `settings`
@@ -24,13 +34,15 @@ Tablas con RLS desactivada (acceso vía service_role únicamente):
 - `agents`
 - `agent_liquidations`
 - `visits`
+- `organizations`
+- `b2b_leads`
 - `categories`
+- `cities`
+- `postal_codes`
+- `ocupaciones`
+- `admin_audit_log` (activada originalmente en migración 002)
 
-Tabla con RLS activada y sin policies:
-
-- `admin_audit_log` (migración `002_audit_log.sql`)
-
-## Por qué RLS off es aceptable hoy
+## Por qué no hay policies
 
 1. El frontend nunca tiene credenciales de Supabase. Toda lectura
    y escritura pasa por una Netlify Function que ya valida
@@ -40,15 +52,14 @@ Tabla con RLS activada y sin policies:
    `update` (`legal-settings`, `edit-card`), validan formato de
    inputs (`stripTags`, regex de phone/email) y restringen URLs
    de avatar al bucket de Supabase.
-3. La tabla `admin_audit_log` está blindada con RLS para evitar
-   que cualquier integración futura con `anon` o `authenticated`
-   pueda leer un registro de auditoría sin pasar por el
-   service_role.
+3. Sin policies, ni `anon` ni `authenticated` pueden tocar las
+   tablas. Mientras el único cliente real sea el service_role,
+   añadir policies sería ruido.
 
-## Cuándo conviene revisitar y activar RLS
+## Cuándo conviene escribir policies
 
-Activar RLS y escribir policies pasa a ser necesario cuando se
-cumpla CUALQUIERA de estas condiciones:
+Escribir policies pasa a ser necesario cuando se cumpla CUALQUIERA
+de estas condiciones:
 
 - Se introduce acceso directo desde el frontend a Supabase con
   `SUPABASE_ANON_KEY` (por ejemplo, suscripciones realtime,
@@ -64,13 +75,25 @@ cumpla CUALQUIERA de estas condiciones:
 
 ## Política operativa
 
-- No habilitar RLS sin escribir las policies correspondientes en
-  el mismo PR. Una tabla con RLS y sin policies queda inaccesible
-  para `anon` y `authenticated`, y aunque eso es seguro, conviene
-  hacerlo de forma deliberada (como en `admin_audit_log`) y no
-  por descuido.
 - Cualquier nueva migración que introduzca una tabla debe
-  declarar explícitamente su postura de RLS (on/off) y, si on,
-  acompañar las policies. Si la tabla solo se lee/escribe desde
-  funciones con service_role, dejar RLS off y comentarlo en la
-  migración.
+  `ENABLE ROW LEVEL SECURITY` en la misma migración, aunque no
+  declare policies (postura por defecto del proyecto).
+- Si la nueva tabla sí necesita ser accesible desde `anon` o
+  `authenticated`, declarar las policies en la misma migración.
+  Nunca dejar una policy permisiva (`USING (true)`) por
+  comodidad — eso es equivalente a tener RLS off pero con peor
+  legibilidad.
+- Cualquier nueva VIEW en `public` debe crearse con
+  `WITH (security_invoker = on)`. Una view sin esa opción se
+  ejecuta con permisos del creador (postgres) y bypassa la RLS
+  de las tablas subyacentes — exactamente el agujero que cierra
+  la migración `025_directory_public_invoker.sql`.
+- Para verificar el estado real en una base de datos:
+  ```sql
+  SELECT relname, relrowsecurity
+    FROM pg_class
+   WHERE relnamespace = 'public'::regnamespace
+     AND relkind = 'r'
+   ORDER BY relname;
+  ```
+  Todas las filas deben mostrar `relrowsecurity = true`.
