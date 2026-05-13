@@ -427,13 +427,36 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   const LEFT_W      = QR_X - PAD_X - 6;
 
   // Nombre del miembro · serif grande, peso. Es el protagonista del cuerpo.
-  doc.fillColor(COLORS.ink).font('PP-Serif').fontSize(14)
-     .text(nombre.substring(0, 50), PAD_X, BODY_TOP, {
-       width: LEFT_W, lineBreak: false, ellipsis: true,
+  // PDFKit con `lineBreak:false, ellipsis:true` debería recortar a una línea
+  // pero en algunos casos (texto más ancho que la caja sin breaks naturales)
+  // aún envuelve y pisa la tagline. Fix defensivo: medimos el ancho real con
+  // `widthOfString` y vamos bajando tamaño en pasos de 0.5pt hasta que entra;
+  // si ni al mínimo entra, truncamos carácter a carácter con elipsis.
+  const NAME_MAX = 14;
+  const NAME_MIN = 9;
+  doc.font('PP-Serif');
+  let nameFontSize = NAME_MAX;
+  let nombreFinal = nombre.substring(0, 50);
+  doc.fontSize(nameFontSize);
+  while (nameFontSize > NAME_MIN && doc.widthOfString(nombreFinal) > LEFT_W) {
+    nameFontSize -= 0.5;
+    doc.fontSize(nameFontSize);
+  }
+  if (doc.widthOfString(nombreFinal) > LEFT_W) {
+    while (nombreFinal.length > 1 && doc.widthOfString(nombreFinal + '…') > LEFT_W) {
+      nombreFinal = nombreFinal.slice(0, -1);
+    }
+    nombreFinal = nombreFinal.replace(/[\s,;:.-]+$/, '') + '…';
+  }
+  doc.fillColor(COLORS.ink)
+     .text(nombreFinal, PAD_X, BODY_TOP, {
+       width: LEFT_W, lineBreak: false,
      });
 
   // Cargo · uppercase tracking en verde-match. Línea inmediata bajo nombre.
-  let cursorY = BODY_TOP + 17;
+  // El salto vertical es proporcional al tamaño usado en el nombre (no fijo a
+  // 17pt) para que un nombre que bajó a 9pt no deje un hueco enorme.
+  let cursorY = BODY_TOP + Math.round(nameFontSize * 1.21);
   if (tagline) {
     doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(7)
        .text(tagline.toUpperCase().substring(0, 50), PAD_X, cursorY, {
