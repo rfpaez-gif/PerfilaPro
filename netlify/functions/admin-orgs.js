@@ -658,6 +658,58 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       }
     }
 
+    // ── download_member_card: PDF de la tarjeta de visita 85×55mm de UN miembro ──
+    // Igual que download_team_cards pero para un único miembro. Caso de uso:
+    // el admin acaba de invitar a un profesional desde el Studio y quiere ver
+    // cómo le ha quedado su tarjeta de visita sin abrir el buzón del miembro
+    // ni bajarse el booklet entero del equipo. El render reusa exactamente la
+    // misma plantilla que invite_team adjunta al email de invitación, así que
+    // lo que el admin ve es lo que el miembro va a recibir.
+    if (action === 'download_member_card') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: cardErr } = await db
+        .from('cards')
+        .select('slug, nombre, tagline, whatsapp, email, direccion, organization_id, status')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (cardErr) return jsonResponse(500, { error: cardErr.message });
+      if (!card)   return jsonResponse(404, { error: 'card no encontrada' });
+      if (!card.organization_id) {
+        return jsonResponse(400, { error: 'la card no pertenece a ninguna organización' });
+      }
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, logo_url, color_primary, address, phone, email')
+        .eq('id', card.organization_id)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const logoBuffer = org.logo_url
+        ? await fetchLogoAsPngBuffer(org.logo_url).catch(() => null)
+        : null;
+
+      try {
+        const pdfBuffer = await buildBusinessCardPDF({ card, org, logoBuffer, siteUrl });
+        return jsonResponse(200, {
+          ok: true,
+          filename: `tarjeta-${card.slug}.pdf`,
+          base64: pdfBuffer.toString('base64'),
+        });
+      } catch (err) {
+        console.error('download_member_card: render falló:', err.message);
+        return jsonResponse(500, { error: 'No se pudo generar el PDF' });
+      }
+    }
+
     // ── org_card_stats: visits 30d + timestamps de email por card ──
     // El admin-orgs studio necesita contexto rápido por card en el listado
     // de profesionales asignados: cuántas visitas tuvo en los últimos 30 días

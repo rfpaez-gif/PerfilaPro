@@ -56,6 +56,7 @@ const CARD_T = {
     generating: 'Generando…',
     canvasServices: 'SERVICIOS',
     canvasFooter: 'Creado con PerfilaPro',
+    backToStudio: '← Volver al panel B2B Studio',
   },
   ca: {
     htmlLang: 'ca',
@@ -87,6 +88,7 @@ const CARD_T = {
     generating: 'Generant…',
     canvasServices: 'SERVEIS',
     canvasFooter: 'Creat amb PerfilaPro',
+    backToStudio: '← Tornar al panell B2B Studio',
   },
 };
 
@@ -105,6 +107,14 @@ exports.handler = async (event) => {
   if (!slug) {
     return { statusCode: 400, body: 'Missing slug' };
   }
+
+  // Cuando el admin entra a la card de un miembro desde "↗ Abrir en pestaña"
+  // del drawer del B2B Studio, perdía contexto: una pestaña nueva con la card
+  // pública y sin pista de cómo volver a `/admin-orgs.html`. Si la query trae
+  // `?from=admin-orgs` renderizamos una franja delgada arriba con un enlace de
+  // vuelta. La URL destino es un panel password-protegido, así que aunque la
+  // comparta un visitante el botón solo le sirve a quien tenga las credenciales.
+  const fromAdminOrgs = event.queryStringParameters?.from === 'admin-orgs';
 
   const { data, error } = await supabase
     .from('cards')
@@ -342,6 +352,9 @@ exports.handler = async (event) => {
   <script src="/js/privacy-banner.js" defer></script>
 </head>
 <body>
+  ${fromAdminOrgs ? `<div style="background:#0A1F44;color:#fff;padding:10px 16px;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center;letter-spacing:.01em">
+    <a href="/admin-orgs.html" onclick="if(window.opener && !window.opener.closed){window.close();return false}" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${T.backToStudio}</a>
+  </div>` : ''}
   <div class="pp-card">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
       ${orgLogo ? `<div class="pp-card__org-hero__logo"><img src="${esc(orgLogo)}" alt="${esc(org.name)}" loading="eager" decoding="async"></div>` : ''}

@@ -1350,6 +1350,68 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── download_member_card · PDF individual de la tarjeta de visita 85×55mm ──
+  describe('download_member_card', () => {
+    function mockMemberLookups({ card, org }) {
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: card, error: null }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards')         return { select: vi.fn(() => cardLookup) };
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+    }
+
+    it('devuelve PDF base64 de un miembro asignado a una org', async () => {
+      const card = { slug: 'olga', nombre: 'Olga', tagline: 'Entrenadora', whatsapp: '34633816729', email: 'olga@st.es', direccion: null, organization_id: 'org-st', status: 'active' };
+      const org  = { id: 'org-st', slug: 'st', name: 'ST', logo_url: null, color_primary: '#FFA500', address: 'C/ X 1', phone: null };
+      mockMemberLookups({ card, org });
+      const res = await handler(buildEvent({ body: { action: 'download_member_card', card_slug: 'olga' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.filename).toBe('tarjeta-olga.pdf');
+      const pdfBytes = Buffer.from(json.base64, 'base64');
+      expect(pdfBytes.slice(0, 5).toString()).toBe('%PDF-');
+      // Tarjeta individual = 1 sola página.
+      const matches = pdfBytes.toString('binary').match(/\/Type\s*\/Page[^s]/g) || [];
+      expect(matches.length).toBe(1);
+    });
+
+    it('devuelve 404 si la card no existe', async () => {
+      mockMemberLookups({ card: null, org: null });
+      const res = await handler(buildEvent({ body: { action: 'download_member_card', card_slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('devuelve 400 si la card no pertenece a ninguna organización', async () => {
+      const card = { slug: 'solo', nombre: 'Solo', organization_id: null, status: 'active' };
+      mockMemberLookups({ card, org: null });
+      const res = await handler(buildEvent({ body: { action: 'download_member_card', card_slug: 'solo' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('devuelve 404 si la org asociada fue soft-deleted', async () => {
+      const card = { slug: 'huerf', nombre: 'Huerfana', organization_id: 'org-borrada', status: 'active' };
+      mockMemberLookups({ card, org: null });
+      const res = await handler(buildEvent({ body: { action: 'download_member_card', card_slug: 'huerf' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza card_slug vacío con 400', async () => {
+      const res = await handler(buildEvent({ body: { action: 'download_member_card', card_slug: '' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   // ── invite_team · timestamp kit_email_sent_at en la card tras email OK ──
   describe('invite_team kit_email_sent_at stamping', () => {
     const mockEmailSend = vi.fn();
