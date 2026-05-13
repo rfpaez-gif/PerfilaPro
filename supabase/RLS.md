@@ -83,6 +83,11 @@ de estas condiciones:
   Nunca dejar una policy permisiva (`USING (true)`) por
   comodidad — eso es equivalente a tener RLS off pero con peor
   legibilidad.
+- Cualquier nueva VIEW en `public` debe crearse con
+  `WITH (security_invoker = on)`. Una view sin esa opción se
+  ejecuta con permisos del creador (postgres) y bypassa la RLS
+  de las tablas subyacentes — exactamente el agujero que cierra
+  la migración `025_directory_public_invoker.sql`.
 - Para verificar el estado real en una base de datos:
   ```sql
   SELECT relname, relrowsecurity
