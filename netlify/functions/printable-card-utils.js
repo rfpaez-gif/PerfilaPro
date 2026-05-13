@@ -408,26 +408,30 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // Fondo blanco
   doc.rect(0, 0, W, H).fill(COLORS.surface);
 
-  // Franja superior con color de la org · 28pt alto ≈ 9.9mm.
+  // Franja superior con color de la org · 36pt alto ≈ 12.7mm.
   // Logo en píldora blanca a la izquierda + nombre de la org centrado/derecha.
-  // STRIP_H subió a 28pt (era 22pt → 17pt en la versión inicial) para que el
-  // logo sea el sello físico de la pertenencia al equipo. Con franja más baja
-  // el logo se leía como detalle, no como marca.
-  const STRIP_H = 28;
+  // STRIP_H subió a 36pt (era 28pt → 22pt → 17pt en versiones previas) tras
+  // confirmar con tarjetas impresas que el logo es height-bound: su proporción
+  // intrínseca limita el crecimiento. Necesita altura para crecer visualmente,
+  // no más ancho. Strip = 23% del alto de la tarjeta — caro pero es el sello
+  // físico de pertenencia al equipo, justifica el espacio.
+  const STRIP_H = 36;
   doc.rect(0, 0, W, STRIP_H).fill(orgColor);
 
   let orgNameX = 10;
   if (logoBuffer) {
     try {
-      // Píldora blanca con padding para que un logo oscuro siga siendo legible
-      // sobre la franja de color. 75pt ancho (era 53pt, antes 38pt) — el logo
-      // ahora pesa visualmente al nivel del nombre del miembro, no por debajo.
-      const logoPadY = 2;
-      const logoBoxH = STRIP_H - logoPadY * 2;
-      const logoBoxW = 75;
+      // Píldora blanca con padding mínimo (1pt vertical) para que el logo
+      // llegue casi al borde y se aproveche todo el alto de la franja.
+      // Logos con whitespace propio en el PNG ya tienen su propio margen —
+      // duplicarlo con padding del contenedor hacía que el logo se viera
+      // diminuto incluso con boxes grandes.
+      const logoPadY = 1;
+      const logoBoxH = STRIP_H - logoPadY * 2;   // = 34
+      const logoBoxW = 78;
       doc.roundedRect(6, logoPadY, logoBoxW, logoBoxH, 2).fill('#FFFFFF');
-      doc.image(logoBuffer, 8, logoPadY + 1.5, {
-        fit: [logoBoxW - 4, logoBoxH - 3],
+      doc.image(logoBuffer, 7, logoPadY + 1, {
+        fit: [logoBoxW - 2, logoBoxH - 2],
         align: 'center',
         valign: 'center',
       });
@@ -441,7 +445,7 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   if (orgName) {
     const orgNameMaxW = W - orgNameX - 10;
     doc.font('PP-Serif').fontSize(10).fillColor('#FFFFFF')
-       .text(orgName.substring(0, 60), orgNameX, 10, {
+       .text(orgName.substring(0, 60), orgNameX, 14, {
          width: orgNameMaxW, align: logoBuffer ? 'left' : 'center',
          lineBreak: false, ellipsis: true,
        });
