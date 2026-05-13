@@ -857,6 +857,7 @@ function renderCardsList() {
       ${nameBlock}
       <div class="pp-cards-list__btns">
         <button class="pp-cards-list__btn pp-cards-list__btn--icon" title="Editar tarjeta" aria-label="Editar tarjeta de ${escapeAttr(c.nombre)}" onclick="openCardEditor('${escapeAttr(c.slug)}')">✏️</button>
+        ${assignedHere ? `<button class="pp-cards-list__btn pp-cards-list__btn--icon" title="Descargar tarjeta de visita 85×55mm (PDF)" aria-label="Descargar tarjeta de visita de ${escapeAttr(c.nombre)}" onclick="downloadMemberCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')">🪪</button>` : ''}
         <button class="pp-cards-list__btn pp-cards-list__btn--icon pp-cards-list__btn--danger" title="Borrar tarjeta" aria-label="Borrar tarjeta de ${escapeAttr(c.nombre)}" onclick="deleteCard('${escapeAttr(c.slug)}', '${escapeAttr(c.nombre)}')">🗑️</button>
         <button class="${btnClass}" onclick="${btnOnclick}">${btnLabel}</button>
       </div>
@@ -917,7 +918,7 @@ function renderCardDrawer(card) {
     <div class="pp-card-drawer__actions">
       <button type="button" class="pp-btn pp-btn--primary pp-btn--sm" onclick="sendEditLinkToMember('${escapeAttr(card.slug)}','${escapeAttr(card.nombre)}')">📧 Enviar enlace al miembro</button>
       <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openCardEditor('${escapeAttr(card.slug)}')">✏️ Editar yo mismo</button>
-      <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/c/${escapeAttr(card.slug)}','_blank')">↗ Abrir en pestaña</button>
+      <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/c/${escapeAttr(card.slug)}?from=admin-orgs','_blank')">↗ Abrir en pestaña</button>
     </div>
   </div>`;
 }
@@ -975,6 +976,33 @@ async function downloadTeamCards() {
     toast('Error: ' + err.message, 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+
+// Descarga la tarjeta de visita 85×55mm de UN miembro. Es exactamente la
+// misma plantilla que invite_team adjunta al email de invitación — sirve
+// como vista previa post-alta para que el admin no tenga que abrir el
+// buzón del miembro recién invitado para ver cómo le quedó.
+async function downloadMemberCard(slug, nombre) {
+  const label = nombre || slug;
+  try {
+    const json = await callAdmin({ action: 'download_member_card', card_slug: slug });
+    if (!json.base64) throw new Error('Respuesta sin PDF');
+    const binary = atob(json.base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = json.filename || `tarjeta-${slug}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Tarjeta de "${label}" descargada`, 'ok');
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
   }
 }
 
