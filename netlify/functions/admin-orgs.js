@@ -622,7 +622,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: org, error: orgErr } = await db
         .from('organizations')
-        .select('id, slug, name, logo_url, color_primary, address, phone, email')
+        .select('id, slug, name, tagline, logo_url, color_primary, address, phone, email')
         .eq('slug', org_slug)
         .is('deleted_at', null)
         .maybeSingle();
@@ -685,7 +685,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: org, error: orgErr } = await db
         .from('organizations')
-        .select('id, slug, name, logo_url, color_primary, address, phone, email')
+        .select('id, slug, name, tagline, logo_url, color_primary, address, phone, email')
         .eq('id', card.organization_id)
         .is('deleted_at', null)
         .maybeSingle();
@@ -941,7 +941,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: org, error: orgErr } = await db
         .from('organizations')
-        .select('id, slug, name, logo_url, color_primary, address, phone, email')
+        .select('id, slug, name, tagline, logo_url, color_primary, address, phone, email')
         .eq('slug', org_slug)
         .is('deleted_at', null)
         .maybeSingle();
