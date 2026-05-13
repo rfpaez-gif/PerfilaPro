@@ -368,8 +368,33 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   const orgName     = org && org.name     ? String(org.name).trim()     : '';
   const orgColor    = org && org.color_primary && /^#[0-9a-fA-F]{6}$/.test(org.color_primary)
     ? org.color_primary : COLORS.ink;
-  const nombre      = card.nombre  ? String(card.nombre).trim()  : '—';
-  const tagline     = card.tagline ? String(card.tagline).trim() : '';
+  // Leyenda verde uppercase = "firma del equipo", se configura una sola vez
+  // en organizations.tagline y se aplica a todas las cards de la org. Las
+  // cards no la guardan duplicada — antes vivía en cards.tagline (un dato
+  // común repetido por miembro), ahora es propiedad de la org.
+  const teamLegend  = org && org.tagline ? String(org.tagline).trim() : '';
+  const nombreRaw   = card.nombre  ? String(card.nombre).trim()  : '—';
+  const taglineCard = card.tagline ? String(card.tagline).trim() : '';
+
+  // El cargo individual del miembro ("Director Comercial", "CEO"…) sale en
+  // su propia línea bajo el nombre. Dos fuentes posibles:
+  //   1. card.tagline (formato post-PR#111: el form pone el cargo en la 3ª
+  //      columna y eso se persiste en tagline).
+  //   2. Split del nombre por la primera coma (formato legacy: cards
+  //      antiguas con "Sisco Benet, Dirección Comercial" en nombre).
+  // Si hay coma en el nombre, la prioridad es el split — esa coma es señal
+  // explícita de que el cargo está concatenado y debe extraerse.
+  let displayName = nombreRaw;
+  let displayCargo = '';
+  const commaIdx = nombreRaw.indexOf(',');
+  if (commaIdx > 0 && commaIdx < nombreRaw.length - 1) {
+    displayName  = nombreRaw.substring(0, commaIdx).trim();
+    displayCargo = nombreRaw.substring(commaIdx + 1).trim().replace(/[.;]+$/, '');
+  }
+  if (!displayCargo && taglineCard) {
+    displayCargo = taglineCard;
+  }
+
   // Address fallback: card.direccion → org.address. Cubre los dos casos
   // (equipo distribuido vs sede única). Si ninguno, se omite la línea.
   const direccion   = card.direccion ? String(card.direccion).trim()
@@ -383,19 +408,24 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // Fondo blanco
   doc.rect(0, 0, W, H).fill(COLORS.surface);
 
-  // Franja superior con color de la org · 17pt alto ≈ 6mm.
+  // Franja superior con color de la org · 22pt alto ≈ 7.8mm.
   // Logo en píldora blanca a la izquierda + nombre de la org centrado/derecha.
-  const STRIP_H = 17;
+  // STRIP_H subió de 17pt a 22pt (≈ +30%) para acomodar el logo +40% más
+  // grande sin recortarlo. El nombre de la org se centra verticalmente en
+  // la franja nueva.
+  const STRIP_H = 22;
   doc.rect(0, 0, W, STRIP_H).fill(orgColor);
 
   let orgNameX = 10;
   if (logoBuffer) {
     try {
       // Píldora blanca con padding para que un logo oscuro siga siendo legible
-      // sobre la franja de color. Altura ajustada a la franja, ancho variable.
+      // sobre la franja de color. +40% en ancho respecto al diseño inicial
+      // (38pt → 53pt) por petición de uso real: con 38pt los logos detallados
+      // (Allianz, Marcos automoción) quedaban ilegibles.
       const logoPadY = 2;
       const logoBoxH = STRIP_H - logoPadY * 2;
-      const logoBoxW = 38;
+      const logoBoxW = 53;
       doc.roundedRect(6, logoPadY, logoBoxW, logoBoxH, 2).fill('#FFFFFF');
       doc.image(logoBuffer, 8, logoPadY + 1.5, {
         fit: [logoBoxW - 4, logoBoxH - 3],
@@ -412,16 +442,19 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   if (orgName) {
     const orgNameMaxW = W - orgNameX - 10;
     doc.font('PP-Serif').fontSize(10).fillColor('#FFFFFF')
-       .text(orgName.substring(0, 60), orgNameX, 4.5, {
+       .text(orgName.substring(0, 60), orgNameX, 7, {
          width: orgNameMaxW, align: logoBuffer ? 'left' : 'center',
          lineBreak: false, ellipsis: true,
        });
   }
 
   // Cuerpo. Columna izquierda: identidad + contactos. Derecha: QR + URL.
+  // QR_SIZE subió de 40pt a 46pt (+15%) — escaneable con más confianza
+  // desde el móvil a 30-40cm, que es la distancia natural cuando alguien
+  // te pasa una tarjeta de visita.
   const BODY_TOP    = STRIP_H + 10;
   const PAD_X       = 12;
-  const QR_SIZE     = 40;          // ≈ 14mm, suficiente para escanear con móvil
+  const QR_SIZE     = 46;
   const QR_X        = W - QR_SIZE - 10;
   const QR_Y        = BODY_TOP;
   const LEFT_W      = QR_X - PAD_X - 6;
@@ -431,20 +464,20 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   //   (1) Medimos con `widthOfString` y bajamos fontSize de 14→7 en pasos de
   //       0.5pt mientras no entre. Comparamos contra LEFT_W × 0.95 porque
   //       PDFKit a veces renderiza ~3-5% más ancho que lo que reporta su
-  //       propio widthOfString (visto en producción con Source Serif 4
-  //       "Javier Marcos, Jefe de producto." pasando todos los checks de
-  //       widthOfString y aún así envolviendo a dos líneas).
+  //       propio widthOfString.
   //   (2) Si al mínimo (7pt) aún no entra, truncamos carácter a carácter
   //       y añadimos elipsis, limpiando puntuación de cola.
   //   (3) En la llamada a `.text()` fijamos `height` además de `width` para
-  //       que PDFKit clipee a una sola línea aunque (1) y (2) fallaran —
-  //       backstop estructural, no recurre a `lineBreak` que no es fiable.
+  //       que PDFKit clipee a una sola línea aunque (1) y (2) fallaran.
+  // Tras el split-por-coma, `displayName` ya suele ser corto ("Sisco Benet"
+  // sin el cargo) y no toca la defensa, pero la dejamos por si alguien
+  // tiene un nombre legítimamente largo.
   const NAME_MAX = 14;
   const NAME_MIN = 7;
   const NAME_SAFETY = LEFT_W * 0.95;
   doc.font('PP-Serif');
   let nameFontSize = NAME_MAX;
-  let nombreFinal = nombre.substring(0, 50);
+  let nombreFinal = displayName.substring(0, 50);
   doc.fontSize(nameFontSize);
   while (nameFontSize > NAME_MIN && doc.widthOfString(nombreFinal) > NAME_SAFETY) {
     nameFontSize -= 0.5;
@@ -464,13 +497,25 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
        ellipsis: true,
      });
 
-  // Cargo · uppercase tracking en verde-match. Línea inmediata bajo nombre.
-  // El salto vertical es proporcional al tamaño usado en el nombre (no fijo a
-  // 17pt) para que un nombre que bajó a 9pt no deje un hueco enorme.
+  // Cargo individual · sans regular sentence-case, color suave. Aparece como
+  // subtítulo del nombre. Estilo distinto del verde uppercase para que la
+  // jerarquía sea inequívoca: NOMBRE / Cargo / FIRMA DE EQUIPO.
   let cursorY = BODY_TOP + Math.round(nameFontSize * 1.21);
-  if (tagline) {
+  if (displayCargo) {
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(8.5)
+       .text(displayCargo.substring(0, 60), PAD_X, cursorY, {
+         width: LEFT_W, height: 12, lineBreak: false, ellipsis: true,
+       });
+    cursorY += 13;
+  }
+
+  // Firma de equipo · uppercase tracking en verde-match.
+  // Espacio extra antes de la firma para equilibrar visualmente la tarjeta
+  // (el nombre + cargo de arriba pesa más, así que damos respiración).
+  if (teamLegend) {
+    cursorY += 4;
     doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(7)
-       .text(tagline.toUpperCase().substring(0, 50), PAD_X, cursorY, {
+       .text(teamLegend.toUpperCase().substring(0, 50), PAD_X, cursorY, {
          width: LEFT_W, lineBreak: false, characterSpacing: 1.1, ellipsis: true,
        });
     cursorY += 13;
