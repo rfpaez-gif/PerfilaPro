@@ -408,24 +408,23 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // Fondo blanco
   doc.rect(0, 0, W, H).fill(COLORS.surface);
 
-  // Franja superior con color de la org · 22pt alto ≈ 7.8mm.
+  // Franja superior con color de la org · 28pt alto ≈ 9.9mm.
   // Logo en píldora blanca a la izquierda + nombre de la org centrado/derecha.
-  // STRIP_H subió de 17pt a 22pt (≈ +30%) para acomodar el logo +40% más
-  // grande sin recortarlo. El nombre de la org se centra verticalmente en
-  // la franja nueva.
-  const STRIP_H = 22;
+  // STRIP_H subió a 28pt (era 22pt → 17pt en la versión inicial) para que el
+  // logo sea el sello físico de la pertenencia al equipo. Con franja más baja
+  // el logo se leía como detalle, no como marca.
+  const STRIP_H = 28;
   doc.rect(0, 0, W, STRIP_H).fill(orgColor);
 
   let orgNameX = 10;
   if (logoBuffer) {
     try {
       // Píldora blanca con padding para que un logo oscuro siga siendo legible
-      // sobre la franja de color. +40% en ancho respecto al diseño inicial
-      // (38pt → 53pt) por petición de uso real: con 38pt los logos detallados
-      // (Allianz, Marcos automoción) quedaban ilegibles.
+      // sobre la franja de color. 75pt ancho (era 53pt, antes 38pt) — el logo
+      // ahora pesa visualmente al nivel del nombre del miembro, no por debajo.
       const logoPadY = 2;
       const logoBoxH = STRIP_H - logoPadY * 2;
-      const logoBoxW = 53;
+      const logoBoxW = 75;
       doc.roundedRect(6, logoPadY, logoBoxW, logoBoxH, 2).fill('#FFFFFF');
       doc.image(logoBuffer, 8, logoPadY + 1.5, {
         fit: [logoBoxW - 4, logoBoxH - 3],
@@ -442,7 +441,7 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   if (orgName) {
     const orgNameMaxW = W - orgNameX - 10;
     doc.font('PP-Serif').fontSize(10).fillColor('#FFFFFF')
-       .text(orgName.substring(0, 60), orgNameX, 7, {
+       .text(orgName.substring(0, 60), orgNameX, 10, {
          width: orgNameMaxW, align: logoBuffer ? 'left' : 'center',
          lineBreak: false, ellipsis: true,
        });
