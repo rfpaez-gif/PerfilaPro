@@ -172,12 +172,8 @@
 
       <div id="inviteModeTeam">
         <p style="font-size:11px;color:var(--color-gris-500);margin:0 0 .85rem;line-height:1.5">
-          <strong style="color:var(--color-tinta)">Datos comunes</strong> · se aplican a todas las cards y quedan bloqueadas para el operario (solo edita su foto + WhatsApp). Si solo invitas a una persona, déjalos vacíos o úsalos igualmente.
+          <strong style="color:var(--color-tinta)">Datos comunes</strong> · se aplican a todas las cards y quedan bloqueadas para el operario (solo edita su foto + WhatsApp). El cargo, en cambio, va por miembro en la lista de abajo.
         </p>
-        <div class="pp-form__row">
-          <label class="pp-form__label" for="tplTagline">Rol / tagline <small>opcional · max 140</small></label>
-          <input type="text" class="pp-input" id="tplTagline" placeholder="Operario de obra · CCH" maxlength="140">
-        </div>
         <div class="pp-form__row" style="display:grid;grid-template-columns:1fr 2fr;gap:.65rem">
           <div>
             <label class="pp-form__label" for="tplCp">CP <small>opcional</small></label>
@@ -199,7 +195,7 @@
 
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin:1rem 0 .5rem;gap:.5rem">
           <p style="font-size:11px;color:var(--color-gris-500);margin:0;line-height:1.5;flex:1">
-            <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro. Acepta <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre, cargo</code>, pegado desde Excel/Sheets (tabs) o CSV con cabecera. Nombre y cargo son opcionales. <strong>El cargo individual</strong> (Entrenadora, Recepcionista, Fisio…) <strong>aparece bajo cada nombre en /e/:slug</strong> y prevalece sobre el tagline del template.
+            <strong style="color:var(--color-tinta)">Lista de operarios</strong> · una línea por miembro con formato <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email, nombre, cargo</code>, pegado desde Excel/Sheets (tabs) o CSV con cabecera. Nombre y cargo son opcionales pero recomendados — <strong>el cargo aparece bajo el nombre en la tarjeta de visita y en /e/:slug</strong>, así que no lo metas dentro del nombre o se solapará.
           </p>
           <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="teamCsvBtn" onclick="document.getElementById('teamCsvInput').click()" style="white-space:nowrap;flex:0 0 auto">📄 Subir CSV</button>
           <input type="file" id="teamCsvInput" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>
@@ -1189,7 +1185,6 @@ let inviteOrgSlug = null;
 function openInviteModal(slug, name) {
   inviteOrgSlug = slug;
   $('inviteOrgName').textContent = name || slug;
-  $('tplTagline').value = '';
   $('tplCp').value = '';
   $('tplZona').value = '';
   $('tplServicios').value = '';
@@ -1197,7 +1192,7 @@ function openInviteModal(slug, name) {
   $('teamList').value = '';
   $('teamCounter').textContent = '0 operarios';
   $('inviteModal').classList.add('is-open');
-  setTimeout(() => $('tplTagline').focus(), 50);
+  setTimeout(() => $('teamList').focus(), 50);
 }
 
 function closeInviteModal() {
@@ -1314,7 +1309,6 @@ async function sendInvite() {
 
     const servicios = $('tplServicios').value.split('\n').map(s => s.trim()).filter(Boolean);
     const template = {
-      tagline:     $('tplTagline').value.trim()     || null,
       cp:          $('tplCp').value.trim()          || null,
       zona:        $('tplZona').value.trim()        || null,
       descripcion: $('tplDescripcion').value.trim() || null,
