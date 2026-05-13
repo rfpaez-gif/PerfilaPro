@@ -427,30 +427,41 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   const LEFT_W      = QR_X - PAD_X - 6;
 
   // Nombre del miembro · serif grande, peso. Es el protagonista del cuerpo.
-  // PDFKit con `lineBreak:false, ellipsis:true` debería recortar a una línea
-  // pero en algunos casos (texto más ancho que la caja sin breaks naturales)
-  // aún envuelve y pisa la tagline. Fix defensivo: medimos el ancho real con
-  // `widthOfString` y vamos bajando tamaño en pasos de 0.5pt hasta que entra;
-  // si ni al mínimo entra, truncamos carácter a carácter con elipsis.
+  // Triple defensa contra desbordes:
+  //   (1) Medimos con `widthOfString` y bajamos fontSize de 14→7 en pasos de
+  //       0.5pt mientras no entre. Comparamos contra LEFT_W × 0.95 porque
+  //       PDFKit a veces renderiza ~3-5% más ancho que lo que reporta su
+  //       propio widthOfString (visto en producción con Source Serif 4
+  //       "Javier Marcos, Jefe de producto." pasando todos los checks de
+  //       widthOfString y aún así envolviendo a dos líneas).
+  //   (2) Si al mínimo (7pt) aún no entra, truncamos carácter a carácter
+  //       y añadimos elipsis, limpiando puntuación de cola.
+  //   (3) En la llamada a `.text()` fijamos `height` además de `width` para
+  //       que PDFKit clipee a una sola línea aunque (1) y (2) fallaran —
+  //       backstop estructural, no recurre a `lineBreak` que no es fiable.
   const NAME_MAX = 14;
-  const NAME_MIN = 9;
+  const NAME_MIN = 7;
+  const NAME_SAFETY = LEFT_W * 0.95;
   doc.font('PP-Serif');
   let nameFontSize = NAME_MAX;
   let nombreFinal = nombre.substring(0, 50);
   doc.fontSize(nameFontSize);
-  while (nameFontSize > NAME_MIN && doc.widthOfString(nombreFinal) > LEFT_W) {
+  while (nameFontSize > NAME_MIN && doc.widthOfString(nombreFinal) > NAME_SAFETY) {
     nameFontSize -= 0.5;
     doc.fontSize(nameFontSize);
   }
-  if (doc.widthOfString(nombreFinal) > LEFT_W) {
-    while (nombreFinal.length > 1 && doc.widthOfString(nombreFinal + '…') > LEFT_W) {
+  if (doc.widthOfString(nombreFinal) > NAME_SAFETY) {
+    while (nombreFinal.length > 1 && doc.widthOfString(nombreFinal + '…') > NAME_SAFETY) {
       nombreFinal = nombreFinal.slice(0, -1);
     }
     nombreFinal = nombreFinal.replace(/[\s,;:.-]+$/, '') + '…';
   }
   doc.fillColor(COLORS.ink)
      .text(nombreFinal, PAD_X, BODY_TOP, {
-       width: LEFT_W, lineBreak: false,
+       width: LEFT_W,
+       height: nameFontSize + 4,
+       lineBreak: false,
+       ellipsis: true,
      });
 
   // Cargo · uppercase tracking en verde-match. Línea inmediata bajo nombre.
