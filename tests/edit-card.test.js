@@ -1,5 +1,10 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
 import { makeHandler } from '../netlify/functions/edit-card.js';
+
+// sendTeamKit se inyecta en makeHandler — patrón DI del codebase.
+// Más predecible que vi.mock cuando el SUT usa CJS require.
+const mockSendTeamKit = vi.fn().mockResolvedValue(true);
 
 // --- Mocks ---
 
@@ -102,7 +107,12 @@ describe('edit-card handler', () => {
       return currentBuilder;
     });
 
-    handler = makeHandler(mockDb);
+    mockSendTeamKit.mockReset();
+    mockSendTeamKit.mockResolvedValue(true);
+    // Inyectamos un emailClient stub y el mock de sendTeamKit. El stub
+    // de email no se usa directamente en estos tests porque sendTeamKit
+    // está mockeado, pero makeHandler lo recibe igual.
+    handler = makeHandler(mockDb, { emails: { send: vi.fn() } }, mockSendTeamKit);
   });
 
   // ── Validación de parámetros ──
@@ -448,6 +458,135 @@ describe('edit-card handler', () => {
         body: { whatsapp: '34611222333' },
       }));
       expect(res.statusCode).toBe(400); // falta nombre/cp/servicios → 400 del flujo normal
+    });
+  });
+
+  // ── Hook del welcome kit B2B post-completación ──
+
+  describe('POST B2B · hook sendTeamKit en primera completación', () => {
+    const b2bCardFresh = {
+      ...baseCard,
+      plan: 'b2b',
+      organization_id: 'org-uuid-1',
+      email: 'ana@iris-energia.com',
+      idioma: 'es',
+      kit_email_sent_at: null,
+      // Datos pre-rellenados por la org via invite_team
+      nombre: 'Ana López',
+      tagline: 'Responsable de Operaciones',
+    };
+
+    it('dispara sendTeamKit cuando kit_email_sent_at es NULL', async () => {
+      mockSingle.mockResolvedValue({ data: b2bCardFresh, error: null });
+      mockOrgMaybeSingle.mockResolvedValue({
+        data: {
+          slug: 'iris-energia', name: 'IRIS energía',
+          logo_url: 'https://supabase.co/storage/v1/object/public/iris.png',
+          color_primary: '#003781', address: null, phone: null,
+        },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.kit_sent).toBe(true);
+
+      expect(mockSendTeamKit).toHaveBeenCalledOnce();
+      const args = mockSendTeamKit.mock.calls[0][0];
+      // Pasa la card con los valores YA actualizados (whatsapp normalizado)
+      expect(args.card.whatsapp).toBe('34611222333');
+      expect(args.card.email).toBe('ana@iris-energia.com');
+      // Pasa la org branded
+      expect(args.org.name).toBe('IRIS energía');
+      expect(args.org.color_primary).toBe('#003781');
+      // Pasa el editToken para que el email lleve el link de edición
+      expect(args.editToken).toBe(VALID_TOKEN);
+    });
+
+    it('NO dispara sendTeamKit cuando kit_email_sent_at ya está marcado (segundo save)', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...b2bCardFresh, kit_email_sent_at: '2026-05-14T10:00:00Z' },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.kit_sent).toBe(false);
+      expect(mockSendTeamKit).not.toHaveBeenCalled();
+    });
+
+    it('NO dispara sendTeamKit si organization_id es NULL (no es B2B locked)', async () => {
+      // En este caso la card no entra al carril B2B locked (no es B2B locked),
+      // así que el hook ni siquiera se evalúa. El flujo normal exige campos
+      // adicionales que no mandamos → 400 del flujo normal.
+      mockSingle.mockResolvedValue({
+        data: { ...b2bCardFresh, organization_id: null },
+        error: null,
+      });
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333', nombre: 'Ana López', cp: '28001', servicios: ['X'] },
+      }));
+      // El flujo normal tampoco dispara kit (es para B2C).
+      expect(mockSendTeamKit).not.toHaveBeenCalled();
+    });
+
+    it('si sendTeamKit falla internamente, el UPDATE de la card NO se revierte', async () => {
+      mockSendTeamKit.mockResolvedValue(false);
+      mockSingle.mockResolvedValue({ data: b2bCardFresh, error: null });
+      mockOrgMaybeSingle.mockResolvedValue({
+        data: { slug: 'iris-energia', name: 'IRIS energía',
+          logo_url: null, color_primary: '#003781', address: null, phone: null },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.kit_sent).toBe(false);
+    });
+
+    it('si sendTeamKit lanza excepción, el endpoint sigue devolviendo 200', async () => {
+      mockSendTeamKit.mockRejectedValue(new Error('boom'));
+      mockSingle.mockResolvedValue({ data: b2bCardFresh, error: null });
+      mockOrgMaybeSingle.mockResolvedValue({
+        data: { slug: 'iris-energia', name: 'IRIS energía',
+          logo_url: null, color_primary: '#003781', address: null, phone: null },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).ok).toBe(true);
+    });
+
+    it('si la org está soft-deleted, pasa org=null a sendTeamKit (kit genérico)', async () => {
+      mockSingle.mockResolvedValue({ data: b2bCardFresh, error: null });
+      // La query .is('deleted_at', null) en una org soft-deleted devuelve null
+      mockOrgMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(mockSendTeamKit).toHaveBeenCalledOnce();
+      expect(mockSendTeamKit.mock.calls[0][0].org).toBeNull();
     });
   });
 
