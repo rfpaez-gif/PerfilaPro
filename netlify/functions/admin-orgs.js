@@ -1112,19 +1112,24 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           if (bizCardAttachment) sendPayload.attachments = [bizCardAttachment];
           await emailClient.emails.send(sendPayload);
           ok.push({ email: rawEmail, slug });
-          // Marcamos el timestamp del email de bienvenida (mismo semántico que
-          // kit_email_sent_at en B2C-paid: "el welcome email para esta card se
-          // envió en esta fecha"). El studio lo usa para mostrar un chip
-          // "Invitado hace Xd" en el listado de miembros. Best-effort: si falla
-          // el UPDATE, la invitación ya está enviada y la consideramos OK.
+          // Marcamos `edit_link_sent_at` — el email de invitación ES un
+          // enlace de edición, no el welcome kit completo. Antes este
+          // bloque marcaba `kit_email_sent_at`, pero eso colisionaba
+          // semánticamente con el hook B2B post-completación de
+          // edit-card.js (que gatea por `kit_email_sent_at IS NULL`
+          // para enviar el welcome kit con la tarjeta YA con datos
+          // reales). El chip "Invitado hace Xd" del Studio combina
+          // ambos campos via pickLastEmailTimestamp, así que sigue
+          // funcionando. Best-effort: si falla el UPDATE, la invitación
+          // ya está enviada y la consideramos OK.
           try {
             const { error: stampErr } = await db
               .from('cards')
-              .update({ kit_email_sent_at: new Date().toISOString() })
+              .update({ edit_link_sent_at: new Date().toISOString() })
               .eq('slug', slug);
-            if (stampErr) console.warn(`invite_team: no marqué kit_email_sent_at para ${slug}:`, stampErr.message);
+            if (stampErr) console.warn(`invite_team: no marqué edit_link_sent_at para ${slug}:`, stampErr.message);
           } catch (stampErr) {
-            console.warn(`invite_team: no marqué kit_email_sent_at para ${slug}:`, stampErr.message);
+            console.warn(`invite_team: no marqué edit_link_sent_at para ${slug}:`, stampErr.message);
           }
         } catch (err) {
           // Card creada pero email falló — lo apuntamos como fail.
