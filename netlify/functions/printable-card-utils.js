@@ -526,10 +526,11 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
     cursorY += 4;
   }
 
-  // Datos de contacto · sans, una línea por canal. Iconografía texto-Unicode
-  // (☎ ✉ 📍) para no depender de glifos de emoji que no embeben todas las
-  // imprentas. Si la imprenta no tiene la fuente, cae a un cuadrado neutro
-  // sin romper layout — es preferible a una imagen que no escala.
+  // Datos de contacto · sans, una línea por canal. Sin iconos prefijos —
+  // los Unicode ☎ ✉ 📍 caían a tofu en PDFs impresos (la fuente embebida
+  // no incluye glifos de emoji), creaban ruido visual sin aportar lectura.
+  // El contexto ya identifica cada línea: número con prefijo +34, @ del
+  // email, "C/" o número de la dirección.
   //
   // Anclamos el bloque al FONDO del cuerpo (justo encima del separador del
   // footer). Si solo hay 2 líneas (p.ej. card sin teléfono guardado), no
@@ -538,9 +539,9 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // espaciado se reparte naturalmente porque el ancla baja queda intacta.
   const lineH = 11.5;
   const contactLines = [];
-  if (telefono)  contactLines.push(`☎  ${telefono}`);
-  if (email)     contactLines.push(`✉  ${email.substring(0, 50)}`);
-  if (direccion) contactLines.push(`📍 ${direccion.substring(0, 60)}`);
+  if (telefono)  contactLines.push(telefono);
+  if (email)     contactLines.push(email.substring(0, 50));
+  if (direccion) contactLines.push(direccion.substring(0, 60));
 
   const FOOTER_LINE_Y = H - 16; // = línea fina sobre 'Powered by PerfilaPro'
   const CONTACT_GAP_TO_FOOTER = 2;
@@ -550,8 +551,10 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // sobre ella. Mantenemos al menos 4pt de respiro.
   contactY = Math.max(contactY, cursorY + 4);
   for (const line of contactLines) {
-    doc.fillColor(COLORS.ink).font('PP-Sans').fontSize(8)
-       .text(line, PAD_X, contactY, { width: LEFT_W, lineBreak: false, ellipsis: true });
+    doc.fillColor(COLORS.ink).font('PP-Sans').fontSize(7)
+       .text(line, PAD_X, contactY, {
+         width: LEFT_W, lineBreak: false, align: 'left', ellipsis: true,
+       });
     contactY += lineH;
   }
 
