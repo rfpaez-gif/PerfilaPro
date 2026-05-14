@@ -96,6 +96,8 @@ Users land here from the edit link in their confirmation or reminder emails. The
 - `edit-card` POST — updates allowed fields after sanitisation (`stripTags`, phone/email cleaning)
 - `upload-avatar` POST — accepts base64 PNG/JPG ≤2 MB, stores in Supabase `Avatars` bucket, returns public URL. Only Supabase storage URLs are accepted for `foto_url`.
 
+**Hook B2B post-completación** (`lib/team-kit.js`): cuando un miembro B2B (card con `organization_id` + `plan='b2b'`) hace su PRIMER POST a `edit-card` (gated por `cards.kit_email_sent_at IS NULL`), `edit-card` dispara `sendTeamKit` después del UPDATE. Genera la tarjeta de visita 85×55mm con los datos reales del miembro (foto + WhatsApp ya rellenados), la adjunta al email y envía el welcome kit B2B con branding de la org (logo + `color_primary` + nombre bajo "Equipo de"). Paralelo al kit post-pago autónomo (`stripe-webhook → buildEmail()`) pero recortado: **sin factura adjunta** (paga la org, no el miembro), **sin QR PNG suelto** (el QR ya va en la tarjeta), **sin sección "plan / activa hasta"** (el miembro no tiene plan propio). Marca `cards.kit_email_sent_at` en éxito para no re-enviar en saves posteriores. Si el send falla, queda NULL y el admin puede reenviar desde el panel. Email sólo se dispara después de update exitoso del carril B2B locked (que ya exige WhatsApp obligatorio), así que la tarjeta nunca sale con datos a medias.
+
 ### GDPR endpoints
 
 Both endpoints reuse the same `edit_token` mechanism as `edit-card` (32-byte hex, 7-day TTL), so the user only needs the link in their confirmation/reminder email to exercise their rights.

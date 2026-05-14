@@ -1,17 +1,24 @@
 const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
 const { normalizeSpanishPhone } = require('./lib/phone-utils');
 const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
+const { sendTeamKit: defaultSendTeamKit } = require('./lib/team-kit');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
+const defaultEmailClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
 function stripTags(str) {
   return String(str || '').replace(/<[^>]*>/g, '').trim();
 }
 
-function makeHandler(db) {
+// `sendTeamKit` se inyecta como dep para que los tests no dependan de
+// vi.mock (que en vitest 1.6 con CJS require puede crear instancias
+// distintas a las importadas vía ESM en el test).
+function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = defaultSendTeamKit) {
   return async (event) => {
     const { slug, token } = event.queryStringParameters || {};
 
@@ -25,7 +32,7 @@ function makeHandler(db) {
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at, organization_id')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at, organization_id, idioma')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -167,10 +174,50 @@ function makeHandler(db) {
           };
         }
 
+        // Primera completación → dispara el welcome kit B2B.
+        //
+        // Gate: card.kit_email_sent_at IS NULL (nunca recibió kit).
+        // En este punto sabemos que (a) la card es B2B locked, (b) tiene
+        // organization_id, (c) WhatsApp acaba de validarse y persistirse —
+        // los datos mínimos para que la tarjeta-de-visita PDF sea útil.
+        // En saves posteriores este bloque no entra (flag ya está marcada).
+        //
+        // Awaited dentro del handler porque Netlify Functions teardown el
+        // container al return — un fire-and-forget se cancelaría. Latencia
+        // extra ~2-4s pero solo la PRIMERA vez que el miembro guarda.
+        // Si el kit falla, el UPDATE de la card ya está hecho — el admin
+        // puede reenviar desde el panel.
+        let kit_sent = false;
+        if (!card.kit_email_sent_at && card.organization_id) {
+          try {
+            const { data: org } = await db
+              .from('organizations')
+              .select('slug, name, logo_url, color_primary, address, phone')
+              .eq('id', card.organization_id)
+              .is('deleted_at', null)
+              .maybeSingle();
+
+            const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+            kit_sent = await sendTeamKit({
+              db,
+              emailClient,
+              // Merge: el UPDATE acaba de persistir whatsapp/foto/etc. con
+              // valores normalizados; el PDF + email tienen que reflejar
+              // esos valores nuevos, no los stale del SELECT inicial.
+              card: { ...card, ...updateB2B },
+              org: org || null,
+              siteUrl,
+              editToken: token,
+            });
+          } catch (err) {
+            console.error('edit-card: team kit no enviado (no fatal):', err.message);
+          }
+        }
+
         return {
           statusCode: 200,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ok: true, locked: true }),
+          body: JSON.stringify({ ok: true, locked: true, kit_sent }),
         };
       }
 
@@ -284,5 +331,5 @@ function makeHandler(db) {
   };
 }
 
-exports.handler = makeHandler(supabase);
+exports.handler = makeHandler(supabase, defaultEmailClient, defaultSendTeamKit);
 exports.makeHandler = makeHandler;
