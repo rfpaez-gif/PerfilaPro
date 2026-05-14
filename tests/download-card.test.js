@@ -21,15 +21,22 @@ function buildEvent({ method = 'GET', slug = 'maria-electricista', token = 'tok-
   };
 }
 
-function buildDb({ card = baseCard, error = null } = {}) {
-  const builder = {
+function buildDb({ card = baseCard, error = null, org = null } = {}) {
+  const cardBuilder = {
     select: vi.fn().mockReturnThis(),
     eq:     vi.fn().mockReturnThis(),
     in:     vi.fn().mockReturnThis(),
     is:     vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: card, error }),
   };
-  return { from: vi.fn(() => builder), _builder: builder };
+  const orgBuilder = {
+    select:      vi.fn().mockReturnThis(),
+    eq:          vi.fn().mockReturnThis(),
+    is:          vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+  };
+  const from = vi.fn((table) => (table === 'organizations' ? orgBuilder : cardBuilder));
+  return { from, _builder: cardBuilder, _orgBuilder: orgBuilder };
 }
 
 describe('download-card handler', () => {
@@ -87,6 +94,32 @@ describe('download-card handler', () => {
   it('Cache-Control es private/no-store (los assets no deben cachearse)', async () => {
     const res = await makeHandler(buildDb())(buildEvent());
     expect(res.headers['Cache-Control']).toBe('private, no-store');
+  });
+
+  it('B2B (organization_id): devuelve la tarjeta de visita 85×55mm, no la A6 autónomo', async () => {
+    // Regresión: el botón "Descargar tarjeta ↓" del welcome kit B2B (team-kit.js)
+    // tira de este endpoint. Antes devolvía siempre la A6 autónoma aunque la
+    // card fuera B2B; ahora detecta organization_id y usa buildBusinessCardPDF.
+    const b2bCard = { ...baseCard, organization_id: 'org-1', plan: 'b2b', email: 'andrea@iris.com' };
+    const org = { slug: 'iris', name: 'Iris Energía', logo_url: null, color_primary: '#003781', tagline: null, address: null, phone: null };
+    const db = buildDb({ card: b2bCard, org });
+    const res = await makeHandler(db)(buildEvent());
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['Content-Type']).toBe('application/pdf');
+    // PDFKit embebe el Title del info-dict en el binario; la tarjeta de visita
+    // usa "Tarjeta visita …" mientras que la A6 autónomo usa "Tarjeta …".
+    const pdfText = Buffer.from(res.body, 'base64').toString('latin1');
+    expect(pdfText).toContain('Tarjeta visita');
+    // Verificamos también que se consultó la org (rama B2B activada).
+    expect(db.from).toHaveBeenCalledWith('organizations');
+  });
+
+  it('autónomo (sin organization_id): devuelve la A6 vertical, no la tarjeta de visita', async () => {
+    const res = await makeHandler(buildDb())(buildEvent());
+    expect(res.statusCode).toBe(200);
+    const pdfText = Buffer.from(res.body, 'base64').toString('latin1');
+    expect(pdfText).toContain('Tarjeta ');
+    expect(pdfText).not.toContain('Tarjeta visita');
   });
 
   it('devuelve 429 al superar el rate limit por IP', async () => {
