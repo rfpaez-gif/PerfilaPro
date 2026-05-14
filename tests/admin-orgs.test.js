@@ -1496,8 +1496,10 @@ describe('admin-orgs handler', () => {
     });
   });
 
-  // ── invite_team · timestamp kit_email_sent_at en la card tras email OK ──
-  describe('invite_team kit_email_sent_at stamping', () => {
+  // ── invite_team · timestamp edit_link_sent_at en la card tras email OK ──
+  // (antes marcaba kit_email_sent_at, pero eso colisionaba semánticamente
+  // con el hook de welcome kit B2B en edit-card.js)
+  describe('invite_team edit_link_sent_at stamping', () => {
     const mockEmailSend = vi.fn();
     const mockEmail = { emails: { send: mockEmailSend } };
     const inviteHandler = makeHandler(mockDb, mockEmail);
@@ -1508,7 +1510,7 @@ describe('admin-orgs handler', () => {
       mockEmailSend.mockResolvedValue({ id: 'msg' });
     });
 
-    it('marca kit_email_sent_at en cada card tras un email exitoso', async () => {
+    it('marca edit_link_sent_at en cada card tras un email exitoso · NO toca kit_email_sent_at', async () => {
       const orgLookup = {
         eq: vi.fn().mockReturnThis(),
         is: vi.fn().mockReturnThis(),
@@ -1542,12 +1544,15 @@ describe('admin-orgs handler', () => {
         },
       }));
       expect(res.statusCode).toBe(200);
-      // 2 invitaciones OK → 2 updates de kit_email_sent_at
+      // 2 invitaciones OK → 2 updates de edit_link_sent_at
       expect(cardsUpdate).toHaveBeenCalledTimes(2);
       cardsUpdate.mock.calls.forEach((call) => {
         const payload = call[0];
-        expect(payload.kit_email_sent_at).toBeTruthy();
-        expect(new Date(payload.kit_email_sent_at).getTime()).toBeLessThanOrEqual(Date.now());
+        expect(payload.edit_link_sent_at).toBeTruthy();
+        expect(new Date(payload.edit_link_sent_at).getTime()).toBeLessThanOrEqual(Date.now());
+        // kit_email_sent_at queda intacto para que el hook B2B del welcome
+        // kit en edit-card.js dispare cuando el miembro complete su perfil.
+        expect(payload.kit_email_sent_at).toBeUndefined();
       });
     });
 
@@ -1585,7 +1590,7 @@ describe('admin-orgs handler', () => {
       expect(att.content.slice(0, 5).toString()).toBe('%PDF-');
     });
 
-    it('NO marca kit_email_sent_at cuando el email falla', async () => {
+    it('NO marca edit_link_sent_at cuando el email falla', async () => {
       mockEmailSend.mockRejectedValue(new Error('Resend down'));
       const orgLookup = {
         eq: vi.fn().mockReturnThis(),
