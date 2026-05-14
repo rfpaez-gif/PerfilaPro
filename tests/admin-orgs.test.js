@@ -733,13 +733,14 @@ describe('admin-orgs handler', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('leads_resend reenvía email con prefix [Reenvío]', async () => {
+    it('leads_resend envía el magic-link sin prefix (es el primer envío manual)', async () => {
       const leadLookup = {
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({
           data: {
             id: 'l1', name: 'Carlos', company: 'Allianz', email: 'c@a.com',
             idioma: 'es', invite_token: 'a'.repeat(48), redeemed_at: null,
+            organization_id: null,
           },
           error: null,
         }),
@@ -753,11 +754,94 @@ describe('admin-orgs handler', () => {
         body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
       }));
       expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).branded).toBe(false);
       expect(mockEmailSend).toHaveBeenCalledOnce();
       const sent = mockEmailSend.mock.calls[0][0];
       expect(sent.to).toBe('c@a.com');
-      expect(sent.subject).toContain('[Reenvío]');
+      expect(sent.subject).not.toContain('[Reenvío]');
+      expect(sent.subject).toContain('[PerfilaPro · Onboarding]');
       expect(sent.html).toContain('/es/onboarding?token=' + 'a'.repeat(48));
+      // Sin org asociada → sin banner branded.
+      expect(sent.html).not.toContain('Demo personalizada');
+    });
+
+    it('leads_resend con org asociada incluye branding (logo + color) en el email', async () => {
+      const leadLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            id: 'l1', name: 'Carlos', company: 'Allianz', email: 'c@a.com',
+            idioma: 'es', invite_token: 'a'.repeat(48), redeemed_at: null,
+            organization_id: 'org1',
+          },
+          error: null,
+        }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            name: 'Allianz España',
+            logo_url: 'https://supabase.co/storage/v1/object/public/Avatars/org-logos/allianz.png',
+            color_primary: '#003781',
+            deleted_at: null,
+          },
+          error: null,
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads')     return { select: vi.fn(() => leadLookup) };
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).branded).toBe(true);
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.html).toContain('Demo personalizada');
+      expect(sent.html).toContain('Allianz España');
+      expect(sent.html).toContain('#003781');
+      expect(sent.html).toContain('allianz.png');
+    });
+
+    it('leads_resend con org soft-deleted → fallback a email genérico (sin branding)', async () => {
+      const leadLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            id: 'l1', name: 'Carlos', company: 'Allianz', email: 'c@a.com',
+            idioma: 'es', invite_token: 'a'.repeat(48), redeemed_at: null,
+            organization_id: 'org1',
+          },
+          error: null,
+        }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            name: 'Allianz', logo_url: null, color_primary: '#003781',
+            deleted_at: '2026-05-01T00:00:00Z',
+          },
+          error: null,
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'b2b_leads')     return { select: vi.fn(() => leadLookup) };
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_resend', lead_id: '11111111-1111-1111-1111-111111111111' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).branded).toBe(false);
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.html).not.toContain('Demo personalizada');
     });
 
     it('leads_resend devuelve 409 si el lead ya está redimido', async () => {

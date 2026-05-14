@@ -1148,7 +1148,7 @@ function renderLeadsTable() {
       <td>${orgSelect}</td>
       <td>${status}</td>
       <td><div class="pp-orgs-table__actions">
-        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="resendLead('${escapeAttr(l.id)}','${escapeAttr(safeName)}')" ${disabledIfRedeemed}>Reenviar link</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="resendLead('${escapeAttr(l.id)}','${escapeAttr(safeName)}','${escapeAttr(currentOrgSlug)}')" ${disabledIfRedeemed} title="${currentOrgSlug ? 'Se enviará con branding de ' + escapeAttr(currentOrgSlug) : 'Se enviará genérico · asocia el lead a una org primero para personalizarlo'}">Enviar magic-link</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1167,13 +1167,16 @@ async function assignLead(selectEl) {
   }
 }
 
-async function resendLead(leadId, name) {
-  if (!confirm(`¿Reenviar magic-link a ${name || 'este lead'}?\n\nMismo token (no expira hasta que se redime). Llega como "[Reenvío] …".`)) return;
+async function resendLead(leadId, name, currentOrgSlug) {
+  const brandingHint = currentOrgSlug
+    ? `\n\nEl email saldrá con branding de "${currentOrgSlug}" (logo + color de la org).`
+    : `\n\nEl email saldrá con identidad genérica de PerfilaPro. Si quieres personalizarlo, asocia el lead a una org antes.`;
+  if (!confirm(`¿Enviar magic-link a ${name || 'este lead'}?${brandingHint}\n\nMismo token (no expira hasta que se redime).`)) return;
   try {
-    await callAdmin({ action: 'leads_resend', lead_id: leadId });
-    toast('Magic-link reenviado', 'ok');
+    const res = await callAdmin({ action: 'leads_resend', lead_id: leadId });
+    toast(res?.branded ? 'Magic-link enviado con branding' : 'Magic-link enviado', 'ok');
   } catch (err) {
-    toast('Error reenviando: ' + err.message, 'err');
+    toast('Error enviando: ' + err.message, 'err');
   }
 }
 

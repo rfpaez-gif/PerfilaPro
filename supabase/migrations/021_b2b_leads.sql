@@ -6,8 +6,15 @@
 --
 -- Hoy el form de /es/empresas solo envía un email a B2B_LEAD_INBOX.
 -- Si el email se pierde, el lead se pierde. Esta tabla lo persiste y
--- añade un magic-link de un solo uso para que el lead aterrice en
+-- reserva un magic-link de un solo uso para que, cuando el admin decida
+-- enviarlo manualmente desde el Studio, el lead aterrice en
 -- /es/onboarding?token=… con sus datos ya rellenados.
+--
+-- Nota (gate manual del magic-link): el envío automático del magic-link
+-- al lead se apagó en el sprint claude/b2b-leads-gate-magic-link. El
+-- form solo manda un acuse de recibo neutral al lead, y el founder
+-- dispara el magic-link a mano desde admin-orgs (leads_resend) — con
+-- branding de la org si la asocia primero.
 --
 -- Idempotente: re-ejecutar no rompe nada (uses IF NOT EXISTS).
 -- Reversible: DROP TABLE b2b_leads y borrar las dos referencias en

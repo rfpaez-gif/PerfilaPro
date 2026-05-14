@@ -66,11 +66,11 @@ function buildInboxEmailHtml({ name, company, email, team_size, sector, message,
 <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:400;color:#0A1F44;margin-top:1.5rem">Mensaje</h3>
 <p style="background:#FAF7F0;padding:1rem;border-radius:8px">${safeMessage}</p>
 <p style="font-size:13px;color:#6B7280;margin-top:1.5rem">
-  <strong style="color:#0A1F44">Magic-link enviado al lead:</strong><br>
+  <strong style="color:#0A1F44">Magic-link reservado (no enviado al lead todavía):</strong><br>
   <a href="${esc(onboardingUrl)}" style="font-family:monospace;font-size:12px;word-break:break-all">${esc(onboardingUrl)}</a>
 </p>
 <p style="font-size:12px;color:#6B7280;margin-top:1rem">
-  Lead persistido en <code>b2b_leads</code>. Desde el Studio puedes asociarlo a una organización antes de que lo redima.
+  Lead persistido en <code>b2b_leads</code>. Al lead se le ha enviado un acuse de recibo neutral (sin magic-link). Asocia el lead a una org en el Studio y luego pulsa <em>"Enviar magic-link"</em> para mandarle el enlace personalizado con branding.
 </p>
 </body></html>`;
 }
@@ -90,6 +90,7 @@ const LEAD_EMAIL_STRINGS = {
       'Este enlace es de un solo uso y caduca cuando alguien lo redime.',
     ],
     footerNote: '¿No has sido tú? Ignora este email — el enlace queda inactivo si no se usa.',
+    brandedLabel: 'Demo personalizada',
   },
   ca: {
     subjectPrefix: '[PerfilaPro · Onboarding]',
@@ -105,10 +106,49 @@ const LEAD_EMAIL_STRINGS = {
       'Aquest enllaç és d’un sol ús i caduca quan algú el redimeix.',
     ],
     footerNote: 'No has estat tu? Ignora aquest email — l’enllaç queda inactiu si no es fa servir.',
+    brandedLabel: 'Demo personalitzada',
   },
 };
 
-function buildLeadEmail({ name, company, inviteToken, idioma, siteUrl }) {
+// Email-2 que se manda automáticamente al lead nada más enviar el form.
+// NO contiene magic-link — solo confirma la recepción y le dice que el
+// equipo de PerfilaPro le contactará en 24-48h. El magic-link sale más
+// tarde desde admin-orgs (acción manual del founder), una vez se ha
+// hablado con el lead y, si aplica, se ha creado la org con branding.
+const LEAD_ACK_STRINGS = {
+  es: {
+    subjectPrefix: '[PerfilaPro]',
+    subject: (firstName) => `${firstName}, hemos recibido tu solicitud`,
+    preheader: (company) => `Te contactaremos en 24-48h para enseñarte la demo de PerfilaPro aplicada a ${company}.`,
+    title: (firstName) => `Gracias por escribirnos, ${firstName}`,
+    intro1: (company) => `Hemos recibido tu solicitud para conocer PerfilaPro aplicado a <strong>${company}</strong>.`,
+    intro2: 'En las próximas <strong>24-48 horas laborables</strong> te escribiremos personalmente para entender vuestro caso y prepararte una demo a medida con el branding y los profesionales de vuestro equipo.',
+    intro3: 'Mientras tanto, si quieres adelantar trabajo, puedes responder a este email con cualquier detalle que creas relevante (logo, paleta corporativa, listado de profesionales, dudas).',
+    footerNote: 'Si no has sido tú quien envió el formulario, ignora este email — tu dirección no quedará registrada para más contactos.',
+  },
+  ca: {
+    subjectPrefix: '[PerfilaPro]',
+    subject: (firstName) => `${firstName}, hem rebut la teva sol·licitud`,
+    preheader: (company) => `Et contactarem en 24-48h per ensenyar-te la demo de PerfilaPro aplicada a ${company}.`,
+    title: (firstName) => `Gràcies per escriure’ns, ${firstName}`,
+    intro1: (company) => `Hem rebut la teva sol·licitud per conèixer PerfilaPro aplicat a <strong>${company}</strong>.`,
+    intro2: 'En les properes <strong>24-48 hores laborables</strong> t’escriurem personalment per entendre el vostre cas i preparar-te una demo a mida amb el branding i els professionals del vostre equip.',
+    intro3: 'Mentrestant, si vols avançar feina, pots respondre aquest email amb qualsevol detall que creguis rellevant (logo, paleta corporativa, llistat de professionals, dubtes).',
+    footerNote: 'Si no has estat tu qui ha enviat el formulari, ignora aquest email — la teva adreça no quedarà registrada per a més contactes.',
+  },
+};
+
+/**
+ * Email con el magic-link de onboarding. NO se envía automáticamente
+ * desde el handler del form — lo dispara el admin desde admin-orgs
+ * (acción `leads_resend`) una vez ha hablado con el lead.
+ *
+ * Si `org` viene resuelto (lead ya asociado a una org en Studio), el
+ * email pinta un banner con logo + color_primary + nombre de la org
+ * arriba del CTA, igual que `buildInviteEmail` hace para los agentes.
+ * Sin `org`, render genérico de PerfilaPro.
+ */
+function buildLeadEmail({ name, company, inviteToken, idioma, siteUrl, org }) {
   const lang = idioma === 'ca' ? 'ca' : 'es';
   const T = LEAD_EMAIL_STRINGS[lang];
   const onboardingUrl = `${siteUrl}/${lang}/onboarding?token=${inviteToken}`;
@@ -117,7 +157,23 @@ function buildLeadEmail({ name, company, inviteToken, idioma, siteUrl }) {
   const bulletsHtml = T.bullets.map(b => `
     <p style="margin:0 0 8px;font-size:14px;color:${COLORS.ink};line-height:1.6">▸ ${esc(b)}</p>`).join('');
 
-  const bodyHtml = `
+  const headerColor = org && org.color && /^#[0-9a-fA-F]{6}$/.test(org.color) ? org.color : null;
+  const orgName = org && org.name ? esc(org.name) : '';
+  const logoCell = org && org.logoUrl
+    ? `<img src="${esc(org.logoUrl)}" alt="${orgName}" style="max-height:40px;max-width:140px;display:block;margin:0 auto 8px">`
+    : '';
+  const orgBanner = (headerColor && orgName) ? `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+              <tr>
+                <td style="background:${headerColor};border-radius:12px;padding:24px 20px;text-align:center">
+                  ${logoCell}
+                  <p style="margin:0;font-size:13px;font-weight:600;color:#ffffff;letter-spacing:.04em;text-transform:uppercase;opacity:.92">${esc(T.brandedLabel)}</p>
+                  <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:#ffffff">${orgName}</p>
+                </td>
+              </tr>
+            </table>` : '';
+
+  const bodyHtml = `${orgBanner}
             <p style="margin:0 0 16px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
               ${T.intro1(esc(company))}
             </p>
@@ -140,6 +196,44 @@ function buildLeadEmail({ name, company, inviteToken, idioma, siteUrl }) {
             <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:${COLORS.inkSoft}">URL directa</p>
             <p style="margin:0;font-size:12px;color:${COLORS.inkSoft};line-height:1.5;word-break:break-all">
               <a href="${esc(onboardingUrl)}" style="color:${COLORS.accent};text-decoration:none">${esc(onboardingUrl)}</a>
+            </p>`;
+
+  const html = buildEmailLayout({
+    preheader: T.preheader(company),
+    title: T.title(firstName),
+    bodyHtml,
+    footerNote: T.footerNote,
+    siteUrl,
+    idioma: lang,
+  });
+
+  return {
+    subject: `${T.subjectPrefix} ${T.subject(firstName)}`,
+    html,
+  };
+}
+
+/**
+ * Acuse de recibo automático que el lead recibe nada más enviar el form.
+ * NO contiene magic-link — solo confirma la recepción y anuncia que el
+ * equipo contactará en 24-48h. El magic-link real lo dispara el admin
+ * desde el Studio (acción `leads_resend`), opcionalmente con branding
+ * de la org si para entonces ya está creada.
+ */
+function buildLeadAckEmail({ name, company, idioma, siteUrl }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const T = LEAD_ACK_STRINGS[lang];
+  const firstName = (name || '').split(' ')[0] || name;
+
+  const bodyHtml = `
+            <p style="margin:0 0 16px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              ${T.intro1(esc(company))}
+            </p>
+            <p style="margin:0 0 16px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              ${T.intro2}
+            </p>
+            <p style="margin:0 0 4px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              ${esc(T.intro3)}
             </p>`;
 
   const html = buildEmailLayout({
@@ -247,21 +341,24 @@ function makeHandler(deps) {
       console.error('lead-b2b: error enviando email interno:', err.message);
     }
 
-    // Email 2 · al lead con el magic-link.
+    // Email 2 · acuse de recibo al lead. NO incluye magic-link — solo
+    // confirma la recepción del form y anuncia contacto en 24-48h. El
+    // magic-link real lo dispara el admin desde admin-orgs.leads_resend
+    // una vez ha hablado con el lead (y, si aplica, ha creado la org
+    // con branding para que el email salga personalizado).
     try {
-      const { subject, html } = buildLeadEmail({ name, company, inviteToken, idioma, siteUrl });
+      const { subject, html } = buildLeadAckEmail({ name, company, idioma, siteUrl });
       await emailClient.emails.send({
         from: 'PerfilaPro <hola@perfilapro.es>',
         to: email,
         subject,
         html,
       });
-      console.log(`lead-b2b: ${company} (${email}) · magic-link enviado`);
+      console.log(`lead-b2b: ${company} (${email}) · acuse de recibo enviado`);
     } catch (err) {
-      // Si el magic-link al lead falla, el lead sigue persistido. El admin
-      // puede reenviarlo desde el Studio (acción explícita). NO devolvemos
-      // 500 para que el form al usuario diga "ok recibido".
-      console.error('lead-b2b: error enviando magic-link:', err.message);
+      // Si el acuse falla, el lead sigue persistido. NO devolvemos 500
+      // para que el form al usuario diga "ok recibido".
+      console.error('lead-b2b: error enviando acuse:', err.message);
     }
 
     return jsonResponse(200, { ok: true });
@@ -274,3 +371,4 @@ const defaultEmail = new Resend(process.env.RESEND_API_KEY);
 exports.handler = makeHandler({ db: defaultDb, emailClient: defaultEmail });
 exports.makeHandler = makeHandler;
 exports.buildLeadEmail = buildLeadEmail;
+exports.buildLeadAckEmail = buildLeadAckEmail;
