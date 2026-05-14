@@ -139,7 +139,7 @@ Exports:
 - `formatSpanishPhone(phone)` — pretty-prints Spanish numbers (`34633816729` → `+34 633 81 67 29`).
 
 **Re-download endpoints** (auth via `edit_token`, same mechanism as `edit-card`):
-- `download-card.js` — `/api/download-card?slug=&token=` returns the PDF.
+- `download-card.js` — `/api/download-card?slug=&token=` returns the PDF. Es B2B-aware: si la card tiene `organization_id` válido (org no soft-deleted), resuelve la org y devuelve la tarjeta de visita 85×55mm branded (`buildBusinessCardPDF`, misma pieza que adjunta el welcome kit B2B y `invite_team`). Sin `organization_id`, devuelve el A6 vertical del autónomo (`buildPrintableCardPDF`). Antes era ciego al carril y el botón "Descargar tarjeta ↓" del welcome kit B2B devolvía la A6 aunque el adjunto del propio email fuera la 85×55mm.
 - `download-qr.js` — `/api/download-qr?slug=&token=&size=` returns the PNG.
 
 Both are rate-limited (10 req / 10 min per IP) and cached as `private, no-store` to prevent leakage. Visible to paid users from the editor's "Tu kit físico" section (`#kitBanner` in `editar.html`, complementary to `#freeBanner` for free users).
