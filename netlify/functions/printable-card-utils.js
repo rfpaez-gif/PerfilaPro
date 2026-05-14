@@ -543,7 +543,7 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   if (direccion) contactLines.push(`📍 ${direccion.substring(0, 60)}`);
 
   const FOOTER_LINE_Y = H - 16; // = línea fina sobre 'Powered by PerfilaPro'
-  const CONTACT_GAP_TO_FOOTER = 4;
+  const CONTACT_GAP_TO_FOOTER = 2;
   let contactY = FOOTER_LINE_Y - CONTACT_GAP_TO_FOOTER - contactLines.length * lineH;
   // Salvaguarda: si la identidad de arriba creció (nombre largo + cargo +
   // legend con tracking), no dejamos que el bloque de contactos se monte
