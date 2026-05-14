@@ -864,9 +864,21 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       return jsonResponse(200, { ok: true, lead_id, organization_id });
     }
 
-    // ── leads_resend: reenviar el magic-link al lead ──
+    // ── leads_resend: enviar el magic-link al lead ──
     // Idempotente: NO regeneramos el invite_token. Si el lead ya está
     // redeemed_at, devolvemos 409 sin enviar (el link no vale para nada).
+    //
+    // Nota histórica: la acción se llama "resend" pero desde el cambio
+    // de gating del magic-link (claude/b2b-leads-gate-magic-link), es
+    // típicamente la PRIMERA vez que el lead recibe el enlace — el form
+    // ya no auto-envía, solo manda acuse de recibo. El nombre del action
+    // se conserva por compat con el frontend.
+    //
+    // Si el lead está asociado a una organización (lead.organization_id),
+    // pasamos el branding de la org (logo + color_primary + nombre) a
+    // buildLeadEmail para que el email salga con un banner branded —
+    // demo personalizada. Sin org asociada, el email va con identidad
+    // PerfilaPro genérica.
     if (action === 'leads_resend') {
       const { lead_id } = body;
       if (!lead_id || !UUID_RE.test(String(lead_id))) {
@@ -878,13 +890,33 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: lead, error } = await db
         .from('b2b_leads')
-        .select('id, name, company, email, idioma, invite_token, redeemed_at')
+        .select('id, name, company, email, idioma, invite_token, redeemed_at, organization_id')
         .eq('id', lead_id)
         .maybeSingle();
       if (error) return jsonResponse(500, { error: error.message });
       if (!lead) return jsonResponse(404, { error: 'lead no encontrado' });
       if (lead.redeemed_at) {
         return jsonResponse(409, { error: 'Este lead ya redimió su enlace' });
+      }
+
+      // Branding opcional: si el admin asoció el lead a una org desde
+      // Studio antes de mandar el link, el email lleva logo + color de
+      // esa org. Si la org está soft-deleted la ignoramos (fallback a
+      // identidad PerfilaPro genérica, no rompe el envío).
+      let orgBranding = null;
+      if (lead.organization_id) {
+        const { data: org } = await db
+          .from('organizations')
+          .select('name, logo_url, color_primary, deleted_at')
+          .eq('id', lead.organization_id)
+          .maybeSingle();
+        if (org && !org.deleted_at) {
+          orgBranding = {
+            name: org.name,
+            logoUrl: org.logo_url,
+            color: org.color_primary,
+          };
+        }
       }
 
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
@@ -894,21 +926,22 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         inviteToken: lead.invite_token,
         idioma: lead.idioma,
         siteUrl,
+        org: orgBranding,
       });
 
       try {
         await emailClient.emails.send({
           from: 'PerfilaPro <hola@perfilapro.es>',
           to: lead.email,
-          subject: '[Reenvío] ' + subject,
+          subject,
           html,
         });
       } catch (err) {
         console.error('admin-orgs leads_resend: error enviando email:', err.message);
-        return jsonResponse(500, { error: 'No se pudo reenviar el email' });
+        return jsonResponse(500, { error: 'No se pudo enviar el email' });
       }
 
-      return jsonResponse(200, { ok: true });
+      return jsonResponse(200, { ok: true, branded: !!orgBranding });
     }
 
     // ── invite_team: alta en bloque de varios agentes con datos comunes ──

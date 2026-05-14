@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { makeHandler, buildLeadEmail } from '../netlify/functions/lead-b2b.js';
+import { makeHandler, buildLeadEmail, buildLeadAckEmail } from '../netlify/functions/lead-b2b.js';
 
 // --- DB mock builder ---------------------------------------------------
 // El handler hace exactamente UNA llamada a db.from('b2b_leads'):
@@ -58,7 +58,7 @@ describe('lead-b2b handler', () => {
     expect(res.statusCode).toBe(405);
   });
 
-  it('persiste el lead y envía dos emails (interno + magic-link al lead)', async () => {
+  it('persiste el lead y envía dos emails (interno con magic-link + acuse al lead sin magic-link)', async () => {
     const res = await handler()(buildEvent({ body: validPayload }));
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).ok).toBe(true);
@@ -73,7 +73,7 @@ describe('lead-b2b handler', () => {
     expect(insertArg.sector).toBe('empresa');
     expect(insertArg.idioma).toBe('es');
 
-    // Email 1 · inbox interno, Email 2 · magic-link al lead
+    // Email 1 · inbox interno (sí lleva el magic-link, para que el founder lo vea)
     expect(mockSend).toHaveBeenCalledTimes(2);
     const internalEmail = mockSend.mock.calls[0][0];
     expect(internalEmail.to).toBe('leads@perfilapro.es');
@@ -81,20 +81,24 @@ describe('lead-b2b handler', () => {
     expect(internalEmail.subject).toContain('Allianz España');
     expect(internalEmail.html).toContain('/es/onboarding?token=');
 
+    // Email 2 · acuse de recibo al lead — SIN magic-link en el cuerpo.
     const leadEmail = mockSend.mock.calls[1][0];
     expect(leadEmail.to).toBe('carlos@example.com');
-    expect(leadEmail.subject).toContain('[PerfilaPro · Onboarding]');
+    expect(leadEmail.subject).toContain('[PerfilaPro]');
+    expect(leadEmail.subject).not.toContain('Onboarding');
     expect(leadEmail.html).toContain('Allianz España');
-    expect(leadEmail.html).toContain('https://perfilapro.es/es/onboarding?token=');
+    expect(leadEmail.html).toContain('24-48');
+    expect(leadEmail.html).not.toContain('/onboarding?token=');
   });
 
-  it('respeta idioma=ca en el subject + URL del magic-link', async () => {
+  it('respeta idioma=ca en el subject del acuse de recibo', async () => {
     const res = await handler()(buildEvent({ body: { ...validPayload, idioma: 'ca' } }));
     expect(res.statusCode).toBe(200);
     const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
     expect(insertArg.idioma).toBe('ca');
     const leadEmail = mockSend.mock.calls[1][0];
-    expect(leadEmail.html).toContain('/ca/onboarding?token=');
+    expect(leadEmail.subject).toMatch(/hem rebut/i);
+    expect(leadEmail.html).not.toContain('/onboarding?token=');
   });
 
   it.each([
@@ -213,5 +217,81 @@ describe('buildLeadEmail', () => {
       name: 'Marta', company: 'Despacho X', inviteToken: 'b'.repeat(48), idioma: 'ca', siteUrl: 'https://perfilapro.es',
     });
     expect(html).toContain('https://perfilapro.es/ca/onboarding?token=' + 'b'.repeat(48));
+  });
+
+  it('sin org → no pinta banner branded', () => {
+    const { html } = buildLeadEmail({
+      name: 'Marta', company: 'Despacho X', inviteToken: 'b'.repeat(48), siteUrl: 'https://perfilapro.es',
+    });
+    expect(html).not.toContain('Demo personalizada');
+  });
+
+  it('con org → pinta banner con logo + color + nombre de la org', () => {
+    const { html } = buildLeadEmail({
+      name: 'Carlos', company: 'Allianz', inviteToken: 'c'.repeat(48), siteUrl: 'https://perfilapro.es',
+      org: { name: 'Allianz', logoUrl: 'https://example.com/allianz.png', color: '#003781' },
+    });
+    expect(html).toContain('Demo personalizada');
+    expect(html).toContain('Allianz');
+    expect(html).toContain('background:#003781');
+    expect(html).toContain('https://example.com/allianz.png');
+  });
+
+  it('con org sin logo → banner solo con color + nombre', () => {
+    const { html } = buildLeadEmail({
+      name: 'Carlos', company: 'Allianz', inviteToken: 'c'.repeat(48), siteUrl: 'https://perfilapro.es',
+      org: { name: 'Allianz', logoUrl: null, color: '#003781' },
+    });
+    expect(html).toContain('Demo personalizada');
+    expect(html).toContain('background:#003781');
+    expect(html).not.toContain('<img');
+  });
+
+  it('con org color inválido → fallback sin banner branded (no inyecta CSS arbitrario)', () => {
+    const { html } = buildLeadEmail({
+      name: 'X', company: 'Y', inviteToken: 'd'.repeat(48), siteUrl: 'https://perfilapro.es',
+      org: { name: 'Y', logoUrl: null, color: 'red; background:url(evil)' },
+    });
+    expect(html).not.toContain('Demo personalizada');
+    expect(html).not.toContain('evil');
+  });
+
+  it('en idioma=ca el banner branded usa "Demo personalitzada"', () => {
+    const { html } = buildLeadEmail({
+      name: 'Marta', company: 'Despatx', inviteToken: 'e'.repeat(48), idioma: 'ca',
+      siteUrl: 'https://perfilapro.es',
+      org: { name: 'Despatx X', logoUrl: null, color: '#003781' },
+    });
+    expect(html).toContain('Demo personalitzada');
+  });
+});
+
+describe('buildLeadAckEmail', () => {
+  it('en es genera acuse de recibo sin magic-link', () => {
+    const { subject, html } = buildLeadAckEmail({
+      name: 'Carlos García', company: 'Allianz', siteUrl: 'https://perfilapro.es',
+    });
+    expect(subject).toContain('[PerfilaPro]');
+    expect(subject).toContain('Carlos');
+    expect(html).toContain('Allianz');
+    expect(html).toContain('24-48');
+    expect(html).not.toContain('/onboarding?token=');
+  });
+
+  it('en ca traduce el subject y el cuerpo', () => {
+    const { subject, html } = buildLeadAckEmail({
+      name: 'Marta', company: 'Despatx X', idioma: 'ca', siteUrl: 'https://perfilapro.es',
+    });
+    expect(subject).toMatch(/hem rebut/i);
+    expect(html).toMatch(/Hem rebut/);
+    expect(html).not.toContain('/onboarding?token=');
+  });
+
+  it('escapa el nombre de la empresa en el cuerpo HTML', () => {
+    const { html } = buildLeadAckEmail({
+      name: 'X', company: '<script>alert(1)</script>', siteUrl: 'https://perfilapro.es',
+    });
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;');
   });
 });
