@@ -282,8 +282,8 @@ exports.handler = async (event) => {
     }
     body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
     .pp-card{width:min(100%,420px);background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-lg);overflow:hidden;box-shadow:var(--pp-shadow)}
-    .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.875rem;padding:1.25rem;border-bottom:1px solid var(--color-gris-200)}
-    .pp-card__avatar{width:100%;aspect-ratio:1/1;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
+    .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.75rem;padding:1rem 1.25rem 1.25rem;border-bottom:1px solid var(--color-gris-200)}
+    .pp-card__avatar{width:100%;max-width:180px;aspect-ratio:1/1;align-self:center;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
     .pp-card__avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .pp-card__avatar-init{font-family:var(--font-serif);font-size:clamp(4rem,18vw,6rem);color:var(--color-verde-match);line-height:1}
     .pp-card__name{font-family:var(--font-serif);font-size:1.75rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
@@ -294,6 +294,7 @@ exports.handler = async (event) => {
     .pp-chip--loc{background:var(--color-crema);color:var(--color-gris-500);border:1px solid var(--color-gris-200)}
     .pp-chip--stat{background:var(--color-verde-light);color:var(--color-verde-match);border:1px solid var(--color-gris-200)}
     .pp-card__desc{font-size:.9375rem;color:var(--color-gris-500);line-height:1.75;background:var(--color-crema);border-radius:var(--pp-r-md);padding:.875rem 1rem;border:1px solid var(--color-gris-200)}
+    .pp-chips + .pp-card__desc{margin-top:-.375rem}
     .pp-svc-list{display:grid;gap:.375rem}
     .pp-svc{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.75rem .875rem;border-radius:var(--pp-r-md);background:var(--color-crema);border:1px solid transparent}
     .pp-svc--lead{background:var(--color-verde-light);border-color:var(--color-gris-200)}
@@ -341,7 +342,7 @@ exports.handler = async (event) => {
        del hero de /e/:slug (fondo color_primary, logo en pill blanco,
        serif blanco) escalado al ancho de la card para que el visitante
        sienta la marca como dueña del espacio. */
-    .pp-card__org-hero{display:block;padding:1.5rem 1.25rem 1.25rem;text-align:center;text-decoration:none;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.14)}
+    .pp-card__org-hero{display:block;padding:.75rem 1.25rem .625rem;text-align:center;text-decoration:none;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.14)}
     .pp-card__org-hero__logo{display:inline-flex;align-items:center;justify-content:center;background:#FFFFFF;padding:.5rem .875rem;border-radius:.75rem;margin-bottom:.75rem;box-shadow:0 4px 12px rgba(0,0,0,.14);transition:transform .18s}
     .pp-card__org-hero__logo img{display:block;max-height:48px;max-width:180px;width:auto;height:auto}
     .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.25rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
