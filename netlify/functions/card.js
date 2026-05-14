@@ -283,7 +283,7 @@ exports.handler = async (event) => {
     body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
     .pp-card{width:min(100%,420px);background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-lg);overflow:hidden;box-shadow:var(--pp-shadow)}
     .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.5rem;padding:.5rem 1rem 1rem;border-bottom:1px solid var(--color-gris-200)}
-    .pp-card__avatar{width:100%;aspect-ratio:1/1;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
+    .pp-card__avatar{width:100%;max-width:280px;aspect-ratio:1/1;align-self:center;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
     .pp-card__avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .pp-card__avatar-init{font-family:var(--font-serif);font-size:clamp(4rem,18vw,6rem);color:var(--color-verde-match);line-height:1}
     .pp-card__name{font-family:var(--font-serif);font-size:1.75rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
