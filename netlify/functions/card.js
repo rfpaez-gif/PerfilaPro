@@ -282,7 +282,7 @@ exports.handler = async (event) => {
     }
     body{font-family:var(--font-sans);background:var(--color-crema);color:var(--color-tinta);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;-webkit-font-smoothing:antialiased}
     .pp-card{width:min(100%,420px);background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:var(--pp-r-lg);overflow:hidden;box-shadow:var(--pp-shadow)}
-    .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.5rem;padding:.75rem 1rem 1rem;border-bottom:1px solid var(--color-gris-200)}
+    .pp-card__header{display:flex;flex-direction:column;text-align:center;gap:.5rem;padding:.5rem 1rem 1rem;border-bottom:1px solid var(--color-gris-200)}
     .pp-card__avatar{width:100%;aspect-ratio:1/1;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
     .pp-card__avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .pp-card__avatar-init{font-family:var(--font-serif);font-size:clamp(4rem,18vw,6rem);color:var(--color-verde-match);line-height:1}
@@ -341,8 +341,9 @@ exports.handler = async (event) => {
        del hero de /e/:slug (fondo color_primary, logo en pill blanco,
        serif blanco) escalado al ancho de la card para que el visitante
        sienta la marca como dueña del espacio. */
-    .pp-card__org-hero{display:block;padding:.5rem 1rem .375rem;text-align:center;text-decoration:none;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.14)}
+    .pp-card__org-hero{display:block;padding:.5rem 1rem .25rem;text-align:center;text-decoration:none;color:#FFFFFF;border-bottom:1px solid rgba(255,255,255,.14)}
     .pp-card__org-hero__logo{display:inline-flex;align-items:center;justify-content:center;background:#FFFFFF;padding:.375rem .625rem;border-radius:.625rem;margin-bottom:.375rem;box-shadow:0 4px 12px rgba(0,0,0,.14);transition:transform .18s}
+    .pp-card__org-hero__logo:last-child{margin-bottom:0}
     .pp-card__org-hero__logo img{display:block;max-height:36px;max-width:160px;width:auto;height:auto}
     .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
     .pp-card__org-hero__tagline{font-size:.75rem;opacity:.9;margin-top:.25rem;line-height:1.4}
@@ -357,9 +358,10 @@ exports.handler = async (event) => {
   </div>` : ''}
   <div class="pp-card">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
-      ${orgLogo ? `<div class="pp-card__org-hero__logo"><img src="${esc(orgLogo)}" alt="${esc(org.name)}" loading="eager" decoding="async"></div>` : ''}
-      <h2 class="pp-card__org-hero__name">${esc(org.name)}</h2>
-      ${org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : ''}
+      ${orgLogo
+        ? `<div class="pp-card__org-hero__logo"><img src="${esc(orgLogo)}" alt="${esc(org.name)}" loading="eager" decoding="async"></div>`
+        : `<h2 class="pp-card__org-hero__name">${esc(org.name)}</h2>
+      ${org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : ''}`}
     </a>` : ''}
     <div class="pp-card__header">
       <div class="pp-card__avatar">
