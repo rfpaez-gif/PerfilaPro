@@ -4,6 +4,8 @@ import {
   isSafeLogoUrl,
   isValidOrgSlug,
   isValidTagline,
+  isValidDescription,
+  isSafeWebsite,
   getOrgBySlug,
   listCardsByOrg,
 } from '../netlify/functions/lib/org-utils.js';
@@ -77,6 +79,44 @@ describe('isValidTagline', () => {
     expect(isValidTagline('x'.repeat(141))).toBe(false);
     expect(isValidTagline(null)).toBe(false);
     expect(isValidTagline(undefined)).toBe(false);
+  });
+});
+
+describe('isValidDescription', () => {
+  it('acepta strings hasta 500 chars (incluida string vacía)', () => {
+    expect(isValidDescription('')).toBe(true);
+    expect(isValidDescription('Comercializadora independiente de energía renovable')).toBe(true);
+    expect(isValidDescription('x'.repeat(500))).toBe(true);
+  });
+  it('rechaza más de 500 chars y no-strings', () => {
+    expect(isValidDescription('x'.repeat(501))).toBe(false);
+    expect(isValidDescription(null)).toBe(false);
+    expect(isValidDescription(undefined)).toBe(false);
+  });
+});
+
+describe('isSafeWebsite', () => {
+  it('acepta URLs http y https parseables', () => {
+    expect(isSafeWebsite('https://irisenergia.es')).toBe(true);
+    expect(isSafeWebsite('http://example.com/path?q=1')).toBe(true);
+    expect(isSafeWebsite('https://sub.dominio.com/ruta')).toBe(true);
+  });
+  it('rechaza protocolos peligrosos', () => {
+    expect(isSafeWebsite('javascript:alert(1)')).toBe(false);
+    expect(isSafeWebsite('data:text/html,<script>x</script>')).toBe(false);
+    expect(isSafeWebsite('file:///etc/passwd')).toBe(false);
+    expect(isSafeWebsite('ftp://example.com')).toBe(false);
+  });
+  it('rechaza strings no parseables como URL', () => {
+    expect(isSafeWebsite('no es una url')).toBe(false);
+    expect(isSafeWebsite('irisenergia.es')).toBe(false); // falta protocolo
+    expect(isSafeWebsite('')).toBe(false);
+    expect(isSafeWebsite(null)).toBe(false);
+    expect(isSafeWebsite(undefined)).toBe(false);
+  });
+  it('rechaza URLs de más de 200 chars', () => {
+    const long = 'https://example.com/' + 'a'.repeat(200);
+    expect(isSafeWebsite(long)).toBe(false);
   });
 });
 
