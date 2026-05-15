@@ -9,6 +9,8 @@ const {
   isSafeLogoUrl,
   isValidOrgSlug,
   isValidTagline,
+  isValidDescription,
+  isSafeWebsite,
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
@@ -195,7 +197,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, logo_url, color_primary, address, phone, created_at')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -204,7 +206,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, logo_url, color_primary, nif, email, address, phone } = body;
+      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
@@ -214,6 +216,15 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       }
       if (tagline != null && !isValidTagline(tagline)) {
         return jsonResponse(400, { error: 'tagline máx. 140 chars' });
+      }
+      if (description != null && !isValidDescription(description)) {
+        return jsonResponse(400, { error: 'description máx. 500 chars' });
+      }
+      if (website && !isSafeWebsite(website)) {
+        return jsonResponse(400, { error: 'website inválido (http:// o https://, máx 200 chars)' });
+      }
+      if (email && !EMAIL_RE.test(String(email).trim())) {
+        return jsonResponse(400, { error: 'email inválido' });
       }
       if (color_primary && !isValidHex(color_primary)) {
         return jsonResponse(400, { error: 'color_primary debe ser #RRGGBB' });
@@ -228,6 +239,8 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           slug,
           name: name.trim(),
           tagline: tagline ? String(tagline).trim() : null,
+          description: description ? stripTagsInline(description).substring(0, 500) : null,
+          website: website ? String(website).trim() : null,
           logo_url: logo_url || null,
           color_primary: color_primary || null,
           nif: nif ? String(nif).trim() : null,
@@ -235,7 +248,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
         })
-        .select('id, slug, name, tagline, logo_url, color_primary, address, phone')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone')
         .single();
 
       if (error) {
@@ -248,13 +261,22 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, logo_url, color_primary, address, phone } = body;
+      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
       }
       if (tagline != null && !isValidTagline(tagline)) {
         return jsonResponse(400, { error: 'tagline máx. 140 chars' });
+      }
+      if (description != null && !isValidDescription(description)) {
+        return jsonResponse(400, { error: 'description máx. 500 chars' });
+      }
+      if (website && !isSafeWebsite(website)) {
+        return jsonResponse(400, { error: 'website inválido (http:// o https://, máx 200 chars)' });
+      }
+      if (email && !EMAIL_RE.test(String(email).trim())) {
+        return jsonResponse(400, { error: 'email inválido' });
       }
       if (color_primary && !isValidHex(color_primary)) {
         return jsonResponse(400, { error: 'color_primary debe ser #RRGGBB' });
@@ -271,6 +293,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         updates.name = name.trim();
       }
       if (tagline !== undefined)       updates.tagline       = tagline ? String(tagline).trim() : null;
+      if (description !== undefined)   updates.description   = description ? stripTagsInline(description).substring(0, 500) : null;
+      if (website !== undefined)       updates.website       = website ? String(website).trim() : null;
+      if (email !== undefined)         updates.email         = email ? String(email).trim() : null;
       if (logo_url !== undefined)      updates.logo_url      = logo_url || null;
       if (color_primary !== undefined) updates.color_primary = color_primary || null;
       // address / phone son tolerantes: el admin los puede vaciar mandando ''

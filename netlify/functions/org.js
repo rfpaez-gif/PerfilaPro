@@ -2,7 +2,7 @@
 
 const { getDb } = require('./lib/supabase-client');
 const { esc, renderCard, htmlPage } = require('./lib/dir-utils');
-const { getOrgBySlug, listCardsByOrg, isValidHex, isSafeLogoUrl } = require('./lib/org-utils');
+const { getOrgBySlug, listCardsByOrg, isValidHex, isSafeLogoUrl, isSafeWebsite } = require('./lib/org-utils');
 
 function makeHandler(deps) {
   const _getDb           = deps.getDb;
@@ -50,12 +50,20 @@ function makeHandler(deps) {
 .pp-org-hero__logo img{display:block;max-height:60px;max-width:200px;width:auto;height:auto}
 .pp-org-hero__name{font-family:var(--font-serif);font-size:1.875rem;line-height:1.2;font-weight:400;letter-spacing:-0.02em;color:#FFFFFF}
 .pp-org-hero__tagline{font-size:.9375rem;opacity:.88;margin-top:.5rem;line-height:1.6;max-width:48ch;margin-left:auto;margin-right:auto}
+.pp-org-about{background:#FFFFFF;border:1px solid var(--color-gris-200);border-radius:1rem;padding:1.5rem 1.25rem;margin-bottom:1.5rem}
+.pp-org-about__title{font-family:var(--font-serif);font-size:1.25rem;font-weight:400;letter-spacing:-0.01em;color:var(--color-tinta);margin:0 0 .75rem}
+.pp-org-about__desc{font-size:.9375rem;line-height:1.65;color:var(--color-tinta);margin:0;white-space:pre-line}
+.pp-org-about__list{list-style:none;margin:1rem 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.875rem;color:var(--color-gris-700)}
+.pp-org-about__list li{display:flex;gap:.5rem;align-items:flex-start;line-height:1.5}
+.pp-org-about__list a{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.pp-org-about__list a:hover{border-color:currentColor}
 .pp-org-count{font-size:.8125rem;color:var(--color-gris-500);margin:0 0 .875rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 @media(max-width:480px){
   .pp-org-hero{padding:1.875rem 1rem 1.5rem}
   .pp-org-hero__name{font-size:1.5rem}
   .pp-org-hero__logo img{max-height:48px;max-width:160px}
 }
+@media(max-width:640px){.pp-org-about__list{grid-template-columns:1fr}}
 `;
 
     const heroHtml = `<section class="pp-org-hero">
@@ -63,6 +71,27 @@ function makeHandler(deps) {
   <h1 class="pp-org-hero__name">${esc(org.name)}</h1>
   ${org.tagline ? `<p class="pp-org-hero__tagline">${esc(org.tagline)}</p>` : ''}
 </section>`;
+
+    // Bloque "Acerca de" — solo aparece si hay al menos un dato. Si la org
+    // no rellena nada, /e/:slug queda como antes (hero + grid, sin scroll
+    // extra). El website se valida con isSafeWebsite antes de renderizar
+    // para evitar javascript: y demás. Email/phone construyen mailto:/tel:.
+    const website = isSafeWebsite(org.website) ? org.website : null;
+    const websiteDisplay = website ? website.replace(/^https?:\/\//i, '').replace(/\/$/, '') : null;
+    const phoneHref = org.phone ? String(org.phone).replace(/[^\d+]/g, '') : null;
+    const hasContacts = Boolean(org.phone || org.email || website || org.address);
+    const hasAbout    = Boolean(org.description || hasContacts);
+
+    const aboutHtml = hasAbout ? `<section class="pp-org-about">
+  <h2 class="pp-org-about__title">Acerca de ${esc(org.name)}</h2>
+  ${org.description ? `<p class="pp-org-about__desc">${esc(org.description)}</p>` : ''}
+  ${hasContacts ? `<ul class="pp-org-about__list">
+    ${org.phone   ? `<li><span aria-hidden="true">📞</span> <a href="tel:${esc(phoneHref)}">${esc(org.phone)}</a></li>` : ''}
+    ${org.email   ? `<li><span aria-hidden="true">✉</span> <a href="mailto:${esc(org.email)}">${esc(org.email)}</a></li>` : ''}
+    ${website     ? `<li><span aria-hidden="true">🌐</span> <a href="${esc(website)}" target="_blank" rel="noopener noreferrer">${esc(websiteDisplay)}</a></li>` : ''}
+    ${org.address ? `<li><span aria-hidden="true">📍</span> ${esc(org.address)}</li>` : ''}
+  </ul>` : ''}
+</section>` : '';
 
     // En el grid de una org enlazamos a la tarjeta personal de cada miembro
     // (/c/:slug), no al perfil-publico SEO (/p/:slug). Queremos que el visitante
@@ -83,7 +112,7 @@ function makeHandler(deps) {
         title,
         desc,
         canonical,
-        body: `${heroHtml}\n${cardsHtml}`,
+        body: `${heroHtml}\n${aboutHtml}\n${cardsHtml}`,
         crumbs: null,
         siteUrl,
         jsonLd: null,

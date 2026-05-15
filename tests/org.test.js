@@ -137,4 +137,91 @@ describe('org handler (/e/:slug)', () => {
     expect(res.body).not.toContain('<script>x</script>');
     expect(res.body).toContain('&lt;script&gt;');
   });
+
+  // ── Bloque "Acerca de" (description + contactos) ──
+  describe('bloque Acerca de', () => {
+    it('no aparece si la org no tiene description ni contactos', async () => {
+      // BASE_ORG no tiene description/website/email/phone/address
+      const res = await handler(buildEvent('/e/iris'));
+      // El CSS .pp-org-about vive siempre en <style>, lo que no debe
+      // aparecer es la <section> ni el título "Acerca de …".
+      expect(res.body).not.toContain('<section class="pp-org-about">');
+      expect(res.body).not.toContain('Acerca de Iris');
+    });
+
+    it('aparece con párrafo de description', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        description: 'Comercializadora independiente de energía 100% renovable.',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).toContain('<section class="pp-org-about">');
+      expect(res.body).toContain('Acerca de Iris Comercializadora');
+      expect(res.body).toContain('Comercializadora independiente de energía 100% renovable.');
+    });
+
+    it('renderiza website como link con target=_blank y rel=noopener', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        website: 'https://irisenergia.es',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).toContain('href="https://irisenergia.es"');
+      expect(res.body).toContain('target="_blank"');
+      expect(res.body).toContain('rel="noopener noreferrer"');
+      // display sin protocolo
+      expect(res.body).toMatch(/>irisenergia\.es</);
+    });
+
+    it('omite website si el protocolo no es http(s)', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        website: 'javascript:alert(1)',
+        description: 'Algo descriptivo',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).not.toContain('javascript:alert');
+      expect(res.body).toContain('Algo descriptivo');
+    });
+
+    it('renderiza email como mailto: clicable', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        email: 'hola@iris.es',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).toContain('href="mailto:hola@iris.es"');
+    });
+
+    it('renderiza phone como tel: limpiando espacios', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        phone: '+34 965 12 34 56',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).toContain('href="tel:+34965123456"');
+      // display preserva el formato bonito
+      expect(res.body).toContain('+34 965 12 34 56');
+    });
+
+    it('renderiza address como texto plano (no link)', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        address: 'C/ Mayor 12, Orihuela',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).toContain('C/ Mayor 12, Orihuela');
+    });
+
+    it('escapa la description y el website en HTML', async () => {
+      mockGetOrgBySlug.mockResolvedValue({
+        ...BASE_ORG,
+        description: '<script>alert(1)</script>',
+        website: 'https://example.com/"><script>',
+      });
+      const res = await handler(buildEvent('/e/iris'));
+      expect(res.body).not.toContain('<script>alert(1)</script>');
+      expect(res.body).toContain('&lt;script&gt;');
+    });
+  });
 });

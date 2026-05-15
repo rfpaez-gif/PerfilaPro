@@ -238,8 +238,25 @@
           </div>
 
           <div class="pp-form__row">
-            <label class="pp-form__label" for="taglineInput">Tagline <small>opcional · máx 140</small></label>
+            <label class="pp-form__label" for="taglineInput">Tagline <small>opcional · máx 140 · 1 línea en /e/:slug</small></label>
             <input type="text" class="pp-input" id="taglineInput" placeholder="Cartera de agentes Allianz España" maxlength="140">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="descriptionInput">Descripción <small>opcional · máx 500 · párrafo en /e/:slug</small></label>
+            <textarea class="pp-input" id="descriptionInput" rows="3" placeholder="Comercializadora independiente de energía 100% renovable. Tarifas transparentes y un profesional asignado por cliente." maxlength="500" style="font-family:inherit;resize:vertical"></textarea>
+            <p class="pp-form__hint">Texto plano. Se muestra en el bloque "Acerca de" debajo del hero, sobre fondo claro.</p>
+          </div>
+
+          <div class="pp-form__row" style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+            <div>
+              <label class="pp-form__label" for="websiteInput">Web corporativa <small>opcional</small></label>
+              <input type="url" class="pp-input" id="websiteInput" placeholder="https://irisenergia.es" maxlength="200">
+            </div>
+            <div>
+              <label class="pp-form__label" for="emailInput">Email corporativo <small>opcional</small></label>
+              <input type="email" class="pp-input" id="emailInput" placeholder="hola@irisenergia.es" maxlength="120">
+            </div>
           </div>
 
           <div class="pp-form__row" style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
@@ -252,7 +269,7 @@
               <input type="text" class="pp-input" id="addressInput" placeholder="C/ Mayor 12, Orihuela" maxlength="200">
             </div>
           </div>
-          <p class="pp-form__hint">Fallback para las tarjetas de visita de los miembros: si un miembro no rellena su propia dirección, sale la de la organización.</p>
+          <p class="pp-form__hint">Teléfono y dirección sirven también de fallback para las tarjetas de visita de los miembros que no rellenen los suyos.</p>
 
           <div class="pp-form__row">
             <label class="pp-form__label">Color primario</label>
@@ -514,7 +531,12 @@ function resetForm() {
   $('nameInput').value = '';
   $('slugInput').value = '';
   $('slugInput').dataset.touched = '';
+  $('slugInput').readOnly = false;
+  $('slugInput').title = '';
   $('taglineInput').value = '';
+  $('descriptionInput').value = '';
+  $('websiteInput').value = '';
+  $('emailInput').value = '';
   $('phoneInput').value = '';
   $('addressInput').value = '';
   $('colorInput').value = '#003781';
@@ -533,7 +555,14 @@ function loadForm(org) {
   $('nameInput').value = org.name || '';
   $('slugInput').value = org.slug || '';
   $('slugInput').dataset.touched = '1';
+  // Bloqueamos el slug en edición: cambiarlo invalida URLs ya repartidas
+  // (emails de invitación, /e/:slug enlazado externamente, QR impresos).
+  $('slugInput').readOnly = true;
+  $('slugInput').title = 'El slug no se edita: rompería URLs ya repartidas. Crea una org nueva si necesitas cambiarlo.';
   $('taglineInput').value = org.tagline || '';
+  $('descriptionInput').value = org.description || '';
+  $('websiteInput').value = org.website || '';
+  $('emailInput').value = org.email || '';
   $('phoneInput').value = org.phone || '';
   $('addressInput').value = org.address || '';
   $('colorInput').value = org.color_primary || '#003781';
@@ -643,32 +672,40 @@ async function callAdmin(payload) {
 }
 
 async function saveOrg() {
-  const name = $('nameInput').value.trim();
-  const slug = $('slugInput').value.trim();
-  const tagline = $('taglineInput').value.trim();
-  const phone   = $('phoneInput').value.trim();
-  const address = $('addressInput').value.trim();
+  const name        = $('nameInput').value.trim();
+  const slug        = $('slugInput').value.trim();
+  const tagline     = $('taglineInput').value.trim();
+  const description = $('descriptionInput').value.trim();
+  const website     = $('websiteInput').value.trim();
+  const email       = $('emailInput').value.trim();
+  const phone       = $('phoneInput').value.trim();
+  const address     = $('addressInput').value.trim();
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
 
   if (!name) return toast('Falta el nombre', 'err');
   if (!slug) return toast('Falta el slug', 'err');
 
+  const payload = {
+    name,
+    tagline:     tagline     || null,
+    description: description || null,
+    website:     website     || null,
+    email:       email       || null,
+    color_primary: color,
+    phone:   phone   || null,
+    address: address || null,
+  };
+
   $('saveBtn').disabled = true;
   try {
     if (editingSlug) {
-      await callAdmin({
-        action: 'update', slug: editingSlug,
-        name, tagline: tagline || null, color_primary: color,
-        phone: phone || null, address: address || null,
-      });
+      await callAdmin({ action: 'update', slug: editingSlug, ...payload });
       toast(`Org "${name}" actualizada`, 'ok');
     } else {
-      await callAdmin({
-        action: 'create',
-        slug, name, tagline: tagline || null, color_primary: color,
-        phone: phone || null, address: address || null,
-      });
+      await callAdmin({ action: 'create', slug, ...payload });
       editingSlug = slug; // permite subir logo justo después
+      $('slugInput').readOnly = true;
+      $('slugInput').title = 'El slug no se edita: rompería URLs ya repartidas. Crea una org nueva si necesitas cambiarlo.';
       $('formTitle').textContent = `Editar · ${name}`;
       $('saveBtn').textContent = 'Guardar cambios';
       $('resetFormBtn').style.display = 'inline-flex';

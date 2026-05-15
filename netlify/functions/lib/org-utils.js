@@ -28,11 +28,28 @@ function isValidTagline(tagline) {
   return typeof tagline === 'string' && tagline.length <= 140;
 }
 
+function isValidDescription(description) {
+  return typeof description === 'string' && description.length <= 500;
+}
+
+// http(s) parseable y dentro de 200 chars. javascript:, data:, file: → false.
+function isSafeWebsite(url) {
+  if (typeof url !== 'string' || !url || url.length > 200) return false;
+  let parsed;
+  try { parsed = new URL(url); } catch { return false; }
+  return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+}
+
+// Campos persistidos que consume el render público y la tarjeta de visita.
+// Cualquier campo que use card.js / org.js / printable-card-utils.js debe
+// listarse aquí o el SELECT lo devuelve undefined silenciosamente.
+const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, deleted_at';
+
 async function getOrgBySlug(db, slug) {
   if (!isValidOrgSlug(slug)) return null;
   const { data, error } = await db
     .from('organizations')
-    .select('id, slug, name, tagline, logo_url, color_primary, deleted_at')
+    .select(ORG_PUBLIC_COLUMNS)
     .eq('slug', slug)
     .is('deleted_at', null)
     .maybeSingle();
@@ -44,7 +61,7 @@ async function getOrgById(db, id) {
   if (!id) return null;
   const { data } = await db
     .from('organizations')
-    .select('id, slug, name, tagline, logo_url, color_primary, deleted_at')
+    .select(ORG_PUBLIC_COLUMNS)
     .eq('id', id)
     .is('deleted_at', null)
     .maybeSingle();
@@ -70,6 +87,8 @@ module.exports = {
   isSafeLogoUrl,
   isValidOrgSlug,
   isValidTagline,
+  isValidDescription,
+  isSafeWebsite,
   getOrgBySlug,
   getOrgById,
   listCardsByOrg,

@@ -195,6 +195,56 @@ describe('admin-orgs handler', () => {
       const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', tagline: long } }));
       expect(res.statusCode).toBe(400);
     });
+
+    it('persiste description sanitizada (strip tags + trim + max 500)', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+        description: '  <b>Comercializadora</b> de energía renovable  ',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.description).toBe('Comercializadora de energía renovable');
+    });
+
+    it('rechaza description de más de 500 chars', async () => {
+      const long = 'x'.repeat(501);
+      const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', description: long } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('description');
+    });
+
+    it('persiste website válido', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+        website: 'https://irisenergia.es',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.website).toBe('https://irisenergia.es');
+    });
+
+    it('rechaza website con protocolo peligroso', async () => {
+      const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', website: 'javascript:alert(1)' } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('website');
+    });
+
+    it('rechaza website sin protocolo http(s)', async () => {
+      const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', website: 'irisenergia.es' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('persiste email válido', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris', email: 'hola@iris.es',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.email).toBe('hola@iris.es');
+    });
+
+    it('rechaza email mal formado', async () => {
+      const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', email: 'no-es-un-email' } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('email');
+    });
   });
 
   // ── update ──
@@ -221,6 +271,32 @@ describe('admin-orgs handler', () => {
 
     it('rechaza slug inválido', async () => {
       const res = await handler(buildEvent({ body: { action: 'update', slug: 'X', tagline: 'foo' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('actualiza description, website y email cuando se envían', async () => {
+      const res = await handler(buildEvent({
+        body: {
+          action: 'update', slug: 'iris',
+          description: 'Nueva descripción',
+          website: 'https://iris.es',
+          email: 'hola@iris.es',
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+    });
+
+    it('rechaza website inválido en update', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'iris', website: 'javascript:alert(1)' },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza description >500 en update', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'iris', description: 'x'.repeat(501) },
+      }));
       expect(res.statusCode).toBe(400);
     });
   });
