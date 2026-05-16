@@ -64,6 +64,15 @@ describe('register-free handler', () => {
     _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
+    // Aislamiento defensivo: garantizamos que cada test arranca sin estas
+    // env vars set. El entorno CI de Netlify las puede tener seteadas
+    // (porque están configuradas en producción), y leakean al runtime de
+    // los tests. Sin este reset, tests que asumen "ninguna puerta abierta"
+    // se rompían cuando WEB_FUNNEL_FREE_ACTIVE=1 estaba presente en CI.
+    // Los describes anidados (demo/web funnel) setean lo que necesitan.
+    delete process.env.DEMO_FUNNEL_FREE_ACTIVE;
+    delete process.env.WEB_FUNNEL_FREE_ACTIVE;
+
     // Default: no existing slug (no collision), no category match,
     // CP 03001 → Alicante / alicante (capital de provincia).
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
