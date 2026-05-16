@@ -31,6 +31,8 @@ function makeHandler(deps) {
 <title>Organización no encontrada — PerfilaPro</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <style>body{font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#FAF7F0;color:#0A1F44;margin:0}div{text-align:center;padding:1rem}h1{font-size:1.5rem;margin-bottom:.5rem;font-weight:700;letter-spacing:-0.02em}p{color:#6B7280;margin:0}</style>
 </head><body><div><h1>Organización no encontrada</h1><p>Esta página no existe o ya no está activa.</p></div></body></html>`,
       };

@@ -254,6 +254,8 @@ function htmlPage({ title, desc, canonical, prevUrl, nextUrl, body, crumbs, site
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <link rel="canonical" href="${esc(canonical)}">
