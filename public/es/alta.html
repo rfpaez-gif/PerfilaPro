@@ -1364,17 +1364,13 @@
         btn.textContent = 'Publicar mi perfil gratis';
         return;
       }
-      // Auto-activación gratuita: el backend ya activó la card como Pro y
-      // mandó el email con la tarjeta A6. No mostramos pantalla intermedia
-      // — redirigimos directo al editor para que el usuario aterrice
-      // viendo su perfil completo (con QR + visitas), sin segundo click.
-      // Distinguimos canal por el `via`: demo-* → funnel demo dirigido;
-      // resto → funnel web orgánico (WEB_FUNNEL_FREE_ACTIVE).
+      // Demo funnel: el backend ya activó la card como Pro y mandó el email
+      // con la tarjeta A6. No mostramos pantalla intermedia — redirigimos
+      // directo al editor para que el usuario aterrice viendo su perfil
+      // completo (con QR + visitas) y la foto al top, sin segundo click.
       if (r.data.demo_activated === true && r.data.edit_url) {
         if (typeof window.ppEvent === 'function') {
-          var camePromDemo = typeof payload.via === 'string' && payload.via.indexOf('demo-') === 0;
-          var evtName = camePromDemo ? 'signup_completed_demo_funnel' : 'signup_completed_web_funnel';
-          window.ppEvent(evtName, { via: payload.via || null, sector: payload.sector });
+          window.ppEvent('signup_completed_demo_funnel', { via: payload.via, sector: payload.sector });
         }
         window.location.href = r.data.edit_url;
         return;

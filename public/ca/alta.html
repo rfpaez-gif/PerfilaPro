@@ -1369,16 +1369,14 @@
         btn.textContent = 'Publicar el meu perfil gratis';
         return;
       }
-      // Auto-activació gratuïta: el backend ja ha activat la targeta com
-      // a Pro i ha enviat l'email amb la targeta A6. No mostrem pantalla
-      // intermèdia — redirigim directament a l'editor. Distingim canal
-      // pel `via`: demo-* → funnel demo dirigit; resta → funnel web
-      // orgànic (WEB_FUNNEL_FREE_ACTIVE).
+      // Demo funnel: el backend ja ha activat la targeta com a Pro i ha
+      // enviat l'email amb la targeta A6. No mostrem pantalla intermèdia
+      // — redirigim directament a l'editor perquè l'usuari aterri veient
+      // el seu perfil complet (amb QR + visites) i la foto a dalt, sense
+      // segon click.
       if (r.data.demo_activated === true && r.data.edit_url) {
         if (typeof window.ppEvent === 'function') {
-          var camePromDemo = typeof payload.via === 'string' && payload.via.indexOf('demo-') === 0;
-          var evtName = camePromDemo ? 'signup_completed_demo_funnel' : 'signup_completed_web_funnel';
-          window.ppEvent(evtName, { via: payload.via || null, sector: payload.sector });
+          window.ppEvent('signup_completed_demo_funnel', { via: payload.via, sector: payload.sector });
         }
         window.location.href = r.data.edit_url;
         return;
