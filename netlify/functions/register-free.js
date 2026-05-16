@@ -257,27 +257,22 @@ function makeHandler(db, emailClient = resend) {
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
-    // Auto-activación gratuita como Pro. Dos puertas independientes y
-    // reversibles, ambas usan la misma maquinaria (lib/demo-activation):
+    // Demo funnel: usuario que entra a /alta procedente de una card demo
+    // (link con ?via=demo-wa | demo-pill | demo-*) y el admin tiene el
+    // grifo abierto vía DEMO_FUNNEL_FREE_ACTIVE=1. La card se activa
+    // como Pro inmediatamente (mismo trato que activate-demo da a las
+    // seed cards), sin pasar por Stripe y sin segundo click. El welcome
+    // email de free se sustituye por el email demo con la tarjeta A6
+    // adjunta — no duplicamos correos.
     //
-    //   - DEMO_FUNNEL_FREE_ACTIVE=1 → solo altas con ?via=demo-*
-    //     (campaña dirigida desde cards seed; tracking por canal)
-    //   - WEB_FUNNEL_FREE_ACTIVE=1  → TODA alta orgánica activa Pro
-    //     (wedge B2C → B2B: el autónomo no paga, la red se hace grande,
-    //     el producto B2B vende sobre esa red)
-    //
-    // Si ambas activas, demo gana precedencia para que el evento PostHog
-    // distinga el canal. El welcome email free se sustituye por el email
-    // demo (con tarjeta A6 adjunta) — no duplicamos correos.
-    //
-    // Apagado: borrar la env var correspondiente. Las cards ya activadas
-    // conservan plan + expires_at. El frontend sigue mandando `via` pero
-    // el backend lo ignora; el banner Stripe del editor vuelve.
-    const hasDemoVia   = typeof via === 'string' && via.startsWith('demo-');
-    const isDemoFunnel = hasDemoVia && process.env.DEMO_FUNNEL_FREE_ACTIVE === '1';
-    const isWebFunnel  = !isDemoFunnel && process.env.WEB_FUNNEL_FREE_ACTIVE === '1';
+    // Apagado: borrar la env var. El backend cae al welcome free normal
+    // y el editor vuelve a mostrar el banner de upgrade Stripe.
+    const isDemoFunnel =
+      typeof via === 'string' &&
+      via.startsWith('demo-') &&
+      process.env.DEMO_FUNNEL_FREE_ACTIVE === '1';
 
-    if (isDemoFunnel || isWebFunnel) {
+    if (isDemoFunnel) {
       const cardForActivation = {
         slug,
         nombre:     cleanNombre,
@@ -298,8 +293,7 @@ function makeHandler(db, emailClient = resend) {
       });
 
       if (result.ok) {
-        const eventName = isDemoFunnel ? 'signup_completed_demo_funnel' : 'signup_completed_web_funnel';
-        captureEvent(slug, eventName, { sector: sector || null, via: via || null, idioma })
+        captureEvent(slug, 'signup_completed_demo_funnel', { sector: sector || null, via, idioma })
           .catch(() => {});
 
         return {
@@ -320,7 +314,7 @@ function makeHandler(db, emailClient = resend) {
       // Activación falló (BD). La card free ya existe — caemos al carril
       // free normal para que el usuario al menos tenga su perfil aunque el
       // upgrade no se haya aplicado. Mejor degradar que perder al usuario.
-      console.error('Auto-activation failed, falling back to free:', result.error?.message);
+      console.error('Demo funnel activation failed, falling back to free:', result.error?.message);
     }
 
     if (email && emailClient) {
