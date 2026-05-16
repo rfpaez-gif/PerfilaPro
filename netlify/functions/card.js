@@ -249,6 +249,8 @@ exports.handler = async (event) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   ${(org || isExampleCard) ? '<meta name="robots" content="noindex,nofollow">' : ''}
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <title>${esc(data.nombre) || T.metaProfile} — PerfilaPro</title>
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
