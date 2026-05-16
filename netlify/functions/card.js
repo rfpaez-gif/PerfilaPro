@@ -181,9 +181,16 @@ exports.handler = async (event) => {
     });
   }
 
-  const waUrl = !isDemo && data.whatsapp
-    ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent(T.waMessage)}`
-    : null;
+  // Cards demo (slug 'demo-*'): visualmente idéntico a una card real, pero
+  // el botón de WhatsApp canaliza al alta en vez de a wa.me. La pequeña
+  // sorpresa al click es el teaching moment ('aquí estaría tu WhatsApp si
+  // tuvieras tu card'). El query param via=demo-wa permite medir qué CTA
+  // convierte más (vs via=demo-pill).
+  const waUrl = isExampleCard
+    ? `/${idioma}/alta?via=demo-wa`
+    : (!isDemo && data.whatsapp
+        ? `https://wa.me/${data.whatsapp}?text=${encodeURIComponent(T.waMessage)}`
+        : null);
 
   // Gate paid/free unificado: stripe_session_id (Stripe real) o kit_email_sent_at
   // (promo de lanzamiento redimida). Mismo criterio que el #freeBanner del editor
@@ -371,7 +378,7 @@ exports.handler = async (event) => {
   ${fromAdminOrgs ? `<div style="background:#0A1F44;color:#fff;padding:10px 16px;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center;letter-spacing:.01em">
     <a href="/admin-orgs.html" onclick="if(window.opener && !window.opener.closed){window.close();return false}" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${T.backToStudio}</a>
   </div>` : ''}
-  ${isExampleCard ? `<a class="pp-demo-pill" href="/${idioma}/alta">${T.demoPill}</a>` : ''}
+  ${isExampleCard ? `<a class="pp-demo-pill" href="/${idioma}/alta?via=demo-pill">${T.demoPill}</a>` : ''}
   <div class="pp-card">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
       ${orgLogo
@@ -396,7 +403,7 @@ exports.handler = async (event) => {
       ${data.descripcion ? `<p class="pp-card__desc">${esc(data.descripcion)}</p>` : ''}
       ${serviciosHTML ? `<div class="pp-svc-list">${serviciosHTML}</div>` : ''}
       ${(waUrl || data.telefono) ? `<div class="pp-cta-group${hasBothCtas ? ' pp-cta-group--dual' : ''}">
-        ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener" class="pp-cta pp-cta--wa">
+        ${waUrl ? `<a href="${waUrl}"${isExampleCard ? '' : ' target="_blank" rel="noopener"'} class="pp-cta pp-cta--wa">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
           ${T.waLabel}
         </a>` : ''}
