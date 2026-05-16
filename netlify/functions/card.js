@@ -358,7 +358,7 @@ exports.handler = async (event) => {
     .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
     .pp-card__org-hero__tagline{font-size:.75rem;opacity:.9;margin-top:.25rem;line-height:1.4}
     .pp-card__org-hero:hover .pp-card__org-hero__logo{transform:translateY(-1px)}
-    /* Pill de disclosure para cards demo (slug `demo-*`). Va sobre la
+    /* Pill de disclosure para cards demo (slug 'demo-*'). Va sobre la
        tarjeta como etiqueta de marketing, link directo al alta. */
     .pp-demo-pill{display:inline-flex;align-items:center;gap:.4rem;margin:0 0 .875rem;padding:.5rem 1rem;background:var(--color-verde-light);color:var(--color-verde-dark);border:1px solid var(--color-gris-200);border-radius:var(--pp-r-pill);font-size:.75rem;font-weight:600;text-decoration:none;letter-spacing:.005em;transition:background .15s,color .15s,border-color .15s;-webkit-tap-highlight-color:transparent}
     .pp-demo-pill:hover{background:var(--color-verde-match);color:#fff;border-color:var(--color-verde-match)}
