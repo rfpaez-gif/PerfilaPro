@@ -1216,6 +1216,19 @@
   const token = params.get('token');
   const previewMode = params.get('preview'); // 'free' | 'pro' — dev-only bypass, sin auth
 
+  // Cards demo (slug 'demo-*'): movemos el campo de foto justo encima del
+  // freeBanner para que sea lo primero accionable cuando el usuario aterriza
+  // en el editor. Observado en pruebas: a los usuarios les cuesta encontrar
+  // el banner de foto enterrado entre los campos del form.
+  if (slug && slug.indexOf('demo-') === 0) {
+    const demoPhotoInput = document.getElementById('fotoFileInput');
+    const demoPhotoField = demoPhotoInput ? demoPhotoInput.closest('.pp-field') : null;
+    const demoFreeBanner = document.getElementById('freeBanner');
+    if (demoPhotoField && demoFreeBanner && demoFreeBanner.parentNode) {
+      demoFreeBanner.parentNode.insertBefore(demoPhotoField, demoFreeBanner);
+    }
+  }
+
   if (previewMode === 'free' || previewMode === 'pro') {
     loadEditFormPreview(previewMode);
   } else if (slug && token) {

@@ -1216,6 +1216,19 @@
   const token = params.get('token');
   const previewMode = params.get('preview'); // 'free' | 'pro' — dev-only bypass, sin auth
 
+  // Targetes demo (slug 'demo-*'): movem el camp de foto just damunt del
+  // freeBanner perquè sigui el primer accionable quan l'usuari aterra a
+  // l'editor. Observat en proves: als usuaris els costa trobar el banner
+  // de foto enterrat entre els camps del form.
+  if (slug && slug.indexOf('demo-') === 0) {
+    const demoPhotoInput = document.getElementById('fotoFileInput');
+    const demoPhotoField = demoPhotoInput ? demoPhotoInput.closest('.pp-field') : null;
+    const demoFreeBanner = document.getElementById('freeBanner');
+    if (demoPhotoField && demoFreeBanner && demoFreeBanner.parentNode) {
+      demoFreeBanner.parentNode.insertBefore(demoPhotoField, demoFreeBanner);
+    }
+  }
+
   if (previewMode === 'free' || previewMode === 'pro') {
     loadEditFormPreview(previewMode);
   } else if (slug && token) {

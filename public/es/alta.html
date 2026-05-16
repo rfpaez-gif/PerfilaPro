@@ -1356,11 +1356,51 @@
       var slug    = r.data.slug;
       var siteUrl = window.location.origin;
       var cardUrl = siteUrl + '/c/' + slug;
+      var isDemo  = typeof slug === 'string' && slug.indexOf('demo-') === 0;
 
       document.getElementById('successUrlText').textContent = cardUrl;
-      // CTA principal va al editor con scroll directo al banner de upgrade —
-      // el usuario aterriza viendo "elige plan" sin pasos intermedios.
-      document.getElementById('btnActivarPerfil').href = r.data.edit_url + '#freeBanner';
+
+      var btnActivar = document.getElementById('btnActivarPerfil');
+      if (isDemo) {
+        // Cards demo: activación gratuita inmediata (sin Stripe). El click
+        // llama a /api/activate-demo y al éxito navega al editor con la foto
+        // arriba.
+        btnActivar.textContent = 'Activa tu demo gratis →';
+        btnActivar.href = '#';
+        btnActivar.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (btnActivar.dataset.busy === '1') return;
+          btnActivar.dataset.busy = '1';
+          var origText = btnActivar.textContent;
+          btnActivar.textContent = 'Activando…';
+          var tokenMatch = (r.data.edit_url || '').match(/[?&]token=([^&]+)/);
+          var token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
+          fetch('/api/activate-demo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: slug, token: token }),
+          })
+          .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, data: d }; }); })
+          .then(function (rr) {
+            if (!rr.ok) {
+              btnActivar.textContent = origText;
+              btnActivar.dataset.busy = '';
+              alert(rr.data.error || 'No se pudo activar la demo.');
+              return;
+            }
+            window.location.href = r.data.edit_url;
+          })
+          .catch(function () {
+            btnActivar.textContent = origText;
+            btnActivar.dataset.busy = '';
+            alert('Error de red. Inténtalo de nuevo.');
+          });
+        });
+      } else {
+        // CTA principal va al editor con scroll directo al banner de upgrade —
+        // el usuario aterriza viendo "elige plan" sin pasos intermedios.
+        btnActivar.href = r.data.edit_url + '#freeBanner';
+      }
       document.getElementById('btnEditarPerfil').href = r.data.edit_url;
       document.getElementById('btnVerPerfil').href = '/c/' + slug;
       document.getElementById('btnWaPerfil').href =
