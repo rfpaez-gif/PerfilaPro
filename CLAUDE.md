@@ -187,13 +187,14 @@ Material de captación: tarjetas reales en producción que representan a profesi
 2. **Editor en `/editar?slug=demo-*`** (`editar.html`): JS detecta el prefijo y mueve la foto al top, encima del `#freeBanner` de upgrade, para que la card parezca completa al visualizarse.
 3. **Activación seed**: `/api/activate-demo` (POST con slug + edit_token). Gate por prefijo `demo-*` — sin el prefijo devuelve 403 aunque el token sea válido. Marca `plan='pro'`, `expires_at` a +365 días, `kit_email_sent_at` y manda email recortado (subject `[Demo]`, footer "Sin valor fiscal", tarjeta A6 adjunta · **sin factura · sin QR PNG suelto · sin comprobante**). Idempotente: re-llamadas devuelven 200 sin re-tocar. Se llama desde la pantalla de éxito de `alta.html` cuando el slug recién creado empieza por `demo-*`.
 
-**Demo funnel** (`DEMO_FUNNEL_FREE_ACTIVE=1`) — extensión opcional para que los usuarios reales que entran a `/alta` procedentes de una card demo completen la activación sin fricción de Stripe.
+**Auto-activación gratuita** — dos puertas independientes y reversibles en `register-free.js` que activan la card como Pro tras el INSERT, sustituyendo el welcome email por el demo email con tarjeta A6 adjunta. Ambas reusan `lib/demo-activation.js → activateAndSendDemoKit()` (la misma función que usa `/api/activate-demo`).
 
-- Frontend (`alta.html` es + ca): lee `?via=demo-*` del URL y lo añade al payload de `register-free`. Si la respuesta lleva `demo_activated: true`, redirige directamente a `edit_url` saltándose la pantalla de éxito (el usuario aterriza viendo su perfil completo con QR + visitas + foto al top).
-- Backend (`register-free.js`): si `via.startsWith('demo-')` y el grifo está abierto, después del INSERT delega en `lib/demo-activation.js` → `activateAndSendDemoKit()` (la misma función que usa `/api/activate-demo`). El welcome email free **se sustituye** por el email demo con tarjeta A6 adjunta — no se mandan dos correos.
-- Cualquier valor que empiece por `demo-` activa (`demo-wa`, `demo-pill`, `demo-qr`, `demo-rastro`, etc) — sin tocar código se pueden añadir variantes para tracking de canal.
-- Apagado: borrar `DEMO_FUNNEL_FREE_ACTIVE`. El frontend sigue mandando `via` pero el backend lo ignora, y el carril free normal (welcome email + banner upgrade Stripe en el editor) vuelve. Las cards ya activadas como demo conservan su `plan='pro'` y `expires_at`.
+- **`DEMO_FUNNEL_FREE_ACTIVE=1`** → solo altas con `?via=demo-*` (campaña dirigida desde cards seed). Cualquier valor que empiece por `demo-` activa (`demo-wa`, `demo-pill`, `demo-qr`, `demo-rastro`, etc) — sin tocar código se pueden añadir variantes para tracking de canal.
+- **`WEB_FUNNEL_FREE_ACTIVE=1`** → TODA alta orgánica (con o sin `via`) entra como Pro. Es el wedge B2C → B2B llevado al extremo: el autónomo individual nunca paga, la red de profesionales se hace grande, el revenue viene de organizaciones (Sprint 3 + Quipu). Cuando este flag está activo, Stripe queda dormido para el carril autónomo pero presente en código por si la conversación cambia más adelante.
+- Precedencia: si ambas envvars están activas con `via=demo-*`, demo gana (evento PostHog `signup_completed_demo_funnel`). Web es el catch-all (evento `signup_completed_web_funnel`).
+- Frontend (`alta.html` es + ca): lee `?via` del URL, lo añade al payload, y si la respuesta lleva `demo_activated: true` redirige directamente a `edit_url` saltándose la pantalla de éxito (el usuario aterriza viendo su perfil Pro completo, con QR + visitas).
 - Si la activación falla en BD (UPDATE error), el handler cae al carril free normal: la card ya existe como free, el usuario recibe welcome email genérico, no se pierde el alta.
+- Apagado: borrar la env var correspondiente. Las cards ya activadas conservan `plan='pro'` y `expires_at`. El frontend sigue mandando `via` pero el backend lo ignora; el banner Stripe del editor vuelve.
 
 **Diferencia con seed cards**: las cards demo-funnel tienen slugs normales (`pepito-perez`, no `demo-*`), así que NO muestran la pill "Ejemplo" en `/c/:slug`, NO mueven la foto al top en el editor, y SÍ se indexan en Google. Son cards reales de usuarios reales que recibieron Pro gratis como gancho de la campaña. La distinción es importante: el prefijo `demo-*` reserva los tres comportamientos visuales para el material de marketing del founder, no para usuarios captados.
 
@@ -301,6 +302,7 @@ POSTHOG_HOST          # default https://eu.i.posthog.com
 B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas y /ca/empresas
 LAUNCH_PROMO_ACTIVE   # "1" activa la promo de lanzamiento 100% bonificada
 DEMO_FUNNEL_FREE_ACTIVE # "1" activa Pro gratis para usuarios que entran a /alta vía ?via=demo-*
+WEB_FUNNEL_FREE_ACTIVE # "1" activa Pro gratis para TODA alta orgánica (wedge B2C → B2B)
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3
 QUIPU_API_BASE        # Sprint 3 — default https://getquipu.com/api/v2
