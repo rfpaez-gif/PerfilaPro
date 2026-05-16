@@ -177,6 +177,31 @@ Acción comercial reversible para que los primeros usuarios completen el flujo d
 
 **Apagado**: borrar la env var. El editor vuelve a llamar a `create-checkout` (Stripe), el endpoint `/api/claim-launch-promo` devuelve 410 Gone, los perfiles ya redimidos conservan su plan + expires_at sin cambios.
 
+### Cards demo (marketing wedge)
+
+Material de captación: tarjetas reales en producción que representan a profesionales-tipo (Mariola peluquera, Paco reformista, etc) y se reparten físicamente (QRs en El Rastro, posters, redes). Sirven dos funciones simultáneas — escaparate de producto y embudo de captación.
+
+**Slug pattern** `demo-*` — todas las seed cards las crea manualmente el founder con un nombre que normalice a slug `demo-...` (ej. "Demo Paco Reparaciones del Hogar" → `demo-paco-reparaciones-del-hogar`). Tres comportamientos se gatan por este prefijo:
+
+1. **Render en `/c/demo-*`** (`card.js`): pinta una pill verde "Ejemplo · Crea la tuya gratis" sobre la card, emite `robots noindex,nofollow`, y el botón WhatsApp + pill canalizan al alta con tracking: `href` → `/{idioma}/alta?via=demo-wa` (WhatsApp) o `?via=demo-pill` (CTA). El número personal del founder no se expone — la card parece completa pero los CTAs redirigen al funnel.
+2. **Editor en `/editar?slug=demo-*`** (`editar.html`): JS detecta el prefijo y mueve la foto al top, encima del `#freeBanner` de upgrade, para que la card parezca completa al visualizarse.
+3. **Activación seed**: `/api/activate-demo` (POST con slug + edit_token). Gate por prefijo `demo-*` — sin el prefijo devuelve 403 aunque el token sea válido. Marca `plan='pro'`, `expires_at` a +365 días, `kit_email_sent_at` y manda email recortado (subject `[Demo]`, footer "Sin valor fiscal", tarjeta A6 adjunta · **sin factura · sin QR PNG suelto · sin comprobante**). Idempotente: re-llamadas devuelven 200 sin re-tocar. Se llama desde la pantalla de éxito de `alta.html` cuando el slug recién creado empieza por `demo-*`.
+
+**Demo funnel** (`DEMO_FUNNEL_FREE_ACTIVE=1`) — extensión opcional para que los usuarios reales que entran a `/alta` procedentes de una card demo completen la activación sin fricción de Stripe.
+
+- Frontend (`alta.html` es + ca): lee `?via=demo-*` del URL y lo añade al payload de `register-free`. Si la respuesta lleva `demo_activated: true`, redirige directamente a `edit_url` saltándose la pantalla de éxito (el usuario aterriza viendo su perfil completo con QR + visitas + foto al top).
+- Backend (`register-free.js`): si `via.startsWith('demo-')` y el grifo está abierto, después del INSERT delega en `lib/demo-activation.js` → `activateAndSendDemoKit()` (la misma función que usa `/api/activate-demo`). El welcome email free **se sustituye** por el email demo con tarjeta A6 adjunta — no se mandan dos correos.
+- Cualquier valor que empiece por `demo-` activa (`demo-wa`, `demo-pill`, `demo-qr`, `demo-rastro`, etc) — sin tocar código se pueden añadir variantes para tracking de canal.
+- Apagado: borrar `DEMO_FUNNEL_FREE_ACTIVE`. El frontend sigue mandando `via` pero el backend lo ignora, y el carril free normal (welcome email + banner upgrade Stripe en el editor) vuelve. Las cards ya activadas como demo conservan su `plan='pro'` y `expires_at`.
+- Si la activación falla en BD (UPDATE error), el handler cae al carril free normal: la card ya existe como free, el usuario recibe welcome email genérico, no se pierde el alta.
+
+**Diferencia con seed cards**: las cards demo-funnel tienen slugs normales (`pepito-perez`, no `demo-*`), así que NO muestran la pill "Ejemplo" en `/c/:slug`, NO mueven la foto al top en el editor, y SÍ se indexan en Google. Son cards reales de usuarios reales que recibieron Pro gratis como gancho de la campaña. La distinción es importante: el prefijo `demo-*` reserva los tres comportamientos visuales para el material de marketing del founder, no para usuarios captados.
+
+**Eventos PostHog**:
+- `whatsapp_click` con `via=demo-*` (desde `/c/demo-*`).
+- `signup_completed_demo_funnel` con `via` y `sector` (desde `register-free`).
+- `demo_activated` con `slug` y `email_sent` (desde `lib/demo-activation`).
+
 ### B2B demo (organizations + /e/:slug)
 
 Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" de profesionales bajo una organización. Activa el scaffolding dormido de la migración 007 (`organizations` + `cards.organization_id`) añadiendo branding (logo + color + slug público + tagline) en migración 019.
@@ -275,6 +300,7 @@ POSTHOG_API_KEY       # PostHog project key — empty disables analytics
 POSTHOG_HOST          # default https://eu.i.posthog.com
 B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas y /ca/empresas
 LAUNCH_PROMO_ACTIVE   # "1" activa la promo de lanzamiento 100% bonificada
+DEMO_FUNNEL_FREE_ACTIVE # "1" activa Pro gratis para usuarios que entran a /alta vía ?via=demo-*
 QUIPU_CLIENT_ID       # Sprint 3 — Verifactu/AEAT invoice provider
 QUIPU_CLIENT_SECRET   # Sprint 3
 QUIPU_API_BASE        # Sprint 3 — default https://getquipu.com/api/v2
@@ -311,6 +337,9 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/download-qr` | `download-qr` |
 | `/api/resend-kit` | `resend-kit` |
 | `/api/claim-launch-promo` | `claim-launch-promo` |
+| `/api/activate-demo` | `activate-demo` |
+| `/api/register-free` | `register-free` |
+| `/api/register-b2b` | `register-b2b` |
 | `/api/ocupaciones-search` | `ocupaciones-search` |
 | `/api/cp-lookup` | `cp-lookup` |
 

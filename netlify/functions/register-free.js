@@ -7,6 +7,7 @@ const { capture: captureEvent } = require('./lib/posthog-server');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
 const { pickSectorLabel } = require('./lib/sector-labels');
+const { activateAndSendDemoKit } = require('./lib/demo-activation');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -121,7 +122,7 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma, via } = body;
     const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
 
     if (!nombre || !whatsapp || !cp || !email) {
@@ -255,6 +256,66 @@ function makeHandler(db, emailClient = resend) {
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+
+    // Demo funnel: usuario que entra a /alta procedente de una card demo
+    // (link con ?via=demo-wa | demo-pill | demo-*) y el admin tiene el
+    // grifo abierto vía DEMO_FUNNEL_FREE_ACTIVE=1. La card se activa
+    // como Pro inmediatamente (mismo trato que activate-demo da a las
+    // seed cards), sin pasar por Stripe y sin segundo click. El welcome
+    // email de free se sustituye por el email demo con la tarjeta A6
+    // adjunta — no duplicamos correos.
+    //
+    // Apagado: borrar la env var. El backend cae al welcome free normal
+    // y el editor vuelve a mostrar el banner de upgrade Stripe.
+    const isDemoFunnel =
+      typeof via === 'string' &&
+      via.startsWith('demo-') &&
+      process.env.DEMO_FUNNEL_FREE_ACTIVE === '1';
+
+    if (isDemoFunnel) {
+      const cardForActivation = {
+        slug,
+        nombre:     cleanNombre,
+        tagline,
+        whatsapp:   waNumber,
+        direccion:  direccionClean,
+        zona:       zonaResolved,
+        email,
+        edit_token: editToken,
+        idioma,
+      };
+      const result = await activateAndSendDemoKit({
+        db,
+        emailClient,
+        card:      cardForActivation,
+        profesion: specialtyCustomClean,
+        siteUrl,
+      });
+
+      if (result.ok) {
+        captureEvent(slug, 'signup_completed_demo_funnel', { sector: sector || null, via, idioma })
+          .catch(() => {});
+
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug,
+            card_url:       `${siteUrl}/c/${slug}`,
+            edit_url:       `${siteUrl}/${idioma}/editar?slug=${slug}&token=${editToken}`,
+            demo_activated: true,
+            plan:           'pro',
+            expires_at:     result.expires_at,
+            email_sent:     result.email_sent,
+          }),
+        };
+      }
+
+      // Activación falló (BD). La card free ya existe — caemos al carril
+      // free normal para que el usuario al menos tenga su perfil aunque el
+      // upgrade no se haya aplicado. Mejor degradar que perder al usuario.
+      console.error('Demo funnel activation failed, falling back to free:', result.error?.message);
+    }
 
     if (email && emailClient) {
       const { subject, html } = buildWelcomeEmail({ nombre: cleanNombre, slug, siteUrl, editToken, idioma });

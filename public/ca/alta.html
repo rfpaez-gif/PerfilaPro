@@ -1325,6 +1325,16 @@
     var localPub   = !!(localPubEl && localPubEl.checked);
     var direccion  = document.getElementById('f_direccion').value.trim();
 
+    // via: si el usuari entra a /alta des d'una targeta demo (botó WhatsApp
+    // o pill "Crea la teva gratis"), el query param ?via=demo-* viatja al
+    // backend. Si el grifo DEMO_FUNNEL_FREE_ACTIVE està obert, register-free
+    // activa la targeta com a Pro i retorna demo_activated:true.
+    var viaParam = null;
+    try {
+      var v = new URLSearchParams(window.location.search).get('via');
+      if (typeof v === 'string' && v.indexOf('demo-') === 0) viaParam = v.substring(0, 40);
+    } catch (e) { /* navegadors IE-shaped, ignorar */ }
+
     var payload = {
       nombre:             document.getElementById('f_nombre').value.trim(),
       sector:             selectedArch ? (selectedArch.sector_slug || 'otro') : 'otro',
@@ -1340,6 +1350,7 @@
       direccion:          localPub && direccion ? direccion : null,
       local_publico:      localPub && !!direccion,
       idioma:             (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
+      via:                viaParam,
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
@@ -1356,6 +1367,18 @@
         errMsg.style.display = '';
         btn.disabled = false;
         btn.textContent = 'Publicar el meu perfil gratis';
+        return;
+      }
+      // Demo funnel: el backend ja ha activat la targeta com a Pro i ha
+      // enviat l'email amb la targeta A6. No mostrem pantalla intermèdia
+      // — redirigim directament a l'editor perquè l'usuari aterri veient
+      // el seu perfil complet (amb QR + visites) i la foto a dalt, sense
+      // segon click.
+      if (r.data.demo_activated === true && r.data.edit_url) {
+        if (typeof window.ppEvent === 'function') {
+          window.ppEvent('signup_completed_demo_funnel', { via: payload.via, sector: payload.sector });
+        }
+        window.location.href = r.data.edit_url;
         return;
       }
       var slug    = r.data.slug;
