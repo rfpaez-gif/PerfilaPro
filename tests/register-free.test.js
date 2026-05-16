@@ -64,6 +64,15 @@ describe('register-free handler', () => {
     _resetRateLimit();
     process.env.SITE_URL = 'https://perfilapro.es';
 
+    // Aislamiento defensivo: garantizamos que cada test arranca sin estas
+    // env vars set. El entorno CI de Netlify las puede tener seteadas
+    // (porque están configuradas en producción), y leakean al runtime de
+    // los tests. Sin este reset, tests que asumen "ninguna puerta abierta"
+    // se rompían cuando WEB_FUNNEL_FREE_ACTIVE=1 estaba presente en CI.
+    // Los describes anidados (demo/web funnel) setean lo que necesitan.
+    delete process.env.DEMO_FUNNEL_FREE_ACTIVE;
+    delete process.env.WEB_FUNNEL_FREE_ACTIVE;
+
     // Default: no existing slug (no collision), no category match,
     // CP 03001 → Alicante / alicante (capital de provincia).
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
@@ -470,6 +479,70 @@ describe('register-free handler', () => {
       expect(json.demo_activated).toBeUndefined();
       expect(json.slug).toBeDefined();
       // Welcome email del carril free se manda como fallback
+      await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).not.toMatch(/^\[Demo\]/);
+    });
+  });
+
+  // ───────────────────────────── Web funnel ─────────────────────────────
+  // Sin via (alta orgánica/SEO/boca-oreja) o con via no-demo. Cuando
+  // WEB_FUNNEL_FREE_ACTIVE=1 está activo, TODA alta entra como Pro sin
+  // pasar por Stripe. Es el wedge B2C → B2B llevado al extremo: cero
+  // fricción de precio para autónomos, revenue viene de organizaciones.
+  describe('web funnel (WEB_FUNNEL_FREE_ACTIVE=1)', () => {
+    beforeEach(() => {
+      process.env.WEB_FUNNEL_FREE_ACTIVE = '1';
+    });
+    afterEach(() => {
+      delete process.env.WEB_FUNNEL_FREE_ACTIVE;
+      delete process.env.DEMO_FUNNEL_FREE_ACTIVE;
+    });
+
+    it('activa la card como Pro cuando WEB está on y no llega via', async () => {
+      const res = await handler(buildEvent({ body: validBody }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBe(true);
+      expect(json.plan).toBe('pro');
+      expect(mockUpdate).toHaveBeenCalledOnce();
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload.plan).toBe('pro');
+    });
+
+    it('activa con via no-demo (instagram, ads, etc) — el via es solo tracking', async () => {
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'instagram' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBe(true);
+      expect(mockUpdate).toHaveBeenCalledOnce();
+    });
+
+    it('manda el mismo email demo (subject [Demo] + PDF A6) que el carril demo', async () => {
+      await handler(buildEvent({ body: validBody }));
+      await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).toMatch(/^\[Demo\]/);
+      expect(sent.attachments).toHaveLength(1);
+    });
+
+    it('si WEB y DEMO están ambos on con via=demo-*, demo tiene precedencia (mismo evento)', async () => {
+      process.env.DEMO_FUNNEL_FREE_ACTIVE = '1';
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'demo-wa' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBe(true);
+      // El UPDATE se hace una sola vez (no double-activation)
+      expect(mockUpdate).toHaveBeenCalledOnce();
+    });
+
+    it('apagar WEB devuelve al carril free normal (welcome email + sin update)', async () => {
+      delete process.env.WEB_FUNNEL_FREE_ACTIVE;
+      const res = await handler(buildEvent({ body: validBody }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBeUndefined();
+      expect(mockUpdate).not.toHaveBeenCalled();
       await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
       const sent = mockEmailSend.mock.calls[0][0];
       expect(sent.subject).not.toMatch(/^\[Demo\]/);
