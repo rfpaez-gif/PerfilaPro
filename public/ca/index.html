@@ -12,7 +12,7 @@
   <link rel="alternate" hreflang="ca" href="https://perfilapro.es/ca/" />
   <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/" />
   <link rel="canonical" href="https://perfilapro.es/ca/" />
-  <meta name="description" content="La teva miniweb professional amb URL pròpia, QR descarregable i WhatsApp directe. Gratis per començar. Activa-ho tot (QR net + kit imprimible + foto) des de 9€. Per a autònoms: furgoneta, aparador, mostrador. En 2 minuts.">
+  <meta name="description" content="La teva miniweb professional amb URL pròpia, QR descarregable i WhatsApp directe. Gratis per a autònoms. Per a equips, parlem-ne. Furgoneta, aparador, mostrador. En 2 minuts.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -228,124 +228,6 @@
       color: var(--color-gris-500);
       line-height: 1.5;
       margin: 0;
-    }
-
-    /* ── Sección precios · 2 cards + multi-perfil ───────────── */
-    .pp-pricing {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--pp-s-6);
-      max-width: 880px;
-      margin: var(--pp-s-10) auto 0;
-    }
-    @media (max-width: 720px) {
-      .pp-pricing { grid-template-columns: 1fr; }
-    }
-    .pp-price-card {
-      background: #FFFFFF;
-      border: 1px solid var(--color-gris-200);
-      border-radius: var(--pp-r-xl);
-      padding: var(--pp-s-8);
-      display: flex;
-      flex-direction: column;
-      gap: var(--pp-s-5);
-      position: relative;
-    }
-    .pp-price-card--featured {
-      border-color: var(--color-verde-match);
-      box-shadow: 0 0 0 4px var(--color-verde-light);
-    }
-    .pp-price-card__badge {
-      position: absolute;
-      top: -12px; right: 20px;
-      background: var(--color-verde-match);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 6px 12px;
-      border-radius: var(--pp-r-pill);
-    }
-    .pp-price-card__name {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: var(--pp-ls-eyebrow);
-      text-transform: uppercase;
-      color: var(--color-gris-500);
-      margin: 0;
-    }
-    .pp-price-card__price {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin: 0;
-    }
-    .pp-price-card__amount {
-      font-family: var(--font-serif);
-      font-size: 56px;
-      font-weight: 400;
-      color: var(--color-tinta);
-      line-height: 1;
-      letter-spacing: -0.02em;
-    }
-    .pp-price-card__period {
-      font-size: 15px;
-      color: var(--color-gris-500);
-    }
-    .pp-price-card__list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .pp-price-card__list li {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      font-size: 14px;
-      color: var(--color-tinta);
-      line-height: 1.5;
-    }
-    .pp-price-card__list svg { color: var(--color-verde-match); flex-shrink: 0; margin-top: 2px; }
-    .pp-price-multi {
-      max-width: 880px;
-      margin: var(--pp-s-6) auto 0;
-      padding: var(--pp-s-5) var(--pp-s-6);
-      background: var(--color-verde-light);
-      border-radius: var(--pp-r-lg);
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--pp-s-5);
-      align-items: center;
-      justify-content: center;
-    }
-    .pp-price-multi__label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--color-tinta);
-    }
-    .pp-price-multi__chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: #FFFFFF;
-      border: 1px solid var(--color-verde-match);
-      border-radius: var(--pp-r-pill);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--color-verde-dark);
-    }
-    .pp-price-note {
-      text-align: center;
-      font-size: 13px;
-      color: var(--color-gris-500);
-      margin-top: var(--pp-s-4);
     }
 
     /* ── Banda B2B · ¿Tu equipo? ────────────────────────────── */
@@ -648,7 +530,6 @@
       <a href="/" class="pp-logo pp-logo--sm" aria-label="PerfilaPro inici">Perfila<span class="pp-logo__pro">Pro</span></a>
       <ul class="pp-nav__links" role="list">
         <li><a href="#como-funciona">Com funciona</a></li>
-        <li><a href="#precios">Preus</a></li>
       </ul>
       <div class="pp-nav__actions">
         <a href="/ca/empresas" style="font-size:13px;font-weight:600;color:var(--color-gris-500,#6B7280);text-decoration:none">Tinc equip →</a>
@@ -697,7 +578,7 @@
           <a href="/ca/alta" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Crear la meva miniweb gratis</a>
           <a href="#anatomia" class="pp-btn pp-btn--secondary pp-btn--lg pp-btn--pill">Veure'n una en directe →</a>
         </div>
-        <p class="pp-hero__micro">Comença gratis. Activa-ho tot (QR + kit imprimible + foto) per 9€ quan vulguis.</p>
+        <p class="pp-hero__micro">Gratis per a autònoms. Sense targeta de crèdit, sense trampa.</p>
       </div>
 
       <!-- Right: profile card preview -->
@@ -806,7 +687,7 @@
           </span>
           <div>
             <p class="pp-anatomy-item__title">QR descarregable</p>
-            <p class="pp-anatomy-item__text">Gratis amb signatura subtil "Creat amb perfilapro.es". Net i sense marca des de Trimestral. Vinil, cartell, targeta — on calgui.</p>
+            <p class="pp-anatomy-item__text">El teu QR net, descarregable en PNG. Vinil, cartell, targeta — on calgui.</p>
           </div>
         </div>
         <div class="pp-anatomy-item pp-reveal">
@@ -1062,72 +943,7 @@
   </div>
 </section>
 
-<!-- ══════════════════ 6 · PRECIOS ══════════════════ -->
-<section class="pp-section pp-section--alt" id="precios">
-  <div class="pp-wrap">
-    <div class="pp-section__head">
-      <span class="pp-section__kicker">Tarifes</span>
-      <h2 class="pp-section__title pp-reveal is-in">Comença gratis. Activa-ho tot quan et convingui.</h2>
-      <p class="pp-section__copy pp-reveal is-in">Pagament únic. Sense subscripcions automàtiques. Sense lletra petita.</p>
-    </div>
-
-    <div class="pp-pricing">
-      <article class="pp-price-card pp-reveal">
-        <p class="pp-price-card__name">Gratis</p>
-        <p class="pp-price-card__price">
-          <span class="pp-price-card__amount">0 €</span>
-          <span class="pp-price-card__period">sense caducitat</span>
-        </p>
-        <ul class="pp-price-card__list">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> La teva URL pública: <code>perfilapro.es/c/el-teu-nom</code></li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> WhatsApp directe, serveis i zona</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> QR amb la signatura <em>"Creat amb perfilapro.es"</em></li>
-          <li style="opacity:.55"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Sense foto professional</li>
-          <li style="opacity:.55"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Sense kit imprimible</li>
-          <li style="opacity:.55"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Sense directori públic</li>
-        </ul>
-        <a href="/ca/alta" class="pp-btn pp-btn--secondary pp-btn--pill" style="margin-top:auto">Començar gratis</a>
-      </article>
-
-      <article class="pp-price-card pp-price-card--featured pp-reveal">
-        <span class="pp-price-card__badge">Més popular</span>
-        <p class="pp-price-card__name">Trimestral</p>
-        <p class="pp-price-card__price">
-          <span class="pp-price-card__amount">9 €</span>
-          <span class="pp-price-card__period">/ 3 mesos</span>
-        </p>
-        <ul class="pp-price-card__list">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Tot el del pla Gratis</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Foto professional a la teva targeta</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> QR net sense marca d'aigua</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <strong>Kit imprimible</strong>: targeta PDF + QR emmarcat tipus aparador + factura</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Redescàrrega il·limitada del kit quan editis les teves dades</li>
-        </ul>
-        <a href="/alta.html?plan=base" class="pp-btn pp-btn--primary pp-btn--pill" style="margin-top:auto">Activar Trimestral · 9€</a>
-      </article>
-
-      <article class="pp-price-card pp-reveal">
-        <p class="pp-price-card__name">Anual</p>
-        <p class="pp-price-card__price">
-          <span class="pp-price-card__amount">19 €</span>
-          <span class="pp-price-card__period">/ 1 any</span>
-        </p>
-        <ul class="pp-price-card__list">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Tot el del pla Trimestral</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> QR vectorial SVG — escala infinita, ideal per a impremta</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Apareixes al directori públic</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Estadístiques: històric complet de visites</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Resum setmanal per email</li>
-        </ul>
-        <a href="/alta.html?plan=pro" class="pp-btn pp-btn--secondary pp-btn--pill" style="margin-top:auto">Activar Anual · 19€</a>
-      </article>
-    </div>
-
-    <p class="pp-price-note">Pagament únic. Sense permanències. Sense domiciliacions. Quan venç, decideixes si renoves.</p>
-  </div>
-</section>
-
-<!-- ══════════════════ 7 · BANDA B2B · EQUIPOS ══════════════════ -->
+<!-- ══════════════════ 6 · BANDA B2B · EQUIPOS ══════════════════ -->
 <section class="pp-section" id="equipos">
   <div class="pp-wrap">
     <div class="pp-b2b pp-reveal">
@@ -1196,7 +1012,7 @@
 
     <div style="text-align:center;margin-top:var(--pp-s-12)">
       <a href="/ca/alta" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Crear la meva miniweb gratis</a>
-      <p style="font-size:13px;color:var(--color-gris-500);margin-top:var(--pp-s-3)">Sense targeta de crèdit per començar. Actives tot (9€) quan vulguis.</p>
+      <p style="font-size:13px;color:var(--color-gris-500);margin-top:var(--pp-s-3)">Sense targeta de crèdit. Sense permanències. Tens un equip? <a href="/ca/empresas" style="color:inherit;text-decoration:underline">Parlem-ne</a>.</p>
     </div>
   </div>
 </section>
@@ -1217,7 +1033,6 @@
         <h4>Producte</h4>
         <a href="/ca/alta">Crear perfil</a>
         <a href="#como-funciona">Com funciona</a>
-        <a href="#precios">Preus</a>
         <a href="/directorio">Directori</a>
         <a href="/ca/empresas">Per a empreses →</a>
       </div>
