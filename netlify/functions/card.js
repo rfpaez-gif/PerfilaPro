@@ -57,6 +57,7 @@ const CARD_T = {
     canvasServices: 'SERVICIOS',
     canvasFooter: 'Creado con PerfilaPro',
     backToStudio: '← Volver al panel B2B Studio',
+    demoPill: 'Ejemplo · Crea la tuya gratis →',
   },
   ca: {
     htmlLang: 'ca',
@@ -89,6 +90,7 @@ const CARD_T = {
     canvasServices: 'SERVEIS',
     canvasFooter: 'Creat amb PerfilaPro',
     backToStudio: '← Tornar al panell B2B Studio',
+    demoPill: 'Exemple · Crea la teva gratis →',
   },
 };
 
@@ -155,6 +157,14 @@ exports.handler = async (event) => {
 
   const DEMO_SLUGS = ['paco-fontanero-alicante', 'pasteleria-sebastian'];
   const isDemo = DEMO_SLUGS.includes(data.slug);
+
+  // Cards de marketing/test cuyo slug empieza por `demo-` (ej. demo-mariola-peluquera).
+  // Renderiza un pill "Ejemplo · Crea la tuya gratis →" sobre la card y emite
+  // robots noindex. Distinto de `isDemo` (landing iframe embed): aquí WhatsApp,
+  // visit logging y el resto del flujo siguen activos — son cards reales con
+  // un disclosure visible para tests fuera del producto (ej. QR repartido
+  // en la calle para medir interés).
+  const isExampleCard = typeof data.slug === 'string' && data.slug.startsWith('demo-');
 
   if (isDemo && !data.foto_url) {
     data.foto_url = 'https://pplx-res.cloudinary.com/image/upload/pplx_search_images/ae1c272ba36742b81a35745691899c1f512df06d.jpg';
@@ -231,7 +241,7 @@ exports.handler = async (event) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${org ? '<meta name="robots" content="noindex,nofollow">' : ''}
+  ${(org || isExampleCard) ? '<meta name="robots" content="noindex,nofollow">' : ''}
   <title>${esc(data.nombre) || T.metaProfile} — PerfilaPro</title>
   <meta name="description" content="${esc(data.tagline)} ${esc(data.zona)}">
   <meta name="generator" content="PerfilaPro·${esc(data.slug)}${data.agent_code ? '·' + esc(data.agent_code) : ''}">
@@ -348,6 +358,11 @@ exports.handler = async (event) => {
     .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
     .pp-card__org-hero__tagline{font-size:.75rem;opacity:.9;margin-top:.25rem;line-height:1.4}
     .pp-card__org-hero:hover .pp-card__org-hero__logo{transform:translateY(-1px)}
+    /* Pill de disclosure para cards demo (slug `demo-*`). Va sobre la
+       tarjeta como etiqueta de marketing, link directo al alta. */
+    .pp-demo-pill{display:inline-flex;align-items:center;gap:.4rem;margin:0 0 .875rem;padding:.5rem 1rem;background:var(--color-verde-light);color:var(--color-verde-dark);border:1px solid var(--color-gris-200);border-radius:var(--pp-r-pill);font-size:.75rem;font-weight:600;text-decoration:none;letter-spacing:.005em;transition:background .15s,color .15s,border-color .15s;-webkit-tap-highlight-color:transparent}
+    .pp-demo-pill:hover{background:var(--color-verde-match);color:#fff;border-color:var(--color-verde-match)}
+    .pp-demo-pill:active{transform:scale(.97)}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
@@ -356,6 +371,7 @@ exports.handler = async (event) => {
   ${fromAdminOrgs ? `<div style="background:#0A1F44;color:#fff;padding:10px 16px;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center;letter-spacing:.01em">
     <a href="/admin-orgs.html" onclick="if(window.opener && !window.opener.closed){window.close();return false}" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${T.backToStudio}</a>
   </div>` : ''}
+  ${isExampleCard ? `<a class="pp-demo-pill" href="/${idioma}/alta">${T.demoPill}</a>` : ''}
   <div class="pp-card">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
       ${orgLogo
