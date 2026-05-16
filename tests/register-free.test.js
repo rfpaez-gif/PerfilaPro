@@ -1,6 +1,16 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { makeHandler, buildWelcomeEmail } from '../netlify/functions/register-free.js';
 const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
+
+// Mock printable kit + posthog server para que el carril demo-funnel
+// (register-free → activateAndSendDemoKit → buildPrintableCardPDF) no
+// arranque pdfkit real ni mande tráfico a posthog en CI.
+vi.mock('../netlify/functions/printable-card-utils', () => ({
+  buildPrintableCardPDF: vi.fn().mockResolvedValue(Buffer.from('pdf-bytes')),
+}));
+vi.mock('../netlify/functions/lib/posthog-server', () => ({
+  capture: vi.fn().mockResolvedValue(undefined),
+}));
 
 // --- Mocks ---
 
@@ -9,6 +19,8 @@ const mockCategoryMaybeSingle = vi.fn();     // categories sector+specialty look
 const mockPostalMaybeSingle = vi.fn();       // postal_codes CP lookup
 const mockOcupacionMaybeSingle = vi.fn();    // ocupaciones SEPE lookup
 const mockInsert = vi.fn();
+const mockUpdate = vi.fn();                  // cards UPDATE (demo funnel activation)
+const mockUpdateEq = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFrom = vi.fn();
 
@@ -62,11 +74,14 @@ describe('register-free handler', () => {
     });
     mockOcupacionMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockInsert.mockResolvedValue({ error: null });
+    mockUpdateEq.mockResolvedValue({ error: null });
+    mockUpdate.mockImplementation(() => ({ eq: mockUpdateEq }));
 
     mockFrom.mockImplementation((table) => {
       if (table === 'cards') {
         const selectBuilder = makeSelectBuilder(mockMaybeSingle);
         selectBuilder.insert = mockInsert;
+        selectBuilder.update = mockUpdate;
         return selectBuilder;
       }
       if (table === 'categories') {
@@ -374,6 +389,91 @@ describe('register-free handler', () => {
     }
     const otherIp = await handler(buildEvent({ body: validBody, ip: '8.8.8.8' }));
     expect(otherIp.statusCode).toBe(200);
+  });
+
+  // ───────────────────────────── Demo funnel ─────────────────────────────
+  // Cuando el usuario entra a /alta desde una card demo (?via=demo-*) y el
+  // grifo DEMO_FUNNEL_FREE_ACTIVE está abierto, la card se activa como Pro
+  // en la misma respuesta de register-free (sin Stripe, sin segundo click,
+  // sin pantalla intermedia). El welcome email se sustituye por el email
+  // demo con la tarjeta A6 adjunta.
+  describe('demo funnel (via=demo-*)', () => {
+    beforeEach(() => {
+      process.env.DEMO_FUNNEL_FREE_ACTIVE = '1';
+    });
+    afterEach(() => {
+      delete process.env.DEMO_FUNNEL_FREE_ACTIVE;
+    });
+
+    it('activa la card como Pro y responde demo_activated:true cuando via=demo-* + env on', async () => {
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'demo-wa' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBe(true);
+      expect(json.plan).toBe('pro');
+      expect(json.expires_at).toBeDefined();
+      // Card se ha actualizado a plan=pro + kit_email_sent_at
+      expect(mockUpdate).toHaveBeenCalledOnce();
+      const updatePayload = mockUpdate.mock.calls[0][0];
+      expect(updatePayload.plan).toBe('pro');
+      expect(updatePayload.status).toBe('active');
+      expect(updatePayload.kit_email_sent_at).toBeDefined();
+      expect(updatePayload.expires_at).toBeDefined();
+    });
+
+    it('manda email demo (subject [Demo] + PDF adjunto) en lugar del welcome free', async () => {
+      await handler(buildEvent({ body: { ...validBody, via: 'demo-wa' } }));
+      await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).toMatch(/^\[Demo\]/);
+      expect(sent.attachments).toHaveLength(1);
+      expect(sent.attachments[0].filename).toMatch(/^perfilapro-.*\.pdf$/);
+    });
+
+    it('acepta cualquier valor que empiece por demo- (demo-pill, demo-qr, etc)', async () => {
+      for (const via of ['demo-pill', 'demo-qr', 'demo-rastro']) {
+        mockUpdate.mockClear();
+        const res = await handler(buildEvent({ body: { ...validBody, via, nombre: `Test ${via}` } }));
+        expect(res.statusCode).toBe(200);
+        const json = JSON.parse(res.body);
+        expect(json.demo_activated, `via=${via} should activate`).toBe(true);
+      }
+    });
+
+    it('ignora via cuando el env var DEMO_FUNNEL_FREE_ACTIVE está apagado', async () => {
+      delete process.env.DEMO_FUNNEL_FREE_ACTIVE;
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'demo-wa' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBeUndefined();
+      expect(mockUpdate).not.toHaveBeenCalled();
+      // Welcome email free (no [Demo] prefix)
+      await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).not.toMatch(/^\[Demo\]/);
+    });
+
+    it('ignora valores de via que no empiezan por demo-', async () => {
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'instagram' } }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBeUndefined();
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it('si la activación demo falla en BD, cae al carril free normal (no pierde al usuario)', async () => {
+      mockUpdateEq.mockResolvedValueOnce({ error: { message: 'BD caída' } });
+      const res = await handler(buildEvent({ body: { ...validBody, via: 'demo-wa' } }));
+      // La card free ya está insertada — devolvemos 200 con welcome email
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.demo_activated).toBeUndefined();
+      expect(json.slug).toBeDefined();
+      // Welcome email del carril free se manda como fallback
+      await vi.waitFor(() => expect(mockEmailSend).toHaveBeenCalledOnce());
+      const sent = mockEmailSend.mock.calls[0][0];
+      expect(sent.subject).not.toMatch(/^\[Demo\]/);
+    });
   });
 
   // register-free es el carril autónomo: NUNCA debe tocar organizations

@@ -1320,6 +1320,16 @@
     var localPub   = !!(localPubEl && localPubEl.checked);
     var direccion  = document.getElementById('f_direccion').value.trim();
 
+    // via: si el usuario entra a /alta procedente de una card demo (botón
+    // WhatsApp o pill "Crea la tuya gratis"), el query param ?via=demo-*
+    // viaja al backend. Si el grifo DEMO_FUNNEL_FREE_ACTIVE está abierto,
+    // register-free activa la card como Pro y devuelve demo_activated:true.
+    var viaParam = null;
+    try {
+      var v = new URLSearchParams(window.location.search).get('via');
+      if (typeof v === 'string' && v.indexOf('demo-') === 0) viaParam = v.substring(0, 40);
+    } catch (e) { /* IE-shaped browsers, ignore */ }
+
     var payload = {
       nombre:             document.getElementById('f_nombre').value.trim(),
       sector:             selectedArch ? (selectedArch.sector_slug || 'otro') : 'otro',
@@ -1335,6 +1345,7 @@
       direccion:          localPub && direccion ? direccion : null,
       local_publico:      localPub && !!direccion,
       idioma:             (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
+      via:                viaParam,
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });
@@ -1351,6 +1362,17 @@
         errMsg.style.display = '';
         btn.disabled = false;
         btn.textContent = 'Publicar mi perfil gratis';
+        return;
+      }
+      // Demo funnel: el backend ya activó la card como Pro y mandó el email
+      // con la tarjeta A6. No mostramos pantalla intermedia — redirigimos
+      // directo al editor para que el usuario aterrice viendo su perfil
+      // completo (con QR + visitas) y la foto al top, sin segundo click.
+      if (r.data.demo_activated === true && r.data.edit_url) {
+        if (typeof window.ppEvent === 'function') {
+          window.ppEvent('signup_completed_demo_funnel', { via: payload.via, sector: payload.sector });
+        }
+        window.location.href = r.data.edit_url;
         return;
       }
       var slug    = r.data.slug;
