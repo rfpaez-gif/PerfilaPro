@@ -213,6 +213,26 @@
     </div>
   </div>
 
+  <!-- Modal: enlace de estadísticas de una org · URL visible para copy en mobile -->
+  <div class="pp-modal-backdrop" id="statsLinkModal" role="dialog" aria-modal="true" aria-labelledby="statsLinkModalTitle">
+    <div class="pp-modal">
+      <h3 class="pp-modal__title" id="statsLinkModalTitle">Enlace de estadísticas</h3>
+      <p class="pp-modal__sub" id="statsLinkModalSub">Comparte este enlace privado con el responsable de la organización.</p>
+      <div class="pp-form__row">
+        <label class="pp-form__label" for="statsLinkUrl" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-gris-500)">URL</label>
+        <input class="pp-input" id="statsLinkUrl" type="text" readonly onclick="this.select()" style="font-family:var(--font-mono);font-size:12px">
+      </div>
+      <div class="pp-modal__actions" style="justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" type="button" onclick="rotateStatsLink()" title="Genera un token nuevo · invalida el enlace anterior">🔄 Rotar</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="pp-btn pp-btn--ghost" type="button" onclick="closeStatsLinkModal()">Cerrar</button>
+          <button class="pp-btn pp-btn--ghost" type="button" id="statsLinkCopyBtn" onclick="copyStatsLink()">📋 Copiar</button>
+          <button class="pp-btn pp-btn--primary" type="button" onclick="openStatsLink()">Abrir ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="pp-shell">
     <!-- ── Columna izquierda: forms + tablas ─────────── -->
     <div>
@@ -986,10 +1006,9 @@ async function sendEditLinkToMember(cardSlug, cardNombre) {
 // base64 dentro de JSON — lo decodificamos y construimos un Blob para
 // `URL.createObjectURL`. Botón deshabilitado durante la generación para
 // evitar dobles clicks (rasterizar QRs + render PDF + base64 puede tardar
-// Stats link: genera/refresca el stats_token de la org y muestra el enlace
-// público (token-protected) para que el founder lo copie y se lo mande al
-// cliente B2B. Si la org ya tiene token vigente, se devuelve el existente.
-// Ctrl/Cmd+click rota el token (force_refresh) — útil si el enlace se filtró.
+// Stats link: genera/refresca el stats_token de la org y abre un modal con
+// la URL visible (mejor UX en mobile que toast + clipboard silencioso, que
+// Safari iOS suele truncar). El modal tiene Copiar / Abrir / Rotar.
 async function getStatsLink(forceRefresh) {
   if (!selectedOrgSlug) { toast('Selecciona una org primero', 'err'); return; }
   const btn = $('statsLinkBtn');
@@ -1004,20 +1023,69 @@ async function getStatsLink(forceRefresh) {
     if (!json.url) throw new Error('Respuesta sin URL');
     const expiresAt = json.expires_at ? new Date(json.expires_at) : null;
     const expiresStr = expiresAt ? expiresAt.toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' }) : '—';
-    // Copia al portapapeles + muestra prompt con la URL para que el admin
-    // pueda copiarla a mano si el clipboard falla (Safari incognito, etc).
-    try {
-      await navigator.clipboard.writeText(json.url);
-      const verb = json.just_created ? (forceRefresh ? 'Token rotado' : 'Token generado') : 'Token existente';
-      toast(`${verb} y enlace copiado al portapapeles. Vence ${expiresStr}.`, 'ok');
-    } catch {
-      window.prompt(`Enlace de estadísticas (vence ${expiresStr}):`, json.url);
-    }
+    const verb = json.just_created ? (forceRefresh ? 'Token rotado' : 'Token generado') : 'Enlace vigente';
+    openStatsLinkModal(json.url, expiresStr, verb);
   } catch (err) {
     toast('Error: ' + err.message, 'err');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
+}
+
+function openStatsLinkModal(url, expiresStr, verb) {
+  const modal = $('statsLinkModal');
+  const input = $('statsLinkUrl');
+  const sub   = $('statsLinkModalSub');
+  if (!modal || !input) return;
+  input.value = url;
+  sub.innerHTML = `<strong>${verb}.</strong> Comparte este enlace con el responsable de la organización. Vence ${expiresStr}.`;
+  modal.classList.add('is-open');
+  // Pre-seleccionar el contenido del input para que un long-press en iOS
+  // permita "Copiar" desde el menú contextual nativo del sistema.
+  setTimeout(() => input.select(), 50);
+}
+
+function closeStatsLinkModal() {
+  const modal = $('statsLinkModal');
+  if (modal) modal.classList.remove('is-open');
+}
+
+async function copyStatsLink() {
+  const input = $('statsLinkUrl');
+  const btn   = $('statsLinkCopyBtn');
+  if (!input) return;
+  const url = input.value;
+  let ok = false;
+  // 1) Primero intentamos la Clipboard API (Chrome / Firefox / Safari desktop).
+  try {
+    await navigator.clipboard.writeText(url);
+    ok = true;
+  } catch {
+    // 2) Fallback execCommand para Safari iOS donde clipboard a veces falla
+    //    incluso con user gesture. Selección manual del input + execCommand.
+    try {
+      input.focus();
+      input.setSelectionRange(0, url.length);
+      ok = document.execCommand('copy');
+    } catch { ok = false; }
+  }
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = ok ? '✓ Copiado' : '⚠ Selecciona y copia a mano';
+    setTimeout(() => { btn.textContent = orig; }, 2200);
+  }
+}
+
+function openStatsLink() {
+  const input = $('statsLinkUrl');
+  if (!input || !input.value) return;
+  window.open(input.value, '_blank', 'noopener');
+}
+
+function rotateStatsLink() {
+  if (!confirm('Generar un token NUEVO invalida el enlace anterior. ¿Continuar?')) return;
+  closeStatsLinkModal();
+  getStatsLink(true);
 }
 
 // segundos con equipos grandes).
