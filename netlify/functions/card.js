@@ -57,7 +57,8 @@ const CARD_T = {
     canvasServices: 'SERVICIOS',
     canvasFooter: 'Creado con PerfilaPro',
     backToStudio: '← Volver al panel B2B Studio',
-    demoPill: 'Ejemplo · Crea la tuya gratis →',
+    demoStripLede: 'Esta tarjeta es solo un ejemplo',
+    demoStripCta: 'Crea la tuya gratis →',
   },
   ca: {
     htmlLang: 'ca',
@@ -90,7 +91,8 @@ const CARD_T = {
     canvasServices: 'SERVEIS',
     canvasFooter: 'Creat amb PerfilaPro',
     backToStudio: '← Tornar al panell B2B Studio',
-    demoPill: 'Exemple · Crea la teva gratis →',
+    demoStripLede: 'Aquesta targeta és només un exemple',
+    demoStripCta: 'Crea la teva gratis →',
   },
 };
 
@@ -159,9 +161,10 @@ exports.handler = async (event) => {
   const isDemo = DEMO_SLUGS.includes(data.slug);
 
   // Cards de marketing/test cuyo slug empieza por `demo-` (ej. demo-mariola-peluquera).
-  // Renderiza un pill "Ejemplo · Crea la tuya gratis →" sobre la card y emite
-  // robots noindex. Distinto de `isDemo` (landing iframe embed): aquí WhatsApp,
-  // visit logging y el resto del flujo siguen activos — son cards reales con
+  // Renderiza una franja sticky amber arriba del viewport ("Esta tarjeta es
+  // solo un ejemplo · Crea la tuya gratis →") y emite robots noindex.
+  // Distinto de `isDemo` (landing iframe embed): aquí WhatsApp, visit
+  // logging y el resto del flujo siguen activos — son cards reales con
   // un disclosure visible para tests fuera del producto (ej. QR repartido
   // en la calle para medir interés).
   const isExampleCard = typeof data.slug === 'string' && data.slug.startsWith('demo-');
@@ -367,20 +370,29 @@ exports.handler = async (event) => {
     .pp-card__org-hero__name{font-family:var(--font-serif);font-size:1.0625rem;line-height:1.2;font-weight:500;letter-spacing:-0.01em;color:#FFFFFF}
     .pp-card__org-hero__tagline{font-size:.75rem;opacity:.9;margin-top:.25rem;line-height:1.4}
     .pp-card__org-hero:hover .pp-card__org-hero__logo{transform:translateY(-1px)}
-    /* Pill de disclosure para cards demo (slug 'demo-*'). Va sobre la
-       tarjeta como etiqueta de marketing, link directo al alta. */
-    .pp-demo-pill{display:inline-flex;align-items:center;gap:.4rem;margin:0 0 .875rem;padding:.5rem 1rem;background:var(--color-verde-light);color:var(--color-verde-dark);border:1px solid var(--color-gris-200);border-radius:var(--pp-r-pill);font-size:.75rem;font-weight:600;text-decoration:none;letter-spacing:.005em;transition:background .15s,color .15s,border-color .15s;-webkit-tap-highlight-color:transparent}
-    .pp-demo-pill:hover{background:var(--color-verde-match);color:#fff;border-color:var(--color-verde-match)}
-    .pp-demo-pill:active{transform:scale(.97)}
+    /* Franja de atención para cards demo (slug 'demo-*'). Sticky-fixed
+       arriba del viewport, full-width, amber. Marketing-grade: el
+       visitante entiende en el primer pixel que la card es un ejemplo
+       y tiene un CTA inmediato para crear la suya. */
+    body.pp-has-demo-strip{padding-top:calc(1.5rem + 56px)}
+    .pp-demo-strip{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem .75rem;padding:.75rem 1rem;background:#FBBF24;color:#78350F;border-bottom:2px solid #B45309;font-size:.875rem;line-height:1.3;text-align:center;text-decoration:none;letter-spacing:.005em;box-shadow:0 2px 8px rgba(120,53,15,.18);transition:background .15s;-webkit-tap-highlight-color:transparent}
+    .pp-demo-strip:hover{background:#F59E0B}
+    .pp-demo-strip:active{background:#D97706}
+    .pp-demo-strip__lede{font-weight:500}
+    .pp-demo-strip__cta{font-weight:800;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+    @media (max-width:380px){.pp-demo-strip{font-size:.8125rem;padding:.625rem .75rem}body.pp-has-demo-strip{padding-top:calc(1.5rem + 64px)}}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
 </head>
-<body>
+<body${isExampleCard ? ' class="pp-has-demo-strip"' : ''}>
+  ${isExampleCard ? `<a class="pp-demo-strip" href="/${idioma}/alta?via=demo-pill">
+    <span class="pp-demo-strip__lede">${T.demoStripLede}</span>
+    <span class="pp-demo-strip__cta">${T.demoStripCta}</span>
+  </a>` : ''}
   ${fromAdminOrgs ? `<div style="background:#0A1F44;color:#fff;padding:10px 16px;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center;letter-spacing:.01em">
     <a href="/admin-orgs.html" onclick="if(window.opener && !window.opener.closed){window.close();return false}" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${T.backToStudio}</a>
   </div>` : ''}
-  ${isExampleCard ? `<a class="pp-demo-pill" href="/${idioma}/alta?via=demo-pill">${T.demoPill}</a>` : ''}
   <div class="pp-card">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
       ${orgLogo
