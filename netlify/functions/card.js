@@ -374,13 +374,13 @@ exports.handler = async (event) => {
        arriba del viewport, full-width, amber. Marketing-grade: el
        visitante entiende en el primer pixel que la card es un ejemplo
        y tiene un CTA inmediato para crear la suya. */
-    body.pp-has-demo-strip{padding-top:calc(1.5rem + 64px)}
-    .pp-demo-strip{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.3rem .85rem;padding:.875rem 1rem;background:#FBBF24;color:#78350F;border-bottom:2px solid #B45309;font-size:1.0625rem;line-height:1.3;text-align:center;text-decoration:none;letter-spacing:.005em;box-shadow:0 2px 8px rgba(120,53,15,.18);transition:background .15s;-webkit-tap-highlight-color:transparent}
+    body.pp-has-demo-strip{padding-top:calc(1.5rem + 76px)}
+    .pp-demo-strip{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.35rem 1rem;padding:1rem 1.25rem;background:#FBBF24;color:#78350F;border-bottom:2px solid #B45309;font-size:1.25rem;line-height:1.3;text-align:center;text-decoration:none;letter-spacing:.005em;box-shadow:0 2px 8px rgba(120,53,15,.18);transition:background .15s;-webkit-tap-highlight-color:transparent}
     .pp-demo-strip:hover{background:#F59E0B}
     .pp-demo-strip:active{background:#D97706}
     .pp-demo-strip__lede{font-weight:500}
     .pp-demo-strip__cta{font-weight:800;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
-    @media (max-width:380px){.pp-demo-strip{font-size:.9375rem;padding:.75rem .75rem}body.pp-has-demo-strip{padding-top:calc(1.5rem + 72px)}}
+    @media (max-width:380px){.pp-demo-strip{font-size:1.0625rem;padding:.875rem .75rem;gap:.25rem .5rem}body.pp-has-demo-strip{padding-top:calc(1.5rem + 88px)}}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
