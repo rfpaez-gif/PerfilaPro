@@ -73,6 +73,50 @@
     .pp-step__title { font-family: var(--font-serif); font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .5rem; }
     .pp-step__body { font-size: 14px; color: var(--color-gris-500, #6B7280); line-height: 1.65; }
 
+    /* ── Pricing ──────────────────────────────────────────── */
+    .pp-pricing { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-pricing__toggle { display: inline-flex; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-pill, 999px); padding: 4px; margin: 1rem auto 2.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+    .pp-pricing__toggle-wrap { text-align: center; }
+    .pp-pricing__toggle-btn { background: transparent; border: none; padding: .5rem 1.125rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font: 600 13px var(--font-sans); color: var(--color-gris-500, #6B7280); transition: all .15s; }
+    .pp-pricing__toggle-btn.is-active { background: var(--color-tinta, #0A1F44); color: #fff; }
+    .pp-pricing__save { margin-left: .35rem; font-size: 11px; padding: 2px 8px; background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border-radius: var(--pp-r-pill, 999px); font-weight: 700; letter-spacing: .02em; }
+    .pp-pricing__toggle-btn.is-active .pp-pricing__save { background: rgba(255,255,255,.18); color: #fff; }
+
+    .pp-pricing__grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+    @media (min-width: 880px) { .pp-pricing__grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; } }
+    .pp-tier { background: #fff; border: 1.5px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 1.75rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: relative; }
+    .pp-tier--featured { border-color: var(--color-verde-dark, #00A865); box-shadow: 0 12px 32px rgba(0,168,101,.10); }
+    .pp-tier__badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--color-verde-dark, #00A865); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: .25rem .75rem; border-radius: var(--pp-r-pill, 999px); white-space: nowrap; }
+    .pp-tier__name { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; letter-spacing: -0.01em; color: var(--color-tinta, #0A1F44); margin: 0; }
+    .pp-tier__audience { font-size: 13px; color: var(--color-gris-500, #6B7280); margin: -.5rem 0 0; line-height: 1.5; }
+    .pp-tier__price { display: flex; align-items: baseline; gap: .35rem; margin: .5rem 0 0; }
+    .pp-tier__price-num { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1; color: var(--color-tinta, #0A1F44); }
+    .pp-tier__price-unit { font-size: 14px; color: var(--color-gris-500, #6B7280); font-weight: 500; }
+    .pp-tier__price-note { font-size: 12px; color: var(--color-gris-500, #6B7280); margin: -.25rem 0 0; line-height: 1.5; min-height: 1.5em; }
+    .pp-tier__divider { border: none; border-top: 1px solid var(--color-gris-200, #E5E7EB); margin: 0; }
+    .pp-tier__includes { display: flex; flex-direction: column; gap: .5rem; }
+    .pp-tier__includes-h { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); margin: 0 0 .25rem; }
+    .pp-tier__feat { display: flex; align-items: flex-start; gap: .5rem; font-size: 14px; line-height: 1.5; color: var(--color-tinta, #0A1F44); }
+    .pp-tier__feat-icon { color: var(--color-verde-dark, #00A865); flex-shrink: 0; line-height: 1.45; font-weight: 700; }
+    .pp-tier__cta { margin-top: auto; }
+
+    /* ── Guarantees + FAQ ─────────────────────────────────── */
+    .pp-guarantees { max-width: 880px; margin: 0 auto 3rem; padding: 2rem 1.5rem; background: var(--color-verde-light, #E6F9F0); border-radius: var(--pp-r-xl, 20px); display: grid; gap: 1rem; grid-template-columns: 1fr; }
+    @media (min-width: 700px) { .pp-guarantees { grid-template-columns: repeat(2, 1fr); } }
+    .pp-guarantee { display: flex; align-items: flex-start; gap: .65rem; font-size: 14px; color: var(--color-tinta, #0A1F44); line-height: 1.55; }
+    .pp-guarantee__icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+    .pp-guarantee strong { display: block; margin-bottom: .15rem; }
+
+    .pp-faq { max-width: 760px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-faq__item { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-md, 12px); padding: 1rem 1.25rem; margin-bottom: .65rem; }
+    .pp-faq__item[open] { border-color: var(--color-verde-dark, #00A865); }
+    .pp-faq__item summary { font-family: var(--font-sans); font-weight: 600; font-size: 15px; cursor: pointer; color: var(--color-tinta, #0A1F44); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .pp-faq__item summary::-webkit-details-marker { display: none; }
+    .pp-faq__item summary::after { content: '+'; font-family: var(--font-serif); font-size: 22px; font-weight: 400; color: var(--color-verde-dark, #00A865); transition: transform .15s; }
+    .pp-faq__item[open] summary::after { content: '−'; }
+    .pp-faq__body { margin-top: .75rem; font-size: 14px; line-height: 1.65; color: var(--color-gris-500, #6B7280); }
+    .pp-faq__body strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+
     /* ── Video ────────────────────────────────────────────── */
     .pp-video-section { background: var(--color-tinta, #0A1F44); color: #fff; padding: 4rem 1.5rem; }
     .pp-video-wrap { max-width: 900px; margin: 0 auto; }
@@ -198,6 +242,144 @@
   </div>
 </section>
 
+<!-- ─────────── Pricing ─────────── -->
+<section class="pp-pricing" id="precios">
+  <div class="pp-section-eyebrow">Precios</div>
+  <h2 class="pp-section-title">Por profesional, sin sorpresas</h2>
+  <p class="pp-section-sub">Tres planes según el tamaño y la complejidad de tu organización. Sin permanencia mensual; 2 meses gratis si pagas anual.</p>
+
+  <div class="pp-pricing__toggle-wrap">
+    <div class="pp-pricing__toggle" role="tablist" aria-label="Ciclo de facturación">
+      <button type="button" class="pp-pricing__toggle-btn is-active" data-cycle="annual" role="tab" aria-selected="true">Anual <span class="pp-pricing__save">2 meses gratis</span></button>
+      <button type="button" class="pp-pricing__toggle-btn" data-cycle="monthly" role="tab" aria-selected="false">Mensual</button>
+    </div>
+  </div>
+
+  <div class="pp-pricing__grid">
+    <article class="pp-tier">
+      <h3 class="pp-tier__name">Equipo</h3>
+      <p class="pp-tier__audience">Para equipos de 5 a 30 profesionales</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="equipo">4</span>
+        <span class="pp-tier__price-unit">€/profesional/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="equipo">Facturado anual · 2 meses gratis</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Incluye</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Página web del equipo con tu logo, color y URL <code style="font-family:var(--font-mono);font-size:12px">perfilapro.es/e/tu-marca</code></p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Perfil digital por profesional con foto, contacto y WhatsApp</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Tarjeta de visita física en PDF lista para imprenta, por cada miembro</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> QR personal por profesional (impresión, vinilo, firma de email)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding del equipo por invitación (3 min, sin contraseñas)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Multi-idioma ES / CA</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Soporte por email (&lt; 48 h)</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="equipo">Pide una demo →</a>
+    </article>
+
+    <article class="pp-tier pp-tier--featured">
+      <span class="pp-tier__badge">Más popular</span>
+      <h3 class="pp-tier__name">Organización</h3>
+      <p class="pp-tier__audience">Para organizaciones de 30 a 100 profesionales</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="organizacion">5</span>
+        <span class="pp-tier__price-unit">€/profesional/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="organizacion">Facturado anual · 2 meses gratis</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Todo lo de Equipo, más</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Branding completo: logo, color, tagline, sección «Acerca de» con web, dirección y teléfono</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Estadísticas agregadas: visitas por profesional y por organización</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Booklet PDF de todas las tarjetas del equipo (descarga masiva pre-evento)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Reenvío del kit por admin cuando un miembro pierde el email</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding asistido: videollamada inicial + plantillas de invitación</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Cumplimiento RGPD documentado (export / delete por miembro)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Soporte prioritario (&lt; 24 h)</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="organizacion">Pide una demo →</a>
+    </article>
+
+    <article class="pp-tier">
+      <h3 class="pp-tier__name">Enterprise</h3>
+      <p class="pp-tier__audience">Despachos multi-oficina, colegios profesionales, +100 miembros</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="enterprise">desde 6</span>
+        <span class="pp-tier__price-unit">€/profesional/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="enterprise">Mínimo 100 profesionales · facturación trimestral o anual</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Todo lo de Organización, más</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> SLA 99,5 % con compensación</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> DPA firmado + contacto DPO</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding presencial o formación al equipo de RRHH</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Facturación trimestral o anual, factura única</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Customer Success dedicado</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> <em>En roadmap</em>: SSO (Google Workspace, M365), API de provisión</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="enterprise">Habla con nosotros →</a>
+    </article>
+  </div>
+</section>
+
+<!-- ─────────── Guarantees ─────────── -->
+<section class="pp-guarantees" aria-label="Garantías">
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">↩️</span>
+    <div><strong>Reembolso 30 días</strong>Sin preguntas. Si no os funciona, os devolvemos lo cobrado.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">🔓</span>
+    <div><strong>Sin permanencia</strong>Plan mensual cancelable cuando quieras. Anual con 2 meses gratis.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">📦</span>
+    <div><strong>Tus datos siempre tuyos</strong>Descarga JSON con toda la información cuando canceles.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">🤝</span>
+    <div><strong>Founding partner</strong>Los primeros 5 clientes: 50 % descuento permanente a cambio de caso de estudio.</div>
+  </div>
+</section>
+
+<!-- ─────────── FAQ ─────────── -->
+<section class="pp-faq" id="faq">
+  <div class="pp-section-eyebrow">Preguntas frecuentes</div>
+  <h2 class="pp-section-title" style="margin-bottom:2rem">Lo que solemos resolver</h2>
+
+  <details class="pp-faq__item">
+    <summary>¿Cómo se factura el número de profesionales?</summary>
+    <p class="pp-faq__body">Pagas por profesional activo cada mes. Si das de alta a alguien a mitad de ciclo, se prorratea. Si das de baja, deja de contar en el siguiente ciclo. <strong>Sin coste de alta ni de baja.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Qué pasa cuando un miembro deja la organización?</summary>
+    <p class="pp-faq__body">Desactivas su perfil con un clic desde el panel. Su URL deja de responder, su tarjeta queda invalidada y no cuenta para la facturación del mes siguiente. <strong>No hay rediseño ni reimpresión a coordinar</strong> como con tarjetas físicas.</p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Las tarjetas físicas en PDF las imprimís vosotros?</summary>
+    <p class="pp-faq__body">No, te entregamos los PDF listos para mandar a la imprenta digital que prefieras (formato ISO 7810, 85 × 55 mm). Cualquier imprenta de barrio te las hace en 24 h. El PDF incluye logo, color corporativo, datos del profesional y QR. <strong>Te queda libertad de proveedor e iteración rápida.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Podemos probar antes de pagar?</summary>
+    <p class="pp-faq__body">Sí. Te montamos una demo personalizada con vuestro logo, vuestro color y 2-3 profesionales de muestra. Es gratis y dura lo que necesites hasta decidir. <strong>Pide la demo desde el formulario de abajo.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Es compatible con sector público / requisitos especiales?</summary>
+    <p class="pp-faq__body">Plan Enterprise. Requisitos específicos (ENS, residencia de datos en España, accesibilidad WCAG AA, contratación por pliego) se evalúan caso por caso. Cuéntanos vuestro escenario en el formulario y te damos una respuesta concreta.</p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Y la facturación legal?</summary>
+    <p class="pp-faq__body">Te emitimos factura conforme a normativa española (Verifactu / AEAT) a nombre de tu organización. Si necesitas DPA firmado para tu departamento legal, lo cubrimos en el plan Enterprise.</p>
+  </details>
+</section>
+
 <!-- ─────────── Video ─────────── -->
 <section class="pp-video-section" id="demo">
   <div class="pp-video-wrap">
@@ -236,6 +418,8 @@
     <form class="pp-form-grid" id="leadForm" autocomplete="on" novalidate>
       <!-- Honeypot · invisible · si se rellena, asumimos bot -->
       <input class="pp-form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <!-- Plan de interés: lo rellena el JS al pulsar el CTA de un tier. -->
+      <input type="hidden" name="plan_interes" id="planInteres" value="">
 
       <div class="pp-form-row pp-form-row--inline">
         <div>
@@ -297,6 +481,50 @@
 
 <script>
 'use strict';
+
+/* ── Pricing toggle (anual / mensual) ────────────────────── */
+// Precios: anual = 4 / 5 / desde 6 ; mensual = 5 / 6 / desde 7.
+// El precio "desde 6/7" del tier Enterprise es indicativo — caso a caso.
+const PRICES = {
+  annual:  { equipo: '4', organizacion: '5', enterprise: 'desde 6' },
+  monthly: { equipo: '5', organizacion: '6', enterprise: 'desde 7' },
+};
+const PRICE_NOTES = {
+  annual: {
+    equipo:       'Facturado anual · 2 meses gratis',
+    organizacion: 'Facturado anual · 2 meses gratis',
+    enterprise:   'Mínimo 100 profesionales · facturación trimestral o anual',
+  },
+  monthly: {
+    equipo:       'Cancelable cuando quieras · sin permanencia',
+    organizacion: 'Cancelable cuando quieras · sin permanencia',
+    enterprise:   'Mínimo 100 profesionales · contrato a medida',
+  },
+};
+function setCycle(cycle) {
+  document.querySelectorAll('.pp-pricing__toggle-btn').forEach(b => {
+    const active = b.dataset.cycle === cycle;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-price]').forEach(el => {
+    el.textContent = PRICES[cycle][el.dataset.price];
+  });
+  document.querySelectorAll('[data-note]').forEach(el => {
+    el.textContent = PRICE_NOTES[cycle][el.dataset.note];
+  });
+}
+document.querySelectorAll('.pp-pricing__toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => setCycle(btn.dataset.cycle));
+});
+
+/* ── Tier CTA: pre-rellena plan_interes al hacer click ───── */
+document.querySelectorAll('[data-tier]').forEach(cta => {
+  cta.addEventListener('click', () => {
+    const hidden = document.getElementById('planInteres');
+    if (hidden) hidden.value = cta.dataset.tier;
+  });
+});
 
 /* ── Sector tabs ─────────────────────────────────────────── */
 document.querySelectorAll('.pp-sectors__tab').forEach(tab => {

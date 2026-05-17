@@ -4,8 +4,16 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 
-const TEAM_SIZES = new Set(['5-20', '20-100', '100-500', '500+']);
-const SECTORS    = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'otro']);
+const TEAM_SIZES   = new Set(['5-20', '20-100', '100-500', '500+']);
+const SECTORS      = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'otro']);
+const PLAN_INTERES = new Set(['equipo', 'organizacion', 'enterprise', 'no_se']);
+
+const PLAN_LABEL = {
+  equipo:       'Equipo (4-5 €/mes)',
+  organizacion: 'Organización (5-6 €/mes)',
+  enterprise:   'Enterprise (desde 6 €/mes)',
+  no_se:        'Sin preferencia',
+};
 
 const SECTOR_LABEL = {
   empresa:  'Empresa / red comercial',
@@ -51,9 +59,12 @@ function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildInboxEmailHtml({ name, company, email, team_size, sector, message, inviteToken, siteUrl }) {
+function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, message, inviteToken, siteUrl }) {
   const safeMessage = esc(message || '(sin mensaje adicional)').replace(/\n/g, '<br>');
   const onboardingUrl = `${siteUrl}/es/onboarding?token=${inviteToken}`;
+  const planRow = plan_interes
+    ? `<tr><td style="color:#6B7280">Plan de interés</td><td><strong>${esc(PLAN_LABEL[plan_interes] || plan_interes)}</strong></td></tr>`
+    : '';
   return `<!DOCTYPE html><html><body style="font-family:Inter,Arial,sans-serif;color:#0A1F44;line-height:1.6">
 <h2 style="font-family:'Source Serif 4',Georgia,serif;font-weight:400;color:#0A1F44;letter-spacing:-0.01em">Nuevo lead B2B</h2>
 <table cellpadding="6" style="border-collapse:collapse;font-size:14px">
@@ -62,6 +73,7 @@ function buildInboxEmailHtml({ name, company, email, team_size, sector, message,
   <tr><td style="color:#6B7280">Email</td><td><a href="mailto:${esc(email)}">${esc(email)}</a></td></tr>
   <tr><td style="color:#6B7280">Equipo</td><td>${esc(team_size)}</td></tr>
   <tr><td style="color:#6B7280">Sector</td><td>${esc(SECTOR_LABEL[sector] || sector)}</td></tr>
+  ${planRow}
 </table>
 <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:400;color:#0A1F44;margin-top:1.5rem">Mensaje</h3>
 <p style="background:#FAF7F0;padding:1rem;border-radius:8px">${safeMessage}</p>
@@ -284,6 +296,11 @@ function makeHandler(deps) {
     const team_size = (body.team_size || '').toString().trim();
     const sector    = (body.sector    || '').toString().trim().toLowerCase();
     const message   = (body.message   || '').toString().trim().slice(0, 2000);
+    // plan_interes es opcional. Si llega con valor pero no está en el enum,
+    // lo ignoramos (defensivo). Vale vacío/undefined cuando el lead llega
+    // por el form sin pulsar el CTA de pricing.
+    const rawPlan    = (body.plan_interes || '').toString().trim().toLowerCase();
+    const plan_interes = PLAN_INTERES.has(rawPlan) ? rawPlan : null;
 
     if (!name || !company || !email) {
       return jsonResponse(400, { error: E.missingFields });
@@ -314,6 +331,7 @@ function makeHandler(deps) {
         name, company, email,
         team_size, sector, message: message || null,
         idioma,
+        plan_interes,
       })
       .select('id, invite_token')
       .single();
@@ -333,7 +351,7 @@ function makeHandler(deps) {
         to: inbox,
         replyTo: email,
         subject: `[Lead B2B · ${SECTOR_LABEL[sector]}] ${company} · ${name}`,
-        html: buildInboxEmailHtml({ name, company, email, team_size, sector, message, inviteToken, siteUrl }),
+        html: buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, message, inviteToken, siteUrl }),
       });
     } catch (err) {
       // Si el email interno falla, NO bloqueamos al lead — su registro está

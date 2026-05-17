@@ -200,6 +200,36 @@ describe('lead-b2b handler', () => {
     const res = await handler()(buildEvent({ body: rest }));
     expect(res.statusCode).toBe(200);
   });
+
+  it('persiste plan_interes cuando es válido y lo añade al email interno', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, plan_interes: 'organizacion' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.plan_interes).toBe('organizacion');
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).toContain('Plan de interés');
+    expect(internalEmail.html).toContain('Organización');
+  });
+
+  it('ignora plan_interes fuera del enum y lo persiste como null', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, plan_interes: 'free' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.plan_interes).toBeNull();
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).not.toContain('Plan de interés');
+  });
+
+  it('payload sin plan_interes → null (retrocompat)', async () => {
+    const res = await handler()(buildEvent({ body: validPayload }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.plan_interes).toBeNull();
+  });
 });
 
 describe('buildLeadEmail', () => {
