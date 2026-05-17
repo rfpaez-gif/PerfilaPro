@@ -235,6 +235,50 @@ Sprint reversible para enseñar que PerfilaPro puede alojar un "equipo branded" 
 - `organizations.idioma` o multilingüismo por org → diferido hasta tener cliente.
 - Tab integrada en `admin.html` para gestión de orgs → vive en su propia página `/admin-orgs.html` para no abultar el dashboard principal. Cuando el B2B sea producto estable se valora consolidar.
 
+### Panel cliente B2B self-serve (`/panel.html`)
+
+Sprint Bloque 2 #1. Permite al **responsable de una organización** gestionar branding, equipo y estadísticas sin pasar por el founder. Activado por magic-link al email registrado en `organizations.email`.
+
+**Auth model — passwordless + JWT 7d:**
+- Cliente abre `/panel.html` → introduce email de su organización → `POST /api/panel-auth { email }`.
+- Backend hace lookup en `organizations.email` (índice parcial `organizations_email_active_idx` creado por migración 028). Si match: firma un JWT con `{ purpose:'org-panel', orgId, orgSlug }`, TTL 7d, secreto `ORG_PANEL_JWT_SECRET` (fallback `AGENT_JWT_SECRET`), y manda email con `${SITE_URL}/panel.html?session=<jwt>`.
+- Devuelve **siempre 200** (anti-enumeration, mismo patrón que `send-edit-link`).
+- Cliente abre email → click → frontend extrae `session=` de la URL, lo guarda en `localStorage.pp_panel_session`, limpia el query string con `history.replaceState`, carga el dashboard.
+- Visitas posteriores: localStorage tiene el JWT → bypasses login.
+- Logout = `localStorage.removeItem`.
+
+**Endpoint `org-panel.js`** (`POST /api/org-panel`, header `Authorization: Bearer <jwt>`):
+
+Toda acción está forzosamente scoped a `orgId` del JWT. No existe `org_slug` en el body — un cliente NUNCA puede operar sobre otra org porque no puede falsificar el JWT. Si la org del JWT está soft-deleted, la sesión queda inservible (401).
+
+| Action | Función |
+|---|---|
+| `get_org` | Devuelve org + lista de miembros + stats agregadas (totals 7d/30d/all + sparkline 30d). Marca `panel_last_login_at` best-effort para que el founder vea desde admin-orgs si el cliente usa el panel. |
+| `update_branding` | Actualiza `tagline`, `description`, `website`, `address`, `phone`, `color_primary`. **NO permite** cambiar `name`, `slug`, `email` ni `logo_url` (founder-only por riesgo de auto-bloqueo / ruptura de URLs / sin upload-org-logo scoped a cliente). |
+| `invite_team` | Alta en lote (≤100). Reusa `lib/team-invite.js` (extracción de la lógica de `admin-orgs.js → invite_team`). Cada miembro recibe email de invitación con tarjeta de visita PDF branded adjunta. |
+
+Rate-limit 120 req / 10 min por IP — holgado para operativa normal (cargar panel + editar branding + invitar lote).
+
+**Reusable `lib/team-invite.js`**: la lógica del loop de invite_team (sanitizar plantilla, cachear logo, generar slug + token + PDF + email + marcar `edit_link_sent_at` por miembro) vive aquí. La importan tanto `admin-orgs.js` (founder) como `org-panel.js` (cliente self-serve). Si añadimos un campo de plantilla nuevo, se añade una sola vez.
+
+**Frontend (`public/panel.html`)**: SPA vanilla JS (sin framework). 3 tabs: Estadísticas (KPIs + sparkline SVG inline), Equipo (tabla ordenada por visitas 30d + form de invite con plantilla colapsable + filas dinámicas), Branding (form con color picker sincronizado a hex input + textarea con maxlength). Login screen con copy "Sin contraseñas" para resaltar el flow. Topbar negra con enlace "Ver página pública ↗" a `/e/:slug`.
+
+**Migración 028**:
+- `organizations.panel_last_login_at timestamptz NULL` — visibility para founder.
+- Índice parcial `organizations_email_active_idx` sobre `email` donde `email IS NOT NULL AND deleted_at IS NULL` — lookup rápido del magic-link.
+
+**Fuera de scope MVP** (Bloque 2 #1):
+- ❌ Offboard de miembros con cortesía 90 días → founder-only via admin-orgs.
+- ❌ Borrar cards / soft-delete miembro → founder-only.
+- ❌ Download PDF de tarjetas del equipo → founder-only.
+- ❌ Resend edit-link a miembro individual → founder-only.
+- ❌ Upload de logo / cambio de `logo_url` → founder vía admin-orgs (requiere su propio endpoint scoped a panel).
+- ❌ Ver/rotar `stats_token` → el link público a `/e/:slug/stats` lo sigue generando founder.
+- ❌ Cambiar `slug`, `name`, `email` propios → founder-only (riesgo de auto-bloqueo).
+- ❌ Múltiples admins / roles por org → modelo actual asume 1 admin por org (organizations.email). Se añade tabla `org_admins` cuando un cliente lo pida.
+
+**Reversibilidad**: borrar las rutas `/api/panel-auth`, `/api/org-panel`, `/panel` en `netlify.toml` + los 3 archivos. La columna `panel_last_login_at` puede dejarse dormida sin coste.
+
 ### Landing B2B (`/es/empresas` + `/ca/empresas`)
 
 Página pública (indexable, no requiere auth) que vende el producto a **organizaciones con red profesional**: empresas, despachos, colegios profesionales, asociaciones, administraciones públicas, ONGs. URL `/es/empresas` por SEO ("empresas" tiene volumen de búsqueda, "organizaciones" no), pero el copy es de amplio espectro. La versión catalana `/ca/empresas` es traducción 1:1; ambas se cruzan con `<link rel="alternate" hreflang>` + `og:locale:alternate`. El header B2C (es y ca) enlaza directo a su versión del landing — espejo simétrico del "Soy autónomo / Sóc autònom →" que el landing B2B tiene hacia el B2C.
@@ -302,6 +346,7 @@ ADMIN_TOTP_SECRET     # optional — enables TOTP 2FA for admin panel
 RESEND_API_KEY
 SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
+ORG_PANEL_JWT_SECRET  # signs B2B client panel JWT (fallback: AGENT_JWT_SECRET)
 POSTHOG_API_KEY       # PostHog project key — empty disables analytics
 POSTHOG_HOST          # default https://eu.i.posthog.com
 B2B_LEAD_INBOX        # email que recibe los leads del form /es/empresas y /ca/empresas
@@ -330,6 +375,9 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/e/:slug/stats` | `org-stats-page` |
 | `/api/org-stats` | `org-stats` |
 | `/api/upload-org-logo` | `upload-org-logo` |
+| `/panel` (→ `/panel.html`) | (static) |
+| `/api/panel-auth` | `panel-auth` |
+| `/api/org-panel` | `org-panel` |
 | `/api/lead-b2b` | `lead-b2b` |
 | `/api/legal-settings` | `legal-settings` |
 | `/api/card-status` | `card-status` |

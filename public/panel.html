@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Panel B2B — PerfilaPro</title>
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Panel B2B">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    body { background: var(--color-crema, #FAF7F0); min-height: 100dvh; margin: 0; font-family: var(--font-sans); color: var(--color-tinta, #0A1F44); }
+
+    /* ── Login ──────────────────────────────────────────── */
+    .pp-login { display: flex; align-items: center; justify-content: center; min-height: 100dvh; padding: 1rem; }
+    .pp-login__box { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); box-shadow: 0 8px 24px rgba(0,0,0,.06); padding: 2.5rem 2rem; width: 100%; max-width: 420px; }
+    .pp-login__logo { font-family: var(--font-serif); font-size: 28px; font-weight: 500; letter-spacing: -0.02em; text-align: center; margin: 0 0 .25rem; color: var(--color-verde-dark, #00A865); }
+    .pp-login__logo em { font-style: italic; font-weight: 500; }
+    .pp-login__title { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; letter-spacing: -0.02em; margin: 1.25rem 0 .35rem; text-align: center; }
+    .pp-login__sub { color: var(--color-gris-500, #6B7280); font-size: 14px; line-height: 1.5; margin: 0 0 1.5rem; text-align: center; }
+    .pp-login__sent { display: none; padding: 1rem; background: var(--color-verde-light, #E6F9F0); border: 1px solid #BFE9D0; border-radius: 12px; color: var(--color-verde-dark, #00A865); font-size: 14px; line-height: 1.55; }
+    .pp-login__sent strong { display: block; margin-bottom: .35rem; }
+    .pp-login__error { color: var(--color-coral, #E0633F); font-size: 13px; margin: .5rem 0 0; display: none; }
+    .pp-login__help { font-size: 12px; color: var(--color-gris-500, #6B7280); text-align: center; margin: 1.25rem 0 0; line-height: 1.55; }
+    .pp-login__help a { color: var(--color-verde-dark, #00A865); text-decoration: none; }
+    .pp-login__help a:hover { text-decoration: underline; }
+
+    /* ── Dashboard shell ────────────────────────────────── */
+    .pp-dash { display: none; }
+    .pp-topbar { background: var(--color-tinta, #0A1F44); color: #fff; padding: .9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .pp-topbar__brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0; }
+    .pp-topbar__brand small { display: block; font-family: var(--font-sans); font-size: 11px; opacity: .65; font-weight: 500; margin-top: 2px; letter-spacing: .02em; }
+    .pp-topbar__actions { display: flex; gap: .5rem; align-items: center; }
+    .pp-topbar__link { color: rgba(255,255,255,.85); text-decoration: none; font-size: 13px; padding: .4rem .75rem; border-radius: 8px; transition: background .15s; }
+    .pp-topbar__link:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .pp-topbar__logout { background: rgba(255,255,255,.18); border: none; color: #fff; padding: .4rem 1rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font-size: 13px; font-weight: 600; }
+    .pp-topbar__logout:hover { background: rgba(255,255,255,.32); }
+
+    /* ── Tabs ───────────────────────────────────────────── */
+    .pp-tabs { display: flex; gap: .25rem; padding: 0 1.5rem; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; overflow-x: auto; }
+    .pp-tab { background: none; border: none; padding: 1rem 1.25rem; font-size: 14px; font-weight: 600; color: var(--color-gris-500, #6B7280); cursor: pointer; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s; white-space: nowrap; }
+    .pp-tab:hover { color: var(--color-tinta, #0A1F44); }
+    .pp-tab--active { color: var(--color-tinta, #0A1F44); border-bottom-color: var(--color-verde-match, #00C277); }
+
+    .pp-content { max-width: 980px; margin: 0 auto; padding: 1.5rem; }
+
+    /* ── Toast ──────────────────────────────────────────── */
+    .pp-toast { padding: .75rem 1rem; border-radius: 10px; font-size: 13px; margin: 0 0 1rem; display: none; line-height: 1.5; }
+    .pp-toast--ok  { background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border: 1px solid #BFE9D0; }
+    .pp-toast--err { background: #FDECEA; color: #B0392A; border: 1px solid #F4C2BC; }
+
+    /* ── Section ────────────────────────────────────────── */
+    .pp-section { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.25rem 1.5rem 1.5rem; margin-bottom: 1.25rem; }
+    .pp-section__title { font-family: var(--font-serif); font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .25rem; }
+    .pp-section__sub { font-size: 13px; color: var(--color-gris-500, #6B7280); margin: 0 0 1.25rem; line-height: 1.55; }
+
+    /* ── Form ───────────────────────────────────────────── */
+    .pp-form { display: grid; gap: 1rem; }
+    .pp-form__row { display: grid; gap: .35rem; }
+    .pp-form__label { font-size: 12px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-form__label small { color: var(--color-gris-500, #6B7280); font-weight: 500; margin-left: .35rem; }
+    .pp-form__hint { font-size: 11px; color: var(--color-gris-500, #6B7280); line-height: 1.45; margin-top: .15rem; }
+
+    .pp-color-row { display: grid; grid-template-columns: 56px 1fr; gap: .65rem; align-items: center; }
+    .pp-color-picker { width: 56px; height: 38px; padding: 0; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; cursor: pointer; background: #fff; }
+
+    .pp-readonly { display: flex; align-items: center; gap: .75rem; padding: .65rem .85rem; background: #F9FAFB; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 10px; font-size: 13px; color: var(--color-gris-500, #6B7280); }
+    .pp-readonly strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-readonly__lock { background: #E5E7EB; color: #6B7280; border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700; letter-spacing: .05em; }
+
+    .pp-form__actions { display: flex; gap: .5rem; justify-content: flex-end; padding-top: .5rem; }
+
+    /* ── Stats KPIs ─────────────────────────────────────── */
+    .pp-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+    @media (min-width: 600px) { .pp-kpis { grid-template-columns: repeat(4, 1fr); } }
+    .pp-kpi { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 14px; padding: 1rem; text-align: center; }
+    .pp-kpi__label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-gris-500, #6B7280); margin: 0 0 .25rem; }
+    .pp-kpi__value { font-family: var(--font-serif); font-size: 1.875rem; font-weight: 500; line-height: 1; color: var(--color-tinta, #0A1F44); }
+
+    .pp-spark { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 14px; padding: 1rem 1.25rem 1.25rem; margin-bottom: 1.25rem; }
+    .pp-spark__title { font-size: 13px; font-weight: 600; color: var(--color-tinta, #0A1F44); margin: 0 0 .75rem; }
+
+    /* ── Members table ──────────────────────────────────── */
+    .pp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .pp-table th { text-align: left; padding: .65rem .75rem; background: #F9FAFB; font-weight: 600; color: var(--color-gris-500, #6B7280); text-transform: uppercase; font-size: 11px; letter-spacing: .03em; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-table td { padding: .75rem; border-bottom: 1px solid #F1F3F5; }
+    .pp-table tr:last-child td { border-bottom: none; }
+    .pp-table__num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pp-table__avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #E5E7EB; display: inline-block; vertical-align: middle; margin-right: .5rem; }
+    .pp-table__link { color: var(--color-verde-dark, #00A865); text-decoration: none; font-size: 12px; }
+    .pp-table__link:hover { text-decoration: underline; }
+    .pp-table__empty { text-align: center; color: var(--color-gris-500, #6B7280); padding: 2rem 1rem; font-size: 14px; font-style: italic; }
+
+    /* ── Invite team ────────────────────────────────────── */
+    .pp-invite__rows { display: grid; gap: .5rem; margin-bottom: 1rem; }
+    .pp-invite__row { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr auto; gap: .5rem; align-items: center; }
+    .pp-invite__row input { padding: .55rem .75rem; }
+    .pp-invite__remove { background: none; border: none; color: var(--color-coral, #E0633F); cursor: pointer; padding: .35rem .5rem; font-size: 18px; border-radius: 6px; }
+    .pp-invite__remove:hover { background: #FDECEA; }
+    .pp-invite__add { background: none; border: 1px dashed var(--color-gris-200, #E5E7EB); padding: .65rem; width: 100%; border-radius: 10px; color: var(--color-gris-500, #6B7280); cursor: pointer; font-size: 13px; font-weight: 500; }
+    .pp-invite__add:hover { border-color: var(--color-verde-match, #00C277); color: var(--color-verde-dark, #00A865); }
+    .pp-invite__template { background: #F9FAFB; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+    .pp-invite__template summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--color-tinta, #0A1F44); padding: .25rem 0; }
+    .pp-invite__template[open] summary { margin-bottom: .75rem; }
+    .pp-invite__template-grid { display: grid; gap: .75rem; }
+    @media (min-width: 600px) { .pp-invite__template-grid { grid-template-columns: 1fr 1fr; } }
+    .pp-invite__results { font-size: 13px; line-height: 1.55; }
+    .pp-invite__results ul { margin: .35rem 0 .75rem 1.25rem; padding: 0; }
+
+    /* ── Spinner ────────────────────────────────────────── */
+    .pp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: pp-spin .6s linear infinite; vertical-align: -2px; margin-right: .35rem; }
+    @keyframes pp-spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .pp-invite__row { grid-template-columns: 1fr; }
+      .pp-content { padding: 1rem; }
+      .pp-section { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ────────────────────────────────────────────── -->
+<div class="pp-login" id="loginScreen">
+  <div class="pp-login__box">
+    <p class="pp-login__logo">Perfila<em>Pro</em></p>
+    <h1 class="pp-login__title">Tu panel B2B</h1>
+    <p class="pp-login__sub">Introduce el email de tu organización y te mandamos un enlace para entrar. Sin contraseñas.</p>
+
+    <form id="loginForm">
+      <div class="pp-form__row">
+        <label class="pp-form__label" for="loginEmail">Email de la organización</label>
+        <input class="pp-input" type="email" id="loginEmail" placeholder="admin@miempresa.com" required autocomplete="email" autocapitalize="off" autocorrect="off">
+      </div>
+      <button type="submit" class="pp-btn pp-btn--primary pp-btn--block" id="loginSubmit" style="margin-top:.75rem">Mandarme el enlace →</button>
+      <p class="pp-login__error" id="loginError"></p>
+    </form>
+
+    <div class="pp-login__sent" id="loginSent">
+      <strong>📬 Revisa tu email</strong>
+      Si el email está registrado, te llegará un enlace para entrar al panel. <strong>Mira también la carpeta de spam</strong> los primeros minutos.
+    </div>
+
+    <p class="pp-login__help">
+      ¿Aún no tienes organización registrada?<br>
+      Escribe a <a href="mailto:hola@perfilapro.es">hola@perfilapro.es</a> y la creamos.
+    </p>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ──────────────────────────────────────── -->
+<div class="pp-dash" id="dashScreen">
+  <div class="pp-topbar">
+    <div>
+      <h1 class="pp-topbar__brand">
+        <span id="topbarOrgName">…</span>
+        <small>Panel B2B · PerfilaPro</small>
+      </h1>
+    </div>
+    <div class="pp-topbar__actions">
+      <a class="pp-topbar__link" id="topbarPublic" href="#" target="_blank" rel="noopener">Ver página pública ↗</a>
+      <button class="pp-topbar__logout" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+
+  <div class="pp-tabs" role="tablist">
+    <button class="pp-tab pp-tab--active" data-tab="stats">Estadísticas</button>
+    <button class="pp-tab"                  data-tab="team">Equipo</button>
+    <button class="pp-tab"                  data-tab="branding">Branding</button>
+  </div>
+
+  <main class="pp-content">
+    <div class="pp-toast pp-toast--ok"  id="toastOk"></div>
+    <div class="pp-toast pp-toast--err" id="toastErr"></div>
+
+    <!-- ── Tab: Stats ─────────────────────────────────── -->
+    <div class="pp-tabpanel" data-tabpanel="stats">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Resumen de tráfico</h2>
+        <p class="pp-section__sub">Visitas a las tarjetas de tu equipo en los últimos 30 días.</p>
+
+        <div class="pp-kpis">
+          <div class="pp-kpi"><p class="pp-kpi__label">Profesionales</p><p class="pp-kpi__value" id="kpiMembers">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Visitas 7 días</p><p class="pp-kpi__value" id="kpi7d">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Visitas 30 días</p><p class="pp-kpi__value" id="kpi30d">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Total</p><p class="pp-kpi__value" id="kpiAll">—</p></div>
+        </div>
+
+        <div class="pp-spark">
+          <p class="pp-spark__title">Últimos 30 días</p>
+          <svg id="sparkSvg" width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none" style="display:block"></svg>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Team ──────────────────────────────────── -->
+    <div class="pp-tabpanel" data-tabpanel="team" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Tu equipo</h2>
+        <p class="pp-section__sub">Profesionales activos en tu organización, ordenados por visitas recientes.</p>
+        <div style="overflow-x:auto">
+          <table class="pp-table">
+            <thead><tr>
+              <th>Profesional</th>
+              <th class="pp-table__num">Visitas 7d</th>
+              <th class="pp-table__num">Visitas 30d</th>
+              <th class="pp-table__num">Total</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="membersTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">Invitar profesionales</h2>
+        <p class="pp-section__sub">Cada miembro recibirá un email con un enlace personal para completar su perfil (foto, WhatsApp, etc.) y una tarjeta de visita en PDF con tu branding.</p>
+
+        <details class="pp-invite__template">
+          <summary>Datos comunes (opcional)</summary>
+          <p class="pp-form__hint" style="margin-bottom:.75rem">Si rellenas estos campos, se aplican a todos los miembros del lote. Cada miembro podrá editar lo suyo más tarde.</p>
+          <div class="pp-invite__template-grid">
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="tplTagline">Cargo común <small>opcional</small></label>
+              <input class="pp-input" type="text" id="tplTagline" maxlength="140" placeholder="Ej. Asesor fiscal">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="tplZona">Zona <small>opcional</small></label>
+              <input class="pp-input" type="text" id="tplZona" maxlength="100" placeholder="Ej. Madrid centro">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="tplCp">Código postal <small>opcional</small></label>
+              <input class="pp-input" type="text" id="tplCp" maxlength="5" placeholder="28013" inputmode="numeric">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="tplServicios">Servicios <small>separados por comas</small></label>
+              <input class="pp-input" type="text" id="tplServicios" placeholder="IRPF, impuestos, sociedades">
+            </div>
+          </div>
+        </details>
+
+        <div class="pp-invite__rows" id="inviteRows">
+          <!-- las filas se generan en JS -->
+        </div>
+        <button type="button" class="pp-invite__add" id="addInviteRow">+ Añadir profesional</button>
+
+        <div class="pp-form__actions" style="margin-top:1rem">
+          <button type="button" class="pp-btn pp-btn--primary" id="sendInvitesBtn">Enviar invitaciones</button>
+        </div>
+
+        <div class="pp-invite__results" id="inviteResults" style="margin-top:1rem;display:none"></div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Branding ──────────────────────────────── -->
+    <div class="pp-tabpanel" data-tabpanel="branding" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Datos de tu organización</h2>
+        <p class="pp-section__sub">Estos datos aparecen en tu página pública y en las tarjetas de visita de tu equipo.</p>
+
+        <form class="pp-form" id="brandingForm">
+          <div class="pp-form__row">
+            <label class="pp-form__label">Nombre <span class="pp-readonly__lock">FIJO</span></label>
+            <div class="pp-readonly"><strong id="brandingName">—</strong></div>
+            <p class="pp-form__hint">Para cambiar el nombre o el logo de tu organización, escribe a <a href="mailto:hola@perfilapro.es" style="color:var(--color-verde-dark,#00A865)">hola@perfilapro.es</a>.</p>
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingTagline">Lema <small>máx. 140 chars</small></label>
+            <input class="pp-input" type="text" id="brandingTagline" maxlength="140">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingDescription">Sobre nosotros <small>máx. 500 chars</small></label>
+            <textarea class="pp-input" id="brandingDescription" rows="3" maxlength="500" style="resize:vertical;min-height:80px;font-family:inherit"></textarea>
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingWebsite">Sitio web <small>opcional</small></label>
+            <input class="pp-input" type="url" id="brandingWebsite" maxlength="200" placeholder="https://miempresa.com">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingAddress">Dirección <small>opcional</small></label>
+            <input class="pp-input" type="text" id="brandingAddress" maxlength="200" placeholder="Calle Mayor 1, 28013 Madrid">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingPhone">Teléfono <small>opcional</small></label>
+            <input class="pp-input" type="tel" id="brandingPhone" maxlength="40" placeholder="+34 91 123 45 67">
+          </div>
+
+          <div class="pp-form__row">
+            <label class="pp-form__label" for="brandingColor">Color de marca</label>
+            <div class="pp-color-row">
+              <input class="pp-color-picker" type="color" id="brandingColor" value="#00C277">
+              <input class="pp-input" type="text" id="brandingColorHex" placeholder="#00C277" pattern="^#[0-9a-fA-F]{6}$" maxlength="7">
+            </div>
+            <p class="pp-form__hint">Se usa en la franja superior de tu página pública y en las tarjetas de visita del equipo.</p>
+          </div>
+
+          <div class="pp-form__actions">
+            <button type="submit" class="pp-btn pp-btn--primary">Guardar cambios</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const SESSION_KEY = 'pp_panel_session';
+  const $ = (id) => document.getElementById(id);
+
+  // ── State ────────────────────────────────────────────────
+  let session = null;
+  let orgData = null;
+  let statsData = null;
+
+  // ── Utils ────────────────────────────────────────────────
+  function showToast(kind, msg) {
+    const el = kind === 'ok' ? $('toastOk') : $('toastErr');
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function showLogin() {
+    $('loginScreen').style.display = 'flex';
+    $('dashScreen').style.display = 'none';
+  }
+  function showDash() {
+    $('loginScreen').style.display = 'none';
+    $('dashScreen').style.display = 'block';
+  }
+
+  function getSession() {
+    const t = localStorage.getItem(SESSION_KEY);
+    return t || null;
+  }
+
+  function setSession(token) {
+    localStorage.setItem(SESSION_KEY, token);
+    session = token;
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    session = null;
+  }
+
+  async function api(action, payload = {}) {
+    const res = await fetch('/api/org-panel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session}`,
+      },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    if (res.status === 401) {
+      // Sesión inválida / expirada — purgamos y volvemos al login.
+      clearSession();
+      showLogin();
+      throw new Error('Sesión expirada');
+    }
+    if (!res.ok) {
+      let err = 'Error desconocido';
+      try { err = (await res.json()).error || err; } catch {}
+      throw new Error(err);
+    }
+    return res.json();
+  }
+
+  // ── Login flow ───────────────────────────────────────────
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('loginSubmit');
+    const err = $('loginError');
+    err.style.display = 'none';
+
+    const email = $('loginEmail').value.trim().toLowerCase();
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+
+    try {
+      const res = await fetch('/api/panel-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (res.status === 429) {
+        err.textContent = 'Demasiados intentos. Espera unos minutos.';
+        err.style.display = 'block';
+      } else if (!res.ok) {
+        err.textContent = 'Algo ha fallado. Inténtalo de nuevo.';
+        err.style.display = 'block';
+      } else {
+        $('loginForm').style.display = 'none';
+        $('loginSent').style.display = 'block';
+      }
+    } catch {
+      err.textContent = 'No se pudo conectar. Inténtalo de nuevo.';
+      err.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Mandarme el enlace →';
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', () => {
+    clearSession();
+    showLogin();
+  });
+
+  // ── Tabs ─────────────────────────────────────────────────
+  document.querySelectorAll('.pp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      document.querySelectorAll('.pp-tab').forEach(b => b.classList.toggle('pp-tab--active', b === btn));
+      document.querySelectorAll('.pp-tabpanel').forEach(p => {
+        p.style.display = p.dataset.tabpanel === target ? 'block' : 'none';
+      });
+    });
+  });
+
+  // ── Render dashboard ─────────────────────────────────────
+  function renderOrg(org) {
+    orgData = org;
+    $('topbarOrgName').textContent = org.name || '';
+    $('topbarPublic').href = `/e/${org.slug}`;
+
+    // Branding form
+    $('brandingName').textContent = org.name || '';
+    $('brandingTagline').value = org.tagline || '';
+    $('brandingDescription').value = org.description || '';
+    $('brandingWebsite').value = org.website || '';
+    $('brandingAddress').value = org.address || '';
+    $('brandingPhone').value = org.phone || '';
+    const color = org.color_primary || '#00C277';
+    $('brandingColor').value = color;
+    $('brandingColorHex').value = color;
+  }
+
+  function renderStats(stats, memberCount) {
+    statsData = stats;
+    $('kpiMembers').textContent = memberCount;
+    $('kpi7d').textContent  = stats.totals.visits_7d;
+    $('kpi30d').textContent = stats.totals.visits_30d;
+    $('kpiAll').textContent = stats.totals.visits_all;
+    renderSparkline(stats.by_day);
+  }
+
+  function renderSparkline(byDay) {
+    const svg = $('sparkSvg');
+    const W = 300, H = 60, PAD = 4;
+    const max = Math.max(1, ...byDay.map(d => d.count));
+    const step = (W - 2 * PAD) / (byDay.length - 1);
+
+    let path = '';
+    byDay.forEach((d, i) => {
+      const x = PAD + i * step;
+      const y = H - PAD - (d.count / max) * (H - 2 * PAD);
+      path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    });
+
+    // Fill area below the line
+    const fillPath = path + `L${W - PAD},${H - PAD} L${PAD},${H - PAD} Z`;
+
+    svg.innerHTML = `
+      <path d="${fillPath}" fill="rgba(0,194,119,0.15)"/>
+      <path d="${path}" fill="none" stroke="#00C277" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    `;
+  }
+
+  function renderMembers(members) {
+    const tbody = $('membersTbody');
+    if (!members.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="pp-table__empty">Aún no hay profesionales en tu equipo. Usa el formulario de abajo para invitar al primero.</td></tr>`;
+      return;
+    }
+    // Ordenar: visitas_30d desc, luego nombre.
+    members.sort((a, b) => (b.visits_30d - a.visits_30d) || a.nombre.localeCompare(b.nombre));
+    tbody.innerHTML = members.map(m => {
+      const avatar = m.foto_url
+        ? `<img class="pp-table__avatar" src="${escapeHtml(m.foto_url)}" alt="">`
+        : `<span class="pp-table__avatar"></span>`;
+      return `<tr>
+        <td>${avatar}<strong>${escapeHtml(m.nombre || '—')}</strong>${m.tagline ? `<br><small style="color:#6B7280">${escapeHtml(m.tagline)}</small>` : ''}</td>
+        <td class="pp-table__num">${m.visits_7d}</td>
+        <td class="pp-table__num">${m.visits_30d}</td>
+        <td class="pp-table__num">${m.visits_all}</td>
+        <td><a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver tarjeta ↗</a></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function loadDashboard() {
+    try {
+      const data = await api('get_org');
+      renderOrg(data.org);
+      renderStats(data.stats, data.members.length);
+      renderMembers(data.members);
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') showToast('err', 'No se pudo cargar tu panel: ' + e.message);
+    }
+  }
+
+  // ── Branding form ────────────────────────────────────────
+  // Sincronizamos color picker ↔ hex input
+  $('brandingColor').addEventListener('input', (e) => {
+    $('brandingColorHex').value = e.target.value.toUpperCase();
+  });
+  $('brandingColorHex').addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) $('brandingColor').value = v;
+  });
+
+  $('brandingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="pp-spinner"></span> Guardando…';
+
+    try {
+      await api('update_branding', {
+        tagline:       $('brandingTagline').value.trim() || null,
+        description:   $('brandingDescription').value.trim() || null,
+        website:       $('brandingWebsite').value.trim() || null,
+        address:       $('brandingAddress').value.trim() || null,
+        phone:         $('brandingPhone').value.trim() || null,
+        color_primary: $('brandingColorHex').value.trim() || null,
+      });
+      showToast('ok', 'Cambios guardados.');
+      // Refrescamos para que el topbar y los KPIs reflejen el cambio
+      await loadDashboard();
+    } catch (e) {
+      showToast('err', e.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar cambios';
+    }
+  });
+
+  // ── Invite team ──────────────────────────────────────────
+  function makeInviteRow(idx) {
+    const row = document.createElement('div');
+    row.className = 'pp-invite__row';
+    row.innerHTML = `
+      <input class="pp-input" type="text" placeholder="Nombre y apellidos" data-field="nombre" autocomplete="off">
+      <input class="pp-input" type="email" placeholder="email@empresa.com" data-field="email" autocomplete="off" autocapitalize="off" autocorrect="off">
+      <input class="pp-input" type="text" placeholder="Cargo (opcional)" data-field="ocupacion" autocomplete="off">
+      <button type="button" class="pp-invite__remove" aria-label="Quitar fila" title="Quitar">×</button>
+    `;
+    row.querySelector('.pp-invite__remove').addEventListener('click', () => {
+      row.remove();
+      if (!$('inviteRows').children.length) addRow();
+    });
+    return row;
+  }
+  function addRow() {
+    const r = makeInviteRow();
+    $('inviteRows').appendChild(r);
+    return r;
+  }
+  $('addInviteRow').addEventListener('click', addRow);
+
+  $('sendInvitesBtn').addEventListener('click', async () => {
+    const rows = Array.from($('inviteRows').querySelectorAll('.pp-invite__row'));
+    const team = rows
+      .map(row => ({
+        nombre:    row.querySelector('[data-field="nombre"]').value.trim(),
+        email:     row.querySelector('[data-field="email"]').value.trim(),
+        ocupacion: row.querySelector('[data-field="ocupacion"]').value.trim(),
+      }))
+      .filter(m => m.email);
+
+    if (!team.length) {
+      showToast('err', 'Añade al menos un profesional con email.');
+      return;
+    }
+    if (team.length > 100) {
+      showToast('err', 'Máximo 100 invitaciones por lote.');
+      return;
+    }
+
+    const servicios = $('tplServicios').value.split(',').map(s => s.trim()).filter(Boolean);
+    const template = {
+      tagline:     $('tplTagline').value.trim() || undefined,
+      zona:        $('tplZona').value.trim() || undefined,
+      cp:          $('tplCp').value.trim() || undefined,
+      servicios:   servicios.length ? servicios : undefined,
+    };
+
+    const btn = $('sendInvitesBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+
+    try {
+      const result = await api('invite_team', { team, template });
+      const okList = result.results.ok || [];
+      const failedList = result.results.failed || [];
+
+      const results = $('inviteResults');
+      let html = `<strong>${escapeHtml(result.summary)}</strong>`;
+      if (okList.length) {
+        html += `<p style="margin-top:.5rem;color:#00A865">✓ Invitaciones enviadas:</p><ul>` +
+          okList.map(o => `<li>${escapeHtml(o.email)}</li>`).join('') + `</ul>`;
+      }
+      if (failedList.length) {
+        html += `<p style="color:#B0392A">✗ Con error:</p><ul>` +
+          failedList.map(f => `<li>${escapeHtml(f.email)} — ${escapeHtml(f.error)}</li>`).join('') + `</ul>`;
+      }
+      results.innerHTML = html;
+      results.style.display = 'block';
+
+      // Limpiamos las filas exitosas pero dejamos las que fallaron para que el cliente las corrija.
+      if (failedList.length === 0) {
+        $('inviteRows').innerHTML = '';
+        addRow();
+      }
+      // Refrescamos miembros + stats
+      await loadDashboard();
+      showToast('ok', result.summary);
+    } catch (e) {
+      showToast('err', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Enviar invitaciones';
+    }
+  });
+
+  // ── Boot ─────────────────────────────────────────────────
+  function boot() {
+    // Si hay session= en la URL (acaba de hacer click en magic-link),
+    // la guardamos en localStorage y limpiamos la URL.
+    const urlParams = new URLSearchParams(window.location.search);
+    const sess = urlParams.get('session');
+    if (sess) {
+      setSession(sess);
+      // Limpiamos la query string sin recargar
+      window.history.replaceState({}, '', window.location.pathname);
+    } else {
+      session = getSession();
+    }
+
+    if (!session) {
+      showLogin();
+      return;
+    }
+
+    showDash();
+    addRow(); // primera fila vacía del invite
+    loadDashboard();
+  }
+
+  boot();
+})();
+</script>
+
+</body>
+</html>

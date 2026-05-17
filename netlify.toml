@@ -252,6 +252,25 @@
   to     = "/.netlify/functions/org-stats"
   status = 200
 
+# Panel cliente B2B self-serve (Sprint Bloque 2 #1).
+# Magic-link → JWT 7d. Cliente gestiona branding, equipo y stats sin
+# pasar por el founder.
+[[redirects]]
+  from   = "/api/panel-auth"
+  to     = "/.netlify/functions/panel-auth"
+  status = 200
+
+[[redirects]]
+  from   = "/api/org-panel"
+  to     = "/.netlify/functions/org-panel"
+  status = 200
+
+# Pretty URL para compartir: /panel → /panel.html
+[[redirects]]
+  from   = "/panel"
+  to     = "/panel.html"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"

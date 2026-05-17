@@ -20,6 +20,7 @@ const {
   buildBusinessCardsBookletPDF,
   fetchLogoAsPngBuffer,
 } = require('./printable-card-utils');
+const { inviteTeamMembers } = require('./lib/team-invite');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -47,13 +48,6 @@ function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function toSlug(name) {
-  return String(name || '').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    .substring(0, 40);
 }
 
 /**
@@ -1061,164 +1055,16 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       if (orgErr) return jsonResponse(500, { error: orgErr.message });
       if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
 
-      // Sanitizamos la plantilla común. Cada campo es opcional — si el
-      // founder no rellena tagline, ningún operario lo lleva. Igual para
-      // servicios (array) y resto.
-      const tpl = template || {};
-      const tplTagline     = tpl.tagline ? stripTagsInline(tpl.tagline).substring(0, 140) : null;
-      const tplDescripcion = tpl.descripcion ? stripTagsInline(tpl.descripcion).substring(0, 300) : null;
-      const tplCp          = tpl.cp ? String(tpl.cp).trim().replace(/\D/g, '').substring(0, 5) : null;
-      const tplZona        = tpl.zona ? stripTagsInline(tpl.zona).substring(0, 100) : null;
-      const tplServicios   = Array.isArray(tpl.servicios)
-        ? tpl.servicios.map(s => stripTagsInline(s).substring(0, 100)).filter(Boolean).slice(0, 20)
-        : [];
-
-      // Logo de la org cacheado para adjuntar la tarjeta de visita a cada
-      // email del lote. Una sola petición HTTP para los N miembros. Si el
-      // fetch falla el booklet sale sin logo, el nombre de la org queda
-      // de cabecera y la invitación se manda igual (defensivo).
-      const orgLogoBuffer = org.logo_url
-        ? await fetchLogoAsPngBuffer(org.logo_url).catch(() => null)
-        : null;
-
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
-      const ok = [];
-      const failed = [];
-
-      for (const raw of team) {
-        const rawEmail     = raw && typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : '';
-        const rawNombre    = raw && typeof raw.nombre === 'string' ? raw.nombre : '';
-        const rawOcupacion = raw && typeof raw.ocupacion === 'string' ? raw.ocupacion : '';
-
-        if (!EMAIL_RE.test(rawEmail)) {
-          failed.push({ email: rawEmail || '(sin email)', error: 'email inválido' });
-          continue;
-        }
-
-        const cleanNombre    = rawNombre    ? stripTagsInline(rawNombre).substring(0, 100)    : '';
-        const cleanOcupacion = rawOcupacion ? stripTagsInline(rawOcupacion).substring(0, 140) : '';
-        const displayName = cleanNombre || 'Nuevo profesional';
-        let slug = cleanNombre ? toSlug(cleanNombre) : '';
-        if (!slug) {
-          slug = `agente-${Date.now().toString(36)}-${crypto.randomBytes(2).toString('hex')}`;
-        }
-
-        const { data: existing } = await db
-          .from('cards')
-          .select('slug')
-          .eq('slug', slug)
-          .maybeSingle();
-        if (existing) {
-          slug = `${slug.substring(0, 35)}-${Date.now().toString().slice(-4)}-${crypto.randomBytes(1).toString('hex')}`;
-        }
-
-        const editToken = crypto.randomBytes(32).toString('hex');
-        const editTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-        const row = {
-          slug,
-          nombre:                displayName,
-          email:                 rawEmail,
-          plan:                  'b2b',
-          status:                'active',
-          organization_id:       org.id,
-          edit_token:            editToken,
-          edit_token_expires_at: editTokenExpiresAt,
-          whatsapp:              '',
-          idioma:                'es',
-        };
-        // Solo añadimos los campos de la plantilla que el founder rellenó.
-        // Sin sobrescribir con null campos que la BD pueda tener con default.
-        // El cargo individual (cleanOcupacion) prevalece sobre tplTagline para
-        // que cada miembro aparezca en /e/:slug con su rol específico
-        // (Entrenadora, Recepcionista, Fisio…) en lugar de un tagline común.
-        const memberTagline = cleanOcupacion || tplTagline;
-        if (memberTagline)  row.tagline     = memberTagline;
-        if (tplDescripcion) row.descripcion = tplDescripcion;
-        if (tplCp)          row.cp          = tplCp;
-        if (tplZona)        row.zona        = tplZona;
-        if (tplServicios.length) row.servicios = tplServicios;
-
-        const { error: insErr } = await db.from('cards').insert(row);
-        if (insErr) {
-          failed.push({ email: rawEmail, error: insErr.message });
-          continue;
-        }
-
-        const editUrl = `${siteUrl}/es/editar?slug=${slug}&token=${editToken}`;
-        const { subject, html } = buildInviteEmail({
-          orgName:    org.name,
-          orgLogoUrl: org.logo_url,
-          orgColor:   org.color_primary,
-          nombre:     cleanNombre,
-          editUrl,
-        });
-
-        // Generamos tarjeta de visita 85×55mm con branding de la org y la
-        // adjuntamos al email. El logo se cachea fuera del loop. Si el render
-        // falla por cualquier motivo seguimos enviando la invitación sin
-        // adjunto (defensivo: la invitación es lo crítico, la tarjeta es bonus).
-        let bizCardAttachment = null;
-        try {
-          const cardForPdf = {
-            slug,
-            nombre:    displayName,
-            tagline:   memberTagline || null,
-            whatsapp:  null,    // el miembro aún no tiene número — campo vacío
-            email:     rawEmail,
-            direccion: null,    // el miembro aún no editó; cae a org.address
-          };
-          const pdfBuffer = await buildBusinessCardPDF({
-            card: cardForPdf,
-            org,
-            logoBuffer: orgLogoBuffer,
-            siteUrl,
-          });
-          bizCardAttachment = {
-            filename: `tarjeta-${slug}.pdf`,
-            content: pdfBuffer,
-          };
-        } catch (err) {
-          console.warn(`invite_team: render de tarjeta de visita para ${slug} falló (no fatal):`, err.message);
-        }
-
-        try {
-          const sendPayload = {
-            from: 'PerfilaPro <hola@perfilapro.es>',
-            to: rawEmail,
-            subject,
-            html,
-          };
-          if (bizCardAttachment) sendPayload.attachments = [bizCardAttachment];
-          await emailClient.emails.send(sendPayload);
-          ok.push({ email: rawEmail, slug });
-          // Marcamos `edit_link_sent_at` — el email de invitación ES un
-          // enlace de edición, no el welcome kit completo. Antes este
-          // bloque marcaba `kit_email_sent_at`, pero eso colisionaba
-          // semánticamente con el hook B2B post-completación de
-          // edit-card.js (que gatea por `kit_email_sent_at IS NULL`
-          // para enviar el welcome kit con la tarjeta YA con datos
-          // reales). El chip "Invitado hace Xd" del Studio combina
-          // ambos campos via pickLastEmailTimestamp, así que sigue
-          // funcionando. Best-effort: si falla el UPDATE, la invitación
-          // ya está enviada y la consideramos OK.
-          try {
-            const { error: stampErr } = await db
-              .from('cards')
-              .update({ edit_link_sent_at: new Date().toISOString() })
-              .eq('slug', slug);
-            if (stampErr) console.warn(`invite_team: no marqué edit_link_sent_at para ${slug}:`, stampErr.message);
-          } catch (stampErr) {
-            console.warn(`invite_team: no marqué edit_link_sent_at para ${slug}:`, stampErr.message);
-          }
-        } catch (err) {
-          // Card creada pero email falló — lo apuntamos como fail.
-          // El admin puede reenviar desde "Asignar profesionales" si quiere
-          // (la card existe, solo le falta llegar el magic-link).
-          console.error(`admin-orgs invite_team: email a ${rawEmail} falló:`, err.message);
-          failed.push({ email: rawEmail, slug, error: 'card creada pero email falló' });
-        }
-      }
+      const { ok, failed } = await inviteTeamMembers({
+        db,
+        emailClient,
+        buildInviteEmail,
+        org,
+        team,
+        template,
+        siteUrl,
+      });
 
       return jsonResponse(200, {
         ok: true,
