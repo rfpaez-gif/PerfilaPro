@@ -1451,6 +1451,98 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  describe('org_get_stats_link', () => {
+    function mockOrgUpdate({ org, updateError = null }) {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const updateChain = {
+        eq: vi.fn().mockResolvedValue({ data: null, error: updateError }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') {
+          return {
+            select: vi.fn(() => orgLookup),
+            update: vi.fn(() => updateChain),
+          };
+        }
+        return {};
+      });
+      return { updateChain };
+    }
+
+    it('genera token nuevo y devuelve URL si la org no tiene token', async () => {
+      mockOrgUpdate({ org: { id: 'o1', slug: 'acme', stats_token: null, stats_token_expires_at: null } });
+      const res = await handler(buildEvent({
+        body: { action: 'org_get_stats_link', org_slug: 'acme' },
+        headers: { host: 'perfilapro.es', 'x-forwarded-proto': 'https' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.just_created).toBe(true);
+      expect(json.token).toMatch(/^[0-9a-f]{64}$/);
+      expect(json.url).toBe(`https://perfilapro.es/e/acme/stats?token=${json.token}`);
+      expect(new Date(json.expires_at).getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('reutiliza el token existente si está vigente', async () => {
+      const futureExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
+      const existingToken = 'c'.repeat(64);
+      mockOrgUpdate({ org: { id: 'o1', slug: 'acme', stats_token: existingToken, stats_token_expires_at: futureExpiry } });
+      const res = await handler(buildEvent({
+        body: { action: 'org_get_stats_link', org_slug: 'acme' },
+        headers: { host: 'perfilapro.es', 'x-forwarded-proto': 'https' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(false);
+      expect(json.token).toBe(existingToken);
+      expect(json.expires_at).toBe(futureExpiry);
+    });
+
+    it('rota el token si force_refresh=true incluso si está vigente', async () => {
+      const futureExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
+      const existingToken = 'd'.repeat(64);
+      mockOrgUpdate({ org: { id: 'o1', slug: 'acme', stats_token: existingToken, stats_token_expires_at: futureExpiry } });
+      const res = await handler(buildEvent({
+        body: { action: 'org_get_stats_link', org_slug: 'acme', force_refresh: true },
+        headers: { host: 'perfilapro.es', 'x-forwarded-proto': 'https' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(true);
+      expect(json.token).not.toBe(existingToken);
+    });
+
+    it('regenera el token si está expirado', async () => {
+      const pastExpiry = new Date(Date.now() - 86400000).toISOString();
+      const oldToken = 'e'.repeat(64);
+      mockOrgUpdate({ org: { id: 'o1', slug: 'acme', stats_token: oldToken, stats_token_expires_at: pastExpiry } });
+      const res = await handler(buildEvent({
+        body: { action: 'org_get_stats_link', org_slug: 'acme' },
+        headers: { host: 'perfilapro.es', 'x-forwarded-proto': 'https' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(true);
+      expect(json.token).not.toBe(oldToken);
+    });
+
+    it('404 si la org no existe', async () => {
+      mockOrgUpdate({ org: null });
+      const res = await handler(buildEvent({ body: { action: 'org_get_stats_link', org_slug: 'no-existe' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza org_slug inválido', async () => {
+      const res = await handler(buildEvent({ body: { action: 'org_get_stats_link', org_slug: 'BAD UPPER' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
   // ── download_team_cards · PDF booklet con tarjeta de visita por miembro ──
   describe('download_team_cards', () => {
     function mockDownloadLookups({ org, cards = [] }) {
