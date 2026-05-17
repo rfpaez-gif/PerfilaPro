@@ -349,6 +349,7 @@
           <h2 class="pp-section__title">Profesionales del equipo</h2>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
             <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="downloadCardsBtn" onclick="downloadTeamCards()" title="Genera un PDF con la tarjeta de visita 85×55mm de cada miembro del equipo">📥 Descargar tarjetas del equipo (PDF)</button>
+            <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="statsLinkBtn" onclick="getStatsLink()" title="Genera un enlace privado para que el responsable de la org acceda al panel de estadísticas agregadas sin login">📊 Enlace estadísticas</button>
             <span class="pp-section__hint">Click en el nombre para ver su tarjeta</span>
           </div>
         </div>
@@ -985,6 +986,40 @@ async function sendEditLinkToMember(cardSlug, cardNombre) {
 // base64 dentro de JSON — lo decodificamos y construimos un Blob para
 // `URL.createObjectURL`. Botón deshabilitado durante la generación para
 // evitar dobles clicks (rasterizar QRs + render PDF + base64 puede tardar
+// Stats link: genera/refresca el stats_token de la org y muestra el enlace
+// público (token-protected) para que el founder lo copie y se lo mande al
+// cliente B2B. Si la org ya tiene token vigente, se devuelve el existente.
+// Ctrl/Cmd+click rota el token (force_refresh) — útil si el enlace se filtró.
+async function getStatsLink(forceRefresh) {
+  if (!selectedOrgSlug) { toast('Selecciona una org primero', 'err'); return; }
+  const btn = $('statsLinkBtn');
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  try {
+    const json = await callAdmin({
+      action: 'org_get_stats_link',
+      org_slug: selectedOrgSlug,
+      force_refresh: forceRefresh === true,
+    });
+    if (!json.url) throw new Error('Respuesta sin URL');
+    const expiresAt = json.expires_at ? new Date(json.expires_at) : null;
+    const expiresStr = expiresAt ? expiresAt.toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' }) : '—';
+    // Copia al portapapeles + muestra prompt con la URL para que el admin
+    // pueda copiarla a mano si el clipboard falla (Safari incognito, etc).
+    try {
+      await navigator.clipboard.writeText(json.url);
+      const verb = json.just_created ? (forceRefresh ? 'Token rotado' : 'Token generado') : 'Token existente';
+      toast(`${verb} y enlace copiado al portapapeles. Vence ${expiresStr}.`, 'ok');
+    } catch {
+      window.prompt(`Enlace de estadísticas (vence ${expiresStr}):`, json.url);
+    }
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+
 // segundos con equipos grandes).
 async function downloadTeamCards() {
   if (!selectedOrgSlug) { toast('Selecciona una org primero', 'err'); return; }
