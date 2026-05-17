@@ -160,6 +160,16 @@
   status = 200
   force  = true
 
+# B2B demo: panel privado de estadísticas agregadas de una organización.
+# Token-protected (organizations.stats_token, TTL 90 días). El founder
+# genera el enlace desde admin-orgs (org_get_stats_link) y lo comparte
+# con el responsable de la org. Más específico que /e/:slug — primero.
+[[redirects]]
+  from   = "/e/:slug/stats"
+  to     = "/.netlify/functions/org-stats-page"
+  status = 200
+  force  = true
+
 # B2B demo: página de organización con grid branded de sus profesionales.
 [[redirects]]
   from   = "/e/:slug"
@@ -235,6 +245,11 @@
 [[redirects]]
   from   = "/api/upload-org-logo"
   to     = "/.netlify/functions/upload-org-logo"
+  status = 200
+
+[[redirects]]
+  from   = "/api/org-stats"
+  to     = "/.netlify/functions/org-stats"
   status = 200
 
 [[redirects]]

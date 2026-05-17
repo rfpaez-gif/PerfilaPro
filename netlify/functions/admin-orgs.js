@@ -795,6 +795,61 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       return jsonResponse(200, { ok: true, cards: stats });
     }
 
+    // ── org_get_stats_link ──
+    // Genera (o refresca) un stats_token para que el founder comparta con el
+    // cliente B2B un enlace `/e/:slug/stats?token=…` que da acceso al panel
+    // de estadísticas agregadas sin login. El token es 32-byte hex (64
+    // chars), TTL 90 días, único por org. Si la org ya tiene un token vigente
+    // se devuelve el actual; con `force_refresh: true` se invalida el viejo
+    // y se emite uno nuevo (rota el enlace si el cliente lo filtró).
+    if (action === 'org_get_stats_link') {
+      const { org_slug, force_refresh } = body;
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, stats_token, stats_token_expires_at')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org)   return jsonResponse(404, { error: 'organization no encontrada' });
+
+      const now      = new Date();
+      const expires  = org.stats_token_expires_at ? new Date(org.stats_token_expires_at) : null;
+      const expired  = !expires || expires.getTime() <= now.getTime();
+      const needsNew = force_refresh === true || !org.stats_token || expired;
+
+      let token        = org.stats_token;
+      let expires_at   = org.stats_token_expires_at;
+      let just_created = false;
+
+      if (needsNew) {
+        token = crypto.randomBytes(32).toString('hex');
+        expires_at = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
+        const { error: updErr } = await db
+          .from('organizations')
+          .update({ stats_token: token, stats_token_expires_at: expires_at })
+          .eq('id', org.id);
+        if (updErr) return jsonResponse(500, { error: updErr.message });
+        just_created = true;
+      }
+
+      const proto = (event.headers && event.headers['x-forwarded-proto']) || 'https';
+      const host  = (event.headers && event.headers.host) || 'perfilapro.es';
+      const url   = `${proto}://${host}/e/${org.slug}/stats?token=${token}`;
+
+      return jsonResponse(200, {
+        ok: true,
+        url,
+        token,
+        expires_at,
+        just_created,
+      });
+    }
+
     // ── delete_card: soft-delete (deleted_at = NOW()) de una card ──
     // Mismo patrón que delete-account.js: marca deleted_at y deja que el job
     // purge-deleted haga el hard-delete cascada a los 30 días. Esto preserva
