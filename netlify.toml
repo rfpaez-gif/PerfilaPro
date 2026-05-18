@@ -30,6 +30,49 @@
 [context.deploy-preview]
   command = "npm test"
 
+# Cache-Control para HTML público: blinda contra cache obsoleta de
+# proxies, CDNs intermedios y Safari iOS. Sin este header, los usuarios
+# con la web añadida a pantalla de inicio podían quedarse con HTML
+# viejo que posteaba a endpoints renombrados (caso Alejandra, mayo 2026).
+# El meta apple-mobile-web-app-capable también se retiró para que iOS
+# no lance el WebView standalone (que cachea más agresivamente).
+# Assets bajo /styles, /assets, etc. siguen con el default de Netlify
+# (must-revalidate + ETag, conditional GET).
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/es/*"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/ca/*"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/panel"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/panel.html"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
+[[headers]]
+  for = "/admin-orgs.html"
+  [headers.values]
+    Cache-Control = "no-store, must-revalidate"
+
 # perfilapro.cat: dominio puerta de entrada para la versión catalana.
 # Cualquier ruta entrante por el .cat se 301 a su equivalente bajo
 # perfilapro.es/ca/* — un único canonical SEO, sin contenido duplicado.
