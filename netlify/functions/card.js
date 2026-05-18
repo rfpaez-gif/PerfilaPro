@@ -59,6 +59,7 @@ const CARD_T = {
     backToStudio: '← Volver al panel B2B Studio',
     demoStripLede: 'Esta tarjeta es solo un ejemplo',
     demoStripCta: 'Crea la tuya gratis →',
+    addPhotoCta: 'Añadir tu foto',
   },
   ca: {
     htmlLang: 'ca',
@@ -93,6 +94,7 @@ const CARD_T = {
     backToStudio: '← Tornar al panell B2B Studio',
     demoStripLede: 'Aquesta targeta és només un exemple',
     demoStripCta: 'Crea la teva gratis →',
+    addPhotoCta: 'Afegir la teva foto',
   },
 };
 
@@ -308,6 +310,15 @@ exports.handler = async (event) => {
     .pp-card__avatar{width:100%;max-width:280px;aspect-ratio:1/1;align-self:center;border-radius:1rem;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center}
     .pp-card__avatar img{width:100%;height:100%;object-fit:cover;display:block}
     .pp-card__avatar-init{font-family:var(--font-serif);font-size:clamp(4rem,18vw,6rem);color:var(--color-verde-match);line-height:1}
+    /* Progressive enhancement: cuando el dueño visita su propia card (token
+       persistido en localStorage por /editar), el placeholder vacío de foto
+       se convierte en un CTA visible al editor. Sin localStorage el render
+       es idéntico al del visitante anónimo. */
+    .pp-card__avatar--owner{cursor:pointer;transition:background .18s}
+    .pp-card__avatar--owner:hover{background:#D6F4E5}
+    .pp-card__avatar-cta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;width:100%;height:100%;text-decoration:none;color:var(--color-verde-match);font-family:var(--font-sans);-webkit-tap-highlight-color:transparent}
+    .pp-card__avatar-cta__icon{font-size:2.75rem;line-height:1}
+    .pp-card__avatar-cta__label{font-size:.9375rem;font-weight:700;letter-spacing:-0.005em;text-align:center;padding:0 .75rem}
     .pp-card__name{font-family:var(--font-serif);font-size:1.75rem;line-height:1.15;letter-spacing:-0.02em;color:var(--color-tinta)}
     .pp-card__role{font-size:.9375rem;color:var(--color-gris-500);margin-top:.375rem;line-height:1.4}
     .pp-card__body{display:grid;grid-template-columns:minmax(0,1fr);gap:.625rem;padding:.875rem 1rem 1rem}
@@ -401,7 +412,7 @@ exports.handler = async (event) => {
       ${org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : ''}`}
     </a>` : ''}
     <div class="pp-card__header">
-      <div class="pp-card__avatar">
+      <div class="pp-card__avatar${data.foto_url || isExampleCard ? '' : ' pp-card__avatar--empty'}">
         ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="pp-card__avatar-init">${avatarInitial}</span>`}
       </div>
       <div>
@@ -488,12 +499,14 @@ exports.handler = async (event) => {
       foto_url:    data.foto_url    || '',
       slug:        data.slug,
       cardUrl:     cardUrl,
+      idioma:      idioma,
     })};
     var STRINGS = ${safeJson({
       copied:         T.copied,
       generating:     T.generating,
       canvasServices: T.canvasServices,
       canvasFooter:   T.canvasFooter,
+      addPhotoCta:    T.addPhotoCta,
     })};
 
     function shareProfile() {
@@ -616,6 +629,29 @@ exports.handler = async (event) => {
         window.ppEvent('whatsapp_click', { slug: CARD.slug });
       }
     });
+
+    // Owner-on-own-card affordance: el placeholder de foto vacío era un punto
+    // muerto. La gente intuye que es capacitivo (es el hueco de su cara) y le
+    // da click esperando subir foto. Cuando el dueño llega a /editar y carga
+    // su card con un token válido, persistimos el token en localStorage. Al
+    // entrar después a /c/:slug (mismo device), detectamos el token y
+    // transformamos el placeholder en un CTA visible que lleva al editor.
+    // Si el visitante no es el dueño (sin token en LS), no toca nada — la
+    // card pública sigue idéntica.
+    (function() {
+      try {
+        var avatar = document.querySelector('.pp-card__avatar--empty');
+        if (!avatar) return;
+        var token = localStorage.getItem('pp_owner_' + CARD.slug);
+        if (!token) return;
+        var editUrl = '/' + CARD.idioma + '/editar?slug=' + encodeURIComponent(CARD.slug) + '&token=' + encodeURIComponent(token);
+        avatar.classList.add('pp-card__avatar--owner');
+        avatar.innerHTML = '<a class="pp-card__avatar-cta" href="' + editUrl + '">' +
+          '<span class="pp-card__avatar-cta__icon" aria-hidden="true">📷</span>' +
+          '<span class="pp-card__avatar-cta__label">' + STRINGS.addPhotoCta + '</span>' +
+          '</a>';
+      } catch (_) { /* localStorage bloqueado (Safari privado, etc.) — no-op */ }
+    })();
   </script>
 </body>
 </html>`;

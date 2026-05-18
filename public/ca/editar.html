@@ -1414,6 +1414,10 @@
         return;
       }
       const card = await res.json();
+      // Marca de propietat per a progressive enhancement a /c/:slug: si el
+      // propietari visita la seva card pública des del mateix device, el
+      // placeholder de foto buit es transforma en un CTA cap a l'editor.
+      try { localStorage.setItem('pp_owner_' + slug, token); } catch (_) {}
       document.getElementById('emailPhase').style.display = 'none';
       document.getElementById('editPhase').style.display = '';
       document.getElementById('editSubtitle').textContent = card.nombre || 'Actualitza les teves dades';

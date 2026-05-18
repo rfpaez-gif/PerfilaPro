@@ -1414,6 +1414,10 @@
         return;
       }
       const card = await res.json();
+      // Marca de propiedad para progressive enhancement en /c/:slug: si el
+      // dueño visita su card pública desde el mismo device, el placeholder
+      // de foto vacío se transforma en un CTA al editor.
+      try { localStorage.setItem('pp_owner_' + slug, token); } catch (_) {}
       document.getElementById('emailPhase').style.display = 'none';
       document.getElementById('editPhase').style.display = '';
       document.getElementById('editSubtitle').textContent = card.nombre || 'Actualiza tus datos';
