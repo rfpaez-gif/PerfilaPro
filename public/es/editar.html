@@ -895,7 +895,7 @@
         <div id="editMsg" style="display:none" class="pp-msg"></div>
 
         <!-- Org branding banner — visible cuando la card pertenece a una organización (carril B2B) -->
-        <div id="orgBanner" hidden style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;border:1px solid #E5E7EB;background:#fff;margin-bottom:1.25rem;border-left-width:6px">
+        <div id="orgBanner" style="display:none;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;border:1px solid #E5E7EB;background:#fff;margin-bottom:1.25rem;border-left-width:6px">
           <div id="orgBannerLogo" style="width:48px;height:48px;border-radius:8px;background:#FAFBFC;border:1px solid #E5E7EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
             <span style="font-size:9px;color:#6B7280;text-align:center;line-height:1.1">org</span>
           </div>
@@ -1523,7 +1523,7 @@
             img.style.maxHeight = '100%';
             obLogo.appendChild(img);
           }
-          ob.hidden = false;
+          ob.style.display = 'flex';
         }
       }
 
