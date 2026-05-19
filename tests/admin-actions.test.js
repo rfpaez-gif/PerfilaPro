@@ -293,4 +293,91 @@ describe('admin-actions handler', () => {
       expect(JSON.parse(res.body).error).toContain('Categoría no encontrada');
     });
   });
+
+  // ── change_email ──
+
+  describe('change_email', () => {
+    it('actualiza el email y devuelve 200', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, email: 'viejo@test.com' }, error: null });
+
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: 'nuevo@test.com' },
+      }));
+
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.ok).toBe(true);
+      expect(data.email).toBe('nuevo@test.com');
+
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.email).toBe('nuevo@test.com');
+    });
+
+    it('trimea espacios en el email entrante', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, email: null }, error: null });
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: '  nuevo@test.com  ' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updated = mockUpdate.mock.calls[0][0];
+      expect(updated.email).toBe('nuevo@test.com');
+    });
+
+    it('audita el cambio con old y new value', async () => {
+      mockSingle.mockResolvedValue({ data: { ...baseCard, email: 'viejo@test.com' }, error: null });
+
+      await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: 'nuevo@test.com' },
+      }));
+
+      const auditCall = mockInsert.mock.calls[0][0];
+      expect(auditCall.action).toBe('change_email');
+      expect(auditCall.entity_slug).toBe('ana-electricista');
+      expect(auditCall.field).toBe('email');
+      expect(auditCall.old_value).toBe('viejo@test.com');
+      expect(auditCall.new_value).toBe('nuevo@test.com');
+    });
+
+    it('devuelve 400 si falta el email', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Falta el email');
+    });
+
+    it('devuelve 400 si el email viene vacío o solo espacios', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: '   ' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Falta el email');
+    });
+
+    it('devuelve 400 si el formato de email es inválido', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: 'no-es-un-email' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Email inválido');
+    });
+
+    it('devuelve 400 si el email supera 200 caracteres', async () => {
+      const tooLong = 'a'.repeat(195) + '@b.com';
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: tooLong },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('Email inválido');
+    });
+
+    it('devuelve 500 si el UPDATE falla', async () => {
+      mockEqUpdate.mockResolvedValueOnce({ error: { message: 'db down' } });
+      const res = await handler(buildEvent({
+        body: { action: 'change_email', slug: 'ana-electricista', email: 'nuevo@test.com' },
+      }));
+      expect(res.statusCode).toBe(500);
+      expect(JSON.parse(res.body).error).toContain('db down');
+    });
+  });
 });

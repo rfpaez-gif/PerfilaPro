@@ -154,6 +154,25 @@ function makeHandler(stripeClient, db) {
       return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, category_id: cat.id, city_slug: newCitySlug }) };
     }
 
+    if (action === 'change_email') {
+      const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
+      if (!rawEmail) {
+        return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Falta el email' }) };
+      }
+      if (rawEmail.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+        return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Email inválido' }) };
+      }
+
+      const { error } = await db.from('cards').update({ email: rawEmail }).eq('slug', slug);
+      if (error) {
+        return { statusCode: 500, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: error.message }) };
+      }
+
+      auditLog(db, ip, 'change_email', slug, 'email', card.email, rawEmail);
+      console.log(`Email cambiado: ${slug} → ${rawEmail}`);
+      return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, email: rawEmail }) };
+    }
+
     return { statusCode: 400, body: JSON.stringify({ error: `Acción desconocida: ${action}` }) };
   };
 }
