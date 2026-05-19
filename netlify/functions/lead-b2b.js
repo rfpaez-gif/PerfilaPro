@@ -25,6 +25,10 @@ const SECTOR_LABEL = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// agent_code: mismo formato que admite create-org-checkout.js. Si llega
+// malformado (URL forjada en un share roto), se silencia — el lead se
+// persiste con agent_code=NULL para no perderlo.
+const AGENT_CODE_RE = /^[A-Za-z0-9_-]{2,40}$/;
 
 const ERROR_STRINGS = {
   es: {
@@ -59,11 +63,14 @@ function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, message, inviteToken, siteUrl }) {
+function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, agent_code, message, inviteToken, siteUrl }) {
   const safeMessage = esc(message || '(sin mensaje adicional)').replace(/\n/g, '<br>');
   const onboardingUrl = `${siteUrl}/es/onboarding?token=${inviteToken}`;
   const planRow = plan_interes
     ? `<tr><td style="color:#6B7280">Plan de interés</td><td><strong>${esc(PLAN_LABEL[plan_interes] || plan_interes)}</strong></td></tr>`
+    : '';
+  const agentRow = agent_code
+    ? `<tr><td style="color:#6B7280">Referido por</td><td><strong style="font-family:monospace">${esc(agent_code)}</strong> <span style="color:#6B7280;font-size:12px">· asigna este código a la org cuando la crees</span></td></tr>`
     : '';
   return `<!DOCTYPE html><html><body style="font-family:Inter,Arial,sans-serif;color:#0A1F44;line-height:1.6">
 <h2 style="font-family:'Source Serif 4',Georgia,serif;font-weight:400;color:#0A1F44;letter-spacing:-0.01em">Nuevo lead B2B</h2>
@@ -74,6 +81,7 @@ function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_int
   <tr><td style="color:#6B7280">Equipo</td><td>${esc(team_size)}</td></tr>
   <tr><td style="color:#6B7280">Sector</td><td>${esc(SECTOR_LABEL[sector] || sector)}</td></tr>
   ${planRow}
+  ${agentRow}
 </table>
 <h3 style="font-family:'Source Serif 4',Georgia,serif;font-weight:400;color:#0A1F44;margin-top:1.5rem">Mensaje</h3>
 <p style="background:#FAF7F0;padding:1rem;border-radius:8px">${safeMessage}</p>
@@ -302,6 +310,14 @@ function makeHandler(deps) {
     const rawPlan    = (body.plan_interes || '').toString().trim().toLowerCase();
     const plan_interes = PLAN_INTERES.has(rawPlan) ? rawPlan : null;
 
+    // Atribución comercial. El landing acepta ?via= en la URL y lo inyecta
+    // como hidden input. Aceptamos también el alias `agent_code` por si en
+    // el futuro algún flow no usa `via`. Silencioso si llega malformado —
+    // el lead se persiste sin attribution (bolsa founder), no se devuelve
+    // 400 para no romper conversiones por un share link roto.
+    const rawAgent = (body.via || body.agent_code || '').toString().trim();
+    const agent_code = AGENT_CODE_RE.test(rawAgent) ? rawAgent : null;
+
     if (!name || !company || !email) {
       return jsonResponse(400, { error: E.missingFields });
     }
@@ -332,6 +348,7 @@ function makeHandler(deps) {
         team_size, sector, message: message || null,
         idioma,
         plan_interes,
+        agent_code,
       })
       .select('id, invite_token')
       .single();
@@ -351,7 +368,7 @@ function makeHandler(deps) {
         to: inbox,
         replyTo: email,
         subject: `[Lead B2B · ${SECTOR_LABEL[sector]}] ${company} · ${name}`,
-        html: buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, message, inviteToken, siteUrl }),
+        html: buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, agent_code, message, inviteToken, siteUrl }),
       });
     } catch (err) {
       // Si el email interno falla, NO bloqueamos al lead — su registro está

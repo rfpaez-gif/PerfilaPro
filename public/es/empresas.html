@@ -420,6 +420,10 @@
       <input class="pp-form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <!-- Plan de interés: lo rellena el JS al pulsar el CTA de un tier. -->
       <input type="hidden" name="plan_interes" id="planInteres" value="">
+      <!-- Atribución comercial: lo rellena el JS desde ?via= en la URL
+           (link compartido por un agente) o desde localStorage si el
+           usuario llegó a través de un link de agente y volvió después. -->
+      <input type="hidden" name="via" id="viaCode" value="">
 
       <div class="pp-form-row pp-form-row--inline">
         <div>
@@ -562,6 +566,31 @@ document.querySelectorAll('.pp-sectors__tab').forEach(tab => {
       fallback.style.display = 'flex';
     }
   }, 2500);
+})();
+
+/* ── Atribución comercial (?via=agent-XXX) ───────────────── */
+// Capturamos el código del agente que comparte el enlace y lo persistimos
+// en localStorage. Si el usuario llega vía link de agente, se va, y vuelve
+// a entrar más tarde sin el query param, la atribución sigue funcionando.
+// Validación defensiva: solo letras/dígitos/guion/underscore, 2-40 chars.
+(function () {
+  const VIA_RE = /^[A-Za-z0-9_-]{2,40}$/;
+  const STORE_KEY = 'pp_b2b_via';
+  let via = null;
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('via');
+    if (fromUrl && VIA_RE.test(fromUrl)) {
+      via = fromUrl;
+      try { localStorage.setItem(STORE_KEY, via); } catch {}
+    } else {
+      const fromStore = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
+      if (fromStore && VIA_RE.test(fromStore)) via = fromStore;
+    }
+  } catch {}
+  if (via) {
+    const input = document.getElementById('viaCode');
+    if (input) input.value = via;
+  }
 })();
 
 /* ── Form submit ─────────────────────────────────────────── */

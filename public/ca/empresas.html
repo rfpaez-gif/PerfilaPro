@@ -420,6 +420,10 @@
       <input class="pp-form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <!-- Pla d'interès: el rellena el JS en clicar el CTA d'un tier. -->
       <input type="hidden" name="plan_interes" id="planInteres" value="">
+      <!-- Atribució comercial: el rellena el JS des de ?via= a la URL
+           (enllaç compartit per un agent) o des de localStorage si
+           l'usuari va arribar via enllaç d'agent i va tornar més tard. -->
+      <input type="hidden" name="via" id="viaCode" value="">
 
       <div class="pp-form-row pp-form-row--inline">
         <div>
@@ -558,6 +562,31 @@ document.querySelectorAll('.pp-sectors__tab').forEach(tab => {
       fallback.style.display = 'flex';
     }
   }, 2500);
+})();
+
+/* ── Atribució comercial (?via=agent-XXX) ────────────────── */
+// Capturem el codi de l'agent que comparteix l'enllaç i el persistim a
+// localStorage. Si l'usuari hi arriba via enllaç d'agent, marxa, i hi
+// torna sense el query param, l'atribució continua funcionant.
+// Validació defensiva: només lletres/dígits/guió/underscore, 2-40 chars.
+(function () {
+  const VIA_RE = /^[A-Za-z0-9_-]{2,40}$/;
+  const STORE_KEY = 'pp_b2b_via';
+  let via = null;
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('via');
+    if (fromUrl && VIA_RE.test(fromUrl)) {
+      via = fromUrl;
+      try { localStorage.setItem(STORE_KEY, via); } catch {}
+    } else {
+      const fromStore = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
+      if (fromStore && VIA_RE.test(fromStore)) via = fromStore;
+    }
+  } catch {}
+  if (via) {
+    const input = document.getElementById('viaCode');
+    if (input) input.value = via;
+  }
 })();
 
 /* ── Form submit ─────────────────────────────────────────── */

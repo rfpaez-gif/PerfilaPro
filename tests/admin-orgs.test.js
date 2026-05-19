@@ -720,7 +720,8 @@ describe('admin-orgs handler', () => {
       const leads = [
         { id: 'l1', invite_token: 'a'.repeat(48), name: 'Carlos', company: 'Allianz', email: 'c@a.com',
           team_size: '100-500', sector: 'empresa', message: null, idioma: 'es',
-          organization_id: 'org1', created_at: '2026-05-01T00:00:00Z', redeemed_at: null, redeemed_card_slug: null },
+          organization_id: 'org1', created_at: '2026-05-01T00:00:00Z', redeemed_at: null, redeemed_card_slug: null,
+          agent_code: 'agent-MARTA01' },
       ];
       const leadsSelect = {
         order: vi.fn().mockReturnThis(),
@@ -741,6 +742,8 @@ describe('admin-orgs handler', () => {
       const json = JSON.parse(res.body);
       expect(json.leads).toHaveLength(1);
       expect(json.leads[0].org.slug).toBe('allianz');
+      // Bloque D · atribución comercial sobrevive al passthrough.
+      expect(json.leads[0].agent_code).toBe('agent-MARTA01');
     });
 
     it('leads_list sin only_pending=false incluye también redimidos', async () => {

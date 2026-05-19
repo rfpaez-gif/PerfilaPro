@@ -61,6 +61,49 @@
       margin: 0 auto;
     }
 
+    /* ── Tabs (Autónomos / B2B) ────────────────────────────── */
+    .pp-tabs {
+      display: flex;
+      gap: .5rem;
+      border-bottom: 1px solid var(--color-gris-200);
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+    .pp-tab {
+      background: transparent;
+      border: none;
+      padding: .75rem 1.25rem;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-gris-500);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color var(--pp-t-fast), border-color var(--pp-t-fast);
+    }
+    .pp-tab:hover { color: var(--color-tinta); }
+    .pp-tab.is-active {
+      color: var(--color-verde-dark);
+      border-bottom-color: var(--color-verde-dark);
+    }
+    .pp-tab__count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      margin-left: .35rem;
+      padding: 2px 7px;
+      border-radius: var(--pp-r-pill);
+      background: var(--color-gris-200);
+      color: var(--color-gris-500);
+    }
+    .pp-tab.is-active .pp-tab__count {
+      background: var(--color-verde-light);
+      color: var(--color-verde-dark);
+    }
+    .pp-tab-pane { display: none; }
+    .pp-tab-pane.is-active { display: block; }
+
     /* ── Ref box (enlace de referido) ──────────────────────── */
     .pp-agent-ref {
       background: var(--color-verde-light);
@@ -72,6 +115,11 @@
       align-items: center;
       gap: 1rem;
       flex-wrap: wrap;
+    }
+    .pp-agent-ref--stacked {
+      flex-direction: column;
+      align-items: stretch;
+      gap: .75rem;
     }
     .pp-agent-ref__label {
       font-family: var(--font-mono);
@@ -91,6 +139,12 @@
       font-weight: 500;
       word-break: break-all;
     }
+    .pp-agent-ref__row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
     .pp-agent-ref__copy {
       background: var(--color-verde-match);
       color: #fff;
@@ -105,6 +159,12 @@
       transition: background var(--pp-t-fast);
     }
     .pp-agent-ref__copy:hover { background: var(--color-verde-dark); }
+    .pp-agent-ref__hint {
+      font-size: 12px;
+      color: var(--color-verde-dark);
+      opacity: .85;
+      line-height: 1.5;
+    }
 
     /* ── Stats ─────────────────────────────────────────────── */
     .pp-stats {
@@ -215,6 +275,7 @@
     .pp-badge--ok      { background: #dcfce7; color: #15803d; }
     .pp-badge--pending { background: var(--color-warning-light); color: var(--color-warning); }
     .pp-badge--neutral { background: #f3f4f6; color: #4b5563; }
+    .pp-badge--canceled { background: #fee2e2; color: #991b1b; }
 
     /* ── Error state (carga fallida) ───────────────────────── */
     .pp-agent-error {
@@ -237,6 +298,7 @@
       .pp-agent-ref { flex-direction: column; align-items: flex-start; }
       .pp-tbl { font-size: 13px; }
       .pp-tbl th, .pp-tbl td { padding: .6rem .75rem; }
+      .pp-tab { padding: .65rem .9rem; font-size: 13px; }
     }
   </style>
 </head>
@@ -252,71 +314,184 @@
 
   <main class="pp-agent-main pp-agent-content" id="mainContent">
 
-    <!-- Enlace de referido -->
-    <div class="pp-agent-ref">
-      <span class="pp-agent-ref__label">Tu enlace de referido</span>
-      <span class="pp-agent-ref__url" id="refUrl"></span>
-      <button class="pp-agent-ref__copy" id="copyBtn" onclick="copyRef()">Copiar</button>
-    </div>
+    <!-- Tabs (Autónomos / B2B) -->
+    <nav class="pp-tabs" role="tablist" aria-label="Carriles de venta">
+      <button class="pp-tab is-active" data-tab="autonomos" role="tab" aria-selected="true">
+        Autónomos <span class="pp-tab__count" id="tabCountCards">—</span>
+      </button>
+      <button class="pp-tab" data-tab="b2b" role="tab" aria-selected="false">
+        B2B <span class="pp-tab__count" id="tabCountOrgs">—</span>
+      </button>
+    </nav>
 
-    <!-- Stats -->
-    <div class="pp-stats">
-      <div class="pp-stat">
-        <div class="pp-stat__label">Tarjetas vendidas</div>
-        <div class="pp-stat__value pp-stat__value--primary" id="statTotal">—</div>
-        <div class="pp-stat__sub">ventas directas</div>
-      </div>
-      <div class="pp-stat">
-        <div class="pp-stat__label">Ventas red</div>
-        <div class="pp-stat__value" id="statSub">—</div>
-        <div class="pp-stat__sub">por tu red</div>
-      </div>
-      <div class="pp-stat">
-        <div class="pp-stat__label">Comisión pendiente</div>
-        <div class="pp-stat__value pp-stat__value--success" id="statPending">—</div>
-        <div class="pp-stat__sub">por liquidar</div>
-      </div>
-    </div>
+    <!-- ─────────── Tab: Autónomos ─────────── -->
+    <section class="pp-tab-pane is-active" data-pane="autonomos">
 
-    <!-- Resumen mensual -->
-    <section class="pp-agent-section">
-      <h2 class="pp-section-title">Resumen mensual</h2>
-      <div class="pp-tbl-wrap">
-        <table class="pp-tbl">
-          <thead>
-            <tr>
-              <th>Período</th>
-              <th>Ventas propias</th>
-              <th>Ventas red</th>
-              <th>Facturado</th>
-              <th>Comisión</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="monthsBody"></tbody>
-        </table>
+      <!-- Enlace de referido autónomos -->
+      <div class="pp-agent-ref">
+        <span class="pp-agent-ref__label">Tu enlace · autónomos</span>
+        <span class="pp-agent-ref__url" id="refUrl"></span>
+        <button class="pp-agent-ref__copy" id="copyBtn" onclick="copyText('refUrl', 'copyBtn')">Copiar</button>
       </div>
+
+      <!-- Stats autónomos -->
+      <div class="pp-stats">
+        <div class="pp-stat">
+          <div class="pp-stat__label">Tarjetas vendidas</div>
+          <div class="pp-stat__value pp-stat__value--primary" id="statTotal">—</div>
+          <div class="pp-stat__sub">ventas directas</div>
+        </div>
+        <div class="pp-stat">
+          <div class="pp-stat__label">Ventas red</div>
+          <div class="pp-stat__value" id="statSub">—</div>
+          <div class="pp-stat__sub">por tu red</div>
+        </div>
+        <div class="pp-stat">
+          <div class="pp-stat__label">Comisión pendiente</div>
+          <div class="pp-stat__value pp-stat__value--success" id="statPending">—</div>
+          <div class="pp-stat__sub">cards + B2B sin liquidar</div>
+        </div>
+      </div>
+
+      <!-- Resumen mensual cards -->
+      <section class="pp-agent-section">
+        <h2 class="pp-section-title">Resumen mensual</h2>
+        <div class="pp-tbl-wrap">
+          <table class="pp-tbl">
+            <thead>
+              <tr>
+                <th>Período</th>
+                <th>Ventas propias</th>
+                <th>Ventas red</th>
+                <th>Facturado</th>
+                <th>Comisión cards</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="monthsCardsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Últimas ventas autónomos -->
+      <section class="pp-agent-section">
+        <h2 class="pp-section-title">Últimas tarjetas</h2>
+        <div class="pp-tbl-wrap">
+          <table class="pp-tbl">
+            <thead>
+              <tr>
+                <th>Profesional</th>
+                <th>Plan</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="salesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
     </section>
 
-    <!-- Últimas ventas -->
-    <section class="pp-agent-section">
-      <h2 class="pp-section-title">Últimas tarjetas</h2>
-      <div class="pp-tbl-wrap">
-        <table class="pp-tbl">
-          <thead>
-            <tr>
-              <th>Profesional</th>
-              <th>Plan</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody id="salesBody"></tbody>
-        </table>
+    <!-- ─────────── Tab: B2B ─────────── -->
+    <section class="pp-tab-pane" data-pane="b2b">
+
+      <!-- Enlaces B2B (ES + CA) -->
+      <div class="pp-agent-ref pp-agent-ref--stacked">
+        <span class="pp-agent-ref__label">Tus enlaces · B2B</span>
+        <div class="pp-agent-ref__row">
+          <span class="pp-agent-ref__url" id="refUrlB2bEs"></span>
+          <button class="pp-agent-ref__copy" id="copyBtnB2bEs" onclick="copyText('refUrlB2bEs', 'copyBtnB2bEs')">Copiar ES</button>
+        </div>
+        <div class="pp-agent-ref__row">
+          <span class="pp-agent-ref__url" id="refUrlB2bCa"></span>
+          <button class="pp-agent-ref__copy" id="copyBtnB2bCa" onclick="copyText('refUrlB2bCa', 'copyBtnB2bCa')">Copiar CA</button>
+        </div>
+        <p class="pp-agent-ref__hint">
+          Compártelos con organizaciones (equipos, despachos, colegios). Cuando rellenen el formulario,
+          tu código queda registrado en el lead para que la atribución llegue a tu liquidación.
+        </p>
       </div>
+
+      <!-- Stats B2B -->
+      <div class="pp-stats">
+        <div class="pp-stat">
+          <div class="pp-stat__label">Orgs activas</div>
+          <div class="pp-stat__value pp-stat__value--primary" id="statOrgCount">—</div>
+          <div class="pp-stat__sub">con suscripción al día</div>
+        </div>
+        <div class="pp-stat">
+          <div class="pp-stat__label">MRR estimado</div>
+          <div class="pp-stat__value" id="statOrgMrr">—</div>
+          <div class="pp-stat__sub">€/mes (anuales÷12)</div>
+        </div>
+        <div class="pp-stat">
+          <div class="pp-stat__label">Facturas recibidas</div>
+          <div class="pp-stat__value" id="statOrgInvoices">—</div>
+          <div class="pp-stat__sub">en los últimos meses</div>
+        </div>
+      </div>
+
+      <!-- Resumen mensual B2B -->
+      <section class="pp-agent-section">
+        <h2 class="pp-section-title">Resumen mensual B2B</h2>
+        <div class="pp-tbl-wrap">
+          <table class="pp-tbl">
+            <thead>
+              <tr>
+                <th>Período</th>
+                <th>Facturas propias</th>
+                <th>Facturas red</th>
+                <th>Comisión B2B</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="monthsOrgsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Orgs activas -->
+      <section class="pp-agent-section">
+        <h2 class="pp-section-title">Organizaciones</h2>
+        <div class="pp-tbl-wrap">
+          <table class="pp-tbl">
+            <thead>
+              <tr>
+                <th>Organización</th>
+                <th>Plan</th>
+                <th>Seats</th>
+                <th>Estado</th>
+                <th>Renueva</th>
+              </tr>
+            </thead>
+            <tbody id="orgsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Últimas facturas B2B -->
+      <section class="pp-agent-section">
+        <h2 class="pp-section-title">Últimas facturas</h2>
+        <div class="pp-tbl-wrap">
+          <table class="pp-tbl">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Organización</th>
+                <th>Plan</th>
+                <th>Seats</th>
+                <th>Importe</th>
+              </tr>
+            </thead>
+            <tbody id="invoicesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
     </section>
 
-    <!-- Liquidaciones -->
+    <!-- ─────────── Liquidaciones (común, fuera de tabs) ─────────── -->
     <section class="pp-agent-section">
       <h2 class="pp-section-title">Historial de liquidaciones</h2>
       <div class="pp-tbl-wrap">
@@ -342,8 +517,32 @@
     if (!token) location.href = '/agente-login.html';
 
     const PLAN_LABELS = { base: 'Trimestral', pro: 'Anual', renovacion: 'Renovación' };
+    const TIER_LABELS = { team: 'Equipo', org: 'Organización' };
+    const CYCLE_LABELS = { monthly: 'Mensual', annual: 'Anual' };
+    const SUB_STATUS_BADGES = {
+      active:   '<span class="pp-badge pp-badge--ok">Activa</span>',
+      trialing: '<span class="pp-badge pp-badge--ok">Trial</span>',
+      past_due: '<span class="pp-badge pp-badge--pending">Impago</span>',
+      canceled: '<span class="pp-badge pp-badge--canceled">Cancelada</span>',
+      paused:   '<span class="pp-badge pp-badge--pending">Pausada</span>',
+    };
 
     document.getElementById('agentName').textContent = localStorage.getItem('pp_agent_name') || '';
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    document.querySelectorAll('.pp-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        document.querySelectorAll('.pp-tab').forEach(t => {
+          const active = t.dataset.tab === target;
+          t.classList.toggle('is-active', active);
+          t.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('.pp-tab-pane').forEach(p => {
+          p.classList.toggle('is-active', p.dataset.pane === target);
+        });
+      });
+    });
 
     async function loadData() {
       const main = document.getElementById('mainContent');
@@ -362,68 +561,174 @@
     }
 
     function render(data) {
-      const { agent, summary, months, recent_sales, liquidations } = data;
+      const {
+        agent, summary, months,
+        recent_sales, liquidations,
+        recent_org_invoices = [],
+        orgs = [],
+      } = data;
 
-      const refUrl = `${location.origin}/?ref=${agent.code}`;
-      document.getElementById('refUrl').textContent = refUrl;
+      // ── Referral URLs ─────────────────────────────────────
+      const origin = location.origin;
+      document.getElementById('refUrl').textContent       = `${origin}/?ref=${agent.code}`;
+      document.getElementById('refUrlB2bEs').textContent  = `${origin}/es/empresas?via=${agent.code}`;
+      document.getElementById('refUrlB2bCa').textContent  = `${origin}/ca/empresas?via=${agent.code}`;
 
-      document.getElementById('statTotal').textContent = summary.total_sales;
-      document.getElementById('statSub').textContent = summary.sub_sales;
+      // ── Tab counts ────────────────────────────────────────
+      document.getElementById('tabCountCards').textContent = summary.total_sales || 0;
+      document.getElementById('tabCountOrgs').textContent  = summary.org_count   || 0;
+
+      // ── Stats Autónomos ──────────────────────────────────
+      document.getElementById('statTotal').textContent   = summary.total_sales;
+      document.getElementById('statSub').textContent     = summary.sub_sales;
       document.getElementById('statPending').textContent = fmt(summary.pending_commission) + '€';
 
-      const mb = document.getElementById('monthsBody');
-      if (!months.length) {
-        mb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="6">Sin ventas aún</td></tr>';
-      } else {
-        mb.innerHTML = months.map(m => `
-          <tr>
-            <td>${fmtPeriod(m.period)}</td>
-            <td>${m.own_sales}</td>
-            <td>${m.sub_sales}</td>
-            <td>${fmt(m.gross)}€</td>
-            <td><span class="pp-tbl__strong">${fmt(m.commission)}€</span></td>
-            <td>${m.liquidated
-              ? '<span class="pp-badge pp-badge--ok">Liquidado</span>'
-              : '<span class="pp-badge pp-badge--pending">Pendiente</span>'}</td>
-          </tr>`).join('');
-      }
+      // ── Stats B2B ────────────────────────────────────────
+      document.getElementById('statOrgCount').textContent    = summary.org_count || 0;
+      document.getElementById('statOrgMrr').textContent      = fmt(summary.org_mrr_eur || 0) + '€';
+      document.getElementById('statOrgInvoices').textContent = recent_org_invoices.length;
 
-      const sb = document.getElementById('salesBody');
-      if (!recent_sales.length) {
-        sb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="4">Sin ventas aún</td></tr>';
-      } else {
-        sb.innerHTML = recent_sales.map(c => `
-          <tr>
-            <td><a href="/c/${c.slug}" target="_blank" class="pp-tbl__link">${c.nombre || c.slug}</a></td>
-            <td>${PLAN_LABELS[c.plan] || c.plan}</td>
-            <td>${c.status === 'active'
-              ? '<span class="pp-badge pp-badge--ok">Activa</span>'
-              : '<span class="pp-badge pp-badge--neutral">' + c.status + '</span>'}</td>
-            <td>${fmtDate(c.created_at)}</td>
-          </tr>`).join('');
-      }
+      // ── Resumen mensual: split en dos tablas ─────────────
+      // Tabla cards: solo periodos con ventas autónomas (own+sub > 0).
+      // Tabla B2B  : solo periodos con facturas B2B (own_inv+sub_inv > 0).
+      // Si una agencia trabaja solo un carril, la otra queda con "Sin
+      // actividad" sin saturar la UI con filas vacías.
+      const cardMonths = months.filter(m => (m.own_sales || 0) + (m.sub_sales || 0) > 0);
+      const orgMonths  = months.filter(m => (m.own_org_invoices || 0) + (m.sub_org_invoices || 0) > 0);
 
-      const lb = document.getElementById('liquidBody');
-      if (!liquidations.length) {
-        lb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Sin liquidaciones aún</td></tr>';
-      } else {
-        lb.innerHTML = liquidations.map(l => `
-          <tr>
-            <td>${fmtPeriod(l.period)}</td>
-            <td>${l.sales_count}</td>
-            <td>${fmt(l.gross_amount)}€</td>
-            <td><span class="pp-tbl__strong">${fmt(l.commission_amount)}€</span></td>
-            <td>${fmtDate(l.paid_at)}</td>
-          </tr>`).join('');
-      }
+      renderMonthsCards('monthsCardsBody', cardMonths);
+      renderMonthsOrgs('monthsOrgsBody',   orgMonths);
+
+      // ── Tablas Autónomos ─────────────────────────────────
+      renderSales('salesBody', recent_sales);
+
+      // ── Tablas B2B ───────────────────────────────────────
+      renderOrgs('orgsBody', orgs);
+      renderInvoices('invoicesBody', recent_org_invoices);
+
+      // ── Liquidaciones ────────────────────────────────────
+      renderLiquidations('liquidBody', liquidations);
     }
 
-    function copyRef() {
-      const url = document.getElementById('refUrl').textContent;
-      navigator.clipboard.writeText(url).then(() => {
-        const btn = document.getElementById('copyBtn');
+    function renderMonthsCards(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="6">Sin ventas de tarjetas aún</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(m => `
+        <tr>
+          <td>${fmtPeriod(m.period)}</td>
+          <td>${m.own_sales}</td>
+          <td>${m.sub_sales}</td>
+          <td>${fmt(m.gross)}€</td>
+          <td><span class="pp-tbl__strong">${fmt(m.card_commission)}€</span></td>
+          <td>${m.liquidated
+            ? '<span class="pp-badge pp-badge--ok">Liquidado</span>'
+            : '<span class="pp-badge pp-badge--pending">Pendiente</span>'}</td>
+        </tr>`).join('');
+    }
+
+    function renderMonthsOrgs(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Sin facturas B2B aún · comparte tus enlaces y empieza a captar organizaciones</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(m => `
+        <tr>
+          <td>${fmtPeriod(m.period)}</td>
+          <td>${m.own_org_invoices}</td>
+          <td>${m.sub_org_invoices}</td>
+          <td><span class="pp-tbl__strong">${fmt(m.org_commission)}€</span></td>
+          <td>${m.liquidated
+            ? '<span class="pp-badge pp-badge--ok">Liquidado</span>'
+            : '<span class="pp-badge pp-badge--pending">Pendiente</span>'}</td>
+        </tr>`).join('');
+    }
+
+    function renderSales(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="4">Sin ventas aún</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(c => `
+        <tr>
+          <td><a href="/c/${c.slug}" target="_blank" class="pp-tbl__link">${escapeHtml(c.nombre || c.slug)}</a></td>
+          <td>${PLAN_LABELS[c.plan] || c.plan}</td>
+          <td>${c.status === 'active'
+            ? '<span class="pp-badge pp-badge--ok">Activa</span>'
+            : '<span class="pp-badge pp-badge--neutral">' + escapeHtml(c.status || '—') + '</span>'}</td>
+          <td>${fmtDate(c.created_at)}</td>
+        </tr>`).join('');
+    }
+
+    function renderOrgs(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Aún no hay organizaciones atribuidas a tu código</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(o => `
+        <tr>
+          <td>
+            <a href="/e/${escapeAttr(o.slug)}" target="_blank" class="pp-tbl__link">${escapeHtml(o.name || o.slug)}</a>
+            <div style="font-size:11px;color:var(--color-gris-500);font-family:var(--font-mono)">${escapeHtml(o.slug)}</div>
+          </td>
+          <td>${TIER_LABELS[o.tier] || o.tier || '—'} · ${CYCLE_LABELS[o.cycle] || o.cycle || '—'}</td>
+          <td>${o.seats || '—'}</td>
+          <td>${SUB_STATUS_BADGES[o.subscription_status] || '<span class="pp-badge pp-badge--neutral">' + escapeHtml(o.subscription_status || '—') + '</span>'}</td>
+          <td>${fmtDate(o.current_period_end)}</td>
+        </tr>`).join('');
+    }
+
+    function renderInvoices(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Sin facturas todavía</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(inv => `
+        <tr>
+          <td>${fmtDate(inv.paid_at)}</td>
+          <td><span style="font-family:var(--font-mono);font-size:12px">${escapeHtml(inv.organization_id || '—').substring(0, 8)}…</span></td>
+          <td>${TIER_LABELS[inv.tier] || inv.tier || '—'} · ${CYCLE_LABELS[inv.cycle] || inv.cycle || '—'}</td>
+          <td>${inv.seats || '—'}</td>
+          <td><span class="pp-tbl__strong">${fmt((inv.amount_cents || 0) / 100)}${currencySymbol(inv.currency)}</span></td>
+        </tr>`).join('');
+    }
+
+    function renderLiquidations(tbodyId, items) {
+      const tb = document.getElementById(tbodyId);
+      if (!items || !items.length) {
+        tb.innerHTML = '<tr class="pp-tbl__empty"><td colspan="5">Sin liquidaciones aún</td></tr>';
+        return;
+      }
+      tb.innerHTML = items.map(l => `
+        <tr>
+          <td>${fmtPeriod(l.period)}</td>
+          <td>${l.sales_count}</td>
+          <td>${fmt(l.gross_amount)}€</td>
+          <td><span class="pp-tbl__strong">${fmt(l.commission_amount)}€</span></td>
+          <td>${fmtDate(l.paid_at)}</td>
+        </tr>`).join('');
+    }
+
+    function copyText(srcId, btnId) {
+      const txt = document.getElementById(srcId).textContent;
+      const btn = document.getElementById(btnId);
+      const original = btn.textContent;
+      navigator.clipboard.writeText(txt).then(() => {
         btn.textContent = '¡Copiado!';
-        setTimeout(() => btn.textContent = 'Copiar', 1500);
+        setTimeout(() => btn.textContent = original, 1500);
+      }).catch(() => {
+        // Fallback: selección manual si Clipboard API falla (HTTP en LAN, etc.)
+        const range = document.createRange();
+        range.selectNode(document.getElementById(srcId));
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
       });
     }
 
@@ -438,9 +743,23 @@
     function fmtPeriod(p) {
       if (!p) return '—';
       const [y, m] = p.split('-');
-      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-      return `${months[parseInt(m,10)-1]} ${y}`;
+      const names = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      return `${names[parseInt(m,10)-1]} ${y}`;
     }
+    function currencySymbol(c) {
+      if (!c) return '€';
+      const code = String(c).toLowerCase();
+      if (code === 'eur') return '€';
+      if (code === 'usd') return '$';
+      if (code === 'gbp') return '£';
+      return ' ' + code.toUpperCase();
+    }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
 
     loadData();
   </script>
