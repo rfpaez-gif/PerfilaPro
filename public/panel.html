@@ -116,10 +116,48 @@
     .pp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: pp-spin .6s linear infinite; vertical-align: -2px; margin-right: .35rem; }
     @keyframes pp-spin { to { transform: rotate(360deg); } }
 
+    /* ── Wizard (Bloque E · onboarding post-checkout) ───── */
+    .pp-wizard { max-width: 640px; margin: 1.5rem auto; padding: 0 1rem; }
+    .pp-wizard__intro { text-align: center; margin-bottom: 1.5rem; }
+    .pp-wizard__intro h2 { font-family: var(--font-serif); font-weight: 400; font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 .35rem; }
+    .pp-wizard__intro p { color: var(--color-gris-500, #6B7280); font-size: 14px; line-height: 1.55; margin: 0; }
+    .pp-wizard__progress { display: flex; gap: .35rem; margin-bottom: 1.5rem; padding: 0 .25rem; }
+    .pp-wizard__step-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--color-gris-200, #E5E7EB); transition: background .25s; }
+    .pp-wizard__step-bar.is-active { background: var(--color-verde-match, #00C277); }
+    .pp-wizard__step-bar.is-done   { background: var(--color-verde-dark, #00A865); }
+    .pp-wizard__step-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--color-gris-500, #6B7280); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 1rem; padding: 0 .25rem; }
+    .pp-wizard__step-label span.is-active { color: var(--color-verde-dark, #00A865); }
+    .pp-wizard__pane { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.75rem 1.5rem; }
+    .pp-wizard__pane h3 { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .35rem; }
+    .pp-wizard__pane p.pp-wizard__lead { color: var(--color-gris-500, #6B7280); font-size: 14px; line-height: 1.55; margin: 0 0 1.25rem; }
+    .pp-wizard__actions { display: flex; gap: .65rem; justify-content: space-between; align-items: center; margin-top: 1.25rem; flex-wrap: wrap; }
+    .pp-wizard__skip { background: none; border: none; color: var(--color-gris-500, #6B7280); font-size: 13px; cursor: pointer; padding: .35rem .5rem; text-decoration: underline; }
+    .pp-wizard__skip:hover { color: var(--color-tinta, #0A1F44); }
+    .pp-wizard__exit { position: absolute; top: 1rem; right: 1.5rem; font-size: 12px; color: rgba(255,255,255,.7); background: none; border: none; cursor: pointer; padding: .25rem .5rem; }
+    .pp-wizard__exit:hover { color: #fff; text-decoration: underline; }
+
+    /* Dropzone para el logo */
+    .pp-dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; padding: 2.25rem 1.5rem; border: 2px dashed var(--color-gris-200, #E5E7EB); border-radius: 14px; background: #F9FAFB; cursor: pointer; transition: all .15s; text-align: center; }
+    .pp-dropzone:hover, .pp-dropzone.is-drag { border-color: var(--color-verde-match, #00C277); background: var(--color-verde-light, #E6F9F0); }
+    .pp-dropzone__icon { font-size: 30px; line-height: 1; opacity: .55; }
+    .pp-dropzone__title { font-weight: 600; color: var(--color-tinta, #0A1F44); font-size: 14px; }
+    .pp-dropzone__hint { font-size: 12px; color: var(--color-gris-500, #6B7280); }
+    .pp-dropzone__error { color: var(--color-coral, #E0633F); font-size: 12px; margin-top: .5rem; min-height: 1em; }
+    .pp-logo-preview { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #F9FAFB; border-radius: 12px; }
+    .pp-logo-preview img { max-width: 120px; max-height: 60px; object-fit: contain; background: #fff; padding: .5rem; border-radius: 8px; border: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-logo-preview__meta { font-size: 12px; color: var(--color-gris-500, #6B7280); }
+    .pp-logo-preview__meta strong { color: var(--color-tinta, #0A1F44); display: block; font-size: 13px; }
+
+    .pp-wizard__color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: .5rem; margin-bottom: 1rem; }
+    .pp-wizard__color-swatch { aspect-ratio: 1; border-radius: 10px; border: 2px solid transparent; cursor: pointer; transition: transform .1s, border-color .15s; }
+    .pp-wizard__color-swatch:hover { transform: scale(1.06); }
+    .pp-wizard__color-swatch.is-selected { border-color: var(--color-tinta, #0A1F44); box-shadow: 0 0 0 2px #fff inset; }
+
     @media (max-width: 600px) {
       .pp-invite__row { grid-template-columns: 1fr; }
       .pp-content { padding: 1rem; }
       .pp-section { padding: 1rem; }
+      .pp-wizard__step-label { font-size: 10px; }
     }
   </style>
 </head>
@@ -155,7 +193,7 @@
 
 <!-- ── DASHBOARD ──────────────────────────────────────── -->
 <div class="pp-dash" id="dashScreen">
-  <div class="pp-topbar">
+  <div class="pp-topbar" style="position:relative">
     <div>
       <h1 class="pp-topbar__brand">
         <span id="topbarOrgName">…</span>
@@ -165,6 +203,112 @@
     <div class="pp-topbar__actions">
       <a class="pp-topbar__link" id="topbarPublic" href="#" target="_blank" rel="noopener">Ver página pública ↗</a>
       <button class="pp-topbar__logout" id="logoutBtn">Salir</button>
+    </div>
+  </div>
+
+  <!-- ── WIZARD (Bloque E · onboarding post-checkout) ───── -->
+  <!-- Aparece SOLO si organizations.logo_url IS NULL y el cliente no
+       lo ha dimissed antes via localStorage. 3 pasos lineales, cada
+       uno con "saltar este paso". Al terminar (o saltar todo), se
+       muestra el dashboard normal. -->
+  <div class="pp-wizard" id="wizardScreen" style="display:none">
+    <div class="pp-wizard__intro">
+      <h2>Bienvenido a tu panel B2B</h2>
+      <p>3 pasos rápidos para dejar tu organización lista. Puedes saltar cualquiera y completarlo después.</p>
+    </div>
+
+    <div class="pp-wizard__progress">
+      <div class="pp-wizard__step-bar is-active" data-bar="1"></div>
+      <div class="pp-wizard__step-bar"           data-bar="2"></div>
+      <div class="pp-wizard__step-bar"           data-bar="3"></div>
+    </div>
+    <div class="pp-wizard__step-label">
+      <span class="is-active" data-lbl="1">1 · Logo</span>
+      <span data-lbl="2">2 · Color</span>
+      <span data-lbl="3">3 · Equipo</span>
+    </div>
+
+    <!-- Paso 1 · Logo ─────────────────────────────────── -->
+    <div class="pp-wizard__pane" data-wstep="1">
+      <h3>Sube el logo de tu organización</h3>
+      <p class="pp-wizard__lead">Aparecerá en tu página pública (<code style="font-family:var(--font-mono);font-size:12px">/e/<span id="wizSlug1">tu-marca</span></code>) y en la tarjeta de visita de cada miembro del equipo.</p>
+
+      <input type="file" id="wizLogoFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="display:none">
+      <div class="pp-dropzone" id="wizDropzone" role="button" tabindex="0" aria-label="Subir logo">
+        <div class="pp-dropzone__icon" aria-hidden="true">🖼</div>
+        <div class="pp-dropzone__title">Arrastra el logo aquí o haz click para elegir</div>
+        <div class="pp-dropzone__hint">PNG, JPG, WEBP o SVG · máx. 2 MB</div>
+      </div>
+
+      <div id="wizLogoPreview" class="pp-logo-preview" style="display:none;margin-top:1rem">
+        <img id="wizLogoImg" alt="Vista previa">
+        <div class="pp-logo-preview__meta">
+          <strong id="wizLogoName">archivo.png</strong>
+          <span id="wizLogoSize">— KB</span>
+        </div>
+      </div>
+
+      <div class="pp-dropzone__error" id="wizLogoError"></div>
+
+      <div class="pp-wizard__actions">
+        <button type="button" class="pp-wizard__skip" data-skip="1">Saltar este paso</button>
+        <button type="button" class="pp-btn pp-btn--primary" id="wizLogoUploadBtn" disabled>Subir y continuar →</button>
+      </div>
+    </div>
+
+    <!-- Paso 2 · Color ────────────────────────────────── -->
+    <div class="pp-wizard__pane" data-wstep="2" style="display:none">
+      <h3>Elige tu color de marca</h3>
+      <p class="pp-wizard__lead">Aparece en la franja superior de tu página pública y en las tarjetas de visita del equipo. Lo puedes cambiar después desde la pestaña Branding.</p>
+
+      <div class="pp-wizard__color-grid" id="wizColorGrid">
+        <!-- Swatches generadas por JS -->
+      </div>
+
+      <div class="pp-color-row">
+        <input class="pp-color-picker" type="color" id="wizColor" value="#00C277">
+        <input class="pp-input" type="text" id="wizColorHex" value="#00C277" maxlength="7" pattern="^#[0-9a-fA-F]{6}$">
+      </div>
+
+      <div class="pp-wizard__actions">
+        <button type="button" class="pp-wizard__skip" data-skip="2">Saltar este paso</button>
+        <button type="button" class="pp-btn pp-btn--primary" id="wizColorSaveBtn">Guardar y continuar →</button>
+      </div>
+    </div>
+
+    <!-- Paso 3 · Equipo ───────────────────────────────── -->
+    <div class="pp-wizard__pane" data-wstep="3" style="display:none">
+      <h3>Invita a tu primer profesional</h3>
+      <p class="pp-wizard__lead">Le mandamos un email con su enlace personal para completar el perfil (foto, WhatsApp, etc.) y una tarjeta de visita en PDF con tu branding. Podrás invitar a más desde la pestaña Equipo en cualquier momento.</p>
+
+      <div class="pp-form">
+        <div class="pp-form__row">
+          <label class="pp-form__label" for="wizInviteName">Nombre y apellidos</label>
+          <input class="pp-input" type="text" id="wizInviteName" placeholder="María López" autocomplete="off">
+        </div>
+        <div class="pp-form__row">
+          <label class="pp-form__label" for="wizInviteEmail">Email</label>
+          <input class="pp-input" type="email" id="wizInviteEmail" placeholder="maria@miempresa.com" autocomplete="off" autocapitalize="off" autocorrect="off">
+        </div>
+        <div class="pp-form__row">
+          <label class="pp-form__label" for="wizInviteRole">Cargo <small>opcional</small></label>
+          <input class="pp-input" type="text" id="wizInviteRole" placeholder="Asesora fiscal" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="pp-wizard__actions">
+        <button type="button" class="pp-wizard__skip" data-skip="3">Saltar y entrar al panel</button>
+        <button type="button" class="pp-btn pp-btn--primary" id="wizInviteBtn">Enviar invitación →</button>
+      </div>
+    </div>
+
+    <!-- Estado final ──────────────────────────────────── -->
+    <div class="pp-wizard__pane" data-wstep="done" style="display:none;text-align:center">
+      <h3 style="margin-bottom:.5rem">¡Todo listo!</h3>
+      <p class="pp-wizard__lead">Tu organización está configurada. Desde el panel puedes editar branding, invitar más profesionales y ver estadísticas en cualquier momento.</p>
+      <div class="pp-wizard__actions" style="justify-content:center">
+        <button type="button" class="pp-btn pp-btn--primary" id="wizFinishBtn">Entrar al panel →</button>
+      </div>
     </div>
   </div>
 
@@ -346,6 +490,29 @@
   function showDash() {
     $('loginScreen').style.display = 'none';
     $('dashScreen').style.display = 'block';
+    // Dashboard normal: oculta el wizard, muestra tabs + content.
+    $('wizardScreen').style.display = 'none';
+    document.querySelector('.pp-tabs').style.display  = '';
+    document.querySelector('.pp-content').style.display = '';
+  }
+  function showWizard() {
+    $('loginScreen').style.display = 'none';
+    $('dashScreen').style.display = 'block';
+    // Wizard mode: oculta tabs + content, muestra wizard.
+    $('wizardScreen').style.display = 'block';
+    document.querySelector('.pp-tabs').style.display  = 'none';
+    document.querySelector('.pp-content').style.display = 'none';
+  }
+
+  // Flag por org-slug. Si el cliente dimisses (skip total o finish), no
+  // volvemos a mostrar el wizard aunque logo_url siga null.
+  function wizardDismissed(slug) {
+    try { return !!localStorage.getItem('pp_panel_wizard_dismissed_' + slug); }
+    catch { return false; }
+  }
+  function dismissWizard(slug) {
+    try { localStorage.setItem('pp_panel_wizard_dismissed_' + slug, '1'); }
+    catch {}
   }
 
   function getSession() {
@@ -517,10 +684,259 @@
       renderOrg(data.org);
       renderStats(data.stats, data.members.length);
       renderMembers(data.members);
+
+      // Wizard post-checkout: si no hay logo y no se ha dimissed antes,
+      // entramos en wizard mode. Si no, dashboard normal. La función
+      // renderOrg() ya ha rellenado los campos del branding form, así que
+      // si el cliente sale del wizard al dashboard, encuentra el panel
+      // pre-poblado.
+      if (!data.org.logo_url && !wizardDismissed(data.org.slug)) {
+        startWizard(data.org);
+      } else {
+        showDash();
+      }
     } catch (e) {
       if (e.message !== 'Sesión expirada') showToast('err', 'No se pudo cargar tu panel: ' + e.message);
     }
   }
+
+  // ── Wizard (Bloque E) ────────────────────────────────────
+  let wizardLogoFile = null;     // File object una vez seleccionado
+  let wizardCurrentStep = 1;     // 1, 2, 3 o 'done'
+
+  // Paleta para el step 2. 12 colores cubre la mayoría de identidades
+  // corporativas razonables sin obligar al cliente a abrir el color picker.
+  const WIZARD_COLORS = [
+    '#00C277', '#0A1F44', '#2563EB', '#DC2626', '#EA580C', '#CA8A04',
+    '#7C3AED', '#DB2777', '#0891B2', '#374151', '#9F1239', '#65A30D',
+  ];
+
+  function startWizard(org) {
+    showWizard();
+    $('wizSlug1').textContent = org.slug;
+
+    // Color inicial: el que tenga la org o el verde PerfilaPro por defecto.
+    const initialColor = (org.color_primary || '#00C277').toUpperCase();
+    $('wizColor').value = initialColor;
+    $('wizColorHex').value = initialColor;
+    renderColorSwatches(initialColor);
+
+    goToWizardStep(1);
+  }
+
+  function goToWizardStep(step) {
+    wizardCurrentStep = step;
+    // Mostrar el pane correspondiente.
+    document.querySelectorAll('[data-wstep]').forEach(p => {
+      p.style.display = String(p.dataset.wstep) === String(step) ? '' : 'none';
+    });
+    // Actualizar barras de progreso. Pasos < step = done, step = active, > step = pendiente.
+    const nStep = step === 'done' ? 4 : Number(step);
+    document.querySelectorAll('[data-bar]').forEach(bar => {
+      const n = Number(bar.dataset.bar);
+      bar.classList.toggle('is-done',   n <  nStep);
+      bar.classList.toggle('is-active', n === nStep);
+    });
+    document.querySelectorAll('[data-lbl]').forEach(lbl => {
+      const n = Number(lbl.dataset.lbl);
+      lbl.classList.toggle('is-active', n === nStep);
+    });
+  }
+
+  function renderColorSwatches(selected) {
+    const grid = $('wizColorGrid');
+    grid.innerHTML = WIZARD_COLORS.map(c => `
+      <button type="button" class="pp-wizard__color-swatch${c.toUpperCase() === selected.toUpperCase() ? ' is-selected' : ''}"
+              style="background:${c}" data-color="${c}" aria-label="Elegir color ${c}"></button>
+    `).join('');
+    grid.querySelectorAll('.pp-wizard__color-swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const color = btn.dataset.color.toUpperCase();
+        $('wizColor').value = color;
+        $('wizColorHex').value = color;
+        renderColorSwatches(color);
+      });
+    });
+  }
+
+  // Skip handlers: salta al siguiente paso o termina si es el último.
+  document.querySelectorAll('[data-skip]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const from = Number(btn.dataset.skip);
+      if (from < 3) goToWizardStep(from + 1);
+      else finishWizard();
+    });
+  });
+
+  $('wizFinishBtn').addEventListener('click', () => finishWizard());
+
+  function finishWizard() {
+    if (orgData?.slug) dismissWizard(orgData.slug);
+    showDash();
+  }
+
+  // ── Step 1 · Logo ────────────────────────────────────────
+  function clientValidateLogo(file) {
+    const MAX = 2 * 1024 * 1024;
+    const okTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (!okTypes.includes(file.type)) return 'Tipo no permitido (PNG, JPG, WEBP, SVG)';
+    if (file.size > MAX) return `Imagen demasiado grande (${(file.size / 1024 / 1024).toFixed(1)} MB · máx 2 MB)`;
+    if (file.size === 0) return 'Archivo vacío';
+    return null;
+  }
+
+  function setWizardLogoFile(file) {
+    $('wizLogoError').textContent = '';
+    const err = clientValidateLogo(file);
+    if (err) {
+      $('wizLogoError').textContent = err;
+      wizardLogoFile = null;
+      $('wizLogoPreview').style.display = 'none';
+      $('wizLogoUploadBtn').disabled = true;
+      return;
+    }
+    wizardLogoFile = file;
+    // Preview local (objectURL) — el upload real se hace al pulsar el botón.
+    const url = URL.createObjectURL(file);
+    $('wizLogoImg').src = url;
+    $('wizLogoName').textContent = file.name;
+    $('wizLogoSize').textContent = (file.size / 1024).toFixed(1) + ' KB · ' + file.type;
+    $('wizLogoPreview').style.display = '';
+    $('wizLogoUploadBtn').disabled = false;
+  }
+
+  const dropzone = $('wizDropzone');
+  const fileInput = $('wizLogoFile');
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dropzone.classList.add('is-drag');
+  }));
+  ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation();
+    dropzone.classList.remove('is-drag');
+  }));
+  dropzone.addEventListener('drop', (e) => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) setWizardLogoFile(f);
+  });
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) setWizardLogoFile(f);
+  });
+
+  async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => {
+        // result viene como "data:<type>;base64,<payload>" — extraemos sólo el payload.
+        const result = reader.result || '';
+        const comma = result.indexOf(',');
+        resolve(comma >= 0 ? result.substring(comma + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer el archivo'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  $('wizLogoUploadBtn').addEventListener('click', async () => {
+    if (!wizardLogoFile) return;
+    const btn = $('wizLogoUploadBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pp-spinner"></span> Subiendo…';
+    try {
+      const base64 = await fileToBase64(wizardLogoFile);
+      const res = await fetch('/api/upload-org-logo-panel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session}`,
+        },
+        body: JSON.stringify({ base64, contentType: wizardLogoFile.type }),
+      });
+      if (res.status === 401) { clearSession(); showLogin(); return; }
+      if (res.status === 429) throw new Error('Demasiados intentos. Espera unos minutos.');
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo subir el logo');
+      // Logo arriba — actualizamos orgData y el preview de la topbar.
+      if (orgData) orgData.logo_url = json.logo_url;
+      goToWizardStep(2);
+    } catch (e) {
+      $('wizLogoError').textContent = e.message;
+      btn.disabled = false;
+      btn.textContent = 'Subir y continuar →';
+    }
+  });
+
+  // ── Step 2 · Color ───────────────────────────────────────
+  $('wizColor').addEventListener('input', (e) => {
+    const v = e.target.value.toUpperCase();
+    $('wizColorHex').value = v;
+    renderColorSwatches(v);
+  });
+  $('wizColorHex').addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+      $('wizColor').value = v;
+      renderColorSwatches(v.toUpperCase());
+    }
+  });
+
+  $('wizColorSaveBtn').addEventListener('click', async () => {
+    const btn = $('wizColorSaveBtn');
+    const color = $('wizColorHex').value.trim();
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+      showToast('err', 'Color inválido (debe ser #RRGGBB)');
+      return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pp-spinner"></span> Guardando…';
+    try {
+      await api('update_branding', { color_primary: color });
+      goToWizardStep(3);
+    } catch (e) {
+      showToast('err', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar y continuar →';
+    }
+  });
+
+  // ── Step 3 · Invitar primer profesional ──────────────────
+  $('wizInviteBtn').addEventListener('click', async () => {
+    const nombre = $('wizInviteName').value.trim();
+    const email  = $('wizInviteEmail').value.trim();
+    const role   = $('wizInviteRole').value.trim();
+
+    if (!nombre || !email) {
+      showToast('err', 'Necesitamos al menos nombre y email.');
+      return;
+    }
+
+    const btn = $('wizInviteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+    try {
+      const result = await api('invite_team', {
+        team: [{ nombre, email, ocupacion: role || undefined }],
+      });
+      const okCount = (result.results?.ok || []).length;
+      if (!okCount) {
+        const firstErr = (result.results?.failed || [])[0]?.error || 'No se pudo enviar la invitación';
+        throw new Error(firstErr);
+      }
+      showToast('ok', `Invitación enviada a ${email}.`);
+      goToWizardStep('done');
+    } catch (e) {
+      showToast('err', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Enviar invitación →';
+    }
+  });
 
   // ── Branding form ────────────────────────────────────────
   // Sincronizamos color picker ↔ hex input
