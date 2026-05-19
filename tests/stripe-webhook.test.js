@@ -493,4 +493,150 @@ describe('stripe-webhook adjuntos', () => {
     expect(filenames).toContain('perfilapro-carlos-fontanero.pdf');
     expect(filenames).toContain('perfilapro-carlos-fontanero-qr.png');
   });
+
+  // ─── Routing B2B (Bloque B) ────────────────────────────────────────────────
+  // Tests focalizados a verificar que los eventos de subscription entran al
+  // lib org-subscription en vez de al carril autónomo. La lógica del lib se
+  // valida exhaustivamente en tests/org-subscription.test.js.
+
+  describe('routing B2B subscription events', () => {
+    function makeOrgChain(maybeSingleData) {
+      const c = {
+        update: vi.fn().mockReturnThis(),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+        select: vi.fn().mockReturnThis(),
+        eq:     vi.fn().mockReturnThis(),
+        is:     vi.fn().mockReturnThis(),
+        insert: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: maybeSingleData, error: null }),
+        single:      vi.fn().mockResolvedValue({ data: maybeSingleData, error: null }),
+      };
+      return c;
+    }
+
+    it('customer.subscription.updated entra al lib (UPDATE organizations)', async () => {
+      const orgChain = makeOrgChain({ id: 'org-1' });
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return orgChain;
+        return defaultFromImpl(table);
+      });
+      mockConstructEvent.mockReturnValue({
+        type: 'customer.subscription.updated',
+        data: {
+          object: {
+            id: 'sub_test',
+            status: 'active',
+            current_period_end: 1900000000,
+            items: { data: [{ quantity: 8 }] },
+          },
+        },
+      });
+      const res = await handler(buildEvent());
+      expect(res.statusCode).toBe(200);
+      expect(mockFrom).toHaveBeenCalledWith('organizations');
+      expect(orgChain.update).toHaveBeenCalled();
+      const updateArg = orgChain.update.mock.calls[0][0];
+      expect(updateArg.seats).toBe(8);
+      expect(updateArg.subscription_status).toBe('active');
+    });
+
+    it('customer.subscription.deleted marca canceled (no soft-delete)', async () => {
+      const orgChain = makeOrgChain({ id: 'org-1' });
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return orgChain;
+        return defaultFromImpl(table);
+      });
+      mockConstructEvent.mockReturnValue({
+        type: 'customer.subscription.deleted',
+        data: { object: { id: 'sub_test' } },
+      });
+      await handler(buildEvent());
+      expect(orgChain.update).toHaveBeenCalledWith({ subscription_status: 'canceled' });
+    });
+
+    it('invoice.paid escribe en org_invoices (no en cards)', async () => {
+      const invoiceChain = makeOrgChain(null);
+      const orgChain = makeOrgChain({ id: 'org-1', agent_code: 'AGENT01', tier: 'team', cycle: 'monthly', seats: 5 });
+      let firstFromOrgsCall = true;
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') {
+          // El primer lookup ('org_invoices' resolver) entra al campo `organizations` para resolver la org
+          if (firstFromOrgsCall) { firstFromOrgsCall = false; return orgChain; }
+          return orgChain;
+        }
+        if (table === 'org_invoices') return invoiceChain;
+        return defaultFromImpl(table);
+      });
+      mockConstructEvent.mockReturnValue({
+        type: 'invoice.paid',
+        data: {
+          object: {
+            id: 'in_test',
+            subscription: 'sub_test',
+            amount_paid: 9900,
+            currency: 'eur',
+            period_start: 1700000000,
+            period_end:   1702592000,
+            status_transitions: { paid_at: 1700000010 },
+            subscription_details: { metadata: { tier: 'team', cycle: 'monthly', seats: '5', agent_code: 'AGENT01' } },
+          },
+        },
+      });
+      const res = await handler(buildEvent());
+      expect(res.statusCode).toBe(200);
+      expect(mockFrom).toHaveBeenCalledWith('org_invoices');
+      expect(invoiceChain.upsert).toHaveBeenCalled();
+      const row = invoiceChain.upsert.mock.calls[0][0];
+      expect(row.stripe_invoice_id).toBe('in_test');
+      expect(row.amount_cents).toBe(9900);
+      expect(row.agent_code).toBe('AGENT01');
+      // El carril autónomo (cards.upsert) NO debe haberse tocado.
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it('checkout.session.completed con kind=org-subscription NO entra al carril autónomo', async () => {
+      const orgChain = makeOrgChain(null);
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return orgChain;
+        return defaultFromImpl(table);
+      });
+      // El insert chain también necesita .single() para devolver la org creada.
+      orgChain.single = vi.fn().mockResolvedValue({
+        data: { id: 'org-new', slug: 'acme', email: 'admin@acme.com' }, error: null,
+      });
+
+      mockConstructEvent.mockReturnValue({
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_test_b2b',
+            subscription: 'sub_new',
+            customer: 'cus_new',
+            customer_details: { email: 'admin@acme.com' },
+            metadata: {
+              kind: 'org-subscription',
+              tier: 'team', cycle: 'monthly', seats: '10',
+              org_name: 'Acme', slug: 'acme', agent_code: 'AGENT01', idioma: 'es',
+            },
+          },
+        },
+      });
+      const res = await handler(buildEvent());
+      expect(res.statusCode).toBe(200);
+      // cards.upsert NO debe haberse llamado (es el indicador del carril autónomo).
+      expect(mockUpsert).not.toHaveBeenCalled();
+      // organizations.insert SÍ debe haberse llamado.
+      expect(orgChain.insert).toHaveBeenCalled();
+    });
+
+    it('payment_intent.created y otros eventos siguen siendo no-op', async () => {
+      mockConstructEvent.mockReturnValue({
+        type: 'customer.created',
+        data: { object: { id: 'cus_xyz' } },
+      });
+      const res = await handler(buildEvent());
+      expect(res.statusCode).toBe(200);
+      expect(mockFrom).not.toHaveBeenCalled();
+    });
+  });
 }, 30000);

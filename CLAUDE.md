@@ -352,8 +352,24 @@ Carril en construcción para llevar las orgs a Stripe Subscription en lugar del 
 - Comisión org: `agentRate%` directo sobre `amount_cents`. L2-on-L1 override 5% sobre invoices de sub-agentes (mismo modelo que cards).
 - Try/catch defensivo en las queries de `org_invoices` y `organizations` — si la migración 029 aún no se ha ejecutado en un entorno, agent-data sigue funcionando para el carril autónomo.
 
+**Eventos Stripe (Bloque B)** — `stripe-webhook.js` delega los 4 eventos de subscription al lib `lib/org-subscription.js`:
+
+| Evento Stripe | Acción |
+|---|---|
+| `checkout.session.completed` con `metadata.kind='org-subscription'` | Inserta `organizations` con slug único (resuelve colisiones con sufijo `-2/-3/…`), persiste `tier/cycle/seats/agent_code/stripe_customer_id/stripe_subscription_id`, envía welcome email con magic-link al panel (`signPanelSession` 7d). Idempotente: replay del mismo `stripe_subscription_id` devuelve `replayed=true` sin re-insert. |
+| `customer.subscription.updated` y `customer.subscription.created` | UPDATE en `organizations` por `stripe_subscription_id`: `subscription_status`, `seats` (de `items.data[0].quantity`), `current_period_end`. Si la sub aún no está en BD (carrera con el checkout), no-op silencioso — el siguiente evento la encontrará. |
+| `customer.subscription.deleted` | UPDATE `subscription_status='canceled'`. **No** soft-deleta la org (los cards públicos siguen funcionando hasta `current_period_end`). El admin decide la limpieza efectiva desde admin-orgs. |
+| `invoice.paid` con `subscription` no-null | UPSERT en `org_invoices` con `onConflict='stripe_invoice_id'`. Snapshot de `agent_code/tier/cycle/seats` preferentemente de la org en BD (refleja estado actual); fallback a `subscription_details.metadata` si la org aún no existe. Invoices sin subscription (one-shot autónomo) se ignoran. |
+
+El carril autónomo (`checkout.session.completed` sin `metadata.kind`) sigue intacto.
+
+**Welcome email B2B** (`buildOrgWelcomeEmail` en `lib/org-subscription.js`):
+- Asunto + cuerpo localizados es/ca según `session.metadata.idioma`.
+- CTA principal: `${siteUrl}/panel.html?session=<jwt>` (JWT firmado por `signPanelSession`, TTL 7d).
+- Bloque "¿Qué hacer ahora?" con 3 pasos: logo+color, invitar equipo en lote, compartir `/e/:slug`.
+- Si Resend falla, el cliente puede pedir el magic-link estándar en `/panel.html` con su email — `panel-auth.js` lo regenera.
+
 **Bloques pendientes**:
-- Bloque B — extender `stripe-webhook.js` para los eventos de subscription (`customer.subscription.created|updated|deleted`, `invoice.paid`). El webhook actual solo procesa `checkout.session.completed` para autónomos.
 - Bloque D — UI agente: tab "Mis B2B" en `/agente.html` + generador de links `?via=agent-XXXX`.
 - Bloque E — wizard post-checkout en `/panel.html` cuando `logo_url IS NULL`.
 
