@@ -319,6 +319,60 @@ Sprint 1: analítica de producto vía PostHog Cloud (región EU). Carga **solo t
 
 **Banner consentimiento** (`public/js/privacy-banner.js`): refactor de informativo a consent gate con dos botones (Aceptar / Rechazar). Flag `pp_privacy_ack` en `localStorage` con valores `accepted` / `rejected` (compat con valor legacy `1` = `accepted`).
 
+### B2B Stripe Subscription (Bloque A — monetización recurrente por org)
+
+Carril en construcción para llevar las orgs a Stripe Subscription en lugar del flujo manual de admin-orgs. Modelo: **seat-based** (€/profesional/mes con Stripe `quantity`), comisión **recurring** sobre cada `invoice.paid` para el agente que cerró la org, **Enterprise gated** vía form `lead-b2b` (no precio recurrente self-serve).
+
+**Endpoint `create-org-checkout.js`** (`POST /api/create-org-checkout`):
+- Body: `{ tier: 'team'|'org', cycle: 'monthly'|'annual', seats: int 1-500, org_name, email, agent_code?, slug?, idioma? }`.
+- Mapea `(tier, cycle)` a uno de los 4 prices Stripe (`STRIPE_PRICE_TEAM_MONTHLY`/`_ANNUAL`, `STRIPE_PRICE_ORG_MONTHLY`/`_ANNUAL`). Si el env var está vacío → 503 (permite activar tiers por separado).
+- `mode='subscription'`, `line_items: [{ price, quantity: seats }]` — Stripe controla el MRR; cambios futuros de seats van via `customer.subscription.updated`.
+- `agent_code` (de `?via=agent-XXXX` en la landing) viaja en `session.metadata` **Y** en `subscription_data.metadata` para que el webhook lo encuentre en `invoice.paid` sin tener que retro-buscar la session original. `agent_code` malformado se silencia (cae a venta directa).
+- Sin `agent_code` → `organizations.agent_code = NULL` post-webhook (bolsa founder; el admin podrá reasignar desde admin-orgs en Bloque D).
+- Rate-limit 10 req / 10 min / IP, mismo patrón que `create-checkout`.
+- `success_url` / `cancel_url` apuntan a `/${idioma}/empresas` con flag `?subscribed=1` en success.
+
+**Schema (migración 029)** — extiende `organizations` y crea `org_invoices`:
+- `organizations.agent_code text NULL` — atribución comercial. NULL = bolsa founder. Indexado parcial.
+- `organizations.stripe_customer_id text NULL` — para resolver org desde `customer.subscription.*` (Stripe sólo manda el customer en algunos eventos).
+- `organizations.stripe_subscription_id text NULL UNIQUE` — clave de upsert en eventos de subscription.
+- `organizations.tier text NULL` — CHECK `'team' | 'org' | 'enterprise'`.
+- `organizations.cycle text NULL` — CHECK `'monthly' | 'annual'`.
+- `organizations.seats integer NULL` — cantidad actual.
+- `organizations.subscription_status text NULL` — mirror del estado Stripe (`active`, `past_due`, `canceled`, etc). Sin CHECK para no acoplarse al enum si Stripe añade estados.
+- `organizations.current_period_end timestamptz NULL` — para notificaciones y display de "renueva el ...".
+- `org_invoices` — histórico de `invoice.paid`. Permite al portal de agentes calcular comisión recurrente sin re-llamar a Stripe. `agent_code` se persiste como snapshot al momento del invoice (atribución histórica estable si la org se reasigna). Indexada por `(agent_code, paid_at DESC)` y por `organization_id`.
+
+**agent-data.js extendido**:
+- Carga `org_invoices` propias (`agent_code = agentCode`) y de sub-agentes (`in subCodes`).
+- Carga `organizations` activas atribuidas al agente para calcular MRR estimado (monthly → directo, annual → /12).
+- `months[]` ahora incluye `card_commission`, `org_commission` y un `commission` total. Cada periodo también lleva `own_org_invoices` y `sub_org_invoices`.
+- Nuevos campos en `summary`: `org_count` (orgs activas), `org_mrr_eur`.
+- Nuevos campos top-level: `recent_org_invoices` (últimos 20), `orgs` (todas las atribuidas, no soft-deleted).
+- Comisión org: `agentRate%` directo sobre `amount_cents`. L2-on-L1 override 5% sobre invoices de sub-agentes (mismo modelo que cards).
+- Try/catch defensivo en las queries de `org_invoices` y `organizations` — si la migración 029 aún no se ha ejecutado en un entorno, agent-data sigue funcionando para el carril autónomo.
+
+**Eventos Stripe (Bloque B)** — `stripe-webhook.js` delega los 4 eventos de subscription al lib `lib/org-subscription.js`:
+
+| Evento Stripe | Acción |
+|---|---|
+| `checkout.session.completed` con `metadata.kind='org-subscription'` | Inserta `organizations` con slug único (resuelve colisiones con sufijo `-2/-3/…`), persiste `tier/cycle/seats/agent_code/stripe_customer_id/stripe_subscription_id`, envía welcome email con magic-link al panel (`signPanelSession` 7d). Idempotente: replay del mismo `stripe_subscription_id` devuelve `replayed=true` sin re-insert. |
+| `customer.subscription.updated` y `customer.subscription.created` | UPDATE en `organizations` por `stripe_subscription_id`: `subscription_status`, `seats` (de `items.data[0].quantity`), `current_period_end`. Si la sub aún no está en BD (carrera con el checkout), no-op silencioso — el siguiente evento la encontrará. |
+| `customer.subscription.deleted` | UPDATE `subscription_status='canceled'`. **No** soft-deleta la org (los cards públicos siguen funcionando hasta `current_period_end`). El admin decide la limpieza efectiva desde admin-orgs. |
+| `invoice.paid` con `subscription` no-null | UPSERT en `org_invoices` con `onConflict='stripe_invoice_id'`. Snapshot de `agent_code/tier/cycle/seats` preferentemente de la org en BD (refleja estado actual); fallback a `subscription_details.metadata` si la org aún no existe. Invoices sin subscription (one-shot autónomo) se ignoran. |
+
+El carril autónomo (`checkout.session.completed` sin `metadata.kind`) sigue intacto.
+
+**Welcome email B2B** (`buildOrgWelcomeEmail` en `lib/org-subscription.js`):
+- Asunto + cuerpo localizados es/ca según `session.metadata.idioma`.
+- CTA principal: `${siteUrl}/panel.html?session=<jwt>` (JWT firmado por `signPanelSession`, TTL 7d).
+- Bloque "¿Qué hacer ahora?" con 3 pasos: logo+color, invitar equipo en lote, compartir `/e/:slug`.
+- Si Resend falla, el cliente puede pedir el magic-link estándar en `/panel.html` con su email — `panel-auth.js` lo regenera.
+
+**Bloques pendientes**:
+- Bloque D — UI agente: tab "Mis B2B" en `/agente.html` + generador de links `?via=agent-XXXX`.
+- Bloque E — wizard post-checkout en `/panel.html` cuando `logo_url IS NULL`.
+
 ### Quipu integration (Verifactu/AEAT)
 
 `netlify/functions/lib/quipu-client.js` is a **skeleton** with the contract (`createInvoice`, `voidInvoice`, `getInvoice`) but no real implementation — every method throws `not implemented`. It is intentionally unwired so that any accidental call fails loudly instead of silently emitting nothing to AEAT.
@@ -337,8 +391,12 @@ STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 STRIPE_PRICE_BASE
 STRIPE_PRICE_PRO
-STRIPE_PRICE_MONTHLY  # Sprint 3 — recurring price (subscription)
-STRIPE_PRICE_ANNUAL   # Sprint 3 — recurring price (subscription)
+STRIPE_PRICE_MONTHLY  # Legacy dormido (sprint 3 antiguo) — no usado por carril B2B
+STRIPE_PRICE_ANNUAL   # Legacy dormido (sprint 3 antiguo) — no usado por carril B2B
+STRIPE_PRICE_TEAM_MONTHLY  # Bloque A B2B — €/profesional/mes, tier Team
+STRIPE_PRICE_TEAM_ANNUAL   # Bloque A B2B — €/profesional/año, tier Team
+STRIPE_PRICE_ORG_MONTHLY   # Bloque A B2B — €/profesional/mes, tier Organización
+STRIPE_PRICE_ORG_ANNUAL    # Bloque A B2B — €/profesional/año, tier Organización
 SUPABASE_URL
 SUPABASE_SERVICE_KEY
 ADMIN_PASSWORD
@@ -366,6 +424,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/c/:slug` | `card` |
 | `/e/:slug` | `org` |
 | `/api/create-checkout` | `create-checkout` |
+| `/api/create-org-checkout` | `create-org-checkout` |
 | `/api/stripe-webhook` | `stripe-webhook` |
 | `/api/admin-data` | `admin-data` |
 | `/api/admin-actions` | `admin-actions` |

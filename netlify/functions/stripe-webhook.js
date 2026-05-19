@@ -7,6 +7,12 @@ const { buildPrintableCardPDF, buildEscaparateQrPng } = require('./printable-car
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { capture: captureEvent } = require('./lib/posthog-server');
 const { isValidCp, lookupCp, normalizeCp } = require('./lib/cp-utils');
+const {
+  handleSubscriptionCheckout,
+  handleSubscriptionUpdated,
+  handleSubscriptionDeleted,
+  handleInvoicePaid,
+} = require('./lib/org-subscription');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -289,8 +295,49 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       return { statusCode: 400, body: `Webhook Error: ${err.message}` };
     }
 
+    const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+
+    // ── B2B Stripe Subscription (Bloque B) ──────────────────────────────────
+    // Los eventos de subscription se procesan ANTES del autónomo para
+    // detectar y desviar el carril B2B sin tocar el flujo existente.
+
+    if (stripeEvent.type === 'customer.subscription.updated' ||
+        stripeEvent.type === 'customer.subscription.created') {
+      const result = await handleSubscriptionUpdated({
+        db, subscription: stripeEvent.data.object,
+      });
+      if (!result.ok) console.log('subscription updated/created skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+
+    if (stripeEvent.type === 'customer.subscription.deleted') {
+      const result = await handleSubscriptionDeleted({
+        db, subscription: stripeEvent.data.object,
+      });
+      if (!result.ok) console.log('subscription deleted skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+
+    if (stripeEvent.type === 'invoice.paid') {
+      const result = await handleInvoicePaid({ db, invoice: stripeEvent.data.object });
+      if (!result.ok) console.log('invoice.paid skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
+
+      // Desvío B2B: si la session lleva metadata.kind === 'org-subscription',
+      // delega al lib y no entra al carril autónomo. Devuelve 200 igualmente
+      // (Stripe espera 2xx para no reintentar).
+      if (session.metadata && session.metadata.kind === 'org-subscription') {
+        const result = await handleSubscriptionCheckout({
+          db, emailClient, session, siteUrl,
+        });
+        if (!result.ok) console.log('B2B checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
+
       const { slug, nombre, tagline, whatsapp, cp, servicios, desc, direccion, local_publico, foto, plan, agent_code, ocupacion_code, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken } =
         session.metadata || {};
 

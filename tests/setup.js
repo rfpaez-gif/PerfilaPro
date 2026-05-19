@@ -6,3 +6,4 @@ process.env.STRIPE_PRICE_PRO  = 'price_pro_mock';
 process.env.SUPABASE_URL = 'https://mock.supabase.co';
 process.env.SUPABASE_SERVICE_KEY = 'mock-service-key';
 process.env.RESEND_API_KEY = 're_test_mock';
+process.env.AGENT_JWT_SECRET = 'test-agent-jwt-secret';

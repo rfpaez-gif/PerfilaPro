@@ -155,6 +155,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/create-org-checkout"
+  to     = "/.netlify/functions/create-org-checkout"
+  status = 200
+
+[[redirects]]
   from   = "/c/:slug"
   to     = "/.netlify/functions/card"
   status = 200
