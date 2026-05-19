@@ -876,13 +876,39 @@
     if (e.key === 'Enter') login();
   });
 
-  function login() {
+  // El admin valida password + TOTP UNA vez vía /api/admin-session y recibe
+  // un JWT (default 60 min). Las acciones subsiguientes mandan
+  // x-admin-session en lugar del TOTP crudo (que expira a los ~90s y
+  // rompía cualquier click más allá del primer minuto).
+  async function login() {
     const pwd  = document.getElementById('passwordInput').value.trim();
     const totp = document.getElementById('totpInput').value.trim();
     if (!pwd) return;
-    sessionStorage.setItem('adminPwd', pwd);
-    sessionStorage.setItem('adminTotp', totp);
     document.getElementById('loginError').style.display = 'none';
+
+    try {
+      const res = await fetch('/.netlify/functions/admin-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': pwd,
+          'x-admin-totp': totp,
+        },
+      });
+      if (!res.ok) throw new Error(res.status);
+      const json = await res.json();
+      if (!json.token) throw new Error('Sin token');
+      sessionStorage.setItem('adminPwd', pwd);
+      sessionStorage.setItem('adminSession', json.token);
+    } catch {
+      document.getElementById('loginError').style.display = 'block';
+      sessionStorage.removeItem('adminPwd');
+      sessionStorage.removeItem('adminSession');
+      return;
+    }
+
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('totpInput').value = '';
     loadData();
     loadInvoices();
     loadAgents();
@@ -890,7 +916,8 @@
 
   function logout() {
     sessionStorage.removeItem('adminPwd');
-    sessionStorage.removeItem('adminTotp');
+    sessionStorage.removeItem('adminSession');
+    sessionStorage.removeItem('adminTotp'); // legacy
     clearInterval(refreshTimer);
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('loginWrap').style.display = 'flex';
@@ -902,8 +929,8 @@
     return sessionStorage.getItem('adminPwd') || '';
   }
 
-  function getTotp() {
-    return sessionStorage.getItem('adminTotp') || '';
+  function getSession() {
+    return sessionStorage.getItem('adminSession') || '';
   }
 
   async function loadData() {
@@ -912,7 +939,7 @@
 
     try {
       const res = await fetch('/.netlify/functions/admin-data', {
-        headers: { 'x-admin-password': pwd, 'x-admin-totp': getTotp() }
+        headers: { 'x-admin-password': pwd, 'x-admin-session': getSession() }
       });
 
       if (res.status === 401) {
@@ -1097,7 +1124,7 @@
     try {
       const res = await fetch('/.netlify/functions/legal-settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({
           legal_name:    document.getElementById('legalName').value.trim(),
           legal_nif:     document.getElementById('legalNif').value.trim(),
@@ -1121,7 +1148,7 @@
     try {
       const res = await fetch('/.netlify/functions/admin-actions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ action, slug, ...extra }),
       });
       const data = await res.json();
@@ -1154,7 +1181,7 @@
     try {
       const res = await fetch('/.netlify/functions/admin-regenerate-seed', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ slug }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1221,7 +1248,7 @@
 
     try {
       const res = await fetch(`/.netlify/functions/admin-invoices?${params}`, {
-        headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() }
+        headers: { 'x-admin-password': getPassword(), 'x-admin-session': getSession() }
       });
       if (!res.ok) { renderInvoicesTable([]); return; }
       const { facturas } = await res.json();
@@ -1257,7 +1284,7 @@
 
   async function downloadInvoicePDF(numero) {
     const url = `/.netlify/functions/admin-invoices?numero=${encodeURIComponent(numero)}`;
-    const res = await fetch(url, { headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() } });
+    const res = await fetch(url, { headers: { 'x-admin-password': getPassword(), 'x-admin-session': getSession() } });
     if (!res.ok) { alert('Error descargando la factura'); return; }
     const blob = await res.blob();
     const a = document.createElement('a');
@@ -1296,7 +1323,7 @@
 
   async function loadAgents() {
     const res = await fetch('/.netlify/functions/admin-agents', {
-      headers: { 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+      headers: { 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
     });
     if (!res.ok) return;
     const { agents } = await res.json();
@@ -1387,7 +1414,7 @@
 
     const res = await fetch('/.netlify/functions/admin-agents', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -1406,7 +1433,7 @@
     try {
       const res = await fetch('/.netlify/functions/admin-actions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ action: 'toggle_directory', slug, field, value: val }),
       });
       const data = await res.json();
@@ -1512,7 +1539,7 @@
     try {
       const res = await fetch('/.netlify/functions/admin-actions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ action: 'set_category', slug: catModalSlug, sector, specialty, city_slug }),
       });
       const data = await res.json();
@@ -1538,7 +1565,7 @@
     try {
       const res = await fetch('/.netlify/functions/resend-invoice', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ slug }),
       });
       const data = await res.json();
@@ -1568,7 +1595,7 @@
     try {
       const res = await fetch('/.netlify/functions/resend-kit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-totp': getTotp() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': getPassword(), 'x-admin-session': getSession() },
         body: JSON.stringify({ slug }),
       });
       const data = await res.json();
