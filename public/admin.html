@@ -1047,7 +1047,7 @@
             <button class="pp-action-btn pp-action-btn--reactivate" onclick="runAction('reactivate','${card.slug}')">Reactivar</button>
             <button class="pp-action-btn pp-action-btn--extend"     onclick="runAction('extend','${card.slug}')">+30 días</button>
             ${card.email ? `<button class="pp-action-btn" onclick="sendEditLink('${card.slug}',this)" style="font-size:11px">✉ Enlace</button>` : ''}
-            <button class="pp-action-btn" onclick="changeEmail('${card.slug}', ${JSON.stringify(card.email || '')})" style="font-size:11px" title="Cambiar el email asociado a esta tarjeta">✏ Email</button>
+            <button class="pp-action-btn" onclick="changeEmail('${card.slug}')" style="font-size:11px" title="Cambiar el email asociado a esta tarjeta">✏ Email</button>
             ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--invoice" onclick="resendInvoice('${card.slug}',this)">📧 Factura</button>` : ''}
             ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--invoice" onclick="resendKit('${card.slug}',this)" title="${kitTitle}">📦 Kit</button>` : ''}
             ${card.stripe_session_id ? `<button class="pp-action-btn pp-action-btn--refund" onclick="openRefundModal('${card.slug}','${card.nombre || card.slug}')">Reembolsar</button>` : ''}
@@ -1132,8 +1132,10 @@
     }
   }
 
-  async function changeEmail(slug, currentEmail) {
-    const next = prompt(`Email actual: ${currentEmail || '(ninguno)'}\n\nNuevo email para ${slug}:`, currentEmail || '');
+  async function changeEmail(slug) {
+    const card = allCards.find(c => c.slug === slug);
+    const currentEmail = (card && card.email) || '';
+    const next = prompt(`Email actual: ${currentEmail || '(ninguno)'}\n\nNuevo email para ${slug}:`, currentEmail);
     if (next === null) return;
     const trimmed = next.trim();
     if (!trimmed) { alert('Email vacío, no se cambió.'); return; }
