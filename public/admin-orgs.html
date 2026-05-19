@@ -1276,10 +1276,18 @@ function renderLeadsTable() {
       orgOpts.replace(`value="${escapeAttr(currentOrgSlug)}"`, `value="${escapeAttr(currentOrgSlug)}" selected`)
     }</select>`;
 
+    // Atribución comercial (Bloque D): si el lead llegó vía ?via=agent-XXX,
+    // mostramos un pill verde con el código. Visible para que el founder
+    // sepa que al crear la org tiene que asignarle ese agent_code.
+    const agentPill = l.agent_code
+      ? `<div class="pp-orgs-table__slug" style="margin-top:4px"><span style="background:var(--color-verde-light);color:var(--color-verde-dark);padding:2px 8px;border-radius:999px;font-family:var(--font-mono);font-size:10.5px;font-weight:600;letter-spacing:.02em" title="Asigna este agent_code a la org cuando la crees para que el agente cobre la comisión recurrente">↗ ${escapeHtml(l.agent_code)}</span></div>`
+      : '';
+
     return `<tr>
       <td>
         <div class="pp-orgs-table__name">${safeName}</div>
         <div class="pp-orgs-table__slug">${safeCompany} · ${safeEmail}</div>
+        ${agentPill}
       </td>
       <td>
         <div style="font-size:12px;color:var(--color-tinta)">${team}</div>

@@ -880,7 +880,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       const onlyPending = body.only_pending !== false;
       let q = db
         .from('b2b_leads')
-        .select('id, invite_token, name, company, email, team_size, sector, message, idioma, organization_id, created_at, redeemed_at, redeemed_card_slug')
+        .select('id, invite_token, name, company, email, team_size, sector, message, idioma, organization_id, created_at, redeemed_at, redeemed_card_slug, agent_code')
         .order('created_at', { ascending: false })
         .limit(200);
       if (onlyPending) q = q.is('redeemed_at', null);

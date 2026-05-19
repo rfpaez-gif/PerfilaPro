@@ -230,6 +230,68 @@ describe('lead-b2b handler', () => {
     const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
     expect(insertArg.plan_interes).toBeNull();
   });
+
+  // ── agent_code / via (Bloque D) ──────────────────────────────────────
+  it('persiste agent_code desde body.via y lo añade al email interno', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, via: 'agent-MARTA01' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBe('agent-MARTA01');
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).toContain('Referido por');
+    expect(internalEmail.html).toContain('agent-MARTA01');
+  });
+
+  it('acepta el alias body.agent_code en lugar de via', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, agent_code: 'CARLOS_42' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBe('CARLOS_42');
+  });
+
+  it('silencia via malformado (caracteres prohibidos) → agent_code null sin 400', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, via: '<script>x</script>' },
+    }));
+    // No bloqueamos el alta por un share link forjado — el lead se persiste
+    // sin atribución (bolsa founder) y se sigue procesando.
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBeNull();
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).not.toContain('Referido por');
+  });
+
+  it('silencia via demasiado corto (<2 chars)', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, via: 'a' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBeNull();
+  });
+
+  it('silencia via demasiado largo (>40 chars)', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, via: 'a'.repeat(41) },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBeNull();
+  });
+
+  it('payload sin via → agent_code null (retrocompat)', async () => {
+    const res = await handler()(buildEvent({ body: validPayload }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.agent_code).toBeNull();
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).not.toContain('Referido por');
+  });
 });
 
 describe('buildLeadEmail', () => {

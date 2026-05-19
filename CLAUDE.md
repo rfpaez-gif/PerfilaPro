@@ -91,6 +91,15 @@ Agents log in with email + password; `agent-auth` returns a JWT (7-day TTL, HS25
 
 `agent-data` returns the agent profile plus a monthly commission breakdown — distinguishing own sales from sub-agent sales, applying a fixed 5% L2-on-L1 override rate.
 
+**Tabs Autónomos / B2B** (Bloque D · UI agente): el portal organiza la información en dos pestañas con el mismo chrome (topbar + liquidaciones compartidas al pie):
+
+- **Autónomos** — enlace de referido tradicional (`${siteUrl}/?ref=${code}`) + KPIs (tarjetas vendidas, ventas red, comisión pendiente combinada cards+B2B) + resumen mensual filtrado a periodos con cards + tabla últimas tarjetas. Misma información que mostraba el portal pre-Bloque D, sólo recolocada.
+- **B2B** — dos enlaces de captación con copy-to-clipboard (`${siteUrl}/es/empresas?via=${code}` + `${siteUrl}/ca/empresas?via=${code}`) que el agente comparte con organizaciones + KPIs B2B (orgs activas, MRR estimado dividiendo annual÷12, número de facturas recientes) + resumen mensual filtrado a periodos con facturas B2B + tabla de orgs (nombre · plan tier·cycle · seats · status · renueva) + tabla últimas facturas (paid_at · org_id · tier·cycle · seats · importe).
+
+Los counts en las pestañas (`Autónomos N` / `B2B M`) reflejan `summary.total_sales` y `summary.org_count` para que un agente con sólo un carril sepa de un vistazo dónde tiene cartera. La tabla de liquidaciones queda **fuera de tabs** porque agrega ambos carriles en `commission_amount`.
+
+**Atribución comercial B2B** (Bloque D · captura `?via=`): cuando un agente comparte `/es/empresas?via=agent-XXX` con una organización, el landing JS (en ambos idiomas) valida con `/^[A-Za-z0-9_-]{2,40}$/`, persiste el código en `localStorage.pp_b2b_via` (sobrevive a navegaciones posteriores sin query param) y lo inyecta como `<input type="hidden" name="via">` en el form del lead. `lead-b2b.js` acepta `body.via` o el alias `body.agent_code`, lo persiste en `b2b_leads.agent_code` (migración 030, columna nullable + índice parcial sobre pendientes) y lo añade a la fila *"Referido por"* del email interno al inbox. El Studio (`admin-orgs.html`) pinta un pill verde con el código en la fila del lead para que el founder, al crear la org, recuerde poner ese `agent_code` en `organizations` y la cadena cierre (`organizations.agent_code → org_invoices.agent_code → agent-data.org_commission`). Atribuciones malformadas se silencian (200 sin attribution) — un share link forjado no debe bloquear un lead legítimo. Sin acción manual del founder al crear la org, el carry-over `b2b_leads.agent_code → organizations.agent_code` está fuera de scope de esta fase (Phase 2 de D, cuando el flujo se ejercite con leads reales).
+
 ### Card editing (`public/editar.html`)
 
 Users land here from the edit link in their confirmation or reminder emails. The page calls:
