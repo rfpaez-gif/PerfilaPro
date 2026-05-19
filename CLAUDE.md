@@ -332,9 +332,28 @@ Carril en construcción para llevar las orgs a Stripe Subscription en lugar del 
 - Rate-limit 10 req / 10 min / IP, mismo patrón que `create-checkout`.
 - `success_url` / `cancel_url` apuntan a `/${idioma}/empresas` con flag `?subscribed=1` en success.
 
+**Schema (migración 029)** — extiende `organizations` y crea `org_invoices`:
+- `organizations.agent_code text NULL` — atribución comercial. NULL = bolsa founder. Indexado parcial.
+- `organizations.stripe_customer_id text NULL` — para resolver org desde `customer.subscription.*` (Stripe sólo manda el customer en algunos eventos).
+- `organizations.stripe_subscription_id text NULL UNIQUE` — clave de upsert en eventos de subscription.
+- `organizations.tier text NULL` — CHECK `'team' | 'org' | 'enterprise'`.
+- `organizations.cycle text NULL` — CHECK `'monthly' | 'annual'`.
+- `organizations.seats integer NULL` — cantidad actual.
+- `organizations.subscription_status text NULL` — mirror del estado Stripe (`active`, `past_due`, `canceled`, etc). Sin CHECK para no acoplarse al enum si Stripe añade estados.
+- `organizations.current_period_end timestamptz NULL` — para notificaciones y display de "renueva el ...".
+- `org_invoices` — histórico de `invoice.paid`. Permite al portal de agentes calcular comisión recurrente sin re-llamar a Stripe. `agent_code` se persiste como snapshot al momento del invoice (atribución histórica estable si la org se reasigna). Indexada por `(agent_code, paid_at DESC)` y por `organization_id`.
+
+**agent-data.js extendido**:
+- Carga `org_invoices` propias (`agent_code = agentCode`) y de sub-agentes (`in subCodes`).
+- Carga `organizations` activas atribuidas al agente para calcular MRR estimado (monthly → directo, annual → /12).
+- `months[]` ahora incluye `card_commission`, `org_commission` y un `commission` total. Cada periodo también lleva `own_org_invoices` y `sub_org_invoices`.
+- Nuevos campos en `summary`: `org_count` (orgs activas), `org_mrr_eur`.
+- Nuevos campos top-level: `recent_org_invoices` (últimos 20), `orgs` (todas las atribuidas, no soft-deleted).
+- Comisión org: `agentRate%` directo sobre `amount_cents`. L2-on-L1 override 5% sobre invoices de sub-agentes (mismo modelo que cards).
+- Try/catch defensivo en las queries de `org_invoices` y `organizations` — si la migración 029 aún no se ha ejecutado en un entorno, agent-data sigue funcionando para el carril autónomo.
+
 **Bloques pendientes**:
 - Bloque B — extender `stripe-webhook.js` para los eventos de subscription (`customer.subscription.created|updated|deleted`, `invoice.paid`). El webhook actual solo procesa `checkout.session.completed` para autónomos.
-- Bloque C — migración 029 con `organizations.agent_code text NULL` + `stripe_subscription_id`. Extender `agent-data.js` para sumar orgs en el cálculo de comisiones.
 - Bloque D — UI agente: tab "Mis B2B" en `/agente.html` + generador de links `?via=agent-XXXX`.
 - Bloque E — wizard post-checkout en `/panel.html` cuando `logo_url IS NULL`.
 

@@ -21,12 +21,12 @@ function verifyToken(event) {
   }
 }
 
-function groupByMonth(cards) {
+function groupByMonth(items, dateKey = 'created_at') {
   const months = {};
-  for (const card of cards) {
-    const period = (card.created_at || '').substring(0, 7); // 'YYYY-MM'
+  for (const item of items) {
+    const period = (item[dateKey] || '').substring(0, 7); // 'YYYY-MM'
     if (!months[period]) months[period] = [];
-    months[period].push(card);
+    months[period].push(item);
   }
   return months;
 }
@@ -42,6 +42,22 @@ function calcCommissions(cards, agentRate, overrideCards, overrideRate) {
     total += price * (overrideRate / 100);
   }
   return Math.round(total * 100) / 100;
+}
+
+// Comisión sobre invoices B2B recurrentes (Bloque C). Cada org_invoice
+// tiene amount_cents — la comisión es % directo sobre eso. El override
+// L2-on-L1 (5% por defecto) aplica igual: si el invoice viene de una org
+// vendida por un sub-agente, el padre cobra overrideRate del mismo amount.
+function calcOrgCommissions(invoices, agentRate, subInvoices, overrideRate) {
+  let total = 0;
+  for (const inv of invoices) {
+    total += (inv.amount_cents || 0) * (agentRate / 100);
+  }
+  for (const inv of subInvoices) {
+    total += (inv.amount_cents || 0) * (overrideRate / 100);
+  }
+  // amount_cents → euros, redondeo 2 decimales
+  return Math.round(total) / 100;
 }
 
 function makeHandler(db) {
@@ -87,14 +103,59 @@ function makeHandler(db) {
       .eq('status', 'active');
 
     let subCards = [];
-    if (subAgents && subAgents.length > 0) {
-      const subCodes = subAgents.map(a => a.code);
+    let subOrgInvoices = [];
+    const subCodes = (subAgents || []).map(a => a.code);
+    if (subCodes.length > 0) {
       const { data } = await db
         .from('cards')
         .select('slug, nombre, plan, status, created_at, agent_code')
         .in('agent_code', subCodes)
         .order('created_at', { ascending: false });
       subCards = data || [];
+
+      // Invoices B2B de orgs vendidas por sub-agentes (override L2-on-L1).
+      // Tabla puede no existir en entornos pre-migración 029 — try/catch
+      // defensivo para no romper agent-data si la migración aún no se ha
+      // ejecutado en este entorno.
+      try {
+        const { data: subInv } = await db
+          .from('org_invoices')
+          .select('id, organization_id, amount_cents, currency, paid_at, agent_code, tier, cycle, seats')
+          .in('agent_code', subCodes)
+          .order('paid_at', { ascending: false });
+        subOrgInvoices = subInv || [];
+      } catch (err) {
+        console.warn('org_invoices no disponible (migración 029 pendiente?):', err.message);
+      }
+    }
+
+    // Invoices B2B propios (orgs cerradas por este agente). Try/catch
+    // defensivo igual que el de sub-invoices.
+    let ownOrgInvoices = [];
+    try {
+      const { data: ownInv } = await db
+        .from('org_invoices')
+        .select('id, organization_id, amount_cents, currency, paid_at, agent_code, tier, cycle, seats')
+        .eq('agent_code', agentCode)
+        .order('paid_at', { ascending: false });
+      ownOrgInvoices = ownInv || [];
+    } catch (err) {
+      console.warn('org_invoices no disponible (migración 029 pendiente?):', err.message);
+    }
+
+    // Orgs activas atribuidas a este agente (para sumar MRR estimado y
+    // mostrar el listado en la tab "Mis B2B" del portal — Bloque D).
+    let ownOrgs = [];
+    try {
+      const { data: orgs } = await db
+        .from('organizations')
+        .select('id, slug, name, tier, cycle, seats, subscription_status, current_period_end, created_at')
+        .eq('agent_code', agentCode)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+      ownOrgs = orgs || [];
+    } catch (err) {
+      console.warn('organizations no disponible:', err.message);
     }
 
     // Load liquidations
@@ -110,32 +171,76 @@ function makeHandler(db) {
     const allOwn = ownCards || [];
     const allSub = subCards || [];
 
-    // Monthly breakdown
-    const ownByMonth = groupByMonth(allOwn);
-    const subByMonth = groupByMonth(allSub);
-    const allPeriods = [...new Set([...Object.keys(ownByMonth), ...Object.keys(subByMonth)])].sort().reverse();
+    // Monthly breakdown — incluye cards autónomos + invoices B2B en la
+    // misma agrupación por YYYY-MM. La métrica `gross` se mantiene en
+    // euros (las cards usan PLAN_PRICES € y los invoices amount_cents/100).
+    const ownByMonth     = groupByMonth(allOwn);
+    const subByMonth     = groupByMonth(allSub);
+    const ownInvByMonth  = groupByMonth(ownOrgInvoices, 'paid_at');
+    const subInvByMonth  = groupByMonth(subOrgInvoices, 'paid_at');
+    const allPeriods = [...new Set([
+      ...Object.keys(ownByMonth),
+      ...Object.keys(subByMonth),
+      ...Object.keys(ownInvByMonth),
+      ...Object.keys(subInvByMonth),
+    ])].sort().reverse();
 
     const liquidatedPeriods = new Set((liquidations || []).map(l => l.period));
 
     const months = allPeriods.map(period => {
-      const own = ownByMonth[period] || [];
-      const sub = subByMonth[period] || [];
-      const commission = calcCommissions(own, agentRate, sub, overrideRate);
+      const own    = ownByMonth[period]    || [];
+      const sub    = subByMonth[period]    || [];
+      const ownInv = ownInvByMonth[period] || [];
+      const subInv = subInvByMonth[period] || [];
+
+      const cardCommission = calcCommissions(own, agentRate, sub, overrideRate);
+      const orgCommission  = calcOrgCommissions(ownInv, agentRate, subInv, overrideRate);
+
       const grossOwn = own.reduce((s, c) => s + (PLAN_PRICES[c.plan] || 9), 0);
       const grossSub = sub.reduce((s, c) => s + (PLAN_PRICES[c.plan] || 9), 0);
+      const grossOwnInv = ownInv.reduce((s, i) => s + (i.amount_cents || 0), 0) / 100;
+      const grossSubInv = subInv.reduce((s, i) => s + (i.amount_cents || 0), 0) / 100;
+
       return {
         period,
-        own_sales: own.length,
-        sub_sales: sub.length,
-        gross: grossOwn + grossSub,
-        commission,
-        liquidated: liquidatedPeriods.has(period),
+        own_sales:    own.length,
+        sub_sales:    sub.length,
+        own_org_invoices: ownInv.length,
+        sub_org_invoices: subInv.length,
+        gross:        Math.round((grossOwn + grossSub + grossOwnInv + grossSubInv) * 100) / 100,
+        card_commission: cardCommission,
+        org_commission:  orgCommission,
+        commission:   Math.round((cardCommission + orgCommission) * 100) / 100,
+        liquidated:   liquidatedPeriods.has(period),
       };
     });
 
     const pendingCommission = months
       .filter(m => !m.liquidated)
       .reduce((s, m) => s + m.commission, 0);
+
+    // MRR estimado: suma del invoice más reciente por suscripción activa.
+    // Aproximado — un cliente que pasó de monthly→annual reciente sesga,
+    // pero sirve como indicador de salud del portfolio del agente.
+    const activeOrgs = ownOrgs.filter(o => o.subscription_status === 'active');
+    const latestInvBySub = new Map();
+    for (const inv of ownOrgInvoices) {
+      // ownOrgInvoices viene ordenado paid_at DESC; el primero encontrado
+      // por organization_id es el más reciente.
+      if (!latestInvBySub.has(inv.organization_id)) {
+        latestInvBySub.set(inv.organization_id, inv);
+      }
+    }
+    let orgMrrEur = 0;
+    for (const org of activeOrgs) {
+      const latest = latestInvBySub.get(org.id);
+      if (!latest) continue;
+      // Annual → dividir el invoice entre 12 para obtener MRR equivalente.
+      const monthlyEquivCents = latest.cycle === 'annual'
+        ? latest.amount_cents / 12
+        : latest.amount_cents;
+      orgMrrEur += monthlyEquivCents / 100;
+    }
 
     return {
       statusCode: 200,
@@ -153,10 +258,14 @@ function makeHandler(db) {
         summary: {
           total_sales: allOwn.length,
           sub_sales: allSub.length,
+          org_count: activeOrgs.length,
+          org_mrr_eur: Math.round(orgMrrEur * 100) / 100,
           pending_commission: Math.round(pendingCommission * 100) / 100,
         },
         months,
         recent_sales: allOwn.slice(0, 20),
+        recent_org_invoices: ownOrgInvoices.slice(0, 20),
+        orgs: ownOrgs,
         liquidations: liquidations || [],
       }),
     };
