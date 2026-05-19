@@ -281,10 +281,33 @@ Rate-limit 120 req / 10 min por IP — holgado para operativa normal (cargar pan
 - ❌ Borrar cards / soft-delete miembro → founder-only.
 - ❌ Download PDF de tarjetas del equipo → founder-only.
 - ❌ Resend edit-link a miembro individual → founder-only.
-- ❌ Upload de logo / cambio de `logo_url` → founder vía admin-orgs (requiere su propio endpoint scoped a panel).
+- ✅ Upload de logo → cliente vía `upload-org-logo-panel.js` (Bloque E).
 - ❌ Ver/rotar `stats_token` → el link público a `/e/:slug/stats` lo sigue generando founder.
 - ❌ Cambiar `slug`, `name`, `email` propios → founder-only (riesgo de auto-bloqueo).
 - ❌ Múltiples admins / roles por org → modelo actual asume 1 admin por org (organizations.email). Se añade tabla `org_admins` cuando un cliente lo pida.
+
+### Wizard onboarding post-checkout (`/panel.html` · Bloque E)
+
+Cuando un cliente B2B aterriza por primera vez en su panel desde el magic-link del welcome email (Bloque B), `loadDashboard()` detecta que `organizations.logo_url IS NULL` y muestra un **wizard de 3 pasos lineales** en lugar del dashboard normal. Cada paso es saltable individualmente — el cliente puede dimissar el wizard en cualquier momento y completar el branding desde la pestaña Branding como antes.
+
+**Pasos:**
+1. **Logo** — dropzone con drag-and-drop + file picker (PNG/JPG/WEBP/SVG, ≤2 MB). Preview local antes de subir. Al pulsar "Subir y continuar →", POST a `upload-org-logo-panel.js` con base64 + contentType.
+2. **Color** — grid de 12 swatches preseleccionados (PerfilaPro verde, tinta, azul, rojo, naranja, mostaza, violeta, rosa, cyan, gris, burdeos, oliva) + color picker nativo + input hex sincronizados. Al guardar → POST a `org-panel.js update_branding { color_primary }`.
+3. **Equipo** — formulario simple (nombre + email + cargo opcional) que invita al primer miembro. Reusa `org-panel.js invite_team` con `team: [{...}]`. Al saltar entra directamente al dashboard.
+
+**Triggers de visibilidad:**
+- Se muestra cuando `org.logo_url == null && !localStorage.pp_panel_wizard_dismissed_<slug>`.
+- Se dimisses (set localStorage flag) al completar el step 3 (botón "Entrar al panel →") o al pulsar "Saltar y entrar al panel" en cualquier paso final que termine el wizard.
+- Una vez dimissado, el wizard no vuelve a aparecer aunque el cliente no haya subido logo — para no agobiar a quien explícitamente dijo "ahora no".
+
+**Endpoint nuevo `upload-org-logo-panel.js`** (`POST /api/upload-org-logo-panel`):
+- Espejo de `upload-org-logo.js` pero auth via JWT del panel (`lib/panel-auth.authFromEvent`) en lugar de admin password + TOTP.
+- Body: `{ base64, contentType }` — **sin `slug`**. La org se resuelve desde `session.orgId` del JWT, así que el cliente NUNCA puede subir el logo de otra org aunque manipule el body.
+- Mismo bucket (`Avatars/org-logos/{slug}-{timestamp}.{ext}`), mismo MAX_BYTES (2 MB), misma whitelist MIME.
+- Rate-limited a 20 req / 10 min por IP — cubre re-subir el logo varias veces sin permitir abuso del bucket.
+- Devuelve 401 si la org está soft-deleted (sesión inservible, mismo patrón que `org-panel.js`).
+
+**Reversibilidad**: borrar la route `/api/upload-org-logo-panel` en `netlify.toml`, el archivo del handler, los pasos del wizard en `panel.html` y la condición `logo_url == null` en `loadDashboard()`. El bucket queda intacto y `upload-org-logo.js` (admin) sigue funcionando.
 
 **Reversibilidad**: borrar las rutas `/api/panel-auth`, `/api/org-panel`, `/panel` en `netlify.toml` + los 3 archivos. La columna `panel_last_login_at` puede dejarse dormida sin coste.
 
@@ -378,9 +401,15 @@ El carril autónomo (`checkout.session.completed` sin `metadata.kind`) sigue int
 - Bloque "¿Qué hacer ahora?" con 3 pasos: logo+color, invitar equipo en lote, compartir `/e/:slug`.
 - Si Resend falla, el cliente puede pedir el magic-link estándar en `/panel.html` con su email — `panel-auth.js` lo regenera.
 
-**Bloques pendientes**:
-- Bloque D — UI agente: tab "Mis B2B" en `/agente.html` + generador de links `?via=agent-XXXX`.
-- Bloque E — wizard post-checkout en `/panel.html` cuando `logo_url IS NULL`.
+**Bloques aterrizados**:
+- Bloque A — `create-org-checkout` (Stripe Subscription).
+- Bloque B — `stripe-webhook` enruta 4 eventos de subscription al lib `org-subscription`.
+- Bloque C — migración 029 + `agent-data` con comisión B2B recurrente.
+- Bloque D — UI agente (tabs Autónomos/B2B + generador `?via=`) + captura de atribución en landing → `b2b_leads.agent_code` (migración 030).
+- Bloque E — wizard onboarding 3 pasos en `/panel.html` cuando `logo_url IS NULL` + `upload-org-logo-panel.js` scoped al JWT del cliente.
+
+**Pendiente** (cuando el flujo se ejercite con clientes reales):
+- Phase 2 de D — carry-over automático `b2b_leads.agent_code → organizations.agent_code` cuando el founder crea la org desde el Studio.
 
 ### Quipu integration (Verifactu/AEAT)
 
@@ -443,6 +472,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/e/:slug/stats` | `org-stats-page` |
 | `/api/org-stats` | `org-stats` |
 | `/api/upload-org-logo` | `upload-org-logo` |
+| `/api/upload-org-logo-panel` | `upload-org-logo-panel` |
 | `/panel` (→ `/panel.html`) | (static) |
 | `/api/panel-auth` | `panel-auth` |
 | `/api/org-panel` | `org-panel` |

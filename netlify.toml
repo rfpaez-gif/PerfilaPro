@@ -270,6 +270,14 @@
   to     = "/.netlify/functions/org-panel"
   status = 200
 
+# Bloque E · upload de logo scoped al JWT del panel cliente (no requiere
+# admin password ni TOTP). Permite que el cliente complete su branding
+# desde el wizard post-checkout sin pasar por el founder.
+[[redirects]]
+  from   = "/api/upload-org-logo-panel"
+  to     = "/.netlify/functions/upload-org-logo-panel"
+  status = 200
+
 # Pretty URL para compartir: /panel → /panel.html
 [[redirects]]
   from   = "/panel"
