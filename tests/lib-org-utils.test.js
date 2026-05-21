@@ -5,6 +5,7 @@ import {
   isValidOrgSlug,
   isValidTagline,
   isValidDescription,
+  isValidCardLayout,
   isSafeWebsite,
   getOrgBySlug,
   listCardsByOrg,
@@ -92,6 +93,23 @@ describe('isValidDescription', () => {
     expect(isValidDescription('x'.repeat(501))).toBe(false);
     expect(isValidDescription(null)).toBe(false);
     expect(isValidDescription(undefined)).toBe(false);
+  });
+});
+
+describe('isValidCardLayout', () => {
+  it('acepta los layouts soportados', () => {
+    expect(isValidCardLayout('standard')).toBe(true);
+    expect(isValidCardLayout('compact')).toBe(true);
+  });
+  it('rechaza valores fuera del enum', () => {
+    expect(isValidCardLayout('horizontal')).toBe(false);
+    expect(isValidCardLayout('Compact')).toBe(false); // case-sensitive
+    expect(isValidCardLayout('')).toBe(false);
+  });
+  it('rechaza no-strings', () => {
+    expect(isValidCardLayout(null)).toBe(false);
+    expect(isValidCardLayout(undefined)).toBe(false);
+    expect(isValidCardLayout(123)).toBe(false);
   });
 });
 

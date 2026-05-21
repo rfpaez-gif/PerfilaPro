@@ -245,6 +245,30 @@ describe('admin-orgs handler', () => {
       expect(res.statusCode).toBe(400);
       expect(JSON.parse(res.body).error).toContain('email');
     });
+
+    it('persiste card_layout=compact cuando se envía explícitamente', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'allianz', name: 'Allianz', card_layout: 'compact',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.card_layout).toBe('compact');
+    });
+
+    it('NO incluye card_layout en el INSERT cuando no se envía (default DB standard)', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted).not.toHaveProperty('card_layout');
+    });
+
+    it('rechaza card_layout fuera del enum con 400', async () => {
+      const res = await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris', card_layout: 'horizontal',
+      } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('card_layout');
+    });
   });
 
   // ── update ──
@@ -296,6 +320,20 @@ describe('admin-orgs handler', () => {
     it('rechaza description >500 en update', async () => {
       const res = await handler(buildEvent({
         body: { action: 'update', slug: 'iris', description: 'x'.repeat(501) },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('actualiza card_layout a compact', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'allianz', card_layout: 'compact' },
+      }));
+      expect(res.statusCode).toBe(200);
+    });
+
+    it('rechaza card_layout fuera del enum en update', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'iris', card_layout: 'horizontal' },
       }));
       expect(res.statusCode).toBe(400);
     });

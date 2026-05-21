@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <title>PerfilaPro · para Allianz</title>
+  <meta name="description" content="Tarjeta digital corporativa para cada agente Allianz. Provisioning instantáneo en el onboarding, marca uniforme, datos en el panel central.">
+  <!-- Landing dedicada a un prospect concreto. NO se indexa. -->
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    /* Paleta Allianz: sampleada del manual corporativo público. */
+    :root {
+      --alz-blue:       #003781;   /* azul corporativo Allianz */
+      --alz-blue-deep:  #002A63;   /* derivado para gradientes */
+      --alz-cyan:       #009FE3;   /* azul secundario */
+      --alz-amber:      #F6A800;   /* acento amarillo corporativo */
+    }
+
+    body { background: var(--color-crema, #FAF7F0); margin: 0; font-family: var(--font-sans); color: var(--color-tinta, #0A1F44); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+
+    /* ── Top nav ──────────────────────────────────────────── */
+    .pp-nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); position: sticky; top: 0; z-index: 10; }
+    .pp-nav__logo { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; }
+    .pp-nav__logo em { color: var(--color-verde-match, #00C277); font-style: italic; }
+    .pp-nav__right { display: flex; align-items: center; gap: 1.25rem; font-size: 13px; }
+    .pp-nav__right a { text-decoration: none; color: var(--color-gris-500, #6B7280); font-weight: 600; }
+
+    /* ── Hero ──────────────────────────────────────────────── */
+    .alz-hero { background: var(--alz-blue); color: #fff; padding: 4rem 1.5rem 4.5rem; text-align: center; position: relative; overflow: hidden; }
+    .alz-hero::before, .alz-hero::after { content: ''; position: absolute; border-radius: 50%; pointer-events: none; opacity: .30; }
+    .alz-hero::before { width: 420px; height: 420px; background: radial-gradient(circle, var(--alz-cyan), transparent 70%); top: -160px; left: -160px; }
+    .alz-hero::after  { width: 360px; height: 360px; background: radial-gradient(circle, var(--alz-amber), transparent 70%); bottom: -140px; right: -120px; }
+    .alz-hero__wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; }
+
+    /* Wordmark CSS · stand-in del logo Allianz. Reemplazar por
+       <img src="/assets/allianz-logo.svg"> cuando se tenga el archivo. */
+    .alz-wordmark { display: inline-flex; align-items: center; gap: .65rem; margin-bottom: 1.75rem; line-height: 1; user-select: none; }
+    .alz-wordmark__mark { display: inline-block; width: clamp(2.5rem, 5.5vw, 3.25rem); height: clamp(2.5rem, 5.5vw, 3.25rem); position: relative; }
+    .alz-wordmark__mark::before, .alz-wordmark__mark::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border: solid #fff; border-width: 4px 4px 0 4px; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+    .alz-wordmark__mark::before { width: 100%; height: 50%; }
+    .alz-wordmark__mark::after  { width: 60%; height: 30%; top: 35%; }
+    .alz-wordmark__txt { font-family: 'Inter', sans-serif; font-weight: 700; font-size: clamp(2.25rem, 5.5vw, 3.25rem); letter-spacing: -0.02em; color: #fff; }
+
+    .alz-hero__eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .15em; color: rgba(255,255,255,.55); margin-bottom: 1rem; }
+    .alz-hero__h1 { font-family: var(--font-serif); font-size: clamp(1.875rem, 4.5vw, 3rem); line-height: 1.15; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 1.25rem; color: #fff; text-wrap: balance; }
+    .alz-hero__h1 .accent { color: var(--alz-amber); }
+    .alz-hero__sub { font-size: clamp(1rem, 2vw, 1.125rem); color: rgba(255,255,255,.85); line-height: 1.6; max-width: 64ch; margin: 0 auto 2rem; }
+    .alz-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+    .alz-hero__btn { font: 600 14px var(--font-sans); padding: .85rem 1.5rem; border-radius: 999px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+    .alz-hero__btn--primary { background: var(--alz-amber); color: #1B1300; box-shadow: 0 6px 16px rgba(246,168,0,.35); }
+    .alz-hero__btn--primary:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(246,168,0,.45); }
+    .alz-hero__btn--ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.4); }
+    .alz-hero__btn--ghost:hover { border-color: #fff; background: rgba(255,255,255,.08); }
+
+    /* ── Section title shared ─────────────────────────────── */
+    .alz-section { max-width: 1000px; margin: 0 auto; padding: 4rem 1.5rem; }
+    .alz-section--narrow { max-width: 780px; }
+    .alz-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--alz-cyan); text-align: center; margin-bottom: 1rem; }
+    .alz-h2 { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .75rem; color: var(--color-tinta); text-wrap: balance; }
+    .alz-sub { text-align: center; font-size: 15px; color: var(--color-gris-500, #6B7280); max-width: 58ch; margin: 0 auto 2.5rem; line-height: 1.65; }
+
+    /* ── Pain block: dolor de onboarding ───────────────────── */
+    .alz-pain { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 2rem 1.75rem; max-width: 880px; margin: 0 auto; }
+    .alz-pain__row { display: grid; gap: .75rem; padding: 1rem 0; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); }
+    @media (min-width: 700px) { .alz-pain__row { grid-template-columns: 220px 1fr; align-items: baseline; gap: 1.5rem; } }
+    .alz-pain__row:last-of-type { border-bottom: none; }
+    .alz-pain__row-label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--alz-blue); }
+    .alz-pain__row-body { font-size: 15px; line-height: 1.65; color: var(--color-tinta); }
+    .alz-pain__row-body strong { color: var(--alz-blue); font-weight: 700; }
+
+    /* ── Pillars: cómo encajaría ─────────────────────────── */
+    .alz-pillars { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+    @media (min-width: 800px) { .alz-pillars { grid-template-columns: repeat(3, 1fr); } }
+    .alz-pillar { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 1.75rem 1.5rem; border-top: 4px solid var(--alz-blue); }
+    .alz-pillar:nth-child(2) { border-top-color: var(--alz-cyan); }
+    .alz-pillar:nth-child(3) { border-top-color: var(--alz-amber); }
+    .alz-pillar__n { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--alz-blue); margin-bottom: .5rem; }
+    .alz-pillar__h { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .75rem; color: var(--color-tinta); }
+    .alz-pillar__b { font-size: 14px; line-height: 1.65; color: var(--color-gris-500, #6B7280); margin: 0; }
+    .alz-pillar__b strong { color: var(--color-tinta); font-weight: 600; }
+
+    /* ── Demo card block ─────────────────────────────────── */
+    .alz-demo { background: var(--alz-blue); color: #fff; border-radius: var(--pp-r-xl, 20px); padding: 2.5rem 2rem; text-align: center; margin: 0 auto; max-width: 880px; box-shadow: 0 16px 48px rgba(0,55,129,.25); }
+    .alz-demo__h { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 1.875rem); font-weight: 400; letter-spacing: -0.015em; margin: 0 0 .75rem; color: #fff; }
+    .alz-demo__b { font-size: 15px; color: rgba(255,255,255,.85); line-height: 1.65; max-width: 60ch; margin: 0 auto 1.75rem; }
+    .alz-demo__urls { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-bottom: 1.75rem; }
+    .alz-demo__url { display: inline-block; font-family: var(--font-mono); font-size: 13px; background: rgba(255,255,255,.10); color: var(--alz-amber); padding: .4rem .8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,.15); }
+    .alz-demo__cta { display: inline-block; background: var(--alz-amber); color: #1B1300; font-weight: 600; padding: .9rem 1.75rem; border-radius: 999px; text-decoration: none; font-size: 14px; transition: transform .15s; }
+    .alz-demo__cta:hover { transform: translateY(-2px); }
+    .alz-demo__note { display: block; margin-top: 1rem; font-size: 12px; color: rgba(255,255,255,.55); font-family: var(--font-mono); }
+
+    /* ── Diferenciador layout compacto ───────────────────── */
+    .alz-layout { display: grid; gap: 2rem; align-items: center; max-width: 1000px; margin: 0 auto; padding: 4rem 1.5rem; }
+    @media (min-width: 800px) { .alz-layout { grid-template-columns: 1fr 1fr; gap: 3rem; } }
+    .alz-layout__copy h2 { font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 1rem; color: var(--color-tinta); }
+    .alz-layout__copy h2 .accent { color: var(--alz-blue); font-weight: 500; }
+    .alz-layout__copy p { font-size: 15px; line-height: 1.7; color: var(--color-gris-500, #6B7280); margin: 0 0 1rem; }
+    .alz-layout__copy p strong { color: var(--color-tinta); font-weight: 600; }
+    .alz-layout__copy ul { padding-left: 1.25rem; margin: 1rem 0 0; font-size: 14px; line-height: 1.75; color: var(--color-tinta); }
+    .alz-layout__copy ul li { margin-bottom: .35rem; }
+    .alz-layout__visual { background: var(--alz-blue); border-radius: var(--pp-r-xl, 20px); padding: 2.5rem 1.5rem; display: flex; flex-direction: column; align-items: center; box-shadow: 0 16px 48px rgba(0,55,129,.25); }
+    .alz-layout__visual a { display: inline-flex; align-items: center; gap: .5rem; background: var(--alz-amber); color: #1B1300; font-weight: 600; padding: .75rem 1.4rem; border-radius: 999px; text-decoration: none; font-size: 13px; margin-top: 1.25rem; }
+    .alz-layout__caption { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,.6); margin-top: .75rem; letter-spacing: .08em; text-transform: uppercase; }
+    .alz-layout__mock { background: #fff; border-radius: 14px; width: 100%; max-width: 280px; padding: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+    .alz-layout__mock-strip { background: var(--alz-blue); color: #fff; padding: .85rem .75rem; text-align: center; }
+    .alz-layout__mock-brand { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px; color: #fff; letter-spacing: -.01em; }
+    .alz-layout__mock-tag { font-size: 10px; opacity: .85; margin-top: .25rem; font-style: italic; }
+    .alz-layout__mock-body { padding: .9rem .85rem .85rem; }
+    .alz-layout__mock-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; }
+    .alz-layout__mock-photo { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #DAE8F6, #B6D0EA); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.10); }
+    .alz-layout__mock-id { min-width: 0; flex: 1; }
+    .alz-layout__mock-name { font-family: 'Source Serif 4', Georgia, serif; font-size: 13px; font-weight: 500; color: #0A1F44; line-height: 1.2; }
+    .alz-layout__mock-role { font-size: 10px; color: #6B7280; margin-top: .15rem; }
+    .alz-layout__mock-rows { display: grid; gap: .25rem; }
+    .alz-layout__mock-row { display: flex; align-items: center; gap: .4rem; padding: .35rem .5rem; background: #FAF7F0; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 9px; color: #0A1F44; }
+    .alz-layout__mock-row::before { content: '•'; color: var(--alz-cyan); font-size: 12px; line-height: 0; }
+
+    /* ── ROI ─────────────────────────────────────────────── */
+    .alz-roi { max-width: 780px; margin: 0 auto; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 2.5rem 2rem; }
+    .alz-roi__row { display: grid; gap: .5rem; padding: .8rem 0; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); font-size: 15px; }
+    @media (min-width: 600px) { .alz-roi__row { grid-template-columns: 1fr auto; align-items: baseline; gap: 1rem; } }
+    .alz-roi__row:last-of-type { border-bottom: none; padding-top: 1.1rem; font-size: 16px; font-weight: 600; color: var(--color-tinta); }
+    .alz-roi__row-label { color: var(--color-gris-500, #6B7280); }
+    .alz-roi__row-val { font-family: var(--font-mono); font-weight: 600; color: var(--alz-blue); font-size: 16px; }
+    .alz-roi__foot { margin: 1.25rem 0 0; font-size: 13px; color: var(--color-gris-500, #6B7280); line-height: 1.65; }
+    .alz-roi__scale { font-size: 13px; color: var(--color-gris-500, #6B7280); text-align: center; margin: 1.5rem 0 0; padding-top: 1.25rem; border-top: 1px dashed var(--color-gris-200, #E5E7EB); }
+    .alz-roi__scale strong { color: var(--color-tinta); font-weight: 600; font-family: var(--font-mono); font-size: 13px; }
+
+    /* ── Founding partner ───────────────────────────────── */
+    .alz-fp { background: linear-gradient(135deg, var(--alz-blue) 0%, var(--alz-blue-deep) 100%); color: #fff; border-radius: var(--pp-r-xl, 20px); padding: 2.5rem 2rem; max-width: 880px; margin: 0 auto; position: relative; overflow: hidden; }
+    .alz-fp::after { content: ''; position: absolute; width: 260px; height: 260px; background: radial-gradient(circle, var(--alz-amber), transparent 70%); top: -100px; right: -100px; opacity: .22; pointer-events: none; }
+    .alz-fp__wrap { position: relative; z-index: 1; }
+    .alz-fp__label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--alz-amber); margin-bottom: 1rem; }
+    .alz-fp__h { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 1.875rem); font-weight: 400; letter-spacing: -0.015em; margin: 0 0 1.25rem; color: #fff; }
+    .alz-fp__list { padding-left: 1.25rem; margin: 0; font-size: 15px; line-height: 1.85; color: rgba(255,255,255,.9); }
+    .alz-fp__list li { margin-bottom: .35rem; }
+    .alz-fp__list strong { color: var(--alz-amber); font-weight: 600; }
+
+    /* ── Contacto ────────────────────────────────────────── */
+    .alz-contact { text-align: center; }
+    .alz-contact__h { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 400; letter-spacing: -0.015em; margin: 0 0 1rem; color: var(--color-tinta); }
+    .alz-contact__b { font-size: 16px; color: var(--color-gris-500, #6B7280); line-height: 1.7; max-width: 50ch; margin: 0 auto 1.75rem; }
+    .alz-contact__cta { display: inline-flex; align-items: center; gap: .5rem; background: var(--alz-blue); color: #fff; font-weight: 600; padding: .9rem 1.75rem; border-radius: 999px; text-decoration: none; font-size: 15px; transition: transform .15s, box-shadow .15s; box-shadow: 0 6px 16px rgba(0,55,129,.30); }
+    .alz-contact__cta:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,55,129,.40); }
+    .alz-contact__alt { display: block; margin-top: 1rem; font-size: 13px; color: var(--color-gris-500, #6B7280); }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    .alz-foot { background: var(--color-crema, #FAF7F0); border-top: 1px solid var(--color-gris-200, #E5E7EB); padding: 2rem 1.5rem; text-align: center; font-size: 12px; color: var(--color-gris-500, #6B7280); }
+    .alz-foot a { color: var(--alz-blue); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────── Top nav ─────────── -->
+<header class="pp-nav">
+  <a class="pp-nav__logo" href="/es/">Perfila<em>Pro</em></a>
+  <div class="pp-nav__right">
+    <a href="/es/empresas">Producto general →</a>
+  </div>
+</header>
+
+<!-- ─────────── Hero ─────────── -->
+<section class="alz-hero">
+  <div class="alz-hero__wrap">
+    <!-- Wordmark CSS · stand-in del logo Allianz. Reemplazar por
+         <img src="/assets/allianz-logo.svg" alt="Allianz"> cuando
+         se tenga el archivo. -->
+    <div class="alz-wordmark" aria-label="Allianz">
+      <span class="alz-wordmark__mark" aria-hidden="true"></span>
+      <span class="alz-wordmark__txt">Allianz</span>
+    </div>
+
+    <div class="alz-hero__eyebrow">Una propuesta preparada para Allianz</div>
+    <h1 class="alz-hero__h1">
+      Tarjeta corporativa Allianz para cada agente.
+      <span class="accent">Provisioning instantáneo en el onboarding.</span>
+    </h1>
+    <p class="alz-hero__sub">
+      Hemos hablado con quien hace 4 a 10 onboardings al día en Allianz. La conclusión:
+      ya existe la taxonomía (ubicación, gestor, perfil workplace, cita enviada),
+      ya existe el proceso. Lo que falta es la pieza pública — el agente nuevo,
+      el día 1, con su tarjeta digital Allianz lista para mandar por WhatsApp.
+    </p>
+    <div class="alz-hero__cta">
+      <a href="/e/allianz-espana" class="alz-hero__btn alz-hero__btn--primary">Ver demo en vivo con la marca →</a>
+      <a href="#propuesta" class="alz-hero__btn alz-hero__btn--ghost">Cómo encaja en Allianz</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Pain: el dolor del onboarding ─────────── -->
+<section class="alz-section alz-section--narrow">
+  <div class="alz-eyebrow">El día 1 del agente</div>
+  <h2 class="alz-h2">Hoy: el agente entra, pero su presencia digital se queda fuera</h2>
+  <p class="alz-sub">
+    El proceso interno funciona. GIAM activo, accesos provisionados, gestor asignado,
+    cita enviada, OB status PLANNED. Pero el agente sale a la calle el lunes sin
+    una pieza digital corporativa que enseñar al primer cliente. Improvisará — LinkedIn
+    personal, foto de WhatsApp, tarjeta antigua de imprenta. Cada agente, una imagen distinta.
+  </p>
+
+  <div class="alz-pain">
+    <div class="alz-pain__row">
+      <span class="alz-pain__row-label">Volumen real</span>
+      <span class="alz-pain__row-body"><strong>4 a 10 onboardings al día</strong> en una sola ubicación (RDA). Replicado por las demás unidades, miles de agentes/año en España.</span>
+    </div>
+    <div class="alz-pain__row">
+      <span class="alz-pain__row-label">Lo que ya existe</span>
+      <span class="alz-pain__row-body">Taxonomía operativa funcionando: <strong>ubicación, gestor ONBO, perfil workplace, fechas, OB status, incident tracking</strong>. Excel ordenado con dropdowns y filtros. El proceso es maduro.</span>
+    </div>
+    <div class="alz-pain__row">
+      <span class="alz-pain__row-label">Lo que falta</span>
+      <span class="alz-pain__row-body"><strong>La pieza pública del agente.</strong> Una URL única, con marca Allianz, con foto, contacto y QR. Algo que enseñe al cliente final desde la primera visita.</span>
+    </div>
+    <div class="alz-pain__row">
+      <span class="alz-pain__row-label">Coste invisible</span>
+      <span class="alz-pain__row-body">La heterogeneidad cuesta marca, recuerdo y trust. <strong>Allianz se diluye en cada interacción</strong> donde el agente se presenta con material no corporativo.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Lo que cambia en Allianz ─────────── -->
+<section class="alz-section" id="propuesta">
+  <div class="alz-eyebrow">Tres ideas pensadas para vuestro flujo</div>
+  <h2 class="alz-h2">Lo que cambia en Allianz con este sistema</h2>
+  <p class="alz-sub">
+    No es un producto genérico empaquetado. Es la lectura de un proceso concreto
+    que vivís: onboarding diario industrializado, taxonomía operativa madura,
+    miles de agentes que cada día representan a Allianz en la calle.
+  </p>
+
+  <div class="alz-pillars">
+    <article class="alz-pillar">
+      <div class="alz-pillar__n">01 · provisioning</div>
+      <h3 class="alz-pillar__h">El agente sale a la calle el lunes con su tarjeta corporativa</h3>
+      <p class="alz-pillar__b">
+        Cuando el OB status pasa a PLANNED, la tarjeta digital se crea
+        automáticamente. <strong>perfilapro.es/c/[nombre-agente]</strong> con marca Allianz,
+        foto, WhatsApp click-to-chat, QR para imprenta. Sin trabajo manual, sin esperar.
+        Encaja con vuestro proceso, no lo cambia.
+      </p>
+    </article>
+    <article class="alz-pillar">
+      <div class="alz-pillar__n">02 · uniformidad</div>
+      <h3 class="alz-pillar__h">Mismo layout, misma marca, miles de agentes</h3>
+      <p class="alz-pillar__b">
+        Hemos diseñado un layout específico para escenarios de marca uniforme:
+        <strong>tarjeta compacta tipo business card</strong>, sin servicios sueltos, sin
+        descripción libre — solo nombre, cargo y contacto. La marca Allianz es la
+        protagonista visual. Cada agente, idéntico en estructura, único en datos.
+      </p>
+    </article>
+    <article class="alz-pillar">
+      <div class="alz-pillar__n">03 · adopción</div>
+      <h3 class="alz-pillar__h">El agente la usa porque le sirve</h3>
+      <p class="alz-pillar__b">
+        WhatsApp click-to-chat directo a su número, QR personal para imprimir en el
+        coche o la furgo, tarjeta PDF lista para imprenta. <strong>Una herramienta que
+        el agente pagaría 10 €/mes por su cuenta</strong> y que aquí la regala Allianz.
+        Adopción voluntaria, no impuesta.
+      </p>
+    </article>
+  </div>
+</section>
+
+<!-- ─────────── Diferenciador: layout compacto ─────────── -->
+<section class="alz-layout" id="layout">
+  <div class="alz-layout__copy">
+    <div class="alz-eyebrow" style="text-align:left">Layout pensado para vosotros</div>
+    <h2>El formato <span class="accent">tarjeta de visita digital</span></h2>
+    <p>
+      La diferencia entre un producto genérico de tarjetas digitales y uno pensado
+      para una organización con miles de agentes está en el layout.
+    </p>
+    <p>
+      El producto estándar pone al individuo en el centro: foto grande, lista de
+      servicios propios, descripción libre, tagline personal. <strong>Eso funciona
+      para un autónomo independiente, pero diluye la marca corporativa.</strong>
+    </p>
+    <p>
+      El layout <strong>compact</strong> da la vuelta a la jerarquía:
+    </p>
+    <ul>
+      <li>Marca Allianz arriba, prominente, con el tagline corporativo</li>
+      <li>Foto pequeña del agente, formato circle, no protagonista</li>
+      <li>Datos de contacto en filas compactas con iconos</li>
+      <li>Botones de acción (WhatsApp, llamar, vCard, compartir)</li>
+      <li>Sin servicios sueltos, sin descripción libre — coherencia visual entre miles de agentes</li>
+    </ul>
+  </div>
+  <div class="alz-layout__visual">
+    <div class="alz-layout__mock" aria-label="Preview tarjeta Allianz">
+      <div class="alz-layout__mock-strip">
+        <div class="alz-layout__mock-brand">Allianz</div>
+        <div class="alz-layout__mock-tag">Tu compañía de seguros y servicios financieros</div>
+      </div>
+      <div class="alz-layout__mock-body">
+        <div class="alz-layout__mock-head">
+          <div class="alz-layout__mock-photo"></div>
+          <div class="alz-layout__mock-id">
+            <div class="alz-layout__mock-name">Nombre del agente</div>
+            <div class="alz-layout__mock-role">Agente · [Ubicación]</div>
+          </div>
+        </div>
+        <div class="alz-layout__mock-rows">
+          <div class="alz-layout__mock-row">Ubicación RDA</div>
+          <div class="alz-layout__mock-row">+34 6•• •• •• ••</div>
+          <div class="alz-layout__mock-row">agente@allianz.es</div>
+        </div>
+      </div>
+    </div>
+    <a href="/e/allianz-espana">Abrir demo en vivo →</a>
+    <span class="alz-layout__caption">vista previa · render real en producción</span>
+  </div>
+</section>
+
+<!-- ─────────── Demo en vivo ─────────── -->
+<section class="alz-section alz-section--narrow">
+  <div class="alz-demo">
+    <h2 class="alz-demo__h">Cómo se vería con la marca Allianz</h2>
+    <p class="alz-demo__b">
+      Hemos montado una versión de demostración con el azul corporativo Allianz,
+      8 perfiles de agentes con datos de muestra y el directorio funcionando. No
+      es una captura, es la página real en producción.
+    </p>
+    <div class="alz-demo__urls">
+      <span class="alz-demo__url">/e/allianz-espana</span>
+      <span class="alz-demo__url">/c/[agente]</span>
+    </div>
+    <a href="/e/allianz-espana" class="alz-demo__cta">Abrir demo →</a>
+    <span class="alz-demo__note">Sin registro · cierra la pestaña cuando quieras.</span>
+  </div>
+</section>
+
+<!-- ─────────── ROI ─────────── -->
+<section class="alz-section alz-section--narrow">
+  <div class="alz-eyebrow">Cuánto cuesta y cuánto vale</div>
+  <h2 class="alz-h2">Tarifa por contrato, no por seat</h2>
+  <p class="alz-sub">
+    A escala Enterprise el modelo seat-by-seat no escala bien. Cuotas por
+    contrato anual, dimensionado al volumen real de agentes activos en la
+    plataforma, con flexibilidad en el alta y baja.
+  </p>
+
+  <div class="alz-roi">
+    <div class="alz-roi__row">
+      <span class="alz-roi__row-label">Agentes activos en el sistema (estimado de partida · una unidad)</span>
+      <span class="alz-roi__row-val">1.000</span>
+    </div>
+    <div class="alz-roi__row">
+      <span class="alz-roi__row-label">Tarifa pública anual estimada (Enterprise · ~4 €/agente/mes)</span>
+      <span class="alz-roi__row-val">48.000 €/año</span>
+    </div>
+    <div class="alz-roi__row">
+      <span class="alz-roi__row-label">Founding Enterprise Partner (50 % permanente)</span>
+      <span class="alz-roi__row-val">24.000 €/año</span>
+    </div>
+    <div class="alz-roi__row">
+      <span class="alz-roi__row-label">Coste por agente al año (founding partner)</span>
+      <span class="alz-roi__row-val">24 €/año</span>
+    </div>
+    <div class="alz-roi__row">
+      <span class="alz-roi__row-label">Comparativa: tarjeta física corporativa, lote único de 1.000 ud. cada 2 años</span>
+      <span class="alz-roi__row-val">~30.000 € amortizado</span>
+    </div>
+    <p class="alz-roi__foot">
+      A escala de 1.000 agentes el sistema cuesta menos que las tarjetas físicas
+      corporativas que ya se imprimen — y resuelve lo que la tarjeta física no
+      puede: actualización inmediata, métricas de uso, QR escaneable, marca
+      uniforme cuando un agente cambia de unidad o región.
+    </p>
+    <p class="alz-roi__scale">
+      <strong>Tres referencias</strong> · 500 agentes: ~12.000 €/año · 1.000: ~24.000 €/año · 3.000: ~72.000 €/año
+      <em style="display:block;margin-top:.4rem;font-style:normal;font-size:12px;opacity:.7">(precios founding partner, 50% sobre tarifa pública estimada, mantenidos en el tiempo · cifras orientativas, dimensionado real por contrato)</em>
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── Founding partner ─────────── -->
+<section class="alz-section alz-section--narrow">
+  <div class="alz-fp">
+    <div class="alz-fp__wrap">
+      <div class="alz-fp__label">Founding Enterprise Partner</div>
+      <h2 class="alz-fp__h">Lo que Allianz recibe como primer cliente Enterprise</h2>
+      <ul class="alz-fp__list">
+        <li><strong>50 % de descuento permanente</strong> sobre la tarifa pública mientras dure el contrato.</li>
+        <li><strong>Layout compacto desarrollado a vuestra medida</strong> — ya en producción, listo para usar el día 1 (lo veis arriba).</li>
+        <li><strong>Acceso directo</strong> al fundador para roadmap, soporte prioritario y desarrollo de funcionalidades específicas del sector asegurador.</li>
+        <li><strong>Integración con el flujo de onboarding</strong>: alta automática cuando el OB status pasa a PLANNED, baja automática cuando un agente deja la compañía. Desarrollo conjunto en los primeros 6 meses.</li>
+        <li><strong>Caso de estudio acordado</strong> a los 12 meses, con métricas medibles. Publicación previa aprobación de Allianz.</li>
+        <li><strong>Cupo limitado</strong>: 3 founding Enterprise partners en total, cerrado una vez completado.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Contacto ─────────── -->
+<section class="alz-section alz-section--narrow">
+  <div class="alz-contact">
+    <div class="alz-eyebrow">Hablamos</div>
+    <h2 class="alz-contact__h">Cuando Allianz quiera, montamos una llamada</h2>
+    <p class="alz-contact__b">
+      30 minutos para enseñar el panel en vivo, responder dudas operativas y
+      dimensionar la propuesta al número real de agentes y al flujo de onboarding
+      actual. Sin formulario.
+    </p>
+    <a href="mailto:hola@perfilapro.es?subject=Allianz%20%C2%B7%20PerfilaPro%20Enterprise&body=Hola%2C%0A%0AHemos%20visto%20la%20propuesta%20para%20Allianz.%0A%0A" class="alz-contact__cta">Escribir un email →</a>
+    <span class="alz-contact__alt">o un WhatsApp directo a través del contacto interno.</span>
+  </div>
+</section>
+
+<!-- ─────────── Footer ─────────── -->
+<footer class="alz-foot">
+  <p>PerfilaPro · una propuesta preparada para Allianz · <a href="/es/empresas">Ver la versión general del producto</a></p>
+</footer>
+
+</body>
+</html>

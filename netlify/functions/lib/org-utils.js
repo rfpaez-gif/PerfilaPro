@@ -32,6 +32,11 @@ function isValidDescription(description) {
   return typeof description === 'string' && description.length <= 500;
 }
 
+const CARD_LAYOUTS = ['standard', 'compact'];
+function isValidCardLayout(layout) {
+  return typeof layout === 'string' && CARD_LAYOUTS.includes(layout);
+}
+
 // http(s) parseable y dentro de 200 chars. javascript:, data:, file: → false.
 function isSafeWebsite(url) {
   if (typeof url !== 'string' || !url || url.length > 200) return false;
@@ -43,7 +48,7 @@ function isSafeWebsite(url) {
 // Campos persistidos que consume el render público y la tarjeta de visita.
 // Cualquier campo que use card.js / org.js / printable-card-utils.js debe
 // listarse aquí o el SELECT lo devuelve undefined silenciosamente.
-const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, deleted_at';
+const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, card_layout, deleted_at';
 
 async function getOrgBySlug(db, slug) {
   if (!isValidOrgSlug(slug)) return null;
@@ -83,11 +88,13 @@ async function listCardsByOrg(db, orgId) {
 
 module.exports = {
   ALLOWED_LOGO_HOSTS,
+  CARD_LAYOUTS,
   isValidHex,
   isSafeLogoUrl,
   isValidOrgSlug,
   isValidTagline,
   isValidDescription,
+  isValidCardLayout,
   isSafeWebsite,
   getOrgBySlug,
   getOrgById,

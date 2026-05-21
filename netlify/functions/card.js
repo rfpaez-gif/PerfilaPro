@@ -240,6 +240,12 @@ exports.handler = async (event) => {
   const org = data.organization_id ? await getOrgById(supabase, data.organization_id) : null;
   const orgAccent = org && isValidHex(org.color_primary) ? org.color_primary : null;
   const orgLogo   = org && isSafeLogoUrl(org.logo_url) ? org.logo_url : null;
+  // Enterprise compact layout: la org marca la pieza, el individuo es
+  // intercambiable. Sin servicios sueltos, sin descripción libre, foto
+  // pequeña, contacto en filas. Solo aplica si la org tiene
+  // `card_layout='compact'` (migración 031). Default 'standard' → cero
+  // cambios en cards existentes.
+  const isCompact = !!(org && org.card_layout === 'compact');
 
   const zonaParts = (data.zona || '').split(' · ');
   const zonaLocal = esc(zonaParts[0] || '');
@@ -392,6 +398,33 @@ exports.handler = async (event) => {
     .pp-demo-strip__lede{font-weight:500}
     .pp-demo-strip__cta{font-weight:800;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
     @media (max-width:380px){.pp-demo-strip{font-size:1.0625rem;padding:.875rem .75rem;gap:.25rem .5rem}body.pp-has-demo-strip{padding-top:calc(1.5rem + 88px)}}
+    /* ── Enterprise compact layout ─────────────────────────
+       Cuando la org tiene card_layout='compact' (migración 031),
+       la card pública del miembro renderiza en formato "tarjeta de
+       visita digital": foto pequeña, datos de contacto compactos,
+       sin servicios ni descripción libre. La marca de la org es la
+       protagonista; el individuo es la pieza intercambiable.
+       ─────────────────────────────────────────────────────── */
+    .pp-card--compact .pp-card__org-hero{padding:1.25rem 1rem 1.125rem}
+    .pp-card--compact .pp-card__org-hero__logo{margin-bottom:.625rem}
+    .pp-card--compact .pp-card__org-hero__logo img{max-height:48px;max-width:180px}
+    .pp-card--compact .pp-card__org-hero__name{font-size:1.25rem;font-weight:600}
+    .pp-card--compact .pp-card__org-hero__tagline{font-size:.875rem;opacity:.95;margin-top:.5rem;font-style:italic}
+    .pp-compact-head{display:flex;align-items:center;gap:1rem;padding:1rem 1rem .75rem}
+    .pp-compact-avatar{width:88px;height:88px;flex-shrink:0;border-radius:50%;overflow:hidden;background:var(--color-verde-light);display:flex;align-items:center;justify-content:center;border:3px solid #FFFFFF;box-shadow:0 4px 12px rgba(10,31,68,.10)}
+    .pp-compact-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .pp-compact-avatar-init{font-family:var(--font-serif);font-size:2.25rem;color:var(--color-verde-match);line-height:1}
+    .pp-compact-id{min-width:0;flex:1}
+    .pp-compact-id__name{font-family:var(--font-serif);font-size:1.375rem;line-height:1.15;letter-spacing:-0.015em;color:var(--color-tinta);font-weight:500}
+    .pp-compact-id__role{font-size:.8125rem;color:var(--color-gris-500);margin-top:.25rem;line-height:1.4}
+    .pp-contact-grid{display:grid;gap:.4rem;padding:0 1rem .5rem}
+    .pp-contact-row{display:flex;align-items:center;gap:.625rem;padding:.625rem .75rem;background:var(--color-crema);border:1px solid var(--color-gris-200);border-radius:.625rem;font-size:.8125rem;color:var(--color-tinta);text-decoration:none;line-height:1.3;transition:background .15s}
+    .pp-contact-row:hover{background:#F3EEDF}
+    .pp-contact-row__icon{flex-shrink:0;width:18px;height:18px;color:var(--color-gris-500);display:flex;align-items:center;justify-content:center}
+    .pp-contact-row__text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pp-contact-row__text--addr{white-space:normal;word-break:break-word}
+    .pp-card--compact .pp-card__body{padding:.875rem 1rem 1rem}
+    .pp-card--compact .pp-card__pw{padding-top:.625rem}
   </style>
   <script src="/js/posthog-init.js" defer></script>
   <script src="/js/privacy-banner.js" defer></script>
@@ -404,14 +437,22 @@ exports.handler = async (event) => {
   ${fromAdminOrgs ? `<div style="background:#0A1F44;color:#fff;padding:10px 16px;font:600 13px/1.3 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;text-align:center;letter-spacing:.01em">
     <a href="/admin-orgs.html" onclick="if(window.opener && !window.opener.closed){window.close();return false}" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px">${T.backToStudio}</a>
   </div>` : ''}
-  <div class="pp-card">
+  <div class="pp-card${isCompact ? ' pp-card--compact' : ''}">
     ${org ? `<a class="pp-card__org-hero" href="/e/${esc(org.slug)}" style="background:${orgAccent || 'var(--color-tinta)'}">
       ${orgLogo
         ? `<div class="pp-card__org-hero__logo"><img src="${esc(orgLogo)}" alt="${esc(org.name)}" loading="eager" decoding="async"></div>`
-        : `<h2 class="pp-card__org-hero__name">${esc(org.name)}</h2>
-      ${org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : ''}`}
+        : `<h2 class="pp-card__org-hero__name">${esc(org.name)}</h2>`}
+      ${isCompact && org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : (!orgLogo && org.tagline ? `<p class="pp-card__org-hero__tagline">${esc(org.tagline)}</p>` : '')}
     </a>` : ''}
-    <div class="pp-card__header">
+    ${isCompact ? `<div class="pp-compact-head">
+      <div class="pp-compact-avatar">
+        ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="pp-compact-avatar-init">${avatarInitial}</span>`}
+      </div>
+      <div class="pp-compact-id">
+        <h1 class="pp-compact-id__name">${esc(data.nombre)}</h1>
+        ${data.tagline ? `<p class="pp-compact-id__role">${esc(data.tagline)}</p>` : ''}
+      </div>
+    </div>` : `<div class="pp-card__header">
       <div class="pp-card__avatar${data.foto_url || isExampleCard ? '' : ' pp-card__avatar--empty'}">
         ${data.foto_url ? `<img src="${esc(data.foto_url)}" alt="${esc(data.nombre)}" loading="lazy">` : `<span class="pp-card__avatar-init">${avatarInitial}</span>`}
       </div>
@@ -419,14 +460,20 @@ exports.handler = async (event) => {
         <h1 class="pp-card__name">${esc(data.nombre)}</h1>
         ${data.tagline ? `<p class="pp-card__role">${esc(data.tagline)}</p>` : ''}
       </div>
-    </div>
+    </div>`}
+    ${isCompact ? `<div class="pp-contact-grid">
+      ${data.zona ? `<div class="pp-contact-row"><span class="pp-contact-row__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="pp-contact-row__text">${esc(data.zona)}</span></div>` : ''}
+      ${data.telefono ? `<a class="pp-contact-row" href="tel:${normalizePhone(data.telefono)}"><span class="pp-contact-row__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.05 12.05 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.84a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45 12.05 12.05 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span><span class="pp-contact-row__text">${esc(normalizePhone(data.telefono))}</span></a>` : ''}
+      ${data.email ? `<a class="pp-contact-row" href="mailto:${esc(data.email)}"><span class="pp-contact-row__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span class="pp-contact-row__text">${esc(data.email)}</span></a>` : ''}
+      ${data.local_publico && data.direccion ? `<a class="pp-contact-row" href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener"><span class="pp-contact-row__icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="pp-contact-row__text pp-contact-row__text--addr">${esc(data.direccion)}</span></a>` : ''}
+    </div>` : ''}
     <div class="pp-card__body">
-      ${(data.zona || (isPro && visitCount !== null)) ? `<div class="pp-chips">
+      ${!isCompact && (data.zona || (isPro && visitCount !== null)) ? `<div class="pp-chips">
         ${data.zona ? `<span class="pp-chip pp-chip--loc"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${zonaLocal}${zonaRange ? ` &middot; ${zonaRange}` : ''}</span>` : ''}
         ${isPro && visitCount !== null ? `<span class="pp-chip pp-chip--stat"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${T.visits30(visitCount)}</span>` : ''}
       </div>` : ''}
-      ${data.descripcion ? `<p class="pp-card__desc">${esc(data.descripcion)}</p>` : ''}
-      ${serviciosHTML ? `<div class="pp-svc-list">${serviciosHTML}</div>` : ''}
+      ${!isCompact && data.descripcion ? `<p class="pp-card__desc">${esc(data.descripcion)}</p>` : ''}
+      ${!isCompact && serviciosHTML ? `<div class="pp-svc-list">${serviciosHTML}</div>` : ''}
       ${(waUrl || data.telefono) ? `<div class="pp-cta-group${hasBothCtas ? ' pp-cta-group--dual' : ''}">
         ${waUrl ? `<a href="${waUrl}"${isExampleCard ? '' : ' target="_blank" rel="noopener"'} class="pp-cta pp-cta--wa">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.858L0 24l6.335-1.652A11.954 11.954 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
@@ -458,9 +505,9 @@ exports.handler = async (event) => {
         </div>
         <div class="pp-qr__meta">
           <p>${T.qrScan}</p>
-          ${data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
-          ${data.email ? `<p>${esc(data.email)}</p>` : ''}
-          ${data.local_publico && data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
+          ${!isCompact && data.whatsapp ? `<p class="pp-qr__strong">${esc(normalizePhone(data.whatsapp))}</p>` : ''}
+          ${!isCompact && data.email ? `<p>${esc(data.email)}</p>` : ''}
+          ${!isCompact && data.local_publico && data.direccion ? `<a href="https://maps.google.com/?q=${encodeURIComponent(data.direccion)}" target="_blank" rel="noopener">${esc(data.direccion)} &rarr;</a>` : ''}
           ${isPro ? `<div>
             <a href="/api/qr/${esc(data.slug)}" download="perfilapro-${esc(data.slug)}.svg" class="pp-qr__dl" title="${T.qrSvgTitle}">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

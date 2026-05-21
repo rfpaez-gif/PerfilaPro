@@ -10,6 +10,7 @@ const {
   isValidOrgSlug,
   isValidTagline,
   isValidDescription,
+  isValidCardLayout,
   isSafeWebsite,
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
@@ -191,7 +192,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, created_at')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, card_layout, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -200,7 +201,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone } = body;
+      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, card_layout } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
@@ -226,6 +227,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       if (logo_url && !isSafeLogoUrl(logo_url)) {
         return jsonResponse(400, { error: 'logo_url debe estar en Supabase storage (https)' });
       }
+      if (card_layout != null && !isValidCardLayout(card_layout)) {
+        return jsonResponse(400, { error: 'card_layout debe ser "standard" o "compact"' });
+      }
 
       const { data, error } = await db
         .from('organizations')
@@ -241,8 +245,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           email: email ? String(email).trim() : null,
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
+          ...(card_layout ? { card_layout } : {}),
         })
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, card_layout')
         .single();
 
       if (error) {
@@ -255,7 +260,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone } = body;
+      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, card_layout } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
@@ -278,6 +283,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       if (logo_url && !isSafeLogoUrl(logo_url)) {
         return jsonResponse(400, { error: 'logo_url debe estar en Supabase storage (https)' });
       }
+      if (card_layout != null && !isValidCardLayout(card_layout)) {
+        return jsonResponse(400, { error: 'card_layout debe ser "standard" o "compact"' });
+      }
 
       const updates = {};
       if (name !== undefined) {
@@ -297,6 +305,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       // a nivel DB (ver migración 023): los validamos aquí en backend.
       if (address !== undefined) updates.address = address ? stripTagsInline(address).substring(0, 200) : null;
       if (phone   !== undefined) updates.phone   = phone   ? stripTagsInline(phone).substring(0, 40)    : null;
+      if (card_layout !== undefined) updates.card_layout = card_layout || 'standard';
 
       if (!Object.keys(updates).length) {
         return jsonResponse(400, { error: 'nada para actualizar' });

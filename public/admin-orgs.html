@@ -301,6 +301,15 @@
           </div>
 
           <div class="pp-form__row">
+            <label class="pp-form__label" for="cardLayoutSelect">Layout de tarjeta <small>aplica al render de /c/:slug de cada miembro</small></label>
+            <select class="pp-input" id="cardLayoutSelect" style="font-family:inherit">
+              <option value="standard">Standard · foto grande + servicios + descripción libre (autónomos)</option>
+              <option value="compact">Compact · tarjeta de visita uniforme, sin servicios sueltos (Enterprise · Allianz)</option>
+            </select>
+            <p class="pp-form__hint">Compact da prioridad a la marca de la org y oculta los 3 servicios y la descripción libre del individuo. Ideal para equipos con marca uniforme.</p>
+          </div>
+
+          <div class="pp-form__row">
             <label class="pp-form__label">Logo <small>opcional · PNG/JPG/SVG · máx 2 MB</small></label>
             <label class="pp-logo-drop" id="logoDrop">
               <div class="pp-logo-drop__preview" id="logoPreview">
@@ -562,6 +571,7 @@ function resetForm() {
   $('addressInput').value = '';
   $('colorInput').value = '#003781';
   $('colorHexInput').value = '#003781';
+  $('cardLayoutSelect').value = 'standard';
   setLogoPreview(null);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
@@ -588,6 +598,7 @@ function loadForm(org) {
   $('addressInput').value = org.address || '';
   $('colorInput').value = org.color_primary || '#003781';
   $('colorHexInput').value = (org.color_primary || '#003781').toUpperCase();
+  $('cardLayoutSelect').value = org.card_layout || 'standard';
   setLogoPreview(org.logo_url);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
@@ -702,6 +713,7 @@ async function saveOrg() {
   const phone       = $('phoneInput').value.trim();
   const address     = $('addressInput').value.trim();
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
+  const card_layout = $('cardLayoutSelect').value || 'standard';
 
   if (!name) return toast('Falta el nombre', 'err');
   if (!slug) return toast('Falta el slug', 'err');
@@ -715,6 +727,7 @@ async function saveOrg() {
     color_primary: color,
     phone:   phone   || null,
     address: address || null,
+    card_layout,
   };
 
   $('saveBtn').disabled = true;
