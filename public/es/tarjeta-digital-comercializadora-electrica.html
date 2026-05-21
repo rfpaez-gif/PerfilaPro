@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <title>Tarjeta digital para comercializadoras eléctricas · PerfilaPro</title>
+  <meta name="description" content="Una tarjeta digital con tu marca para cada comercial autónomo. Cuando alguien cambia de comercializadora, sus contactos se quedan contigo. Desde 4 €/comercial/mes.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://perfilapro.es/es/tarjeta-digital-comercializadora-electrica">
+  <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/tarjeta-digital-comercializadora-electrica">
+  <link rel="alternate" hreflang="x-default" href="https://perfilapro.es/es/tarjeta-digital-comercializadora-electrica">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PerfilaPro">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:title" content="Tarjeta digital para comercializadoras eléctricas · PerfilaPro">
+  <meta property="og:description" content="Una tarjeta digital con tu marca para cada comercial autónomo. Cuando alguien cambia de comercializadora, sus contactos se quedan contigo.">
+  <meta property="og:url" content="https://perfilapro.es/es/tarjeta-digital-comercializadora-electrica">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/brand.css">
+  <style>
+    body { background: var(--color-crema, #FAF7F0); margin: 0; font-family: var(--font-sans); color: var(--color-tinta, #0A1F44); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+
+    /* ── Top nav ──────────────────────────────────────────── */
+    .pp-nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); position: sticky; top: 0; z-index: 10; }
+    .pp-nav__logo { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; }
+    .pp-nav__logo em { color: var(--color-verde-match, #00C277); font-style: italic; }
+    .pp-nav__right { display: flex; align-items: center; gap: 1.25rem; font-size: 13px; }
+    .pp-nav__right a { text-decoration: none; color: var(--color-gris-500, #6B7280); font-weight: 600; }
+    .pp-nav__right a:hover { color: var(--color-tinta); }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .pp-hero { max-width: 880px; margin: 0 auto; padding: 4.5rem 1.5rem 3.5rem; text-align: center; }
+    .pp-hero__eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); margin-bottom: 1rem; }
+    .pp-hero__h1 { font-family: var(--font-serif); font-size: clamp(2rem, 5.5vw, 3.5rem); line-height: 1.1; font-weight: 400; letter-spacing: -0.025em; margin: 0 0 1.25rem; color: var(--color-tinta); }
+    .pp-hero__sub { font-size: clamp(1rem, 2vw, 1.125rem); color: var(--color-gris-500, #6B7280); line-height: 1.6; max-width: 60ch; margin: 0 auto 2rem; }
+    .pp-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+    .pp-hero__cta .pp-btn { min-width: 200px; }
+
+    /* ── Generic section headers ──────────────────────────── */
+    .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
+    .pp-section-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); text-align: center; margin-bottom: 1rem; }
+    .pp-section-sub { text-align: center; font-size: 15px; color: var(--color-gris-500, #6B7280); max-width: 56ch; margin: 0 auto 3rem; line-height: 1.6; }
+
+    /* ── Pain / solución (two-col cards) ───────────────────── */
+    .pp-pair { max-width: 1000px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-pair__grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+    @media (min-width: 800px) { .pp-pair__grid { grid-template-columns: repeat(2, 1fr); align-items: stretch; } }
+    .pp-pair__card { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 2rem 1.75rem; }
+    .pp-pair__card--pain { border-left: 4px solid var(--color-coral, #E0633F); }
+    .pp-pair__card--gain { border-left: 4px solid var(--color-verde-dark, #00A865); }
+    .pp-pair__label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .75rem; }
+    .pp-pair__card--pain .pp-pair__label { color: var(--color-coral, #E0633F); }
+    .pp-pair__card--gain .pp-pair__label { color: var(--color-verde-dark, #00A865); }
+    .pp-pair__h { font-family: var(--font-serif); font-size: 1.375rem; line-height: 1.25; font-weight: 400; letter-spacing: -0.015em; margin: 0 0 1rem; color: var(--color-tinta); }
+    .pp-pair__list { padding-left: 1.1rem; margin: 0; font-size: 15px; line-height: 1.7; color: var(--color-gris-500, #6B7280); }
+    .pp-pair__list li { margin-bottom: .65rem; }
+    .pp-pair__list strong { color: var(--color-tinta); font-weight: 600; }
+
+    /* ── Double value (comercial vs company) ──────────────── */
+    .pp-double { background: #fff; border-top: 1px solid var(--color-gris-200, #E5E7EB); border-bottom: 1px solid var(--color-gris-200, #E5E7EB); padding: 4rem 1.5rem; margin-bottom: 4rem; }
+    .pp-double__wrap { max-width: 1000px; margin: 0 auto; }
+    .pp-double__grid { display: grid; gap: 1.75rem; grid-template-columns: 1fr; margin-top: 2.5rem; }
+    @media (min-width: 800px) { .pp-double__grid { grid-template-columns: repeat(2, 1fr); } }
+    .pp-double__card { padding: 2rem; border-radius: var(--pp-r-xl, 20px); }
+    .pp-double__card--a { background: var(--color-tinta, #0A1F44); color: #fff; }
+    .pp-double__card--b { background: var(--color-verde-light, #E6F9F0); color: var(--color-tinta, #0A1F44); }
+    .pp-double__who { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: .75rem; opacity: .75; }
+    .pp-double__h { font-family: var(--font-serif); font-size: 1.5rem; line-height: 1.25; font-weight: 400; letter-spacing: -0.015em; margin: 0 0 1rem; color: inherit; }
+    .pp-double__b { font-size: 15px; line-height: 1.7; opacity: .9; margin: 0; }
+    .pp-double__b strong { font-weight: 600; opacity: 1; }
+
+    /* ── Steps ────────────────────────────────────────────── */
+    .pp-steps { max-width: 1000px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-steps__grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; margin-top: 2rem; }
+    @media (min-width: 800px) { .pp-steps__grid { grid-template-columns: repeat(3, 1fr); } }
+    .pp-step { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.75rem 1.5rem; }
+    .pp-step__n { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); font-family: var(--font-mono); font-weight: 700; font-size: 14px; margin-bottom: 1rem; }
+    .pp-step__title { font-family: var(--font-serif); font-size: 1.125rem; font-weight: 400; letter-spacing: -0.01em; margin: 0 0 .5rem; }
+    .pp-step__body { font-size: 14px; color: var(--color-gris-500, #6B7280); line-height: 1.65; }
+
+    /* ── ROI calc block ───────────────────────────────────── */
+    .pp-roi { max-width: 760px; margin: 0 auto 4rem; padding: 2.5rem 2rem; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); }
+    .pp-roi__h { font-family: var(--font-serif); font-size: clamp(1.375rem, 2.8vw, 1.75rem); font-weight: 400; letter-spacing: -0.015em; margin: 0 0 1.25rem; color: var(--color-tinta); }
+    .pp-roi__row { display: grid; gap: .5rem; padding: .75rem 0; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); font-size: 15px; }
+    @media (min-width: 600px) { .pp-roi__row { grid-template-columns: 1fr auto; align-items: baseline; gap: 1rem; } }
+    .pp-roi__row:last-of-type { border-bottom: none; padding-top: 1rem; font-size: 17px; font-weight: 600; color: var(--color-tinta); }
+    .pp-roi__row-label { color: var(--color-gris-500, #6B7280); }
+    .pp-roi__row-val { font-family: var(--font-mono); font-weight: 600; color: var(--color-tinta); }
+    .pp-roi__foot { margin: 1.25rem 0 0; font-size: 13px; color: var(--color-gris-500, #6B7280); line-height: 1.6; }
+
+    /* ── Pricing (mismo bloque que /es/empresas) ──────────── */
+    .pp-pricing { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-pricing__toggle { display: inline-flex; background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-pill, 999px); padding: 4px; margin: 1rem auto 2.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+    .pp-pricing__toggle-wrap { text-align: center; }
+    .pp-pricing__toggle-btn { background: transparent; border: none; padding: .5rem 1.125rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font: 600 13px var(--font-sans); color: var(--color-gris-500, #6B7280); transition: all .15s; }
+    .pp-pricing__toggle-btn.is-active { background: var(--color-tinta, #0A1F44); color: #fff; }
+    .pp-pricing__save { margin-left: .35rem; font-size: 11px; padding: 2px 8px; background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border-radius: var(--pp-r-pill, 999px); font-weight: 700; letter-spacing: .02em; }
+    .pp-pricing__toggle-btn.is-active .pp-pricing__save { background: rgba(255,255,255,.18); color: #fff; }
+
+    .pp-pricing__grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
+    @media (min-width: 880px) { .pp-pricing__grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; } }
+    .pp-tier { background: #fff; border: 1.5px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-xl, 20px); padding: 1.75rem 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: relative; }
+    .pp-tier--featured { border-color: var(--color-verde-dark, #00A865); box-shadow: 0 12px 32px rgba(0,168,101,.10); }
+    .pp-tier__badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--color-verde-dark, #00A865); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: .25rem .75rem; border-radius: var(--pp-r-pill, 999px); white-space: nowrap; }
+    .pp-tier__name { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; letter-spacing: -0.01em; color: var(--color-tinta, #0A1F44); margin: 0; }
+    .pp-tier__audience { font-size: 13px; color: var(--color-gris-500, #6B7280); margin: -.5rem 0 0; line-height: 1.5; }
+    .pp-tier__price { display: flex; align-items: baseline; gap: .35rem; margin: .5rem 0 0; }
+    .pp-tier__price-num { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1; color: var(--color-tinta, #0A1F44); }
+    .pp-tier__price-unit { font-size: 14px; color: var(--color-gris-500, #6B7280); font-weight: 500; }
+    .pp-tier__price-note { font-size: 12px; color: var(--color-gris-500, #6B7280); margin: -.25rem 0 0; line-height: 1.5; min-height: 1.5em; }
+    .pp-tier__divider { border: none; border-top: 1px solid var(--color-gris-200, #E5E7EB); margin: 0; }
+    .pp-tier__includes { display: flex; flex-direction: column; gap: .5rem; }
+    .pp-tier__includes-h { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); margin: 0 0 .25rem; }
+    .pp-tier__feat { display: flex; align-items: flex-start; gap: .5rem; font-size: 14px; line-height: 1.5; color: var(--color-tinta, #0A1F44); }
+    .pp-tier__feat-icon { color: var(--color-verde-dark, #00A865); flex-shrink: 0; line-height: 1.45; font-weight: 700; }
+    .pp-tier__cta { margin-top: auto; }
+
+    /* ── Guarantees + FAQ ─────────────────────────────────── */
+    .pp-guarantees { max-width: 880px; margin: 0 auto 3rem; padding: 2rem 1.5rem; background: var(--color-verde-light, #E6F9F0); border-radius: var(--pp-r-xl, 20px); display: grid; gap: 1rem; grid-template-columns: 1fr; }
+    @media (min-width: 700px) { .pp-guarantees { grid-template-columns: repeat(2, 1fr); } }
+    .pp-guarantee { display: flex; align-items: flex-start; gap: .65rem; font-size: 14px; color: var(--color-tinta, #0A1F44); line-height: 1.55; }
+    .pp-guarantee__icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+    .pp-guarantee strong { display: block; margin-bottom: .15rem; }
+
+    .pp-faq { max-width: 760px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-faq__item { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-md, 12px); padding: 1rem 1.25rem; margin-bottom: .65rem; }
+    .pp-faq__item[open] { border-color: var(--color-verde-dark, #00A865); }
+    .pp-faq__item summary { font-family: var(--font-sans); font-weight: 600; font-size: 15px; cursor: pointer; color: var(--color-tinta, #0A1F44); list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .pp-faq__item summary::-webkit-details-marker { display: none; }
+    .pp-faq__item summary::after { content: '+'; font-family: var(--font-serif); font-size: 22px; font-weight: 400; color: var(--color-verde-dark, #00A865); transition: transform .15s; }
+    .pp-faq__item[open] summary::after { content: '−'; }
+    .pp-faq__body { margin-top: .75rem; font-size: 14px; line-height: 1.65; color: var(--color-gris-500, #6B7280); }
+    .pp-faq__body strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+
+    /* ── Trust signals ────────────────────────────────────── */
+    .pp-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2.5rem; padding: 2.5rem 1.5rem; max-width: 1000px; margin: 0 auto; font-size: 13px; color: var(--color-gris-500, #6B7280); }
+    .pp-trust span { display: inline-flex; align-items: center; gap: .4rem; }
+
+    /* ── Form ─────────────────────────────────────────────── */
+    .pp-form-section { background: #fff; border-top: 1px solid var(--color-gris-200, #E5E7EB); padding: 4rem 1.5rem; }
+    .pp-form-wrap { max-width: 560px; margin: 0 auto; }
+    .pp-form-grid { display: grid; gap: 1rem; margin-top: 2rem; }
+    .pp-form-row { display: grid; gap: .35rem; }
+    .pp-form-row--inline { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 540px) { .pp-form-row--inline { grid-template-columns: 1fr; } }
+    .pp-form-label { font-size: 12px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-form-required { color: var(--color-coral, #E0633F); }
+    .pp-form-honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .pp-form-status { padding: .75rem 1rem; border-radius: 8px; font-size: 14px; margin-top: 1rem; display: none; }
+    .pp-form-status--ok { background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border: 1px solid #BFE9D0; }
+    .pp-form-status--err { background: #FDECEA; color: #B0392A; border: 1px solid #F4C2BC; }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    .pp-foot { padding: 2rem 1.5rem; text-align: center; font-size: 12px; color: var(--color-gris-500, #6B7280); background: var(--color-crema, #FAF7F0); border-top: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-foot a { color: var(--color-verde-dark, #00A865); text-decoration: none; font-weight: 600; }
+    .pp-foot__b2c { background: #fff; padding: 1.5rem 1rem; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); max-width: 540px; margin: 0 auto 1.5rem; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────── Top nav ─────────── -->
+<header class="pp-nav">
+  <a class="pp-nav__logo" href="/es/">Perfila<em>Pro</em></a>
+  <div class="pp-nav__right">
+    <a href="/es/empresas">Otras organizaciones →</a>
+  </div>
+</header>
+
+<!-- ─────────── Hero ─────────── -->
+<section class="pp-hero">
+  <div class="pp-hero__eyebrow">Comercializadoras eléctricas · redes comerciales a comisión</div>
+  <h1 class="pp-hero__h1">Que tus clientes recuerden tu marca,<br>no solo a tu comercial</h1>
+  <p class="pp-hero__sub">Una tarjeta digital con tu logo, tu color y tu URL para cada comercial autónomo. Cuando alguien cambia de comercializadora, sus contactos se quedan contigo. Desde 4 €/comercial/mes.</p>
+  <div class="pp-hero__cta">
+    <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Pide una demo con tu marca →</a>
+    <a href="#como" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Cómo funciona</a>
+  </div>
+</section>
+
+<!-- ─────────── Pain + ganancia paralelas ─────────── -->
+<section class="pp-pair">
+  <div class="pp-section-eyebrow">El problema</div>
+  <h2 class="pp-section-title">Tu marca trabaja por el comercial.<br>Cuando él se va, ella también se va.</h2>
+  <p class="pp-section-sub">Las comercializadoras con red de comerciales autónomos viven una paradoja: la inversión en captación se hace bajo tu marca, pero el cliente final solo recuerda a la persona que le firmó el contrato. Cuando ese comercial cambia de comercializadora, se lleva consigo más de lo que crees.</p>
+
+  <div class="pp-pair__grid">
+    <article class="pp-pair__card pp-pair__card--pain">
+      <div class="pp-pair__label">↓ Lo que pierdes hoy</div>
+      <h3 class="pp-pair__h">Cuando un comercial se va</h3>
+      <ul class="pp-pair__list">
+        <li>Sus contactos están en <strong>su iPhone</strong>, no en tu CRM. Esa cartera se va con él.</li>
+        <li>Los clientes que firmaron contigo recuerdan a <strong>"Juan"</strong>, no a tu marca. Si Juan llama desde la competencia, escuchan.</li>
+        <li>Cada comercial se presenta como puede: una tarjeta de imprenta antigua, un LinkedIn personal, nada. La <strong>imagen de tu marca cambia de visita en visita</strong>.</li>
+        <li>No sabes a cuántas casas ha visitado, qué leads ha generado ni qué interés ha despertado. <strong>Sin datos no hay decisiones</strong>.</li>
+      </ul>
+    </article>
+
+    <article class="pp-pair__card pp-pair__card--gain">
+      <div class="pp-pair__label">↑ Lo que recuperas</div>
+      <h3 class="pp-pair__h">Con tu marca encima de cada visita</h3>
+      <ul class="pp-pair__list">
+        <li>Cada comercial tiene su tarjeta digital en <strong>perfilapro.es/e/tu-comercializadora/juan-perez</strong>. Bajo tu marca.</li>
+        <li>Las visitas, los WhatsApp click-to-chat y los QR escaneados <strong>quedan en tu panel</strong>, no en su teléfono.</li>
+        <li>Cuando un comercial se da de baja, su perfil sale del directorio en <strong>un clic</strong>. Tu URL sigue viva, tus datos siguen contigo.</li>
+        <li>Misma estructura visual para los 150 comerciales. El cliente final <strong>ve marca</strong>, no individuos sueltos.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ─────────── Doble valor: para ti y para el comercial ─────────── -->
+<section class="pp-double">
+  <div class="pp-double__wrap">
+    <div class="pp-section-eyebrow">Por qué lo adoptan los comerciales</div>
+    <h2 class="pp-section-title">El producto gana en los dos lados de la mesa</h2>
+    <p class="pp-section-sub">Las herramientas de control corporativo fracasan cuando los comerciales las viven como vigilancia. Esto está diseñado para que el comercial gane visiblemente, no solo la company.</p>
+
+    <div class="pp-double__grid">
+      <article class="pp-double__card pp-double__card--a">
+        <div class="pp-double__who">Para la comercializadora</div>
+        <h3 class="pp-double__h">Retención de cartera y consistencia de marca</h3>
+        <p class="pp-double__b">
+          Cada visita refuerza visualmente tu marca, no la del comercial. Los datos del cliente final quedan
+          centralizados en tu panel: a cuántos clientes ha visitado cada comercial, dónde, qué leads ha
+          generado. <strong>Cuando alguien se va, no se lleva una cartera invisible.</strong>
+        </p>
+      </article>
+      <article class="pp-double__card pp-double__card--b">
+        <div class="pp-double__who">Para el comercial autónomo</div>
+        <h3 class="pp-double__h">Una herramienta profesional gratis</h3>
+        <p class="pp-double__b">
+          Foto, WhatsApp click-to-chat, QR personal para imprimir en la furgo o en la firma de email. Una
+          herramienta que él pagaría 10 €/mes en HiHello o Linq, y que aquí se la regalas tú.
+          <strong>Lo viven como beneficio, no como control.</strong>
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Cómo funciona ─────────── -->
+<section class="pp-steps" id="como">
+  <div class="pp-section-eyebrow">Cómo se monta</div>
+  <h2 class="pp-section-title">100 comerciales onboardados en una semana</h2>
+  <p class="pp-section-sub">Sin instalación, sin app, sin migración de nada.</p>
+
+  <div class="pp-steps__grid">
+    <div class="pp-step">
+      <div class="pp-step__n">1</div>
+      <h3 class="pp-step__title">Tú creas la comercializadora</h3>
+      <p class="pp-step__body">Subes el logo, eliges el color corporativo, escribes la frase de marca. Tu URL <code style="font-family:var(--font-mono);font-size:12px">/e/tu-comercializadora</code> queda lista. Lo gestionas desde un panel propio.</p>
+    </div>
+    <div class="pp-step">
+      <div class="pp-step__n">2</div>
+      <h3 class="pp-step__title">Invitas a tus comerciales por email</h3>
+      <p class="pp-step__body">Subes la lista (CSV o uno a uno desde el panel). Cada comercial recibe un email con un link que le abre su editor en 3 minutos: foto, zona, WhatsApp. Sin contraseñas que recordar.</p>
+    </div>
+    <div class="pp-step">
+      <div class="pp-step__n">3</div>
+      <h3 class="pp-step__title">Comparten su perfil con clientes</h3>
+      <p class="pp-step__body">Por WhatsApp, QR impreso en la tarjeta física que se descargan en PDF, vinilo en la furgo, firma de email. Cada visita refuerza tu marca y trae datos a tu panel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── ROI numérico ─────────── -->
+<section style="padding: 0 1.5rem;">
+  <div class="pp-roi">
+    <div class="pp-section-eyebrow" style="text-align:left">Cuánto cuesta y cuánto vale</div>
+    <h3 class="pp-roi__h">Comercializadora con 150 comerciales autónomos</h3>
+    <div class="pp-roi__row">
+      <span class="pp-roi__row-label">Coste mensual (4 €/comercial · plan anual con 2 meses gratis)</span>
+      <span class="pp-roi__row-val">600 €/mes</span>
+    </div>
+    <div class="pp-roi__row">
+      <span class="pp-roi__row-label">Anualizado</span>
+      <span class="pp-roi__row-val">~7.200 €/año</span>
+    </div>
+    <div class="pp-roi__row">
+      <span class="pp-roi__row-label">Coste por comercial al año</span>
+      <span class="pp-roi__row-val">48 €/año</span>
+    </div>
+    <div class="pp-roi__row">
+      <span class="pp-roi__row-label">Coste comparado: un solo churn de comercial con 80 clientes a 60 € de margen anual</span>
+      <span class="pp-roi__row-val">~4.800 € perdidos</span>
+    </div>
+    <p class="pp-roi__foot">El sistema se paga con <strong>1,5 churns de comercial al año</strong> que evites, sin contar la consistencia de marca ni los datos de visita. Si tu red rota más de un 5 % al año (típico del sector), la cuenta sale a tu favor mes uno.</p>
+  </div>
+</section>
+
+<!-- ─────────── Pricing (mismo bloque que /es/empresas) ─────────── -->
+<section class="pp-pricing" id="precios">
+  <div class="pp-section-eyebrow">Precios</div>
+  <h2 class="pp-section-title">Por comercial, sin sorpresas</h2>
+  <p class="pp-section-sub">Sin permanencia mensual; 2 meses gratis si pagas anual.</p>
+
+  <div class="pp-pricing__toggle-wrap">
+    <div class="pp-pricing__toggle" role="tablist" aria-label="Ciclo de facturación">
+      <button type="button" class="pp-pricing__toggle-btn is-active" data-cycle="annual" role="tab" aria-selected="true">Anual <span class="pp-pricing__save">2 meses gratis</span></button>
+      <button type="button" class="pp-pricing__toggle-btn" data-cycle="monthly" role="tab" aria-selected="false">Mensual</button>
+    </div>
+  </div>
+
+  <div class="pp-pricing__grid">
+    <article class="pp-tier">
+      <h3 class="pp-tier__name">Equipo</h3>
+      <p class="pp-tier__audience">Comercializadora con 5 a 30 comerciales</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="equipo">4</span>
+        <span class="pp-tier__price-unit">€/comercial/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="equipo">Facturado anual · 2 meses gratis</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Incluye</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Página de la comercializadora con tu logo, color y URL <code style="font-family:var(--font-mono);font-size:12px">perfilapro.es/e/tu-marca</code></p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Perfil digital por comercial con foto, WhatsApp y zona</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Tarjeta física en PDF lista para imprenta, por cada comercial</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> QR personal por comercial (impresión, vinilo, firma de email)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding del equipo por invitación (3 min, sin contraseñas)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Soporte por email (&lt; 48 h)</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="equipo">Pide una demo →</a>
+    </article>
+
+    <article class="pp-tier pp-tier--featured">
+      <span class="pp-tier__badge">Más popular</span>
+      <h3 class="pp-tier__name">Organización</h3>
+      <p class="pp-tier__audience">Comercializadora con 30 a 100 comerciales</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="organizacion">5</span>
+        <span class="pp-tier__price-unit">€/comercial/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="organizacion">Facturado anual · 2 meses gratis</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Todo lo de Equipo, más</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Branding completo: logo, color, tagline, sección «Acerca de» con web, dirección y teléfono</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Estadísticas agregadas: visitas por comercial y por comercializadora</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Booklet PDF de todas las tarjetas (descarga masiva pre-feria o pre-campaña)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Reenvío del kit por admin cuando un comercial pierde el email</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding asistido: videollamada inicial + plantillas de invitación</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Cumplimiento RGPD documentado (export / delete por comercial)</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Soporte prioritario (&lt; 24 h)</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="organizacion">Pide una demo →</a>
+    </article>
+
+    <article class="pp-tier">
+      <h3 class="pp-tier__name">Enterprise</h3>
+      <p class="pp-tier__audience">Comercializadoras multi-marca o con +100 comerciales</p>
+      <div class="pp-tier__price">
+        <span class="pp-tier__price-num" data-price="enterprise">desde 6</span>
+        <span class="pp-tier__price-unit">€/comercial/mes</span>
+      </div>
+      <p class="pp-tier__price-note" data-note="enterprise">Mínimo 100 comerciales · facturación trimestral o anual</p>
+      <hr class="pp-tier__divider">
+      <div class="pp-tier__includes">
+        <p class="pp-tier__includes-h">Todo lo de Organización, más</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> SLA 99,5 % con compensación</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> DPA firmado + contacto DPO</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Onboarding presencial o formación al equipo</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Facturación trimestral o anual, factura única</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> Customer Success dedicado</p>
+        <p class="pp-tier__feat"><span class="pp-tier__feat-icon">✓</span> <em>En roadmap</em>: SSO (Google Workspace, M365), API de provisión</p>
+      </div>
+      <a href="#contacto" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill pp-tier__cta" data-tier="enterprise">Habla con nosotros →</a>
+    </article>
+  </div>
+</section>
+
+<!-- ─────────── Guarantees ─────────── -->
+<section class="pp-guarantees" aria-label="Garantías">
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">↩️</span>
+    <div><strong>Reembolso 30 días</strong>Sin preguntas. Si no os funciona, os devolvemos lo cobrado.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">🔓</span>
+    <div><strong>Sin permanencia</strong>Plan mensual cancelable cuando quieras. Anual con 2 meses gratis.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">📦</span>
+    <div><strong>Tus datos siempre tuyos</strong>Descarga JSON con toda la información cuando canceles.</div>
+  </div>
+  <div class="pp-guarantee">
+    <span class="pp-guarantee__icon" aria-hidden="true">🤝</span>
+    <div><strong>Founding partner</strong>Los primeros 5 clientes: 50 % descuento permanente a cambio de caso de estudio.</div>
+  </div>
+</section>
+
+<!-- ─────────── FAQ ─────────── -->
+<section class="pp-faq" id="faq">
+  <div class="pp-section-eyebrow">Preguntas frecuentes</div>
+  <h2 class="pp-section-title" style="margin-bottom:2rem">Las que se hacen en este sector</h2>
+
+  <details class="pp-faq__item">
+    <summary>¿Funciona con comerciales autónomos a comisión, no con empleados?</summary>
+    <p class="pp-faq__body">Es exactamente el caso de uso óptimo. Cada comercial tiene su perfil vinculado a tu comercializadora; los leads y visitas que genera quedan atribuidos a tu panel central. Cuando un comercial deja de operar bajo tu marca, su perfil sale del directorio en un clic y la URL deja de responder. <strong>No requiere que el comercial sea empleado tuyo</strong> — solo que lleve tu marca encima.</p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Qué pasa con los datos de los clientes cuando un comercial se va?</summary>
+    <p class="pp-faq__body">Los datos de contacto capturados a través de la tarjeta (visitas a la página, clicks de WhatsApp, leads del formulario) quedan en el panel de la comercializadora. La tarjeta del comercial saliente se invalida desde el panel; los QR antiguos que el cliente tenga impresos dejan de cargar el perfil de ese comercial. <strong>La marca corporativa sigue presente vía la URL de la comercializadora</strong>, así que el cliente que escanee un QR antiguo aún puede llegar al directorio activo de tu red.</p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Lo va a ver el comercial como vigilancia o como herramienta?</summary>
+    <p class="pp-faq__body">Como herramienta, si se le presenta como herramienta. La tarjeta digital con foto, WhatsApp click-to-chat y QR personal es una pieza profesional que el comercial habría tenido que pagarse en HiHello o Linq por 10 €/mes. <strong>El framing recomendado es "te lo regalamos", no "te vamos a vigilar"</strong>. Las estadísticas del panel son agregadas: tú ves visitas y leads, no tracking individual del comercial.</p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Cuánto se tarda en onboardear a 100 comerciales?</summary>
+    <p class="pp-faq__body">Tú creas la comercializadora en el panel en 5 minutos. Los comerciales reciben un email de invitación con un link directo a su editor (sin contraseñas); rellenan foto, zona y WhatsApp en 3 minutos cada uno. 100 comerciales pueden estar completos en una semana sin que tú tengas que coordinar nada. <strong>Para los más reticentes, el admin puede pre-rellenar los datos básicos desde el panel y el comercial solo añade la foto.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Las tarjetas físicas en PDF también se incluyen?</summary>
+    <p class="pp-faq__body">Sí. Cada comercial recibe automáticamente un PDF de su tarjeta de visita (formato ISO 7810, 85 × 55 mm, con tu logo, tu color, sus datos y un QR a su perfil). El admin puede descargar todas las tarjetas del equipo en un único PDF booklet para mandar a la imprenta antes de una feria o campaña. <strong>Tú decides la imprenta y el papel.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Podemos probar antes de pagar?</summary>
+    <p class="pp-faq__body">Sí. Te montamos una demo personalizada con vuestro logo, vuestro color y 2-3 comerciales de muestra para que veáis cómo queda con la identidad de vuestra comercializadora. Es gratis y dura lo que necesitéis hasta decidir. <strong>Pide la demo desde el formulario de abajo.</strong></p>
+  </details>
+
+  <details class="pp-faq__item">
+    <summary>¿Cubre solo eléctrica o también gas y servicios energéticos?</summary>
+    <p class="pp-faq__body">El producto es agnóstico al tipo de suministro. Comercializadoras de gas, dual eléctrica+gas, autoconsumo solar, servicios energéticos a empresas (ESCO) o consultoría energética: <strong>si tienes red comercial autónoma a comisión, encaja igual</strong>. La landing habla de "eléctrica" porque es el caso más común en España.</p>
+  </details>
+</section>
+
+<!-- ─────────── Trust signals ─────────── -->
+<section class="pp-trust">
+  <span>🇪🇸 Servidores en Europa</span>
+  <span>🔒 GDPR</span>
+  <span>📄 Facturación legal española</span>
+  <span>⚡ Sin instalación, sin app</span>
+  <span>🔄 Exportas tus datos en JSON cuando quieras</span>
+</section>
+
+<!-- ─────────── Form ─────────── -->
+<section class="pp-form-section" id="contacto">
+  <div class="pp-form-wrap">
+    <div class="pp-section-eyebrow">Contacto</div>
+    <h2 class="pp-section-title">Hablemos de tu red comercial</h2>
+    <p class="pp-section-sub">Cuéntame cuántos comerciales tiene tu red y qué te preocupa hoy. Te respondo en menos de 24 h.</p>
+
+    <form class="pp-form-grid" id="leadForm" autocomplete="on" novalidate>
+      <!-- Honeypot · invisible · si se rellena, asumimos bot -->
+      <input class="pp-form-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <!-- Sector pre-seleccionado: el lead viene de una landing sectorial. -->
+      <input type="hidden" name="sector" value="red_comercial">
+      <!-- Plan de interés: lo rellena el JS al pulsar el CTA de un tier. -->
+      <input type="hidden" name="plan_interes" id="planInteres" value="">
+      <!-- Atribución comercial: ?via=agent-XXX en la URL o localStorage. -->
+      <input type="hidden" name="via" id="viaCode" value="">
+
+      <div class="pp-form-row pp-form-row--inline">
+        <div>
+          <label class="pp-form-label" for="f-name">Nombre <span class="pp-form-required">*</span></label>
+          <input class="pp-input" type="text" id="f-name" name="name" required maxlength="100" autocomplete="name">
+        </div>
+        <div>
+          <label class="pp-form-label" for="f-company">Comercializadora <span class="pp-form-required">*</span></label>
+          <input class="pp-input" type="text" id="f-company" name="company" required maxlength="120" autocomplete="organization">
+        </div>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-email">Email <span class="pp-form-required">*</span></label>
+        <input class="pp-input" type="email" id="f-email" name="email" required maxlength="200" autocomplete="email">
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-team">Tamaño de la red comercial <span class="pp-form-required">*</span></label>
+        <select class="pp-input pp-input--select" id="f-team" name="team_size" required>
+          <option value="">— Elige —</option>
+          <option value="5-20">5 a 20 comerciales</option>
+          <option value="20-100">20 a 100 comerciales</option>
+          <option value="100-500">100 a 500 comerciales</option>
+          <option value="500+">Más de 500</option>
+        </select>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-message">Mensaje <small style="font-weight:500;color:var(--color-gris-500)">· opcional</small></label>
+        <textarea class="pp-input pp-input--textarea" id="f-message" name="message" rows="4" maxlength="2000" placeholder="¿Qué te preocupa hoy de tu red? ¿Rotación, imagen, datos?"></textarea>
+      </div>
+
+      <button class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill" type="submit" id="submitBtn">Enviar →</button>
+
+      <div class="pp-form-status" id="formStatus"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ─────────── Footer ─────────── -->
+<footer class="pp-foot">
+  <div class="pp-foot__b2c">
+    ¿Vendes por tu cuenta y no tienes equipo? <a href="/es/">Crea tu perfil gratis →</a>
+  </div>
+  <p>© PerfilaPro · <a href="/es/empresas">Ver otras organizaciones</a> · <a href="/es/terminos">Términos</a> · <a href="/es/privacidad">Privacidad</a> · <a href="/es/legal">Aviso legal</a></p>
+</footer>
+
+<script>
+'use strict';
+
+/* ── Pricing toggle (anual / mensual) ────────────────────── */
+const PRICES = {
+  annual:  { equipo: '4', organizacion: '5', enterprise: 'desde 6' },
+  monthly: { equipo: '5', organizacion: '6', enterprise: 'desde 7' },
+};
+const PRICE_NOTES = {
+  annual: {
+    equipo:       'Facturado anual · 2 meses gratis',
+    organizacion: 'Facturado anual · 2 meses gratis',
+    enterprise:   'Mínimo 100 comerciales · facturación trimestral o anual',
+  },
+  monthly: {
+    equipo:       'Cancelable cuando quieras · sin permanencia',
+    organizacion: 'Cancelable cuando quieras · sin permanencia',
+    enterprise:   'Mínimo 100 comerciales · contrato a medida',
+  },
+};
+function setCycle(cycle) {
+  document.querySelectorAll('.pp-pricing__toggle-btn').forEach(b => {
+    const active = b.dataset.cycle === cycle;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-price]').forEach(el => {
+    el.textContent = PRICES[cycle][el.dataset.price];
+  });
+  document.querySelectorAll('[data-note]').forEach(el => {
+    el.textContent = PRICE_NOTES[cycle][el.dataset.note];
+  });
+}
+document.querySelectorAll('.pp-pricing__toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => setCycle(btn.dataset.cycle));
+});
+
+/* ── Tier CTA: pre-rellena plan_interes al hacer click ───── */
+document.querySelectorAll('[data-tier]').forEach(cta => {
+  cta.addEventListener('click', () => {
+    const hidden = document.getElementById('planInteres');
+    if (hidden) hidden.value = cta.dataset.tier;
+  });
+});
+
+/* ── Atribución comercial (?via=agent-XXX) ───────────────── */
+(function () {
+  const VIA_RE = /^[A-Za-z0-9_-]{2,40}$/;
+  const STORE_KEY = 'pp_b2b_via';
+  let via = null;
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('via');
+    if (fromUrl && VIA_RE.test(fromUrl)) {
+      via = fromUrl;
+      try { localStorage.setItem(STORE_KEY, via); } catch {}
+    } else {
+      const fromStore = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
+      if (fromStore && VIA_RE.test(fromStore)) via = fromStore;
+    }
+  } catch {}
+  if (via) {
+    const input = document.getElementById('viaCode');
+    if (input) input.value = via;
+  }
+})();
+
+/* ── Form submit ─────────────────────────────────────────── */
+const form       = document.getElementById('leadForm');
+const submitBtn  = document.getElementById('submitBtn');
+const formStatus = document.getElementById('formStatus');
+
+function setStatus(msg, kind) {
+  formStatus.textContent = msg;
+  formStatus.className   = 'pp-form-status pp-form-status--' + kind;
+  formStatus.style.display = 'block';
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  formStatus.style.display = 'none';
+
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.idioma = 'es';
+
+  if (!data.name || !data.company || !data.email || !data.team_size) {
+    setStatus('Faltan campos obligatorios.', 'err');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  const originalLabel = submitBtn.textContent;
+  submitBtn.textContent = 'Enviando…';
+
+  try {
+    const res = await fetch('/api/lead-b2b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Error de servidor');
+    }
+    setStatus('¡Gracias! Te respondo en menos de 24 h.', 'ok');
+    form.reset();
+  } catch (err) {
+    setStatus('No se pudo enviar: ' + err.message + '. Si persiste, escríbeme a hola@perfilapro.es.', 'err');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+  }
+});
+</script>
+
+</body>
+</html>

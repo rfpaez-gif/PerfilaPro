@@ -102,12 +102,13 @@ describe('lead-b2b handler', () => {
   });
 
   it.each([
-    ['empresa',  'Empresa'],
-    ['despacho', 'Despacho'],
-    ['colegio',  'Colegio'],
-    ['publico',  'Administración'],
-    ['ong',      'ONG'],
-    ['otro',     'Otro'],
+    ['empresa',       'Empresa'],
+    ['despacho',      'Despacho'],
+    ['colegio',       'Colegio'],
+    ['publico',       'Administración'],
+    ['ong',           'ONG'],
+    ['red_comercial', 'Red comercial'],
+    ['otro',          'Otro'],
   ])('acepta el sector "%s" y lo etiqueta como "%s" en el subject interno', async (sector, label) => {
     const res = await handler()(buildEvent({ body: { ...validPayload, sector } }));
     expect(res.statusCode).toBe(200);
