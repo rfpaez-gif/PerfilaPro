@@ -43,7 +43,7 @@ function isSafeWebsite(url) {
 // Campos persistidos que consume el render público y la tarjeta de visita.
 // Cualquier campo que use card.js / org.js / printable-card-utils.js debe
 // listarse aquí o el SELECT lo devuelve undefined silenciosamente.
-const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, deleted_at';
+const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, deleted_at';
 
 async function getOrgBySlug(db, slug) {
   if (!isValidOrgSlug(slug)) return null;

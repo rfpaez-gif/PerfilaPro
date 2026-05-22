@@ -301,6 +301,16 @@
           </div>
 
           <div class="pp-form__row">
+            <label style="display:flex;gap:.6rem;align-items:flex-start;cursor:pointer">
+              <input type="checkbox" id="hideBrandingInput" style="margin-top:.25rem">
+              <span>
+                <strong style="display:block">White-label · Ocultar "Powered by PerfilaPro"</strong>
+                <small style="color:var(--color-gris-500)">Para clientes B2B de pago. Oculta el pie "Powered by" en /c/:slug y la URL impresa en el PNG descargable. La card sigue alojada en perfilapro.es (dominio propio del cliente es otro sprint).</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="pp-form__row">
             <label class="pp-form__label">Logo <small>opcional · PNG/JPG/SVG · máx 2 MB</small></label>
             <label class="pp-logo-drop" id="logoDrop">
               <div class="pp-logo-drop__preview" id="logoPreview">
@@ -562,6 +572,7 @@ function resetForm() {
   $('addressInput').value = '';
   $('colorInput').value = '#003781';
   $('colorHexInput').value = '#003781';
+  $('hideBrandingInput').checked = false;
   setLogoPreview(null);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
@@ -588,6 +599,7 @@ function loadForm(org) {
   $('addressInput').value = org.address || '';
   $('colorInput').value = org.color_primary || '#003781';
   $('colorHexInput').value = (org.color_primary || '#003781').toUpperCase();
+  $('hideBrandingInput').checked = org.hide_branding === true;
   setLogoPreview(org.logo_url);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
@@ -702,6 +714,7 @@ async function saveOrg() {
   const phone       = $('phoneInput').value.trim();
   const address     = $('addressInput').value.trim();
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
+  const hideBranding = $('hideBrandingInput').checked === true;
 
   if (!name) return toast('Falta el nombre', 'err');
   if (!slug) return toast('Falta el slug', 'err');
@@ -715,6 +728,7 @@ async function saveOrg() {
     color_primary: color,
     phone:   phone   || null,
     address: address || null,
+    hide_branding: hideBranding,
   };
 
   $('saveBtn').disabled = true;

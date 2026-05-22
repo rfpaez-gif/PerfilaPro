@@ -191,7 +191,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, created_at')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -200,7 +200,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone } = body;
+      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, hide_branding } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
@@ -241,8 +241,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           email: email ? String(email).trim() : null,
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
+          hide_branding: hide_branding === true,
         })
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding')
         .single();
 
       if (error) {
@@ -255,7 +256,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone } = body;
+      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
@@ -297,6 +298,9 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       // a nivel DB (ver migración 023): los validamos aquí en backend.
       if (address !== undefined) updates.address = address ? stripTagsInline(address).substring(0, 200) : null;
       if (phone   !== undefined) updates.phone   = phone   ? stripTagsInline(phone).substring(0, 40)    : null;
+      // hide_branding: white-label flag. Boolean estricto — cualquier
+      // valor distinto de true se persiste como false (no toggle accidental).
+      if (hide_branding !== undefined) updates.hide_branding = hide_branding === true;
 
       if (!Object.keys(updates).length) {
         return jsonResponse(400, { error: 'nada para actualizar' });

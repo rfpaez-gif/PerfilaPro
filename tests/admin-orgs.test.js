@@ -147,6 +147,26 @@ describe('admin-orgs handler', () => {
       expect(inserted.phone).toBeNull();
     });
 
+    it('persiste hide_branding=true cuando llega true (white-label opt-in)', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'aossa', name: 'AOSSA', hide_branding: true,
+      } }));
+      expect(mockInsert.mock.calls[0][0].hide_branding).toBe(true);
+    });
+
+    it('persiste hide_branding=false por defecto (sin opt-in explícito)', async () => {
+      await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris' } }));
+      expect(mockInsert.mock.calls[0][0].hide_branding).toBe(false);
+    });
+
+    it('hide_branding distinto de true (string, 1, "true") se persiste como false', async () => {
+      // Boolean estricto · evita toggle accidental por payload mal formado.
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'xx', name: 'XX', hide_branding: 'true',
+      } }));
+      expect(mockInsert.mock.calls[0][0].hide_branding).toBe(false);
+    });
+
     it('rechaza slug inválido con 400', async () => {
       const res = await handler(buildEvent({ body: { action: 'create', slug: 'IRIS-MAYUS', name: 'Iris' } }));
       expect(res.statusCode).toBe(400);
@@ -298,6 +318,31 @@ describe('admin-orgs handler', () => {
         body: { action: 'update', slug: 'iris', description: 'x'.repeat(501) },
       }));
       expect(res.statusCode).toBe(400);
+    });
+
+    it('persiste hide_branding=true en update (white-label opt-in)', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'aossa', hide_branding: true },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(updateMock.mock.calls[0][0]).toEqual({ hide_branding: true });
+    });
+
+    it('hide_branding no-true en update se persiste como false (boolean estricto)', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      await handler(buildEvent({
+        body: { action: 'update', slug: 'aossa', hide_branding: 'yes' },
+      }));
+      expect(updateMock.mock.calls[0][0]).toEqual({ hide_branding: false });
     });
   });
 

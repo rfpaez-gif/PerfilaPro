@@ -240,6 +240,11 @@ exports.handler = async (event) => {
   const org = data.organization_id ? await getOrgById(supabase, data.organization_id) : null;
   const orgAccent = org && isValidHex(org.color_primary) ? org.color_primary : null;
   const orgLogo   = org && isSafeLogoUrl(org.logo_url) ? org.logo_url : null;
+  // White-label flag para clientes B2B de pago (Enterprise). Cuando es
+  // true, ocultamos el footer "Powered by PerfilaPro" y la URL impresa
+  // en el PNG descargable. La card sigue funcionando bajo perfilapro.es —
+  // dominio propio del cliente es otro sprint (custom_domain alias).
+  const hideBranding = !!(org && org.hide_branding);
 
   const zonaParts = (data.zona || '').split(' · ');
   const zonaLocal = esc(zonaParts[0] || '');
@@ -476,12 +481,12 @@ exports.handler = async (event) => {
       ${isFree && !org ? `<div class="pp-free-banner">
         <p>${T.freeBanner}</p>
       </div>` : ''}
-      <div class="pp-card__pw">
+      ${hideBranding ? '' : `<div class="pp-card__pw">
         ${org
           ? `${T.poweredBy} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong>`
           : `${T.pwCreated} <strong>Perfila<span class="pp-logo__pro">Pro</span></strong><br>
         <a href="https://perfilapro.es">${T.pwOwn}</a>`}
-      </div>
+      </div>`}
     </div>
   </div>
   ${org ? '' : `<div class="pp-page-foot">
@@ -500,6 +505,7 @@ exports.handler = async (event) => {
       slug:        data.slug,
       cardUrl:     cardUrl,
       idioma:      idioma,
+      hideBranding: hideBranding,
     })};
     var STRINGS = ${safeJson({
       copied:         T.copied,
@@ -592,13 +598,15 @@ exports.handler = async (event) => {
       }
       if (CARD.zona) { y+=8; ctx.fillStyle = MU; ctx.font = '17px Arial,sans-serif'; ctx.textAlign='left'; ctx.fillText('\\uD83D\\uDCCD '+CARD.zona,80,y); y+=48; }
 
-      y += 10;
-      ctx.strokeStyle = 'rgba(30,27,20,.10)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke(); y+=24;
-      ctx.fillStyle = P; ctx.font = 'bold 17px Arial,sans-serif'; ctx.textAlign='left';
-      ctx.fillText(CARD.cardUrl,80,y);
-      ctx.fillStyle = 'rgba(30,27,20,.25)'; ctx.font = '13px Arial,sans-serif';
-      ctx.textAlign = 'center'; ctx.fillText(STRINGS.canvasFooter,W/2,H-52);
+      if (!CARD.hideBranding) {
+        y += 10;
+        ctx.strokeStyle = 'rgba(30,27,20,.10)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(W-60,y); ctx.stroke(); y+=24;
+        ctx.fillStyle = P; ctx.font = 'bold 17px Arial,sans-serif'; ctx.textAlign='left';
+        ctx.fillText(CARD.cardUrl,80,y);
+        ctx.fillStyle = 'rgba(30,27,20,.25)'; ctx.font = '13px Arial,sans-serif';
+        ctx.textAlign = 'center'; ctx.fillText(STRINGS.canvasFooter,W/2,H-52);
+      }
 
       canvas.toBlob(function(blob) {
         var url = URL.createObjectURL(blob);
