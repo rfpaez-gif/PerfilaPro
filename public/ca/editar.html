@@ -1529,13 +1529,16 @@
 
       // Carril B2B amb cadenat · camps fixats per l'organització.
       // Si la card és plan='b2b' amb organization_id, bloquegem visualment
-      // els inputs que l'org gestiona (nom, tagline, CP, descripció, adreça,
-      // serveis). El backend ignora qualsevol intent d'actualitzar aquests
-      // camps en cards B2B (defensa de fons).
+      // els inputs que l'org gestiona (nom, tagline, CP, descripció,
+      // serveis). El membre SÍ pot editar el seu emplaçament — la seva seu /
+      // lloc de treball real, que pot diferir de la seu central quan l'org
+      // és multi-seu (cas AOSSA amb emplaçaments en províncies diferents).
+      // El backend ignora intents d'actualitzar els camps bloquejats
+      // (defensa de fons).
       window._ppIsB2BLocked = card.plan === 'b2b' && card.organization && !!card.organization.name;
       if (window._ppIsB2BLocked) {
         const orgName = card.organization.name;
-        const lockedInputs = ['nombre', 'tagline', 'cp', 'descripcion', 'direccion', 'local_publico'];
+        const lockedInputs = ['nombre', 'tagline', 'cp', 'descripcion'];
         lockedInputs.forEach(function(id) {
           const el = document.getElementById(id);
           if (!el) return;
@@ -1570,6 +1573,27 @@
               lock.innerHTML = '🔒 Fixats per ' + orgName;
               svcLabel.appendChild(lock);
             }
+          }
+        }
+
+        // Emplaçament: per a B2B el toggle "local públic" no aporta
+        // (un lloc de treball és públic per definició). Amaguem el toggle,
+        // deixem l'input sempre visible i renombrem l'etiqueta.
+        const lpField = document.getElementById('local_publico');
+        if (lpField) {
+          const lpRow = lpField.closest('.pp-field');
+          if (lpRow) lpRow.style.display = 'none';
+        }
+        const dirFieldB2B = document.getElementById('direccion_field');
+        if (dirFieldB2B) {
+          dirFieldB2B.style.display = '';
+          const dirLabelB2B = dirFieldB2B.querySelector('.pp-field__label');
+          if (dirLabelB2B && dirLabelB2B.firstChild && dirLabelB2B.firstChild.nodeType === 3) {
+            dirLabelB2B.firstChild.nodeValue = 'Emplaçament';
+          }
+          const dirHintB2B = dirFieldB2B.querySelector('.pp-field__hint');
+          if (dirHintB2B) {
+            dirHintB2B.textContent = 'La teva seu o lloc de treball. Si canvies d\'emplaçament, edita\'l aquí.';
           }
         }
       }

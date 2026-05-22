@@ -1530,13 +1530,16 @@
       // Carril B2B con candado · campos fijados por la organización.
       // Si la card es plan='b2b' con organization_id, bloqueamos visualmente
       // los inputs que la org gestiona (nombre, tagline, CP, descripción,
-      // dirección, servicios). El backend ignora cualquier intento de
-      // updateForzar esos campos en cards B2B (defensa de fondo).
+      // servicios). El miembro SÍ puede editar su emplazamiento — su sede /
+      // lugar de trabajo real, que puede diferir de la sede central cuando
+      // la org es multi-sede (caso AOSSA con emplazamientos en distintas
+      // provincias). El backend ignora intentos de updateForzar los campos
+      // bloqueados (defensa de fondo).
       window._ppIsB2BLocked = card.plan === 'b2b' && card.organization && !!card.organization.name;
       if (window._ppIsB2BLocked) {
         const orgName = card.organization.name;
         // Campos input cuyo .pp-field padre marcamos como is-locked.
-        const lockedInputs = ['nombre', 'tagline', 'cp', 'descripcion', 'direccion', 'local_publico'];
+        const lockedInputs = ['nombre', 'tagline', 'cp', 'descripcion'];
         lockedInputs.forEach(function(id) {
           const el = document.getElementById(id);
           if (!el) return;
@@ -1574,6 +1577,27 @@
               lock.innerHTML = '🔒 Fijados por ' + orgName;
               svcLabel.appendChild(lock);
             }
+          }
+        }
+
+        // Emplazamiento: para B2B el toggle "local público" no aporta
+        // (un workplace es público por definición). Ocultamos el toggle,
+        // dejamos el input siempre visible y renombramos el label.
+        const lpField = document.getElementById('local_publico');
+        if (lpField) {
+          const lpRow = lpField.closest('.pp-field');
+          if (lpRow) lpRow.style.display = 'none';
+        }
+        const dirFieldB2B = document.getElementById('direccion_field');
+        if (dirFieldB2B) {
+          dirFieldB2B.style.display = '';
+          const dirLabelB2B = dirFieldB2B.querySelector('.pp-field__label');
+          if (dirLabelB2B && dirLabelB2B.firstChild && dirLabelB2B.firstChild.nodeType === 3) {
+            dirLabelB2B.firstChild.nodeValue = 'Emplazamiento';
+          }
+          const dirHintB2B = dirFieldB2B.querySelector('.pp-field__hint');
+          if (dirHintB2B) {
+            dirHintB2B.textContent = 'Tu sede o lugar de trabajo. Si cambias de emplazamiento, edítalo aquí.';
           }
         }
       }

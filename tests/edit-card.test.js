@@ -386,16 +386,17 @@ describe('edit-card handler', () => {
       mockSingle.mockResolvedValue({ data: b2bCard, error: null });
     });
 
-    it('actualiza solo whatsapp, telefono, foto_url, descripcion en cards B2B', async () => {
+    it('actualiza whatsapp, telefono, foto_url, descripcion y emplazamiento en cards B2B', async () => {
       const res = await handler(buildEvent({
         method: 'POST',
         body: {
-          // El operario manda todo, pero el backend solo usa los 4 campos editables
+          // El operario manda todo, pero el backend solo usa los campos editables
           nombre:    'Pedro HACKED',
           tagline:   'CEO autoproclamado',
           cp:        '99999',
           servicios: ['Robar la empresa'],
           direccion: 'Calle Falsa 123',
+          local_publico: false, // ignorado: para B2B se fuerza true cuando hay direccion
           whatsapp:  '34611222333',
           telefono:  '961234567',
           foto_url:  'https://abc.supabase.co/storage/v1/object/public/Avatars/pedro.jpg',
@@ -407,20 +408,55 @@ describe('edit-card handler', () => {
       expect(json.ok).toBe(true);
       expect(json.locked).toBe(true);
 
-      // El update debe haber tocado SOLO los 4 campos editables
+      // El update debe incluir el emplazamiento del miembro y forzar
+      // local_publico=true (workplace = público por definición)
       const updateCall = currentBuilder.update.mock.calls[0][0];
       expect(updateCall).toEqual({
-        whatsapp:    '34611222333',
-        telefono:    '961234567',
-        foto_url:    'https://abc.supabase.co/storage/v1/object/public/Avatars/pedro.jpg',
-        descripcion: 'Mi nueva descripción personal',
+        whatsapp:      '34611222333',
+        telefono:      '961234567',
+        foto_url:      'https://abc.supabase.co/storage/v1/object/public/Avatars/pedro.jpg',
+        descripcion:   'Mi nueva descripción personal',
+        direccion:     'Calle Falsa 123',
+        local_publico: true,
       });
       // Y NO los datos que la org gestiona
       expect(updateCall.nombre).toBeUndefined();
       expect(updateCall.tagline).toBeUndefined();
       expect(updateCall.cp).toBeUndefined();
       expect(updateCall.servicios).toBeUndefined();
-      expect(updateCall.direccion).toBeUndefined();
+    });
+
+    it('B2B sin direccion en el payload deja direccion=null y local_publico=false', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updateCall = currentBuilder.update.mock.calls[0][0];
+      expect(updateCall.direccion).toBeNull();
+      expect(updateCall.local_publico).toBe(false);
+    });
+
+    it('B2B con direccion solo whitespace queda como null + local_publico=false', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333', direccion: '   ', local_publico: true },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updateCall = currentBuilder.update.mock.calls[0][0];
+      expect(updateCall.direccion).toBeNull();
+      expect(updateCall.local_publico).toBe(false);
+    });
+
+    it('B2B sanitiza HTML de direccion antes de persistir', async () => {
+      const res = await handler(buildEvent({
+        method: 'POST',
+        body: { whatsapp: '34611222333', direccion: 'Polígono <script>x</script> Norte, 12' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const updateCall = currentBuilder.update.mock.calls[0][0];
+      expect(updateCall.direccion).toBe('Polígono x Norte, 12');
+      expect(updateCall.local_publico).toBe(true);
     });
 
     it('rechaza si falta whatsapp', async () => {

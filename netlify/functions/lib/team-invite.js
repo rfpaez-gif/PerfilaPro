@@ -124,6 +124,16 @@ async function inviteTeamMembers({ db, emailClient, buildInviteEmail, org, team,
     if (tplZona)        row.zona        = tplZona;
     if (tplServicios.length) row.servicios = tplServicios;
 
+    // Pre-rellena el emplazamiento con la sede de la org. Cubre el caso
+    // "despacho sede única" out-of-the-box (todos los miembros heredan la
+    // dirección sin tocar nada) y deja al miembro multi-sede (AOSSA con
+    // emplazamientos en distintas provincias) cambiarla desde /editar.
+    // local_publico=true porque un workplace es público por definición.
+    if (org.address) {
+      row.direccion     = stripTagsInline(org.address).substring(0, 200);
+      row.local_publico = true;
+    }
+
     const { error: insErr } = await db.from('cards').insert(row);
     if (insErr) {
       failed.push({ email: rawEmail, error: insErr.message });
@@ -149,7 +159,7 @@ async function inviteTeamMembers({ db, emailClient, buildInviteEmail, org, team,
         tagline:   memberTagline || null,
         whatsapp:  null,
         email:     rawEmail,
-        direccion: null,
+        direccion: row.direccion || null,
       };
       const pdfBuffer = await buildBusinessCardPDF({
         card: cardForPdf,

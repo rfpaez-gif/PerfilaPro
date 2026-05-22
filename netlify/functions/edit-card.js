@@ -119,10 +119,12 @@ function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = default
       // ── Carril B2B con candado ──
       // Si la card pertenece a una organización (plan='b2b' + organization_id),
       // la mayoría de campos están fijados por la org y NO los puede tocar el
-      // operario. El operario solo añade su contacto personal: foto, WhatsApp,
-      // teléfono y descripción libre. Cualquier intento de mandar nombre/tagline/
-      // servicios/CP/dirección se ignora silenciosamente (defensa de fondo
-      // independiente del frontend, por si alguien edita el HTML).
+      // operario. El operario añade su contacto personal: foto, WhatsApp,
+      // teléfono, descripción libre y emplazamiento (su sede / lugar de
+      // trabajo real, que puede diferir de la dirección de la org central
+      // cuando la org es multi-sede tipo AOSSA). Cualquier intento de mandar
+      // nombre/tagline/servicios/CP se ignora silenciosamente (defensa de
+      // fondo independiente del frontend, por si alguien edita el HTML).
       const isB2BLocked = card.plan === 'b2b' && !!card.organization_id;
       if (isB2BLocked) {
         if (!whatsapp) {
@@ -153,11 +155,19 @@ function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = default
           telefonoCleanB2B = tNorm.local;
         }
 
+        // Emplazamiento del miembro. Para B2B el toggle local_publico no
+        // aplica (un workplace es público por definición) — lo forzamos a
+        // true cuando hay direccion efectiva, sin requerir opt-in del frontend.
+        const direccionCleanB2B = direccion ? stripTags(direccion).substring(0, 200) : null;
+        const hasDireccionB2B = !!(direccionCleanB2B && direccionCleanB2B.trim());
+
         const updateB2B = {
-          whatsapp:    waNorm.e164,
-          telefono:    telefonoCleanB2B,
-          foto_url:    fotoUrlClean,
-          descripcion: descripcion ? stripTags(descripcion).substring(0, 200) : null,
+          whatsapp:      waNorm.e164,
+          telefono:      telefonoCleanB2B,
+          foto_url:      fotoUrlClean,
+          descripcion:   descripcion ? stripTags(descripcion).substring(0, 200) : null,
+          direccion:     hasDireccionB2B ? direccionCleanB2B : null,
+          local_publico: hasDireccionB2B,
         };
 
         const { error: updateError } = await db

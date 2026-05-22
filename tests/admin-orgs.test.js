@@ -1106,6 +1106,58 @@ describe('admin-orgs handler', () => {
       expect(cardInsert.mock.calls[0][0].tagline).toBeUndefined();
     });
 
+    it('pre-rellena direccion y local_publico desde org.address al invitar', async () => {
+      // AOSSA-style: la org tiene sede central; los miembros la heredan
+      // como emplazamiento por defecto y la editan desde /editar si están
+      // en otra sede.
+      const { cardInsert } = mockBulkOrgAndCards({
+        org: { id: 'org1', slug: 'aossa', name: 'AOSSA', logo_url: null, color_primary: '#003781', address: 'Av. de la Innovación s/n, 41020 Sevilla' },
+      });
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'aossa',
+          template: {},
+          team: [{ email: 'agente@aossa.es', nombre: 'Lucía Romero' }],
+        },
+      }));
+      const row = cardInsert.mock.calls[0][0];
+      expect(row.direccion).toBe('Av. de la Innovación s/n, 41020 Sevilla');
+      expect(row.local_publico).toBe(true);
+    });
+
+    it('no añade direccion al row si la org no tiene address', async () => {
+      // Caso común hoy: orgs sin address registrada → miembro queda sin
+      // emplazamiento hasta que lo rellene él mismo en /editar.
+      const { cardInsert } = mockBulkOrgAndCards();
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'cch',
+          template: {},
+          team: [{ email: 'a@cch.es', nombre: 'Ana' }],
+        },
+      }));
+      const row = cardInsert.mock.calls[0][0];
+      expect(row.direccion).toBeUndefined();
+      expect(row.local_publico).toBeUndefined();
+    });
+
+    it('sanitiza HTML del org.address al pre-rellenar direccion', async () => {
+      const { cardInsert } = mockBulkOrgAndCards({
+        org: { id: 'org1', slug: 'xx', name: 'X', logo_url: null, color_primary: '#000', address: '  <b>C/ Mayor</b> 12  ' },
+      });
+      await inviteTeamHandler(buildEvent({
+        body: {
+          action: 'invite_team',
+          org_slug: 'xx',
+          template: {},
+          team: [{ email: 'a@xx.es', nombre: 'A B' }],
+        },
+      }));
+      expect(cardInsert.mock.calls[0][0].direccion).toBe('C/ Mayor 12');
+    });
+
     it('sanitiza HTML y trunca la ocupacion individual a 140 chars', async () => {
       const { cardInsert } = mockBulkOrgAndCards();
       const long = 'X'.repeat(200);
