@@ -776,6 +776,129 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── send_panel_invite ──
+  describe('send_panel_invite', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const inviteHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      process.env.ORG_PANEL_JWT_SECRET = 'test-org-panel-secret';
+      process.env.SITE_URL = 'https://perfilapro.es';
+      delete process.env.URL;
+      mockEmailSend.mockResolvedValue({ id: 'msg-1' });
+    });
+
+    function withOrg(orgData) {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: orgData, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      return orgLookup;
+    }
+
+    it('manda email con magic-link 7d (sin claim founder) al organizations.email', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es' });
+
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.ok).toBe(true);
+      expect(body.sent_to).toBe('cliente@iris.es');
+
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.to).toBe('cliente@iris.es');
+      expect(call.subject).toMatch(/Iris Energía/);
+      expect(call.html).toMatch(/panel\.html\?session=/);
+
+      // El magic-link del HTML NO debe llevar claim actor=founder (es para el cliente, TTL 7d).
+      const m = call.html.match(/panel\.html\?session=([^"&]+)/);
+      expect(m).toBeTruthy();
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(m[1], 'test-org-panel-secret');
+      expect(decoded.actor).toBeUndefined();
+      expect(decoded.orgSlug).toBe('iris-energia');
+    });
+
+    it('localiza el email en catalán cuando idioma=ca', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia', idioma: 'ca' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.subject).toMatch(/El teu panell/);
+      expect(call.html).toMatch(/Benvinguda/);
+    });
+
+    it('default a español si idioma no se especifica', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.subject).toMatch(/Tu panel de PerfilaPro/);
+      expect(call.html).toMatch(/Bienvenida/);
+    });
+
+    it('devuelve 400 si la org no tiene email registrado', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: null });
+
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toMatch(/email/i);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      withOrg(null);
+
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'no-existe' },
+      }));
+      expect(res.statusCode).toBe(404);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('rechaza slug inválido con 400', async () => {
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'IRIS!' },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza requests sin contraseña con 401', async () => {
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+        password: '',
+      }));
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('devuelve 500 si Resend falla y NO devuelve 200 engañoso', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es' });
+      mockEmailSend.mockRejectedValueOnce(new Error('Resend down'));
+
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      expect(res.statusCode).toBe(500);
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {

@@ -797,6 +797,7 @@ function renderOrgsTable() {
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="selectOrg('${safeSlug}')">Editar</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/e/${safeSlug}','_blank')">Abrir</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openPanelAsFounder('${safeSlug}', this)" title="Abrir el panel de esta organización como si fueras el cliente. Sesión de 1 hora.">🔑 Panel</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="sendPanelInvite('${safeSlug}','${safeName}', this)" title="Enviar el acceso al panel al email registrado de la org. Magic-link válido 7 días.">✉️ Acceso</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openInviteModal('${safeSlug}','${safeName}')">Invitar</button>
         <button class="pp-btn pp-btn--danger pp-btn--sm" onclick="deleteOrg('${safeSlug}','${safeName}')">Eliminar</button>
       </div></td>
@@ -866,6 +867,37 @@ async function openPanelAsFounder(slug, btn) {
     }
   } catch (err) {
     toast('Error abriendo panel: ' + err.message, 'err');
+  } finally {
+    if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+  }
+}
+
+// Envía la invitación al panel al email registrado de la org. Magic-link
+// 7 días. Founder-triggered: el acceso al panel se abre cuando hay un
+// deal cerrado, no automáticamente. Pide idioma (es/ca) porque el email
+// va al cliente, no al founder, y debe estar en su idioma.
+async function sendPanelInvite(slug, name, btn) {
+  const org = cachedOrgs.find(o => o.slug === slug);
+  if (!org) return toast('Org no encontrada en la caché — recarga la página', 'err');
+  if (!org.email) {
+    return toast(`Org "${name}" no tiene email registrado. Añádelo en el form de Editar antes de enviar el acceso.`, 'err');
+  }
+  const idioma = prompt(
+    `Enviar acceso al panel a ${org.email}\n\nIdioma del email:\n  - "es" para español\n  - "ca" para catalán\n\nDeja vacío para español.`,
+    'es'
+  );
+  if (idioma === null) return; // cancelado
+  const lang = idioma.trim().toLowerCase() === 'ca' ? 'ca' : 'es';
+
+  if (!confirm(`Vas a enviar a "${org.email}" (idioma: ${lang}) un email de bienvenida con magic-link al panel.\n\nMagic-link válido 7 días. ¿Continuar?`)) return;
+
+  const original = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+  try {
+    const json = await callAdmin({ action: 'send_panel_invite', slug, idioma: lang });
+    toast(`Acceso enviado a ${json.sent_to || org.email}`, 'ok');
+  } catch (err) {
+    toast('Error enviando acceso: ' + err.message, 'err');
   } finally {
     if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
   }

@@ -170,6 +170,95 @@ function buildOffboardEmail({ orgName, nombre, idioma, cardUrl, editUrl }) {
   return { subject: t.subject, html };
 }
 
+// Email de invitación al panel B2B self-serve. Lo dispara el founder
+// desde admin-orgs cuando ha cerrado un deal con la org y abre la puerta
+// del panel. Distinto tono que panel-auth.buildPanelLoginEmail (que es
+// "tú lo pediste, aquí lo tienes"): aquí es "te lo hemos preparado, ya
+// está listo, esto es lo que vas a encontrar dentro".
+const PANEL_INVITE_STRINGS = {
+  es: {
+    preheader: (orgName) => `Tu panel de PerfilaPro está listo · ${orgName}`,
+    title: (orgName) => `Bienvenida, ${orgName}`,
+    subject: (orgName) => `Tu panel de PerfilaPro está listo · ${orgName}`,
+    intro: 'Hemos configurado vuestro panel B2B en PerfilaPro. Desde aquí podéis gestionar el equipo y la marca de vuestra organización sin tener que escribirnos para cada cambio.',
+    bullets: [
+      '<strong>Branding</strong> · logo, color, descripción, datos de contacto que aparecen en vuestra página pública.',
+      '<strong>Equipo</strong> · invitar profesionales en lote, ver quién está activo, descargar tarjetas físicas.',
+      '<strong>Estadísticas</strong> · visitas a las tarjetas del equipo, evolución y desglose por miembro.',
+    ],
+    cta: 'Entrar al panel →',
+    validity: 'El enlace de acceso es válido <strong>7 días</strong>. Si caduca, basta con abrir <a href="{panelHomeUrl}" style="color:#00A865">{panelHomeUrl}</a> e introducir este mismo email para recibir uno nuevo.',
+    publicLine: 'Vuestra página pública sigue activa en <a href="{publicUrl}" style="color:#00A865">{publicUrl}</a>.',
+    help: 'Si tenéis cualquier duda, responded a este email y os contestamos.',
+  },
+  ca: {
+    preheader: (orgName) => `El teu panell de PerfilaPro està a punt · ${orgName}`,
+    title: (orgName) => `Benvinguda, ${orgName}`,
+    subject: (orgName) => `El teu panell de PerfilaPro està a punt · ${orgName}`,
+    intro: 'Hem configurat el vostre panell B2B a PerfilaPro. Des d\'aquí podeu gestionar l\'equip i la marca de la vostra organització sense haver d\'escriure\'ns per a cada canvi.',
+    bullets: [
+      '<strong>Branding</strong> · logo, color, descripció, dades de contacte que apareixen a la vostra pàgina pública.',
+      '<strong>Equip</strong> · convidar professionals en lot, veure qui està actiu, descarregar targetes físiques.',
+      '<strong>Estadístiques</strong> · visites a les targetes de l\'equip, evolució i desglossament per membre.',
+    ],
+    cta: 'Entrar al panell →',
+    validity: 'L\'enllaç d\'accés és vàlid <strong>7 dies</strong>. Si caduca, només cal obrir <a href="{panelHomeUrl}" style="color:#00A865">{panelHomeUrl}</a> i introduir aquest mateix email per rebre\'n un de nou.',
+    publicLine: 'La vostra pàgina pública continua activa a <a href="{publicUrl}" style="color:#00A865">{publicUrl}</a>.',
+    help: 'Si teniu qualsevol dubte, responeu a aquest email i us contestem.',
+  },
+};
+
+function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publicUrl, idioma = 'es' }) {
+  const lang = idioma === 'ca' ? 'ca' : 'es';
+  const T = PANEL_INVITE_STRINGS[lang];
+
+  const bulletsHtml = T.bullets.map(b =>
+    `<li style="margin:0 0 8px;font-size:14px;color:${COLORS.inkSoft};line-height:1.55">${b}</li>`
+  ).join('');
+
+  const validityHtml = T.validity
+    .replace(/\{panelHomeUrl\}/g, panelHomeUrl);
+
+  const publicLineHtml = T.publicLine
+    .replace(/\{publicUrl\}/g, publicUrl);
+
+  const bodyHtml = `
+            <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.65">
+              ${T.intro}
+            </p>
+
+            <ul style="margin:0 0 24px;padding:0 0 0 20px;list-style:disc">
+              ${bulletsHtml}
+            </ul>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+              <tr><td align="center">
+                <a href="${panelUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">${T.cta}</a>
+              </td></tr>
+            </table>
+
+            <p style="margin:0 0 14px;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              ${validityHtml}
+            </p>
+
+            <p style="margin:0 0 14px;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              ${publicLineHtml}
+            </p>
+
+            <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
+              ${T.help}
+            </p>`;
+
+  const html = buildEmailLayout({
+    preheader: T.preheader(orgName),
+    title: T.title(orgName),
+    bodyHtml,
+    idioma: lang,
+  });
+
+  return { subject: T.subject(orgName), html };
+}
+
 function makeHandler(db, emailClient = defaultEmailClient) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -343,6 +432,68 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         url: `${siteUrl}/panel.html?session=${token}`,
         org_name: org.name,
       });
+    }
+
+    // ── send_panel_invite: el founder dispara el "te abro la puerta del
+    // panel" cuando ha cerrado un deal con la org. Manda un magic-link de
+    // bienvenida al organizations.email con TTL 7d (cliente normal, sin
+    // claim actor=founder). NO es self-serve — requiere que el founder
+    // tenga el contexto comercial de qué cliente está onboardeando.
+    //
+    // Idempotente: el founder puede reenviar si el cliente pierde el email.
+    // Cada envío firma un JWT nuevo (los previos siguen siendo válidos
+    // hasta su expiración natural, pero el cliente normalmente usa el
+    // último que recibe).
+    if (action === 'send_panel_invite') {
+      const { slug, idioma } = body;
+      const lang = idioma === 'ca' ? 'ca' : 'es';
+      if (!isValidOrgSlug(slug)) return jsonResponse(400, { error: 'slug inválido' });
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, email')
+        .eq('slug', slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
+      if (!org.email) {
+        return jsonResponse(400, {
+          error: 'La org no tiene email registrado. Añádelo en el formulario antes de enviar el acceso al cliente.',
+        });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Cliente de email no configurado (falta RESEND_API_KEY)' });
+      }
+
+      const token = signPanelSession({ orgId: org.id, orgSlug: org.slug });
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const panelUrl = `${siteUrl}/panel.html?session=${token}`;
+      const panelHomeUrl = `${siteUrl}/panel.html`;
+      const publicUrl = `${siteUrl}/e/${org.slug}`;
+
+      const { subject, html } = buildPanelInviteEmail({
+        orgName: org.name,
+        orgSlug: org.slug,
+        panelUrl,
+        panelHomeUrl,
+        publicUrl,
+        idioma: lang,
+      });
+
+      try {
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>',
+          to: org.email,
+          subject,
+          html,
+        });
+      } catch (err) {
+        console.error('admin-orgs send_panel_invite: email falló:', err.message);
+        return jsonResponse(500, { error: 'No se pudo enviar el email: ' + err.message });
+      }
+
+      return jsonResponse(200, { ok: true, sent_to: org.email });
     }
 
     // ── delete_org: soft-delete (setea deleted_at) ──
@@ -1116,3 +1267,5 @@ exports.handler = makeHandler(supabase);
 exports.makeHandler = makeHandler;
 exports.buildInviteEmail = buildInviteEmail;
 exports.buildOffboardEmail = buildOffboardEmail;
+exports.buildPanelInviteEmail = buildPanelInviteEmail;
+exports.PANEL_INVITE_STRINGS = PANEL_INVITE_STRINGS;
