@@ -62,7 +62,7 @@ function makeHandler(db) {
       if (card.organization_id) {
         const { data: org } = await db
           .from('organizations')
-          .select('slug, name, logo_url, color_primary, tagline, address, phone')
+          .select('slug, name, logo_url, color_primary, tagline, address, phone, hide_branding')
           .eq('id', card.organization_id)
           .is('deleted_at', null)
           .maybeSingle();

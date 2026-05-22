@@ -515,13 +515,24 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   // Firma de equipo · uppercase tracking en verde-match.
   // Espacio extra antes de la firma para equilibrar visualmente la tarjeta
   // (el nombre + cargo de arriba pesa más, así que damos respiración).
+  // Se permite wrap a 2 líneas para taglines largas tipo
+  // "Servicios deportivos y sociales para la administración pública" —
+  // mejor 2 líneas legibles que 1 truncada con "...". Cap a 2 líneas
+  // (~26pt) para que el bloque de contacto de abajo no se desplace en
+  // exceso si alguien mete una tagline absurda.
   if (teamLegend) {
     cursorY += 4;
-    doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(7)
-       .text(teamLegend.toUpperCase().substring(0, 50), PAD_X, cursorY, {
-         width: LEFT_W, lineBreak: false, characterSpacing: 1.1, ellipsis: true,
-       });
-    cursorY += 13;
+    const legendText = teamLegend.toUpperCase().substring(0, 100);
+    doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(7);
+    const legendOpts = { width: LEFT_W, characterSpacing: 1.1 };
+    const naturalHeight = doc.heightOfString(legendText, legendOpts);
+    const legendHeight = Math.min(naturalHeight, 26);
+    doc.text(legendText, PAD_X, cursorY, {
+      ...legendOpts,
+      height: legendHeight,
+      ellipsis: true,
+    });
+    cursorY += legendHeight + 2;
   } else {
     cursorY += 4;
   }
@@ -564,25 +575,33 @@ function renderBusinessCard(doc, { card, org, logoBuffer, qrBuffer, cardUrl }) {
   doc.rect(QR_X - 0.5, QR_Y - 0.5, QR_SIZE + 1, QR_SIZE + 1)
      .lineWidth(0.3).strokeColor(COLORS.border).stroke();
 
-  // URL corta bajo el QR (sin protocolo, peso normal pero color match).
-  // Usamos `perfilapro.es/c/<slug>` — cabe en el ancho del QR si el slug
-  // es razonable, y permite que alguien teclee la URL si no puede escanear.
-  const slug = card.slug || '';
-  const urlLabel = `perfilapro.es/c/${slug}`;
-  doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(6)
-     .text(urlLabel, QR_X - 10, QR_Y + QR_SIZE + 3, {
-       width: QR_SIZE + 20, align: 'center', lineBreak: false, ellipsis: true,
-     });
+  // URL corta bajo el QR + footer "Powered by PerfilaPro" se omiten
+  // cuando la org tiene hide_branding=true (white-label Enterprise).
+  // El QR sigue siendo escaneable — quien lo apunte con el móvil llega
+  // igualmente a perfilapro.es/c/<slug>; sólo desaparece el rastro textual.
+  const hideBranding = !!(org && org.hide_branding);
 
-  // Footer · línea sutil + atribución mínima. Cumple "Powered by"
-  // sin competir visualmente con la marca de la org.
-  const FOOTER_Y = H - 12;
-  doc.moveTo(PAD_X, FOOTER_Y - 4).lineTo(W - PAD_X, FOOTER_Y - 4)
-     .strokeColor(COLORS.border).lineWidth(0.3).stroke();
-  doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(6)
-     .text('Powered by PerfilaPro', PAD_X, FOOTER_Y, {
-       width: W - PAD_X * 2, align: 'right', lineBreak: false,
-     });
+  if (!hideBranding) {
+    // URL corta bajo el QR (sin protocolo, peso normal pero color match).
+    // Usamos `perfilapro.es/c/<slug>` — cabe en el ancho del QR si el slug
+    // es razonable, y permite que alguien teclee la URL si no puede escanear.
+    const slug = card.slug || '';
+    const urlLabel = `perfilapro.es/c/${slug}`;
+    doc.fillColor(COLORS.match).font('PP-Sans-SemiBold').fontSize(6)
+       .text(urlLabel, QR_X - 10, QR_Y + QR_SIZE + 3, {
+         width: QR_SIZE + 20, align: 'center', lineBreak: false, ellipsis: true,
+       });
+
+    // Footer · línea sutil + atribución mínima. Cumple "Powered by"
+    // sin competir visualmente con la marca de la org.
+    const FOOTER_Y = H - 12;
+    doc.moveTo(PAD_X, FOOTER_Y - 4).lineTo(W - PAD_X, FOOTER_Y - 4)
+       .strokeColor(COLORS.border).lineWidth(0.3).stroke();
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(6)
+       .text('Powered by PerfilaPro', PAD_X, FOOTER_Y, {
+         width: W - PAD_X * 2, align: 'right', lineBreak: false,
+       });
+  }
 }
 
 // PDF single-card. Recibe la card + la org resuelta + el logoBuffer ya

@@ -202,7 +202,7 @@ function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = default
           try {
             const { data: org } = await db
               .from('organizations')
-              .select('slug, name, logo_url, color_primary, address, phone')
+              .select('slug, name, logo_url, color_primary, address, phone, hide_branding')
               .eq('id', card.organization_id)
               .is('deleted_at', null)
               .maybeSingle();

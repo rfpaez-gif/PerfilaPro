@@ -278,6 +278,35 @@ describe('buildBusinessCardPDF', () => {
     });
     expect(buf.slice(0, 5).toString()).toBe('%PDF-');
   });
+
+  it('hide_branding=true produce un PDF menor (menos texto renderizado)', async () => {
+    // PDFKit subsetea fuentes, así que los strings no son grepables en el
+    // binario. Usamos size-diff: con branding hay 2 bloques de texto extra
+    // (URL bajo QR + footer "Powered by") + 1 stroke line. Sin branding
+    // esos bytes desaparecen → PDF más corto.
+    const conBranding = await buildBusinessCardPDF({
+      card, org: { ...org, hide_branding: false },
+    });
+    const sinBranding = await buildBusinessCardPDF({
+      card, org: { ...org, hide_branding: true },
+    });
+    expect(sinBranding.length).toBeLessThan(conBranding.length);
+  });
+
+  it('teamLegend largo no rompe el render (62 chars / 2 líneas)', async () => {
+    // Tagline real de AOSSA: 62 chars. La versión antigua hacía
+    // substring(0, 50) + lineBreak:false, dejando "...ADMINISTRA" cortado.
+    // Ahora se envuelve a 2 líneas con cap de 26pt para no descolocar el
+    // resto del layout. Smoke test: el render no lanza y produce un PDF
+    // válido. Verificación visual queda manual.
+    const longLegend = 'Servicios deportivos y sociales para la administración pública';
+    const buf = await buildBusinessCardPDF({
+      card,
+      org: { ...org, tagline: longLegend },
+    });
+    expect(buf.slice(0, 5).toString()).toBe('%PDF-');
+    expect(buf.length).toBeGreaterThan(2000);
+  });
 });
 
 describe('buildBusinessCardsBookletPDF', () => {

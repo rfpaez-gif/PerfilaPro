@@ -85,7 +85,7 @@ function makeHandler(db, emailClient) {
     // sobre otra org porque no podemos falsificar el JWT.
     const { data: org, error: orgErr } = await db
       .from('organizations')
-      .select('id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, created_at, deleted_at, panel_last_login_at')
+      .select('id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, created_at, deleted_at, panel_last_login_at')
       .eq('id', session.orgId)
       .maybeSingle();
     if (orgErr) return jsonResponse(500, { error: orgErr.message });
