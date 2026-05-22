@@ -32,7 +32,7 @@ function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = default
 
     const { data: card, error } = await db
       .from('cards')
-      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at, organization_id, idioma')
+      .select('slug, nombre, tagline, cp, zona, servicios, whatsapp, telefono, foto_url, descripcion, direccion, local_publico, email, edit_token_expires_at, category_id, specialty_custom, city_slug, directory_visible, plan, status, stripe_session_id, kit_email_sent_at, organization_id, idioma, expires_at, offboarded_at, previous_organization_id')
       .eq('slug', slug)
       .eq('edit_token', token)
       .in('status', ['active', 'free'])
@@ -88,10 +88,27 @@ function makeHandler(db, emailClient = defaultEmailClient, sendTeamKit = default
         if (org) organization = org;
       }
 
+      // Si la card está offboarded reciente, devolvemos el nombre de la
+      // org de la que salió para que /editar pinte un banner contextual
+      // ("Has salido del equipo de Iris Energía · cortesía 90d hasta...")
+      // en lugar del banner free genérico de alta nueva. Lookup defensivo:
+      // si la org previa fue soft-deleted entretanto, queda en null y el
+      // banner cae al copy genérico "tu tarjeta sigue activa 90 días".
+      let previous_organization = null;
+      if (card.offboarded_at && card.previous_organization_id) {
+        const { data: prevOrg } = await db
+          .from('organizations')
+          .select('slug, name')
+          .eq('id', card.previous_organization_id)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (prevOrg) previous_organization = prevOrg;
+      }
+
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...card, category_sector, category_specialty, launch_promo_active, organization }),
+        body: JSON.stringify({ ...card, category_sector, category_specialty, launch_promo_active, organization, previous_organization }),
       };
     }
 

@@ -367,6 +367,61 @@ describe('edit-card handler', () => {
     });
   });
 
+  describe('GET con offboarded card', () => {
+    it('devuelve previous_organization con nombre cuando la card está offboarded reciente', async () => {
+      mockSingle.mockResolvedValue({
+        data: {
+          ...baseCard,
+          organization_id: null, // ya no pertenece a la org
+          previous_organization_id: 'org-uuid-aossa',
+          offboarded_at: '2026-05-15T00:00:00Z',
+          plan: 'base',
+          expires_at: '2026-08-13T00:00:00Z',
+        },
+        error: null,
+      });
+      mockOrgMaybeSingle.mockResolvedValue({
+        data: { slug: 'aossa', name: 'AOSSA' },
+        error: null,
+      });
+
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      const data = JSON.parse(res.body);
+      expect(data.previous_organization).toEqual({ slug: 'aossa', name: 'AOSSA' });
+      expect(data.offboarded_at).toBe('2026-05-15T00:00:00Z');
+      expect(data.organization).toBeNull(); // no current org
+    });
+
+    it('previous_organization=null si la org previa fue soft-deleted', async () => {
+      mockSingle.mockResolvedValue({
+        data: {
+          ...baseCard,
+          organization_id: null,
+          previous_organization_id: 'org-uuid-borrada',
+          offboarded_at: '2026-05-15T00:00:00Z',
+        },
+        error: null,
+      });
+      mockOrgMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).previous_organization).toBeNull();
+    });
+
+    it('NO consulta organizations cuando no hay offboard (offboarded_at NULL)', async () => {
+      mockSingle.mockResolvedValue({
+        data: { ...baseCard, organization_id: null, offboarded_at: null, previous_organization_id: null },
+        error: null,
+      });
+      const res = await handler(buildEvent({ method: 'GET' }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).previous_organization).toBeNull();
+      expect(mockOrgMaybeSingle).not.toHaveBeenCalled();
+    });
+  });
+
   // ── Carril B2B con candado ──
 
   describe('POST con card B2B locked', () => {

@@ -905,6 +905,22 @@
           </div>
         </div>
 
+        <!-- Banner contextual cuando el usuario sale del equipo de una org B2B.
+             Visible si card.offboarded_at IS NOT NULL. Suprime el freeBanner
+             para no competir con dos CTAs distintos. -->
+        <div class="pp-upgrade pp-upgrade--offboarded" id="offboardedBanner" hidden style="background:#FFF8E1;border:1px solid #F0D679;border-radius:16px;padding:1.5rem 1.75rem;margin-bottom:1.5rem">
+          <p class="pp-upgrade__eyebrow" style="color:#6B4F00">Has salido del equipo</p>
+          <h2 class="pp-upgrade__title" style="margin:.4rem 0 .6rem"><span id="offboardedOrgName">Tu organización</span> · 90 días de cortesía</h2>
+          <p class="pp-upgrade__sub" style="color:#5C4400">
+            Tu tarjeta sigue activa pública (tus contactos no la pierden) como autónomo individual,
+            con plan Base gratuito hasta el <strong id="offboardedDate">—</strong>.
+            Antes de esa fecha, puedes activar Base/Pro para mantenerla más allá; si no, expirará automáticamente.
+          </p>
+          <div style="margin-top:1rem">
+            <a href="/c/" id="offboardedViewLink" class="pp-upgrade__cta" style="background:#0A1F44;color:#fff;padding:.75rem 1.5rem;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px">Ver mi tarjeta pública ↗</a>
+          </div>
+        </div>
+
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__eyebrow">Activa tu plan</p>
           <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
@@ -1602,16 +1618,39 @@
         }
       }
 
+      // Banner contextual de offboard — prioritario sobre el freeBanner
+      // genérico. Cuando la card lleva offboarded_at (y typically plan='base'
+      // + expires_at = NOW+90d), el usuario YA tuvo tarjeta como parte de
+      // un equipo; no es un alta nueva. Mostramos copy contextual y
+      // ocultamos el banner free para no competir.
+      const offboardedBanner = document.getElementById('offboardedBanner');
+      const isOffboarded = !!card.offboarded_at;
+      if (offboardedBanner && isOffboarded) {
+        const orgName = (card.previous_organization && card.previous_organization.name) || 'tu organización';
+        document.getElementById('offboardedOrgName').textContent = orgName;
+        if (card.expires_at) {
+          const d = new Date(card.expires_at);
+          const opts = { day: '2-digit', month: 'long', year: 'numeric' };
+          document.getElementById('offboardedDate').textContent = d.toLocaleDateString('es-ES', opts);
+        }
+        document.getElementById('offboardedViewLink').href = '/c/' + slug;
+        offboardedBanner.hidden = false;
+      }
+
       // Upgrade banner — visible mientras la card no tenga ni session
       // de Stripe ni kit ya enviado (promo redimida también marca
       // kit_email_sent_at, así que post-promo el banner se oculta solo).
+      // Si la card está offboarded reciente, NO mostramos freeBanner —
+      // el copy del offboardedBanner ya cubre el contexto y un CTA secundario
+      // del propio offboardedBanner lleva al usuario al flujo de upgrade si
+      // lo desea.
       const freeBanner = document.getElementById('freeBanner');
       const freeBannerBtn = document.getElementById('freeBannerBtn');
       const launchPromoActive = card.launch_promo_active === true;
       // Sprint 3 · pieza A: los perfiles del carril B2B (plan='b2b') no ven
       // el banner de upgrade — su ciclo de vida lo gestiona la suscripción
       // de la organización, no el plan individual de 9€/19€.
-      if (freeBanner && !card.stripe_session_id && !card.kit_email_sent_at && card.plan !== 'b2b') {
+      if (freeBanner && !isOffboarded && !card.stripe_session_id && !card.kit_email_sent_at && card.plan !== 'b2b') {
         // Personalizar headline + showcase con datos del usuario.
         const firstName = (card.nombre || '').split(/\s+/)[0] || 'Tu trabajo';
         document.getElementById('upgradeName').textContent = firstName;
