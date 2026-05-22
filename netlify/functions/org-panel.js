@@ -15,6 +15,7 @@
 //                       puerta de entrada del propio panel — solo founder).
 //   - invite_team    — alta en lote de miembros. Reusa lib/team-invite.js.
 
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { authFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
@@ -28,6 +29,11 @@ const { computeOrgStats } = require('./lib/org-stats-utils');
 const { inviteTeamMembers } = require('./lib/team-invite');
 const { buildInviteEmail, buildOffboardEmail } = require('./admin-orgs');
 const { offboardCard, COURTESY_DAYS } = require('./lib/card-offboard');
+const {
+  buildBusinessCardPDF,
+  buildBusinessCardsBookletPDF,
+  fetchLogoAsPngBuffer,
+} = require('./printable-card-utils');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 
 const defaultDb = createClient(
@@ -313,6 +319,161 @@ function makeHandler(db, emailClient) {
         expires_at: expiresAt,
         courtesy_days: COURTESY_DAYS,
       });
+    }
+
+    // ── resend_edit_link: reenvía el magic-link de edición a un miembro ──
+    // Para cuando el miembro pierde su email original. Reusa edit_token vigente
+    // si lo hay; si está caducado o falta, lo regenera (32 bytes hex, 7d).
+    // Espejo de admin-orgs.send_edit_link con guard cross-tenant: la card
+    // tiene que pertenecer al org del JWT (organization_id === session.orgId).
+    // El email va branded con el logo + color de la org (siempre desde el
+    // panel — todas las cards de aquí son B2B por definición).
+    if (action === 'resend_edit_link') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      const { data: card, error: cardErr } = await db
+        .from('cards')
+        .select('slug, nombre, email, idioma, organization_id, edit_token, edit_token_expires_at')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (cardErr) return jsonResponse(500, { error: cardErr.message });
+      if (!card)   return jsonResponse(404, { error: 'card no encontrada' });
+      if (card.organization_id !== org.id) {
+        return jsonResponse(403, { error: 'esta card no pertenece a tu organización' });
+      }
+      if (!card.email) {
+        return jsonResponse(400, { error: 'la card no tiene email registrado' });
+      }
+
+      let token = card.edit_token;
+      const expired = !card.edit_token_expires_at || new Date(card.edit_token_expires_at) < new Date();
+      const tokenUpdate = {};
+      if (!token || expired) {
+        token = crypto.randomBytes(32).toString('hex');
+        tokenUpdate.edit_token = token;
+        tokenUpdate.edit_token_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+      const editUrl = `${siteUrl}/${idioma}/editar?slug=${card.slug}&token=${token}`;
+
+      // Branded siempre — el cliente solo opera sobre cards de su propia org.
+      const invite = buildInviteEmail({
+        orgName:    org.name,
+        orgLogoUrl: org.logo_url || null,
+        orgColor:   org.color_primary || null,
+        nombre:     card.nombre,
+        editUrl,
+      });
+      const prefix = idioma === 'ca' ? '[Reenviament]' : '[Reenvío]';
+
+      try {
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>',
+          to: card.email,
+          subject: `${prefix} ${invite.subject}`,
+          html: invite.html,
+        });
+      } catch (err) {
+        console.error(`org-panel resend_edit_link: email a ${card.email} falló:`, err.message);
+        return jsonResponse(500, { error: 'No se pudo enviar el email' });
+      }
+
+      const { error: updErr } = await db
+        .from('cards')
+        .update({ edit_link_sent_at: new Date().toISOString(), ...tokenUpdate })
+        .eq('slug', card_slug);
+      if (updErr) {
+        console.warn('org-panel resend_edit_link: no se pudo marcar edit_link_sent_at:', updErr.message);
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        card_slug,
+        email: card.email,
+        sent_at: new Date().toISOString(),
+      });
+    }
+
+    // ── download_member_card: PDF 85×55mm de UN miembro del equipo ──
+    // Mismo render que adjunta el welcome kit B2B (buildBusinessCardPDF
+    // con logo + color de la org). Guard cross-tenant: solo cards del
+    // org del JWT. base64 dentro de JSON para no romper el dispatcher.
+    if (action === 'download_member_card') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+
+      const { data: card, error: cardErr } = await db
+        .from('cards')
+        .select('slug, nombre, tagline, whatsapp, email, direccion, organization_id, status')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (cardErr) return jsonResponse(500, { error: cardErr.message });
+      if (!card)   return jsonResponse(404, { error: 'card no encontrada' });
+      if (card.organization_id !== org.id) {
+        return jsonResponse(403, { error: 'esta card no pertenece a tu organización' });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      const logoBuffer = org.logo_url
+        ? await fetchLogoAsPngBuffer(org.logo_url).catch(() => null)
+        : null;
+
+      try {
+        const pdfBuffer = await buildBusinessCardPDF({ card, org, logoBuffer, siteUrl });
+        return jsonResponse(200, {
+          ok: true,
+          filename: `tarjeta-${card.slug}.pdf`,
+          base64: pdfBuffer.toString('base64'),
+        });
+      } catch (err) {
+        console.error('org-panel download_member_card: render falló:', err.message);
+        return jsonResponse(500, { error: 'No se pudo generar el PDF' });
+      }
+    }
+
+    // ── download_team_cards: PDF booklet con UNA tarjeta 85×55mm por miembro ──
+    // Para que el cliente pueda imprimir tarjetas para todo su equipo antes
+    // de un evento sin pedirle al founder que se lo prepare. El org slug es
+    // el del JWT — el body NO lo lleva (a propósito: prevenir que un cliente
+    // pueda intentar descargar booklets de otra org pasando org_slug en body).
+    if (action === 'download_team_cards') {
+      const { data: cards, error: cardsErr } = await db
+        .from('cards')
+        .select('slug, nombre, tagline, whatsapp, email, direccion')
+        .eq('organization_id', org.id)
+        .is('deleted_at', null)
+        .eq('status', 'active')
+        .order('nombre', { ascending: true });
+      if (cardsErr) return jsonResponse(500, { error: cardsErr.message });
+      if (!cards || !cards.length) {
+        return jsonResponse(400, { error: 'tu equipo no tiene profesionales activos todavía' });
+      }
+
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      try {
+        const pdfBuffer = await buildBusinessCardsBookletPDF({ cards, org, siteUrl });
+        return jsonResponse(200, {
+          ok: true,
+          filename: `tarjetas-${org.slug}.pdf`,
+          base64: pdfBuffer.toString('base64'),
+          count: cards.length,
+        });
+      } catch (err) {
+        console.error('org-panel download_team_cards: render del booklet falló:', err.message);
+        return jsonResponse(500, { error: 'No se pudo generar el PDF' });
+      }
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });

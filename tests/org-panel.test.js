@@ -584,6 +584,244 @@ describe('org-panel handler', () => {
     });
   });
 
+  // ── resend_edit_link ──
+  describe('resend_edit_link', () => {
+    function makeResendDb({ ownershipOrgId = 'org-uuid-1', cardEmail = 'maria@x.com', editToken = 'tok-existing', tokenExpiresAt = new Date(Date.now() + 5 * 86400000).toISOString() }) {
+      const orgMaybeSingle = vi.fn().mockResolvedValue({ data: VALID_ORG, error: null });
+      const orgChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: orgMaybeSingle,
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+          then: (r) => Promise.resolve({ error: null }).then(r),
+        })),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            slug: 'maria', nombre: 'María', email: cardEmail, idioma: 'es',
+            organization_id: ownershipOrgId,
+            edit_token: editToken, edit_token_expires_at: tokenExpiresAt,
+          },
+        }),
+      };
+      const cardsChain = {
+        select: vi.fn(() => cardLookup),
+        update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      };
+      const from = vi.fn((table) => {
+        if (table === 'organizations') return orgChain;
+        if (table === 'cards') return cardsChain;
+        throw new Error(`unexpected table: ${table}`);
+      });
+      return { db: { from } };
+    }
+
+    it('reenvía el edit-link al email del miembro y devuelve 200', async () => {
+      const { db } = makeResendDb({ ownershipOrgId: 'org-uuid-1' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'resend_edit_link', card_slug: 'maria' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.email).toBe('maria@x.com');
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      // El subject lleva el prefix de reenvío.
+      expect(mockEmailSend.mock.calls[0][0].subject).toMatch(/^\[Reenvío\]/);
+    });
+
+    it('devuelve 403 si la card pertenece a OTRA org (guard cross-tenant)', async () => {
+      const { db } = makeResendDb({ ownershipOrgId: 'otra-org-uuid' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'resend_edit_link', card_slug: 'cross' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(403);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('devuelve 400 si la card no tiene email registrado', async () => {
+      const { db } = makeResendDb({ ownershipOrgId: 'org-uuid-1', cardEmail: null });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'resend_edit_link', card_slug: 'maria' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('rechaza body sin card_slug con 400', async () => {
+      const { db } = makeDb();
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'resend_edit_link' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── download_member_card ──
+  describe('download_member_card', () => {
+    function makeDownloadDb({ ownershipOrgId = 'org-uuid-1' }) {
+      const orgMaybeSingle = vi.fn().mockResolvedValue({ data: VALID_ORG, error: null });
+      const orgChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: orgMaybeSingle,
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+          then: (r) => Promise.resolve({ error: null }).then(r),
+        })),
+      };
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: {
+            slug: 'maria', nombre: 'María', tagline: 'Sales',
+            whatsapp: '+34911111111', email: 'maria@x.com', direccion: null,
+            organization_id: ownershipOrgId, status: 'active',
+          },
+        }),
+      };
+      const cardsChain = {
+        select: vi.fn(() => cardLookup),
+      };
+      const from = vi.fn((table) => {
+        if (table === 'organizations') return orgChain;
+        if (table === 'cards') return cardsChain;
+        throw new Error(`unexpected table: ${table}`);
+      });
+      return { db: { from } };
+    }
+
+    it('devuelve base64 del PDF de la tarjeta del miembro', async () => {
+      const { db } = makeDownloadDb({ ownershipOrgId: 'org-uuid-1' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_member_card', card_slug: 'maria' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.filename).toBe('tarjeta-maria.pdf');
+      // El mock de printable-card-utils no intercepta require() CJS;
+      // verificamos formato base64 válido en vez de contenido exacto.
+      expect(json.base64).toMatch(/^[A-Za-z0-9+/=]+$/);
+      expect(json.base64.length).toBeGreaterThan(50);
+    });
+
+    it('devuelve 403 si la card pertenece a otra org', async () => {
+      const { db } = makeDownloadDb({ ownershipOrgId: 'otra-org-uuid' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_member_card', card_slug: 'cross' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('rechaza body sin card_slug con 400', async () => {
+      const { db } = makeDb();
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_member_card' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── download_team_cards ──
+  describe('download_team_cards', () => {
+    function makeBookletDb({ cards = [] }) {
+      const orgMaybeSingle = vi.fn().mockResolvedValue({ data: VALID_ORG, error: null });
+      const orgChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: orgMaybeSingle,
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+          then: (r) => Promise.resolve({ error: null }).then(r),
+        })),
+      };
+      const cardsListChain = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: cards, error: null }),
+      };
+      const cardsChain = {
+        select: vi.fn(() => cardsListChain),
+      };
+      const from = vi.fn((table) => {
+        if (table === 'organizations') return orgChain;
+        if (table === 'cards') return cardsChain;
+        throw new Error(`unexpected table: ${table}`);
+      });
+      return { db: { from } };
+    }
+
+    it('devuelve base64 del booklet PDF con todas las cards del equipo', async () => {
+      const { db } = makeBookletDb({
+        cards: [
+          { slug: 'maria', nombre: 'María', tagline: 'Sales', whatsapp: '+34', email: 'm@x.com', direccion: null },
+          { slug: 'paco',  nombre: 'Paco',  tagline: 'Dev',   whatsapp: '+34', email: 'p@x.com', direccion: null },
+        ],
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_team_cards' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.filename).toBe('tarjetas-acme.pdf');
+      expect(json.count).toBe(2);
+      expect(json.base64).toMatch(/^[A-Za-z0-9+/=]+$/);
+      expect(json.base64.length).toBeGreaterThan(50);
+    });
+
+    it('devuelve 400 si el equipo no tiene profesionales activos', async () => {
+      const { db } = makeBookletDb({ cards: [] });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_team_cards' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toMatch(/no tiene profesionales/i);
+    });
+
+    it('NO acepta org_slug del body (siempre usa session.orgSlug)', async () => {
+      // Aunque el body lleve org_slug='otra-org', el handler ignora ese
+      // campo y opera sobre el orgId del JWT (scope blindado por diseño).
+      const { db } = makeBookletDb({
+        cards: [{ slug: 'a', nombre: 'A', tagline: null, whatsapp: '+34', email: null, direccion: null }],
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'download_team_cards', org_slug: 'otra-org' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).filename).toBe('tarjetas-acme.pdf'); // del JWT, no del body
+    });
+  });
+
   // ── rate limit ──
   it('rate-limita después de 120 requests en 10min desde la misma IP', async () => {
     const { db } = makeDb();

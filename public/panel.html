@@ -358,8 +358,13 @@
     <!-- ── Tab: Team ──────────────────────────────────── -->
     <div class="pp-tabpanel" data-tabpanel="team" style="display:none">
       <section class="pp-section">
-        <h2 class="pp-section__title">Tu equipo</h2>
-        <p class="pp-section__sub">Profesionales activos en tu organización, ordenados por visitas recientes.</p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
+          <div>
+            <h2 class="pp-section__title">Tu equipo</h2>
+            <p class="pp-section__sub" style="margin-bottom:0">Profesionales activos en tu organización, ordenados por visitas recientes.</p>
+          </div>
+          <button type="button" class="pp-btn pp-btn--ghost" id="downloadTeamCardsBtn" onclick="window.__downloadTeamCards(this)" title="PDF con la tarjeta de visita 85×55mm de cada miembro. Una página por persona, listo para imprenta.">📥 Descargar tarjetas (PDF)</button>
+        </div>
         <div style="overflow-x:auto">
           <table class="pp-table">
             <thead><tr>
@@ -710,12 +715,79 @@
         <td class="pp-table__num">${m.visits_30d}</td>
         <td class="pp-table__num">${m.visits_all}</td>
         <td style="white-space:nowrap">
-          <a class="pp-table__link" href="/c/${safeSlug}" target="_blank" rel="noopener">Ver ↗</a>
-          <button class="pp-table__link pp-table__link--danger" style="margin-left:.75rem;background:none;border:none;cursor:pointer;font:inherit;color:#B0392A;padding:0" onclick="window.__offboardMember('${safeSlug}','${safeName}', this)" title="Sacar del equipo. Su tarjeta sigue activa como autónomo individual con 90 días de cortesía gratis.">Dar de baja</button>
+          <a class="pp-table__link" href="/c/${safeSlug}" target="_blank" rel="noopener" title="Ver tarjeta pública">Ver ↗</a>
+          <button class="pp-table__link" style="margin-left:.65rem;background:none;border:none;cursor:pointer;font:inherit;color:var(--color-verde-dark,#00A865);padding:0" onclick="window.__downloadMemberCard('${safeSlug}','${safeName}', this)" title="Descargar la tarjeta de visita 85×55mm de este miembro en PDF.">🪪 PDF</button>
+          <button class="pp-table__link" style="margin-left:.65rem;background:none;border:none;cursor:pointer;font:inherit;color:var(--color-verde-dark,#00A865);padding:0" onclick="window.__resendEditLink('${safeSlug}','${safeName}', this)" title="Reenviar al miembro el enlace para editar su perfil. Útil si perdió el email original.">✉️ Reenviar</button>
+          <button class="pp-table__link pp-table__link--danger" style="margin-left:.65rem;background:none;border:none;cursor:pointer;font:inherit;color:#B0392A;padding:0" onclick="window.__offboardMember('${safeSlug}','${safeName}', this)" title="Sacar del equipo. Su tarjeta sigue activa como autónomo individual con 90 días de cortesía gratis.">Dar de baja</button>
         </td>
       </tr>`;
     }).join('');
   }
+
+  // Convierte un base64 a Blob + dispara descarga. Util compartida para
+  // los dos endpoints que devuelven PDF (member + booklet).
+  function downloadBase64Pdf(base64, filename) {
+    const byteChars = atob(base64);
+    const bytes = new Uint8Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  // Descarga la tarjeta de visita 85×55mm de UN miembro en PDF.
+  window.__downloadMemberCard = async function(slug, nombre, btn) {
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      const json = await api('download_member_card', { card_slug: slug });
+      downloadBase64Pdf(json.base64, json.filename || ('tarjeta-' + slug + '.pdf'));
+      showToast('ok', `Tarjeta de ${nombre} descargada.`);
+    } catch (e) {
+      showToast('err', 'No se pudo generar el PDF: ' + e.message);
+    } finally {
+      if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+    }
+  };
+
+  // Reenvía el magic-link de edición al email del miembro. Útil cuando
+  // perdió el email original. El backend reusa edit_token vigente o lo
+  // regenera si está caducado.
+  window.__resendEditLink = async function(slug, nombre, btn) {
+    if (!confirm(`Reenviar a ${nombre} el enlace para editar su perfil.\n\nLe llegará a su email registrado. Si el enlace anterior estaba caducado, se genera uno nuevo de 7 días.\n\n¿Confirmar?`)) return;
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      const json = await api('resend_edit_link', { card_slug: slug });
+      showToast('ok', `Enlace reenviado a ${json.email || nombre}.`);
+    } catch (e) {
+      showToast('err', 'No se pudo reenviar: ' + e.message);
+    } finally {
+      if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+    }
+  };
+
+  // Descarga un booklet PDF con la tarjeta 85×55mm de cada miembro activo
+  // del equipo. Una página por persona, ordenado alfabéticamente.
+  window.__downloadTeamCards = async function(btn) {
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Generando PDF…'; }
+    try {
+      const json = await api('download_team_cards');
+      downloadBase64Pdf(json.base64, json.filename || 'tarjetas-equipo.pdf');
+      showToast('ok', `Booklet con ${json.count} tarjeta${json.count === 1 ? '' : 's'} descargado.`);
+    } catch (e) {
+      showToast('err', 'No se pudo generar el booklet: ' + e.message);
+    } finally {
+      if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+    }
+  };
 
   // Expuesta global para que el onclick inline la encuentre. La SPA es
   // vanilla JS sin event delegation; mantenemos el patrón existente.
