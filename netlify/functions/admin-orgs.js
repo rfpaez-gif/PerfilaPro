@@ -339,6 +339,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       const token = signPanelSession({ orgId: org.id, orgSlug: org.slug, actor: 'founder' });
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
       return jsonResponse(200, {
+        ok: true,
         url: `${siteUrl}/panel.html?session=${token}`,
         org_name: org.name,
       });

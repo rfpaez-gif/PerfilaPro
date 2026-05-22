@@ -718,6 +718,9 @@ describe('admin-orgs handler', () => {
       const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'iris-energia' } }));
       expect(res.statusCode).toBe(200);
       const body = JSON.parse(res.body);
+      // Convención del handler: callAdmin del frontend exige json.ok === true,
+      // no basta con res.ok. Sin ok=true el frontend lanza "HTTP 200" engañoso.
+      expect(body.ok).toBe(true);
       expect(body.org_name).toBe('Iris Energía');
       expect(body.url).toMatch(/^https:\/\/perfilapro\.es\/panel\.html\?session=/);
 
