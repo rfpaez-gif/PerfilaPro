@@ -899,6 +899,158 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── list_offboarded_members ──
+  describe('list_offboarded_members', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+    });
+
+    it('devuelve cards offboarded en últimos 90d con flag restorable', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'uuid-aossa', name: 'AOSSA' } }),
+      };
+      const cardsChain = {
+        eq: vi.fn().mockReturnThis(),
+        gte: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: [
+            { slug: 'maria', nombre: 'María', email: 'm@x.com', offboarded_at: '2026-05-01T00:00:00Z', offboarded_by: 'client', organization_id: null, expires_at: '2026-08-01T00:00:00Z' },
+            { slug: 'paco', nombre: 'Paco',  email: 'p@x.com', offboarded_at: '2026-04-15T00:00:00Z', offboarded_by: 'founder', organization_id: 'otra-org', expires_at: '2026-07-15T00:00:00Z' },
+          ],
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        if (table === 'cards') return { select: vi.fn(() => cardsChain) };
+        return {};
+      });
+
+      const res = await handler(buildEvent({
+        body: { action: 'list_offboarded_members', slug: 'aossa' },
+      }));
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.members).toHaveLength(2);
+      expect(body.members[0].restorable).toBe(true);  // organization_id NULL
+      expect(body.members[1].restorable).toBe(false); // ya re-asignada
+      expect(body.window_days).toBe(90);
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      const res = await handler(buildEvent({ body: { action: 'list_offboarded_members', slug: 'fantasma' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('rechaza slug inválido con 400', async () => {
+      const res = await handler(buildEvent({ body: { action: 'list_offboarded_members', slug: 'AOSSA!' } }));
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  // ── restore_member ──
+  describe('restore_member', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const restoreHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      process.env.SITE_URL = 'https://perfilapro.es';
+      mockEmailSend.mockResolvedValue({ id: 'msg-restore' });
+    });
+
+    function withCardAndOrg(cardData, orgData) {
+      const cardLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: cardData }),
+      };
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: orgData }),
+      };
+      const updateChain = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return {
+          select: vi.fn(() => cardLookup),
+          update: vi.fn(() => updateChain),
+        };
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+    }
+
+    it('restaura card huérfana a su org original y envía email al trabajador', async () => {
+      withCardAndOrg(
+        {
+          slug: 'maria', nombre: 'María López', email: 'maria@x.com', idioma: 'es',
+          organization_id: null,
+          previous_organization_id: 'uuid-aossa',
+          offboarded_at: '2026-05-15T00:00:00Z',
+        },
+        { id: 'uuid-aossa', name: 'AOSSA' }
+      );
+
+      const res = await restoreHandler(buildEvent({
+        body: { action: 'restore_member', card_slug: 'maria' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).org_name).toBe('AOSSA');
+      expect(mockEmailSend).toHaveBeenCalledOnce();
+      expect(mockEmailSend.mock.calls[0][0].subject).toMatch(/vuelves a formar parte/i);
+    });
+
+    it('rechaza con 400 si la card no está offboarded', async () => {
+      withCardAndOrg(
+        { slug: 'x', organization_id: 'uuid-org', previous_organization_id: null, offboarded_at: null },
+        null
+      );
+      const res = await restoreHandler(buildEvent({
+        body: { action: 'restore_member', card_slug: 'x' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('rechaza con 409 si la card ya pertenece a otra org', async () => {
+      withCardAndOrg(
+        {
+          slug: 'movida', organization_id: 'uuid-otra-org',
+          previous_organization_id: 'uuid-aossa',
+          offboarded_at: '2026-05-15T00:00:00Z',
+        },
+        null
+      );
+      const res = await restoreHandler(buildEvent({
+        body: { action: 'restore_member', card_slug: 'movida' },
+      }));
+      expect(res.statusCode).toBe(409);
+    });
+
+    it('rechaza requests sin contraseña con 401', async () => {
+      const res = await restoreHandler(buildEvent({
+        body: { action: 'restore_member', card_slug: 'x' },
+        password: '',
+      }));
+      expect(res.statusCode).toBe(401);
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {

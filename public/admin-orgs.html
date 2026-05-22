@@ -388,6 +388,23 @@
           <p class="pp-empty">Carga una org para ver sus profesionales.</p>
         </div>
       </section>
+
+      <!-- ── Drawer: miembros dados de baja en últimos 90d ───── -->
+      <section class="pp-section" id="offboardedSection" style="display:none">
+        <details>
+          <summary style="cursor:pointer;font-weight:600;font-size:14px;color:var(--color-tinta);margin-bottom:.25rem">
+            <span id="offboardedSummary">Miembros dados de baja recientemente</span>
+          </summary>
+          <p class="pp-section__hint" style="margin:.5rem 0 .75rem">
+            Cards que salieron del equipo en los últimos 90 días. Puedes restaurarlas
+            a la org si fue un error — solo si siguen sin vincular a otra org. Tras la
+            ventana de 90 días, la card expira como autónomo y deja de aparecer aquí.
+          </p>
+          <div id="offboardedList">
+            <p class="pp-empty">Cargando…</p>
+          </div>
+        </details>
+      </section>
     </div>
 
     <!-- ── Columna derecha: preview ─────────────────── -->
@@ -828,6 +845,7 @@ function exitOrgContext() {
   cardStatsBySlug = {};
   resetForm();
   $('assignSection').style.display = 'none';
+  $('offboardedSection').style.display = 'none';
   setPreview(null);
   renderOrgsTable();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -924,6 +942,69 @@ function showAssignSection(org) {
   $('assignSection').style.display = 'block';
   $('assignOrgName').textContent = org.name;
   renderCardsList();
+  loadOffboardedMembers(org.slug);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Miembros offboarded recientemente (drawer en la org)
+   ─────────────────────────────────────────────────────────── */
+async function loadOffboardedMembers(slug) {
+  const section = $('offboardedSection');
+  const list = $('offboardedList');
+  const summary = $('offboardedSummary');
+  section.style.display = 'block';
+  list.innerHTML = '<p class="pp-empty">Cargando…</p>';
+  try {
+    const json = await callAdmin({ action: 'list_offboarded_members', slug });
+    const members = json.members || [];
+    summary.textContent = members.length
+      ? `Miembros dados de baja recientemente (${members.length})`
+      : 'Miembros dados de baja recientemente';
+    if (!members.length) {
+      list.innerHTML = '<p class="pp-empty">Sin bajas recientes.</p>';
+      return;
+    }
+    list.innerHTML = `<table class="pp-orgs-table" style="margin-top:.5rem">
+      <thead><tr>
+        <th>Miembro</th>
+        <th>Dado de baja</th>
+        <th>Por</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${members.map(m => {
+        const safeSlug = escapeHtml(m.slug);
+        const safeName = escapeHtml(m.nombre || '—');
+        const dateStr = m.offboarded_at ? new Date(m.offboarded_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—';
+        const actor = m.offboarded_by === 'client' ? 'cliente' : 'founder';
+        const restoreCell = m.restorable
+          ? `<button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="restoreMember('${safeSlug}','${safeName}', this)" title="Devolver a este miembro al equipo de la org. Plan b2b, expires_at NULL, email de aviso al trabajador.">↩ Restaurar</button>`
+          : `<span class="pp-section__hint" title="Ya pertenece a otra org tras la baja — no se puede restaurar sin desvincularla primero">Re-asignada</span>`;
+        return `<tr>
+          <td>${safeName}<br><small style="color:var(--color-gris-500);font-family:var(--font-mono);font-size:10px">${safeSlug}</small></td>
+          <td><span class="pp-orgs-table__slug">${dateStr}</span></td>
+          <td><span class="pp-orgs-table__slug">${actor}</span></td>
+          <td>${restoreCell}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch (err) {
+    list.innerHTML = `<p class="pp-empty">Error: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function restoreMember(cardSlug, name, btn) {
+  if (!confirm(`Vas a restaurar a ${name} al equipo de la org.\n\nPlan b2b, sin expires_at, branding de la org aplicado. El trabajador recibe un email de aviso ("ha sido un error, vuelves a estar en el equipo").\n\n¿Confirmar?`)) return;
+  const original = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Restaurando…'; }
+  try {
+    const json = await callAdmin({ action: 'restore_member', card_slug: cardSlug });
+    toast(`${name} restaurado/a al equipo de ${json.org_name || 'la org'}`, 'ok');
+    if (selectedOrgSlug) await loadOffboardedMembers(selectedOrgSlug);
+    await loadCards();
+  } catch (err) {
+    toast('Error restaurando: ' + err.message, 'err');
+    if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+  }
 }
 
 $('cardsSearch').addEventListener('input', renderCardsList);

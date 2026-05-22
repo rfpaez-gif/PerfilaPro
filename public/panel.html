@@ -702,15 +702,43 @@
       const avatar = m.foto_url
         ? `<img class="pp-table__avatar" src="${escapeHtml(m.foto_url)}" alt="">`
         : `<span class="pp-table__avatar"></span>`;
+      const safeSlug = escapeHtml(m.slug);
+      const safeName = escapeHtml(m.nombre || '');
       return `<tr>
         <td>${avatar}<strong>${escapeHtml(m.nombre || '—')}</strong>${m.tagline ? `<br><small style="color:#6B7280">${escapeHtml(m.tagline)}</small>` : ''}</td>
         <td class="pp-table__num">${m.visits_7d}</td>
         <td class="pp-table__num">${m.visits_30d}</td>
         <td class="pp-table__num">${m.visits_all}</td>
-        <td><a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver tarjeta ↗</a></td>
+        <td style="white-space:nowrap">
+          <a class="pp-table__link" href="/c/${safeSlug}" target="_blank" rel="noopener">Ver ↗</a>
+          <button class="pp-table__link pp-table__link--danger" style="margin-left:.75rem;background:none;border:none;cursor:pointer;font:inherit;color:#B0392A;padding:0" onclick="window.__offboardMember('${safeSlug}','${safeName}', this)" title="Sacar del equipo. Su tarjeta sigue activa como autónomo individual con 90 días de cortesía gratis.">Dar de baja</button>
+        </td>
       </tr>`;
     }).join('');
   }
+
+  // Expuesta global para que el onclick inline la encuentre. La SPA es
+  // vanilla JS sin event delegation; mantenemos el patrón existente.
+  window.__offboardMember = async function(slug, nombre, btn) {
+    const confirmMsg = `Vas a dar de baja a ${nombre} del equipo.\n\n` +
+      `Su tarjeta seguirá activa pública (sus contactos no la pierden) como ` +
+      `autónomo individual con 90 días de cortesía gratis. Recibirá un email ` +
+      `avisando del cambio.\n\n` +
+      `¿Confirmar?`;
+    if (!confirm(confirmMsg)) return;
+
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      await api('offboard_member', { card_slug: slug });
+      showToast('ok', `${nombre} ha salido del equipo. Recibirá el email con sus 90 días de cortesía.`);
+      // Recargamos el dashboard para que la tabla refleje el cambio.
+      await loadDashboard();
+    } catch (e) {
+      showToast('err', 'No se pudo dar de baja: ' + e.message);
+      if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
+    }
+  };
 
   async function loadDashboard() {
     try {

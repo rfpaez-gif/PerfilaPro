@@ -490,6 +490,100 @@ describe('org-panel handler', () => {
     });
   });
 
+  // ── offboard_member ──
+  describe('offboard_member', () => {
+    /**
+     * Mock específico para offboard. El handler hace 3 SELECTs en
+     * 'cards' (lookup de pertenencia, lookup del lib, sin más) + 1
+     * UPDATE. La pertenencia es la primera lookup; controlamos su
+     * organization_id para probar el guard.
+     */
+    function makeOffboardDb({ ownershipOrgId = 'org-uuid-1', cardFull = null }) {
+      const orgMaybeSingle = vi.fn().mockResolvedValue({ data: VALID_ORG, error: null });
+      const orgChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: orgMaybeSingle,
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+          then: (r) => Promise.resolve({ error: null }).then(r),
+        })),
+      };
+
+      // Pertenencia (1st cards lookup) + full lookup desde lib (2nd).
+      const cardLookups = [
+        { data: { slug: 'maria', organization_id: ownershipOrgId }, error: null },
+        { data: cardFull || {
+          slug: 'maria', nombre: 'María', email: null, idioma: 'es',
+          organization_id: ownershipOrgId, expires_at: null,
+          edit_token: 'tok', edit_token_expires_at: new Date(Date.now() + 5 * 86400000).toISOString(),
+        }, error: null },
+      ];
+      let cardSelectIdx = 0;
+      const cardsChain = {
+        select: vi.fn(() => ({
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(cardLookups[cardSelectIdx++] || cardLookups[cardLookups.length - 1])),
+        })),
+        update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      };
+
+      const from = vi.fn((table) => {
+        if (table === 'organizations') return orgChain;
+        if (table === 'cards') return cardsChain;
+        throw new Error(`unexpected table: ${table}`);
+      });
+      return { db: { from }, cardsChain };
+    }
+
+    it('da de baja a un miembro de la propia org (delega al lib y devuelve 200)', async () => {
+      const { db } = makeOffboardDb({ ownershipOrgId: 'org-uuid-1' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'offboard_member', card_slug: 'maria' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.courtesy_days).toBe(90);
+      expect(json.card_slug).toBe('maria');
+    });
+
+    it('devuelve 403 si la card pertenece a OTRA org (guard de cross-tenant)', async () => {
+      const { db } = makeOffboardDb({ ownershipOrgId: 'otra-org-uuid' });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'offboard_member', card_slug: 'cross' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(403);
+      expect(JSON.parse(res.body).error).toMatch(/no pertenece a tu organización/i);
+    });
+
+    it('rechaza body sin card_slug con 400', async () => {
+      const { db } = makeDb();
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'offboard_member' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza JWT inválido con 401 (no llega siquiera al guard)', async () => {
+      const { db } = makeDb();
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'offboard_member', card_slug: 'maria' },
+        // sin token
+      }));
+      expect(res.statusCode).toBe(401);
+    });
+  });
+
   // ── rate limit ──
   it('rate-limita después de 120 requests en 10min desde la misma IP', async () => {
     const { db } = makeDb();

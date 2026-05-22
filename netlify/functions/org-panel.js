@@ -26,7 +26,8 @@ const {
 } = require('./lib/org-utils');
 const { computeOrgStats } = require('./lib/org-stats-utils');
 const { inviteTeamMembers } = require('./lib/team-invite');
-const { buildInviteEmail } = require('./admin-orgs');
+const { buildInviteEmail, buildOffboardEmail } = require('./admin-orgs');
+const { offboardCard, COURTESY_DAYS } = require('./lib/card-offboard');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 
 const defaultDb = createClient(
@@ -240,6 +241,77 @@ function makeHandler(db, emailClient) {
         org: { slug: org.slug, name: org.name },
         results: { ok, failed },
         summary: `${ok.length} de ${team.length} invitaciones enviadas${failed.length ? `, ${failed.length} con error` : ''}`,
+      });
+    }
+
+    // ── offboard_member: el cliente saca a un miembro de su equipo ──
+    // SCOPED al org del JWT: antes del UPDATE comprobamos que la card
+    // pertenece a esta org (organization_id === session.orgId). Aunque
+    // el cliente manipulara el body con un slug de otra org, fall.
+    //
+    // Semántica del offboard (compartida con admin-orgs.offboard_card):
+    // la card NO se borra ni se oculta. Sale del equipo, queda como
+    // autónomo individual 90d gratis. URL pública sigue activa para
+    // que sus contactos no la pierdan. Trail (previous_organization_id
+    // + offboarded_at + offboarded_by='client') permite restore desde
+    // admin-orgs si el cliente lo pidió por error.
+    if (action === 'offboard_member') {
+      const { card_slug } = body;
+      if (typeof card_slug !== 'string' || !card_slug) {
+        return jsonResponse(400, { error: 'card_slug requerido' });
+      }
+      if (!emailClient) {
+        return jsonResponse(500, { error: 'Resend no configurado' });
+      }
+
+      // Verificamos pertenencia ANTES de invocar el helper, sin esto un
+      // JWT del panel cliente podría offboardear cards de otras orgs.
+      const { data: card, error: cardErr } = await db
+        .from('cards')
+        .select('slug, organization_id')
+        .eq('slug', card_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (cardErr) return jsonResponse(500, { error: cardErr.message });
+      if (!card)   return jsonResponse(404, { error: 'card no encontrada' });
+      if (card.organization_id !== org.id) {
+        return jsonResponse(403, { error: 'esta card no pertenece a tu organización' });
+      }
+
+      const result = await offboardCard(db, { cardSlug: card_slug, actor: 'client' });
+      if (!result.ok) return jsonResponse(result.status, { error: result.error });
+      const { card: full, orgName, editToken, expiresAt } = result;
+
+      // Email al trabajador (best-effort, mismo patrón que admin-orgs).
+      if (full.email) {
+        const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+        const idioma = full.idioma === 'ca' ? 'ca' : 'es';
+        const cardUrl = `${siteUrl}/c/${full.slug}`;
+        const editUrl = `${siteUrl}/${idioma}/editar?slug=${full.slug}&token=${editToken}`;
+        const { subject, html } = buildOffboardEmail({
+          orgName,
+          nombre: full.nombre,
+          idioma,
+          cardUrl,
+          editUrl,
+        });
+        try {
+          await emailClient.emails.send({
+            from: 'PerfilaPro <hola@perfilapro.es>',
+            to: full.email,
+            subject,
+            html,
+          });
+        } catch (err) {
+          console.error(`org-panel offboard_member: email a ${full.email} falló:`, err.message);
+        }
+      }
+
+      return jsonResponse(200, {
+        ok: true,
+        card_slug,
+        expires_at: expiresAt,
+        courtesy_days: COURTESY_DAYS,
       });
     }
 
