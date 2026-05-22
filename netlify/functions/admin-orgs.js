@@ -21,6 +21,7 @@ const {
   fetchLogoAsPngBuffer,
 } = require('./printable-card-utils');
 const { inviteTeamMembers } = require('./lib/team-invite');
+const { signPanelSession } = require('./lib/panel-auth');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -313,6 +314,34 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         .is('deleted_at', null);
       if (error) return jsonResponse(500, { error: error.message });
       return jsonResponse(200, { ok: true });
+    }
+
+    // ── get_panel_url: firma un JWT corto (1h, actor=founder) y devuelve la
+    // URL del panel del cliente para que el founder lo abra "como si fuera
+    // el cliente" — soporte / demos / troubleshooting. El claim actor=founder
+    // queda en el JWT (no en query string, no manipulable) para que panel.html
+    // pinte la franja "operando como founder · [org] · Cerrar". TTL corto
+    // porque es una sesión operativa, no persistente: si el founder necesita
+    // más, regenera el link en 5 segundos.
+    if (action === 'get_panel_url') {
+      const { slug } = body;
+      if (!isValidOrgSlug(slug)) return jsonResponse(400, { error: 'slug inválido' });
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name')
+        .eq('slug', slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
+
+      const token = signPanelSession({ orgId: org.id, orgSlug: org.slug, actor: 'founder' });
+      const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+      return jsonResponse(200, {
+        url: `${siteUrl}/panel.html?session=${token}`,
+        org_name: org.name,
+      });
     }
 
     // ── delete_org: soft-delete (setea deleted_at) ──

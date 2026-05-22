@@ -103,6 +103,35 @@ describe('signPanelSession / verifyPanelSession', () => {
     expect(() => signPanelSession({ orgId: 'x' })).toThrow();
     expect(() => signPanelSession({ orgSlug: 'y' })).toThrow();
   });
+
+  it('actor=founder se persiste en el JWT y verifyPanelSession lo devuelve', () => {
+    const token = signPanelSession({ orgId: 'uuid-1', orgSlug: 'acme', actor: 'founder' });
+    const decoded = verifyPanelSession(token);
+    expect(decoded).toEqual({ orgId: 'uuid-1', orgSlug: 'acme', actor: 'founder' });
+  });
+
+  it('sin actor el JWT verifica sin claim actor (carril cliente normal)', () => {
+    const token = signPanelSession({ orgId: 'uuid-1', orgSlug: 'acme' });
+    const decoded = verifyPanelSession(token);
+    expect(decoded).toEqual({ orgId: 'uuid-1', orgSlug: 'acme' });
+    expect(decoded.actor).toBeUndefined();
+  });
+
+  it('actor con valor distinto de "founder" se ignora (no se firma)', () => {
+    const token = signPanelSession({ orgId: 'uuid-1', orgSlug: 'acme', actor: 'admin' });
+    const decoded = verifyPanelSession(token);
+    expect(decoded.actor).toBeUndefined();
+  });
+
+  it('token founder caduca antes que el del cliente (TTL 1h vs 7d)', () => {
+    const jwt = require('jsonwebtoken');
+    const founderToken = signPanelSession({ orgId: 'uuid-1', orgSlug: 'acme', actor: 'founder' });
+    const clientToken = signPanelSession({ orgId: 'uuid-1', orgSlug: 'acme' });
+    const founderExp = jwt.decode(founderToken).exp;
+    const clientExp = jwt.decode(clientToken).exp;
+    // Cliente expira ≥ 6 días después que founder.
+    expect(clientExp - founderExp).toBeGreaterThan(6 * 24 * 3600);
+  });
 });
 
 describe('authFromEvent', () => {

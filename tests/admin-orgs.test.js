@@ -693,6 +693,86 @@ describe('admin-orgs handler', () => {
     });
   });
 
+  // ── get_panel_url ──
+  describe('get_panel_url', () => {
+    beforeEach(() => {
+      process.env.ORG_PANEL_JWT_SECRET = 'test-org-panel-secret';
+      process.env.SITE_URL = 'https://perfilapro.es';
+      delete process.env.URL;
+    });
+
+    it('firma un JWT actor=founder y devuelve la URL del panel', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía' },
+          error: null,
+        }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+
+      const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'iris-energia' } }));
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.org_name).toBe('Iris Energía');
+      expect(body.url).toMatch(/^https:\/\/perfilapro\.es\/panel\.html\?session=/);
+
+      // Verifica que el JWT lleva el claim actor=founder.
+      const token = body.url.split('session=')[1];
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, 'test-org-panel-secret');
+      expect(decoded.actor).toBe('founder');
+      expect(decoded.orgSlug).toBe('iris-energia');
+      expect(decoded.orgId).toBe('uuid-iris');
+      expect(decoded.purpose).toBe('org-panel');
+    });
+
+    it('devuelve 404 si la org no existe', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'no-existe' } }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('devuelve 404 si la org está soft-deleted (la query filtra deleted_at IS NULL)', async () => {
+      // El handler usa .is('deleted_at', null) en la query — mockeamos lookup
+      // como si la org soft-deleted no apareciera (mismo comportamiento real).
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
+        return {};
+      });
+      const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'iris-energia' } }));
+      expect(res.statusCode).toBe(404);
+      expect(orgLookup.is).toHaveBeenCalledWith('deleted_at', null);
+    });
+
+    it('rechaza slug inválido con 400', async () => {
+      const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'IRIS!' } }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('rechaza requests sin contraseña con 401 (no expone URL impersonate)', async () => {
+      const res = await handler(buildEvent({ body: { action: 'get_panel_url', slug: 'iris-energia' }, password: '' }));
+      expect(res.statusCode).toBe(401);
+    });
+  });
+
   // ── delete_org ──
   describe('delete_org', () => {
     it('soft-deleta la org y desvincula sus cards', async () => {

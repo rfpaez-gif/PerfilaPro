@@ -161,6 +161,21 @@ describe('org-panel handler', () => {
     expect(res.statusCode).toBe(401);
   });
 
+  it('JWT founder (actor=founder) opera igual que cliente normal', async () => {
+    const founderToken = signPanelSession({
+      orgId: 'org-uuid-1',
+      orgSlug: 'acme',
+      actor: 'founder',
+    });
+    const { db } = makeDb();
+    const handler = makeHandler(db, mockEmail);
+    const res = await handler(buildEvent({ body: { action: 'get_org' }, token: founderToken }));
+    // get_org devuelve 200 igual que con JWT cliente — el founder hereda los
+    // mismos permisos scoped a la org del JWT. La diferencia (TTL corto +
+    // franja "operando como founder") vive en el frontend.
+    expect(res.statusCode).toBe(200);
+  });
+
   it('rechaza body no-JSON con 400', async () => {
     const { db } = makeDb();
     const handler = makeHandler(db, mockEmail);

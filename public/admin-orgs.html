@@ -796,6 +796,7 @@ function renderOrgsTable() {
       <td><div class="pp-orgs-table__actions">
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="selectOrg('${safeSlug}')">Editar</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/e/${safeSlug}','_blank')">Abrir</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openPanelAsFounder('${safeSlug}', this)" title="Abrir el panel de esta organización como si fueras el cliente. Sesión de 1 hora.">🔑 Panel</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openInviteModal('${safeSlug}','${safeName}')">Invitar</button>
         <button class="pp-btn pp-btn--danger pp-btn--sm" onclick="deleteOrg('${safeSlug}','${safeName}')">Eliminar</button>
       </div></td>
@@ -842,6 +843,31 @@ async function deleteOrg(slug, name) {
     toast(`Org "${name}" eliminada`, 'ok');
   } catch (err) {
     toast('Error borrando: ' + err.message, 'err');
+  }
+}
+
+// Abre el panel del cliente con un JWT de impersonación firmado por el
+// founder (TTL 1h, claim actor=founder). El propio panel detecta el claim
+// y pinta una franja "operando como founder · [org] · Cerrar". Sirve para
+// soporte ("muéstrame qué ves") y demos a prospectos sin tocar el flujo
+// de magic-link al cliente real.
+async function openPanelAsFounder(slug, btn) {
+  const original = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  try {
+    const json = await callAdmin({ action: 'get_panel_url', slug });
+    if (!json.url) throw new Error('respuesta sin url');
+    const win = window.open(json.url, '_blank', 'noopener,noreferrer');
+    if (!win) {
+      // Bloqueador de popups: caemos a mostrar la URL en el toast para copy-paste.
+      toast(`Panel listo. Copia y pega: ${json.url}`, 'ok');
+    } else {
+      toast(`Abriendo panel de ${json.org_name || slug}…`, 'ok');
+    }
+  } catch (err) {
+    toast('Error abriendo panel: ' + err.message, 'err');
+  } finally {
+    if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
   }
 }
 

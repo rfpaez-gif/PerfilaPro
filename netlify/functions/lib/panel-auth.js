@@ -16,6 +16,7 @@
 const jwt = require('jsonwebtoken');
 
 const TOKEN_TTL = '7d';
+const FOUNDER_TOKEN_TTL = '1h';
 const PURPOSE = 'org-panel';
 
 function panelJwtSecret() {
@@ -24,18 +25,25 @@ function panelJwtSecret() {
     || 'changeme';
 }
 
-function signPanelSession({ orgId, orgSlug }) {
+// Firma un JWT del panel.
+//   - actor undefined → flujo normal cliente, TTL 7d.
+//   - actor === 'founder' → impersonación de soporte/demo desde admin-orgs,
+//     TTL corto (1h) porque es una sesión operativa, no persistente. El claim
+//     queda en el JWT (no en query string) para que panel.html lo verifique
+//     y pinte una franja "operando como founder".
+function signPanelSession({ orgId, orgSlug, actor }) {
   if (!orgId || !orgSlug) {
     throw new Error('signPanelSession: orgId y orgSlug requeridos');
   }
-  return jwt.sign(
-    { purpose: PURPOSE, orgId, orgSlug },
-    panelJwtSecret(),
-    { expiresIn: TOKEN_TTL }
-  );
+  const payload = { purpose: PURPOSE, orgId, orgSlug };
+  const isFounder = actor === 'founder';
+  if (isFounder) payload.actor = 'founder';
+  return jwt.sign(payload, panelJwtSecret(), {
+    expiresIn: isFounder ? FOUNDER_TOKEN_TTL : TOKEN_TTL,
+  });
 }
 
-// Devuelve { orgId, orgSlug } si el token es válido + del purpose correcto.
+// Devuelve { orgId, orgSlug, actor? } si el token es válido + del purpose correcto.
 // null en cualquier otro caso (firma inválida, expirado, purpose distinto).
 function verifyPanelSession(token) {
   if (!token || typeof token !== 'string') return null;
@@ -47,7 +55,9 @@ function verifyPanelSession(token) {
   }
   if (!decoded || decoded.purpose !== PURPOSE) return null;
   if (!decoded.orgId || !decoded.orgSlug) return null;
-  return { orgId: decoded.orgId, orgSlug: decoded.orgSlug };
+  const out = { orgId: decoded.orgId, orgSlug: decoded.orgSlug };
+  if (decoded.actor === 'founder') out.actor = 'founder';
+  return out;
 }
 
 // Extrae el JWT del header Authorization: Bearer <token>.
@@ -70,6 +80,7 @@ function unauthorizedResponse() {
 
 module.exports = {
   TOKEN_TTL,
+  FOUNDER_TOKEN_TTL,
   PURPOSE,
   signPanelSession,
   verifyPanelSession,

@@ -41,6 +41,15 @@
     .pp-topbar__logout { background: rgba(255,255,255,.18); border: none; color: #fff; padding: .4rem 1rem; border-radius: var(--pp-r-pill, 999px); cursor: pointer; font-size: 13px; font-weight: 600; }
     .pp-topbar__logout:hover { background: rgba(255,255,255,.32); }
 
+    /* Franja "operando como founder" — solo visible cuando el JWT lleva
+       actor=founder. Tono ámbar para diferenciarla del topbar normal. */
+    .pp-founder-bar { display: none; background: #FFF4D6; color: #6B4F00; border-bottom: 1px solid #F0D679; padding: .55rem 1.5rem; font-size: 13px; line-height: 1.4; }
+    .pp-founder-bar--on { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+    .pp-founder-bar__msg { font-weight: 500; }
+    .pp-founder-bar__msg strong { font-weight: 700; }
+    .pp-founder-bar__close { background: rgba(107,79,0,.12); border: 1px solid rgba(107,79,0,.25); color: #6B4F00; padding: .25rem .75rem; border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .pp-founder-bar__close:hover { background: rgba(107,79,0,.2); }
+
     /* ── Tabs ───────────────────────────────────────────── */
     .pp-tabs { display: flex; gap: .25rem; padding: 0 1.5rem; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); background: #fff; overflow-x: auto; }
     .pp-tab { background: none; border: none; padding: 1rem 1.25rem; font-size: 14px; font-weight: 600; color: var(--color-gris-500, #6B7280); cursor: pointer; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s; white-space: nowrap; }
@@ -193,6 +202,10 @@
 
 <!-- ── DASHBOARD ──────────────────────────────────────── -->
 <div class="pp-dash" id="dashScreen">
+  <div class="pp-founder-bar" id="founderBar" role="status" aria-live="polite">
+    <span class="pp-founder-bar__msg">👁 Operando como <strong>founder</strong> · <span id="founderOrgName">…</span> · sesión 1h</span>
+    <button type="button" class="pp-founder-bar__close" id="founderCloseBtn">✕ Cerrar y volver al Studio</button>
+  </div>
   <div class="pp-topbar" style="position:relative">
     <div>
       <h1 class="pp-topbar__brand">
@@ -469,6 +482,25 @@
   let session = null;
   let orgData = null;
   let statsData = null;
+  // Cuando el founder entra vía admin-orgs ("Abrir panel"), el JWT lleva
+  // actor=founder y TTL 1h. NO se persiste en localStorage para evitar
+  // que (a) sobrescriba la sesión del cliente real si ese navegador la
+  // tiene y (b) varios paneles impersonate abiertos en pestañas distintas
+  // se pisen entre sí. Vive solo en memoria de esta pestaña.
+  let founderMode = false;
+
+  // Decodifica el payload de un JWT sin verificar firma — solo para
+  // inspección en cliente del claim `actor`. La verificación real ocurre
+  // en backend (lib/panel-auth.verifyPanelSession) en cada llamada.
+  function decodeJwtPayload(token) {
+    try {
+      const parts = String(token).split('.');
+      if (parts.length !== 3) return null;
+      const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = b64 + '='.repeat((4 - b64.length % 4) % 4);
+      return JSON.parse(atob(padded));
+    } catch { return null; }
+  }
 
   // ── Utils ────────────────────────────────────────────────
   function showToast(kind, msg) {
@@ -612,6 +644,8 @@
     orgData = org;
     $('topbarOrgName').textContent = org.name || '';
     $('topbarPublic').href = `/e/${org.slug}`;
+    const fName = $('founderOrgName');
+    if (fName) fName.textContent = org.name || org.slug || '';
 
     // Branding form
     $('brandingName').textContent = org.name || '';
@@ -1064,13 +1098,20 @@
 
   // ── Boot ─────────────────────────────────────────────────
   function boot() {
-    // Si hay session= en la URL (acaba de hacer click en magic-link),
-    // la guardamos en localStorage y limpiamos la URL.
+    // Si hay session= en la URL (magic-link cliente O impersonate founder),
+    // lo extraemos. Si lleva claim actor=founder NO lo guardamos en
+    // localStorage — solo memoria del tab, así no contamina sesiones
+    // del cliente ni pisa otros panels-impersonate abiertos.
     const urlParams = new URLSearchParams(window.location.search);
     const sess = urlParams.get('session');
     if (sess) {
-      setSession(sess);
-      // Limpiamos la query string sin recargar
+      const payload = decodeJwtPayload(sess);
+      if (payload && payload.actor === 'founder') {
+        founderMode = true;
+        session = sess; // solo memoria
+      } else {
+        setSession(sess); // cliente normal → localStorage 7d
+      }
       window.history.replaceState({}, '', window.location.pathname);
     } else {
       session = getSession();
@@ -1081,9 +1122,30 @@
       return;
     }
 
+    if (founderMode) renderFounderBar();
+
     showDash();
     addRow(); // primera fila vacía del invite
     loadDashboard();
+  }
+
+  function renderFounderBar() {
+    const bar = $('founderBar');
+    if (!bar) return;
+    bar.classList.add('pp-founder-bar--on');
+    const btn = $('founderCloseBtn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        // Si la pestaña la abrió window.open desde admin-orgs, window.close()
+        // funciona y devuelve el foco al Studio. Si el founder pegó la URL
+        // a pelo (sin opener), navegamos manualmente.
+        try { window.close(); } catch {}
+        // Fallback: si seguimos aquí 100ms después, navega.
+        setTimeout(() => {
+          if (!window.closed) window.location.href = '/admin-orgs.html';
+        }, 100);
+      });
+    }
   }
 
   boot();
