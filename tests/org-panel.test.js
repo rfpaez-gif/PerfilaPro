@@ -822,6 +822,137 @@ describe('org-panel handler', () => {
     });
   });
 
+  // ── get_stats_link ──
+  describe('get_stats_link', () => {
+    it('genera token nuevo si la org no tiene', async () => {
+      const { db, orgChain } = makeDb({
+        org: { ...VALID_ORG, stats_token: null, stats_token_expires_at: null },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.ok).toBe(true);
+      expect(json.just_created).toBe(true);
+      expect(json.token).toMatch(/^[0-9a-f]{64}$/);
+      expect(json.url).toContain('/e/acme/stats?token=');
+      expect(json.url.endsWith(json.token)).toBe(true);
+      expect(new Date(json.expires_at).getTime()).toBeGreaterThan(Date.now());
+      // Persistió el token nuevo
+      const updateCall = orgChain.update.mock.calls.find(c => c[0].stats_token);
+      expect(updateCall).toBeTruthy();
+      expect(updateCall[0].stats_token).toBe(json.token);
+    });
+
+    it('reutiliza el token vigente si no se pide force_refresh', async () => {
+      const futureExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
+      const existingToken = 'c'.repeat(64);
+      const { db, orgChain } = makeDb({
+        org: { ...VALID_ORG, stats_token: existingToken, stats_token_expires_at: futureExpiry },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(false);
+      expect(json.token).toBe(existingToken);
+      expect(json.expires_at).toBe(futureExpiry);
+      // No debe haber UPDATE de stats_token cuando se reusa
+      const updateCalls = orgChain.update.mock.calls.filter(c => c[0].stats_token);
+      expect(updateCalls).toHaveLength(0);
+    });
+
+    it('rota el token con force_refresh=true aunque esté vigente', async () => {
+      const futureExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
+      const existingToken = 'd'.repeat(64);
+      const { db } = makeDb({
+        org: { ...VALID_ORG, stats_token: existingToken, stats_token_expires_at: futureExpiry },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link', force_refresh: true },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(true);
+      expect(json.token).not.toBe(existingToken);
+      expect(json.token).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('regenera el token si está expirado', async () => {
+      const pastExpiry = new Date(Date.now() - 86400000).toISOString();
+      const oldToken = 'e'.repeat(64);
+      const { db } = makeDb({
+        org: { ...VALID_ORG, stats_token: oldToken, stats_token_expires_at: pastExpiry },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.just_created).toBe(true);
+      expect(json.token).not.toBe(oldToken);
+    });
+
+    it('compone la URL usando host + proto de los headers', async () => {
+      const { db } = makeDb({
+        org: { ...VALID_ORG, stats_token: null, stats_token_expires_at: null },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler({
+        httpMethod: 'POST',
+        headers: {
+          authorization: `Bearer ${validToken}`,
+          host: 'deploy-preview-42--perfilapro.netlify.app',
+          'x-forwarded-proto': 'https',
+          'x-forwarded-for': '7.7.7.7',
+        },
+        body: JSON.stringify({ action: 'get_stats_link' }),
+      });
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.url.startsWith('https://deploy-preview-42--perfilapro.netlify.app/e/acme/stats?token=')).toBe(true);
+    });
+
+    it('devuelve 500 si falla el UPDATE del token nuevo', async () => {
+      const { db } = makeDb({
+        org: { ...VALID_ORG, stats_token: null, stats_token_expires_at: null },
+        updateError: { message: 'db boom' },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(500);
+    });
+
+    it('respeta el scope del JWT — no acepta org_slug del body', async () => {
+      // El SELECT inicial pega .eq('id', session.orgId), así que aunque el
+      // body trajera org_slug='otra', se ignora y se opera sobre la del JWT.
+      const { db } = makeDb({
+        org: { ...VALID_ORG, stats_token: null, stats_token_expires_at: null },
+      });
+      const handler = makeHandler(db, mockEmail);
+      const res = await handler(buildEvent({
+        body: { action: 'get_stats_link', org_slug: 'otra-org' },
+        token: validToken,
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.url).toContain('/e/acme/stats?token='); // del JWT, no del body
+    });
+  });
+
   // ── rate limit ──
   it('rate-limita después de 120 requests en 10min desde la misma IP', async () => {
     const { db } = makeDb();

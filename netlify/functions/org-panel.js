@@ -14,6 +14,9 @@
 //                       Excluye name, slug, email (cambian la URL pública o la
 //                       puerta de entrada del propio panel — solo founder).
 //   - invite_team    — alta en lote de miembros. Reusa lib/team-invite.js.
+//   - get_stats_link — genera/devuelve el enlace privado `/e/:slug/stats?token=…`
+//                       para compartir las stats agregadas sin login. Con
+//                       `force_refresh: true` rota el token (invalida el viejo).
 
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
@@ -92,7 +95,7 @@ function makeHandler(db, emailClient) {
     // sobre otra org porque no podemos falsificar el JWT.
     const { data: org, error: orgErr } = await db
       .from('organizations')
-      .select('id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, created_at, deleted_at, panel_last_login_at')
+      .select('id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, created_at, deleted_at, panel_last_login_at, stats_token, stats_token_expires_at')
       .eq('id', session.orgId)
       .maybeSingle();
     if (orgErr) return jsonResponse(500, { error: orgErr.message });
@@ -474,6 +477,52 @@ function makeHandler(db, emailClient) {
         console.error('org-panel download_team_cards: render del booklet falló:', err.message);
         return jsonResponse(500, { error: 'No se pudo generar el PDF' });
       }
+    }
+
+    // ── get_stats_link ──
+    // Devuelve la URL `/e/:slug/stats?token=…` para compartir el panel
+    // privado de estadísticas con alguien que no entra al panel cliente
+    // (un directivo, un socio externo, un colaborador puntual). Reusa el
+    // token vigente si no ha caducado; con `force_refresh: true` rota el
+    // token (invalida el enlace anterior — útil si se filtró o si una
+    // persona deja la organización).
+    //
+    // Espejo de admin-orgs.org_get_stats_link pero scoped al org del JWT
+    // — el founder hace esto desde admin-orgs, el cliente desde aquí.
+    if (action === 'get_stats_link') {
+      const { force_refresh } = body;
+
+      const now      = new Date();
+      const expires  = org.stats_token_expires_at ? new Date(org.stats_token_expires_at) : null;
+      const expired  = !expires || expires.getTime() <= now.getTime();
+      const needsNew = force_refresh === true || !org.stats_token || expired;
+
+      let token        = org.stats_token;
+      let expires_at   = org.stats_token_expires_at;
+      let just_created = false;
+
+      if (needsNew) {
+        token = crypto.randomBytes(32).toString('hex');
+        expires_at = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString();
+        const { error: updErr } = await db
+          .from('organizations')
+          .update({ stats_token: token, stats_token_expires_at: expires_at })
+          .eq('id', org.id);
+        if (updErr) return jsonResponse(500, { error: updErr.message });
+        just_created = true;
+      }
+
+      const proto = (event.headers && event.headers['x-forwarded-proto']) || 'https';
+      const host  = (event.headers && event.headers.host) || 'perfilapro.es';
+      const url   = `${proto}://${host}/e/${org.slug}/stats?token=${token}`;
+
+      return jsonResponse(200, {
+        ok: true,
+        url,
+        token,
+        expires_at,
+        just_created,
+      });
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });

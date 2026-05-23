@@ -121,6 +121,16 @@
     .pp-invite__results { font-size: 13px; line-height: 1.55; }
     .pp-invite__results ul { margin: .35rem 0 .75rem 1.25rem; padding: 0; }
 
+    /* ── Modal (enlace stats) ───────────────────────────── */
+    .pp-modal-backdrop { position: fixed; inset: 0; background: rgba(10,31,68,.48); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+    .pp-modal-backdrop.is-open { display: flex; }
+    .pp-modal { background: #fff; border-radius: var(--pp-r-xl, 20px); width: 100%; max-width: 460px; padding: 1.75rem; box-shadow: 0 24px 64px rgba(0,0,0,.18); }
+    .pp-modal__title { font-family: var(--font-serif); font-size: 1.375rem; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .25rem; }
+    .pp-modal__sub { color: var(--color-gris-500, #6B7280); font-size: 13px; margin: 0 0 1.25rem; line-height: 1.5; }
+    .pp-modal__sub strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-modal .pp-form__row { margin-bottom: .85rem; }
+    .pp-modal__actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: 1.25rem; }
+
     /* ── Spinner ────────────────────────────────────────── */
     .pp-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: pp-spin .6s linear infinite; vertical-align: -2px; margin-right: .35rem; }
     @keyframes pp-spin { to { transform: rotate(360deg); } }
@@ -353,6 +363,12 @@
           <svg id="sparkSvg" width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none" style="display:block"></svg>
         </div>
       </section>
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">Enlace privado de estadísticas</h2>
+        <p class="pp-section__sub">Comparte este enlace con alguien que necesite ver las estadísticas pero no entra al panel — un directivo, un socio externo, un colaborador puntual. Acceso de solo lectura, sin login. Si se filtra o alguien deja la organización, puedes rotarlo cuando quieras y el anterior deja de funcionar.</p>
+        <button type="button" class="pp-btn pp-btn--ghost" id="statsLinkBtn" onclick="window.__getStatsLink(false)">📊 Mostrar enlace privado</button>
+      </section>
     </div>
 
     <!-- ── Tab: Team ──────────────────────────────────── -->
@@ -474,6 +490,26 @@
     </div>
 
   </main>
+
+  <!-- Modal: enlace privado de stats · URL visible para copy en mobile -->
+  <div class="pp-modal-backdrop" id="statsLinkModal" role="dialog" aria-modal="true" aria-labelledby="statsLinkModalTitle">
+    <div class="pp-modal">
+      <h3 class="pp-modal__title" id="statsLinkModalTitle">Enlace privado de estadísticas</h3>
+      <p class="pp-modal__sub" id="statsLinkModalSub">Comparte este enlace para que alguien acceda al panel de estadísticas sin entrar a tu panel B2B.</p>
+      <div class="pp-form__row">
+        <label class="pp-form__label" for="statsLinkUrl" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-gris-500)">URL</label>
+        <input class="pp-input" id="statsLinkUrl" type="text" readonly onclick="this.select()" style="font-family:var(--font-mono, ui-monospace, Menlo, monospace);font-size:12px">
+      </div>
+      <div class="pp-modal__actions" style="justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" type="button" onclick="window.__rotateStatsLink()" title="Genera un token nuevo · invalida el enlace anterior">🔄 Rotar</button>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="pp-btn pp-btn--ghost" type="button" onclick="window.__closeStatsLinkModal()">Cerrar</button>
+          <button class="pp-btn pp-btn--ghost" type="button" id="statsLinkCopyBtn" onclick="window.__copyStatsLink()">📋 Copiar</button>
+          <button class="pp-btn pp-btn--primary" type="button" onclick="window.__openStatsLink()">Abrir ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -810,6 +846,90 @@
       showToast('err', 'No se pudo dar de baja: ' + e.message);
       if (btn && original != null) { btn.disabled = false; btn.textContent = original; }
     }
+  };
+
+  // ── Enlace privado de stats ─────────────────────────────
+  // Mismo patrón que admin-orgs: pide el token al backend, abre un modal
+  // con la URL visible (mejor UX en mobile que un toast + clipboard
+  // silencioso, que Safari iOS suele truncar). El modal tiene Copiar /
+  // Abrir / Rotar. La rotación invalida el enlace anterior — útil si se
+  // filtró el link o si alguien deja la organización.
+  window.__getStatsLink = async function(forceRefresh) {
+    const btn = $('statsLinkBtn');
+    const orig = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+    try {
+      const json = await api('get_stats_link', { force_refresh: forceRefresh === true });
+      if (!json.url) throw new Error('Respuesta sin URL');
+      const expiresAt = json.expires_at ? new Date(json.expires_at) : null;
+      const expiresStr = expiresAt
+        ? expiresAt.toLocaleDateString('es-ES', { year:'numeric', month:'long', day:'numeric' })
+        : '—';
+      const verb = json.just_created
+        ? (forceRefresh ? 'Token rotado' : 'Token generado')
+        : 'Enlace vigente';
+      openStatsLinkModal(json.url, expiresStr, verb);
+    } catch (e) {
+      showToast('err', 'No se pudo generar el enlace: ' + e.message);
+    } finally {
+      if (btn && orig != null) { btn.disabled = false; btn.textContent = orig; }
+    }
+  };
+
+  function openStatsLinkModal(url, expiresStr, verb) {
+    const modal = $('statsLinkModal');
+    const input = $('statsLinkUrl');
+    const sub   = $('statsLinkModalSub');
+    if (!modal || !input) return;
+    input.value = url;
+    sub.innerHTML = `<strong>${verb}.</strong> Compártelo con quien necesite ver las estadísticas sin entrar al panel. Vence el ${expiresStr}.`;
+    modal.classList.add('is-open');
+    // Pre-seleccionar el contenido para que un long-press en iOS active
+    // el menú contextual nativo de Copiar.
+    setTimeout(() => input.select(), 50);
+  }
+
+  window.__closeStatsLinkModal = function() {
+    const modal = $('statsLinkModal');
+    if (modal) modal.classList.remove('is-open');
+  };
+
+  window.__copyStatsLink = async function() {
+    const input = $('statsLinkUrl');
+    const btn   = $('statsLinkCopyBtn');
+    if (!input) return;
+    const url = input.value;
+    let ok = false;
+    // 1) Clipboard API (Chrome / Firefox / Safari desktop).
+    try {
+      await navigator.clipboard.writeText(url);
+      ok = true;
+    } catch {
+      // 2) Fallback execCommand para Safari iOS donde clipboard a veces
+      //    falla incluso con user gesture.
+      try {
+        input.focus();
+        input.setSelectionRange(0, url.length);
+        ok = document.execCommand('copy');
+      } catch { ok = false; }
+    }
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = ok ? '✓ Copiado' : '⚠ Selecciona y copia a mano';
+      setTimeout(() => { btn.textContent = orig; }, 2200);
+    }
+  };
+
+  window.__openStatsLink = function() {
+    const input = $('statsLinkUrl');
+    if (!input || !input.value) return;
+    window.open(input.value, '_blank', 'noopener');
+  };
+
+  window.__rotateStatsLink = function() {
+    if (!confirm('Vas a generar un enlace nuevo.\n\nEl enlace anterior dejará de funcionar inmediatamente — útil si se filtró o si alguien con acceso ya no debe tenerlo.\n\n¿Continuar?')) return;
+    window.__closeStatsLinkModal();
+    window.__getStatsLink(true);
   };
 
   async function loadDashboard() {

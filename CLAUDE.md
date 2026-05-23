@@ -265,6 +265,7 @@ Toda acción está forzosamente scoped a `orgId` del JWT. No existe `org_slug` e
 | `get_org` | Devuelve org + lista de miembros + stats agregadas (totals 7d/30d/all + sparkline 30d). Marca `panel_last_login_at` best-effort para que el founder vea desde admin-orgs si el cliente usa el panel. |
 | `update_branding` | Actualiza `tagline`, `description`, `website`, `address`, `phone`, `color_primary`. **NO permite** cambiar `name`, `slug`, `email` ni `logo_url` (founder-only por riesgo de auto-bloqueo / ruptura de URLs / sin upload-org-logo scoped a cliente). |
 | `invite_team` | Alta en lote (≤100). Reusa `lib/team-invite.js` (extracción de la lógica de `admin-orgs.js → invite_team`). Cada miembro recibe email de invitación con tarjeta de visita PDF branded adjunta. |
+| `get_stats_link` | Genera o devuelve el enlace privado `/e/:slug/stats?token=…` para compartir las stats agregadas sin login (directivo, socio externo, colaborador puntual). Reusa el token vigente; con `force_refresh: true` rota (invalida el anterior — útil si se filtró o si alguien deja la organización). Espejo de `admin-orgs.org_get_stats_link` scoped al JWT — ambos puntos de entrada coexisten porque comparten la misma columna `organizations.stats_token`. |
 
 Rate-limit 120 req / 10 min por IP — holgado para operativa normal (cargar panel + editar branding + invitar lote).
 
@@ -282,7 +283,7 @@ Rate-limit 120 req / 10 min por IP — holgado para operativa normal (cargar pan
 - ❌ Download PDF de tarjetas del equipo → founder-only.
 - ❌ Resend edit-link a miembro individual → founder-only.
 - ✅ Upload de logo → cliente vía `upload-org-logo-panel.js` (Bloque E).
-- ❌ Ver/rotar `stats_token` → el link público a `/e/:slug/stats` lo sigue generando founder.
+- ✅ Ver/rotar `stats_token` → cliente vía `org-panel.get_stats_link` (tab Estadísticas → "Mostrar enlace privado", modal con Copiar / Abrir / Rotar). Founder también puede desde admin-orgs.
 - ❌ Cambiar `slug`, `name`, `email` propios → founder-only (riesgo de auto-bloqueo).
 - ❌ Múltiples admins / roles por org → modelo actual asume 1 admin por org (organizations.email). Se añade tabla `org_admins` cuando un cliente lo pida.
 
