@@ -122,8 +122,16 @@ function makeHandler(db, emailClient = resend) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'JSON inválido' }) };
     }
 
-    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma, via } = body;
+    const { nombre, whatsapp, sector, cp, email, desc, direccion, local_publico, servicios: rawServicios, category_sector, category_specialty, specialty_custom, ocupacion_code, idioma: rawIdioma, via, agent_code: rawAgentCode } = body;
     const idioma = rawIdioma === 'ca' ? 'ca' : 'es';
+
+    // Atribución comercial autónomos. El frontend captura ?ref=AGENT del URL
+    // (link del portal de agentes) y lo manda como agent_code en el body.
+    // Mismo regex que B2B (lead-b2b.js / create-checkout.js) — refs
+    // malformadas se silencian para no bloquear el alta legítima.
+    const agentCodeClean = typeof rawAgentCode === 'string' && /^[A-Za-z0-9_-]{2,40}$/.test(rawAgentCode)
+      ? rawAgentCode
+      : null;
 
     if (!nombre || !whatsapp || !cp || !email) {
       return { statusCode: 400, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Faltan campos obligatorios: nombre, whatsapp, cp, email' }) };
@@ -246,6 +254,7 @@ function makeHandler(db, emailClient = resend) {
       edit_token:       editToken,
       edit_token_expires_at: editTokenExpiresAt,
       idioma,
+      agent_code:       agentCodeClean,
     };
 
     const { error } = await db.from('cards').insert(row);

@@ -212,6 +212,25 @@ describe('register-free handler', () => {
     expect(insertCall.edit_token_expires_at).toBeDefined();
   });
 
+  it('persiste agent_code cuando llega un valor válido (?ref=AGENT)', async () => {
+    await handler(buildEvent({ body: { ...validBody, agent_code: 'AGENT01' } }));
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.agent_code).toBe('AGENT01');
+  });
+
+  it('agent_code queda en null si no llega', async () => {
+    await handler(buildEvent({ body: validBody }));
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.agent_code).toBeNull();
+  });
+
+  it('agent_code malformado se silencia (no bloquea el alta)', async () => {
+    const res = await handler(buildEvent({ body: { ...validBody, agent_code: '../../../etc/passwd' } }));
+    expect(res.statusCode).toBe(200);
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.agent_code).toBeNull();
+  });
+
   it('sends welcome email (fire-and-forget)', async () => {
     await handler(buildEvent({ body: validBody }));
     // Email is sent async, check it was called

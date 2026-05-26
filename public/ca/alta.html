@@ -831,6 +831,32 @@
   var selectedServices = [];     // servicios elegidos (strings)
 
   /* ════════════════════════════════════════════════════════════
+     ATRIBUCIÓ COMERCIAL ?ref=AGENT
+     ════════════════════════════════════════════════════════════
+     El portal de col·laboradors (/agente.html) reparteix l'enllaç
+     ${origin}/?ref=AGENT. Capturem el query param en carregar i el
+     persistim en localStorage perquè sobrevisqui a la navegació a
+     /alta. A submitForm l'enviem com a agent_code → register-free
+     el persisteix a cards.agent_code. Mateix format que admet
+     lead-b2b.js per coherència entre carrils. */
+  var REF_RE = /^[A-Za-z0-9_-]{2,40}$/;
+  (function captureRef() {
+    try {
+      var fromUrl = new URLSearchParams(window.location.search).get('ref');
+      if (typeof fromUrl === 'string' && REF_RE.test(fromUrl)) {
+        try { localStorage.setItem('pp_ref', fromUrl); } catch (e) {}
+      }
+    } catch (e) {}
+  })();
+  function getRefCode() {
+    try {
+      var stored = localStorage.getItem('pp_ref');
+      if (stored && REF_RE.test(stored)) return stored;
+    } catch (e) {}
+    return null;
+  }
+
+  /* ════════════════════════════════════════════════════════════
      UTILS
      ════════════════════════════════════════════════════════════ */
   function toSlug(s) {
@@ -1353,6 +1379,7 @@
       local_publico:      localPub && !!direccion,
       idioma:             (document.documentElement.lang || 'es').toLowerCase().slice(0, 2) === 'ca' ? 'ca' : 'es',
       via:                viaParam,
+      agent_code:         getRefCode(),
     };
 
     if (typeof window.ppEvent === 'function') window.ppEvent('signup_submit_started', { sector: payload.sector });

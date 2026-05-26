@@ -413,6 +413,34 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       // resuelve después con un SELECT, pero llegamos al webhook ya sabiendo
       // si city_slug existe; el segundo flag se setea en el UPDATE post-upsert
       // si efectivamente hay categoría asociada.
+
+      // Atribución comercial · preservación defensiva. El upgrade de un
+      // autónomo a pago se inicia desde editar.html, que NO ve agent_code
+      // (privacidad — el editor no debe conocer quién es el agente que
+      // captó al usuario). Si la metadata Stripe no trae agent_code pero
+      // la card ya tenía uno (porque register-free la persistió desde
+      // ?ref=AGENT), preservamos el original para que la cadena ?ref= →
+      // cards.agent_code → liquidación llegue a su fin aunque el alta
+      // pase por el upgrade Stripe. Si la metadata SÍ trae agent_code,
+      // gana ese (caso normal del flow pagado directo desde alta).
+      let agentCodeFinal = agent_code || null;
+      if (!agentCodeFinal) {
+        try {
+          const { data: existingForAgent } = await db
+            .from('cards')
+            .select('agent_code')
+            .eq('slug', slug)
+            .maybeSingle();
+          if (existingForAgent?.agent_code) {
+            agentCodeFinal = existingForAgent.agent_code;
+          }
+        } catch (err) {
+          // BD no disponible o mock incompleto: caemos al valor de metadata
+          // (que ya es null) para no romper el upsert principal.
+          console.warn('agent_code preservation lookup failed (non-fatal):', err.message);
+        }
+      }
+
       const upsertRow = {
         slug,
         nombre:      stripTags(nombre).substring(0, 100),
@@ -435,7 +463,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         expires_at: expiresAt,
         email,
         edit_token: editToken,
-        agent_code: agent_code || null,
+        agent_code: agentCodeFinal,
         ocupacion_code: ocupacionCodeClean,
         idioma,
       };
@@ -463,7 +491,7 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         if (redErr) console.warn('No se pudo marcar lead redimido (no fatal):', redErr.message);
       }
 
-      captureEvent(slug, 'signup_completed_paid', { plan: plan || 'base', agent_code: agent_code || null })
+      captureEvent(slug, 'signup_completed_paid', { plan: plan || 'base', agent_code: agentCodeFinal })
         .catch(() => {});
 
       // Tarjeta imprimible + QR PNG (no bloquean el webhook si fallan; el

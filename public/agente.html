@@ -493,7 +493,13 @@
 
     <!-- ─────────── Liquidaciones (común, fuera de tabs) ─────────── -->
     <section class="pp-agent-section">
-      <h2 class="pp-section-title">Historial de liquidaciones</h2>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+        <h2 class="pp-section-title" style="margin:0">Historial de liquidaciones</h2>
+        <button type="button" id="exportCsvBtn" class="pp-agent-ref__copy" style="background:var(--color-tinta);padding:.55rem 1.1rem"
+                onclick="exportExtractoCsv()" title="Descarga un CSV con resumen mensual, ventas, facturas B2B y liquidaciones">
+          Exportar CSV ↓
+        </button>
+      </div>
       <div class="pp-tbl-wrap">
         <table class="pp-tbl">
           <thead>
@@ -544,6 +550,10 @@
       });
     });
 
+    // Cache del payload renderizado para que el botón Exportar CSV pueda
+    // construir el extracto sin tener que volver a llamar a /api/agent-data.
+    let lastData = null;
+
     async function loadData() {
       const main = document.getElementById('mainContent');
       try {
@@ -552,6 +562,7 @@
         });
         if (res.status === 401) { logout(); return; }
         const data = await res.json();
+        lastData = data;
         render(data);
         main.classList.add('is-visible');
       } catch {
@@ -736,6 +747,107 @@
       localStorage.removeItem('pp_agent_token');
       localStorage.removeItem('pp_agent_name');
       location.href = '/agente-login.html';
+    }
+
+    /* ── Export CSV ────────────────────────────────────────────
+       Vuelca el extracto del agente (resumen mensual + ventas
+       autónomos + facturas B2B + liquidaciones) a un CSV
+       cliente-side. El founder usa este fichero como evidencia
+       documental al pagar una liquidación; el agente lo guarda
+       como soporte para facturar PerfilaPro y para su propia
+       contabilidad. RFC-4180-style (`"` → `""`, CRLF), encoding
+       UTF-8 con BOM para que Excel-ES abra acentos sin pedir
+       paso intermedio. */
+    function exportExtractoCsv() {
+      if (!lastData) {
+        alert('Datos aún no cargados. Espera un momento e inténtalo de nuevo.');
+        return;
+      }
+      const { agent, summary, months = [], recent_sales = [], recent_org_invoices = [], liquidations = [] } = lastData;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const blocks = [];
+
+      blocks.push([['Extracto PerfilaPro · ' + (agent.name || agent.code)]]);
+      blocks.push([['Generado', today]]);
+      blocks.push([['Código', agent.code]]);
+      blocks.push([['Comisión propia (%)', agent.commission_rate]]);
+      blocks.push([['Override L2 sobre red (%)', 5]]);
+      blocks.push([[]]);
+      blocks.push([['── Resumen ──']]);
+      blocks.push([
+        ['Tarjetas vendidas', summary.total_sales || 0],
+        ['Ventas red', summary.sub_sales || 0],
+        ['Orgs activas', summary.org_count || 0],
+        ['MRR estimado (€)', fmt(summary.org_mrr_eur || 0)],
+        ['Comisión pendiente (€)', fmt(summary.pending_commission || 0)],
+      ]);
+      blocks.push([[]]);
+      blocks.push([['── Resumen mensual ──']]);
+      blocks.push([['Periodo', 'Ventas propias', 'Ventas red', 'Facturas propias B2B', 'Facturas red B2B', 'Facturado bruto (€)', 'Comisión cards (€)', 'Comisión B2B (€)', 'Comisión total (€)', 'Estado']]);
+      months.forEach(m => blocks[blocks.length - 1].push([
+        m.period,
+        m.own_sales || 0,
+        m.sub_sales || 0,
+        m.own_org_invoices || 0,
+        m.sub_org_invoices || 0,
+        fmt(m.gross || 0),
+        fmt(m.card_commission || 0),
+        fmt(m.org_commission || 0),
+        fmt(m.commission || 0),
+        m.liquidated ? 'Liquidado' : 'Pendiente',
+      ]));
+      blocks.push([[]]);
+      blocks.push([['── Últimas tarjetas (autónomos) ──']]);
+      blocks.push([['Fecha', 'Slug', 'Profesional', 'Plan', 'Estado']]);
+      recent_sales.forEach(c => blocks[blocks.length - 1].push([
+        (c.created_at || '').slice(0, 10),
+        c.slug,
+        c.nombre || '',
+        c.plan,
+        c.status || '',
+      ]));
+      blocks.push([[]]);
+      blocks.push([['── Últimas facturas B2B ──']]);
+      blocks.push([['Fecha de pago', 'Organización (id)', 'Tier', 'Ciclo', 'Seats', 'Importe (€)', 'Moneda']]);
+      recent_org_invoices.forEach(inv => blocks[blocks.length - 1].push([
+        (inv.paid_at || '').slice(0, 10),
+        inv.organization_id || '',
+        inv.tier || '',
+        inv.cycle || '',
+        inv.seats || '',
+        fmt((inv.amount_cents || 0) / 100),
+        (inv.currency || 'eur').toUpperCase(),
+      ]));
+      blocks.push([[]]);
+      blocks.push([['── Liquidaciones pagadas ──']]);
+      blocks.push([['Periodo', 'Ventas', 'Importe (€)', 'Comisión (€)', 'Pagado']]);
+      liquidations.forEach(l => blocks[blocks.length - 1].push([
+        l.period,
+        l.sales_count || 0,
+        fmt(l.gross_amount || 0),
+        fmt(l.commission_amount || 0),
+        (l.paid_at || '').slice(0, 10),
+      ]));
+
+      // Flatten + escape
+      const rows = [];
+      blocks.forEach(block => block.forEach(row => rows.push(row)));
+      const csv = rows.map(row => row.map(cell => {
+        const s = cell == null ? '' : String(cell);
+        return /[",\r\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',')).join('\r\n');
+
+      // BOM para que Excel reconozca UTF-8 sin pedir paso de importación.
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `extracto-${agent.code}-${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function fmt(n) { return Number(n || 0).toFixed(2); }
