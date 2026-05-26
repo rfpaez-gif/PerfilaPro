@@ -58,6 +58,29 @@ distinta. No hace falta leerlos en orden, pero si entras de cero:
 - Comprueba que tu ficha tiene NIF + dirección + razón social
   rellenos. Si no, no puedes facturar — escribe al founder.
 
+## Formato del kit
+
+Cada pieza vive como **markdown editable** (fuente de la verdad) y
+**PDF branded PerfilaPro** (para enviar al colaborador). Mismos
+ficheros, mismo prefijo `kit-agente-*`, distintas extensiones.
+
+El PDF se regenera a partir del markdown con:
+
+```bash
+node docs/comercial/build-kit-agente.js              # los 7
+node docs/comercial/build-kit-agente.js portal       # solo uno
+node docs/comercial/build-kit-agente.js portal links # subset
+```
+
+El generador hereda paleta y tipografías de
+`docs/comercial/build-one-pager.js` y de
+`netlify/functions/lib/email-layout.js`. Si la marca cambia, los
+tres se tocan en el mismo commit.
+
+Si necesitas editar el contenido del kit: edita el `.md`,
+regenera el PDF, commitea ambos. **Nunca edites el PDF
+directamente** — se sobreescribe en el siguiente build.
+
 ## A quién contactar
 
 - Soporte de producto, dudas técnicas, dudas de descuentos, cuentas
