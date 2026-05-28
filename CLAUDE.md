@@ -426,6 +426,8 @@ Env vars (see `.env.example`): `QUIPU_CLIENT_ID`, `QUIPU_CLIENT_SECRET`, `QUIPU_
 
 Carril sports_club montado sobre la infra B2B existente (no es un fork, es una extensión gateada por discriminadores). Activación runtime con `CANTERA_VERTICAL_ACTIVE=1`; cualquier otro valor lo apaga limpiamente. Las tablas y columnas creadas por la migración 033 quedan dormidas — cero impacto en autónomos y B2B genérico.
 
+> **Estado actual del sprint + decisiones pendientes**: ver `docs/cantera-handoff.md`. Cuando arranque un hilo nuevo, leerlo después de esta sección.
+
 **Decisiones-marco** (D1/D2/D3 — heredadas, no re-debatir):
 
 - **D1** · Una sola tabla `cards` con discriminador `card_kind` (`autonomo` | `player` | `club_staff`). Reusa foto_url, edit_token, kit_email_sent_at, visits, slug-as-PK, idioma, downloads. Campos no aplicables (sector, servicios, whatsapp comercial) quedan NULL para cards no-autónomas.
