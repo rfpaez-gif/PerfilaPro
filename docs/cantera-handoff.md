@@ -8,7 +8,14 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: el trabajo continúa en `claude/cantera-sprint-continue-fB7hD` (la capa schema 033 + este handoff se fast-forwardearon desde `claude/perfilapro-youth-sports-VR55w`).
+**Branch**: capa schema 033 + capa 0.5 (034) mergeadas a `main` (PR #141). La capa 1 (helpers) vive en `claude/cantera-capa1-helpers`.
+
+**Capa 1 · helpers** — `claude/cantera-capa1-helpers`. 5 libs puros + 48 tests (`tests/lib-cantera-flag`, `lib-card-kind`, `lib-pii-crypto`, `lib-sports-categories`, `lib-external-payments`). Suite total 1154/1154.
+- `lib/cantera-flag.js` — gate `isCanteraActive()` + `canteraDisabledResponse()` (410).
+- `lib/card-kind.js` — guards `isAutonomo/isPlayer/isClubStaff`, `cardKindOf` normaliza a `'autonomo'`.
+- `lib/pii-crypto.js` — **DECISIÓN**: cifrado AES-256-GCM app-side (NO pgcrypto DB-side). La columna `bytea` guarda `[iv|tag|ct]` como `\x…`. Clave LAZY, decrypt defensivo. Documentado en CLAUDE.md (sección Helpers + nota env var). Si en el futuro se prefiere pgcrypto, este helper es el único punto a cambiar.
+- `lib/sports-categories.js` — `categoryForBirthYear` con offsets relativos al año de temporada; cutoff julio.
+- `lib/external-payments.js` — `buildPaymentRow`/`recordExternalPayment`/`list*` sobre la tabla de la 034.
 
 **Capa 0.5 · migración 034** — `supabase/migrations/034_cantera_external_payments.sql`. Pusheada, **NO ejecutada en producción**. Aterriza las respuestas a Q1 y Q2 (ver §4):
 - `external_payments` (Bizum/efectivo/transferencia manuales) — la pestaña Cobros del Studio une esto + `parent_subscriptions`. NO es registro fiscal.
@@ -136,8 +143,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 |---|---|---|
 | **0 · ✅ hecho** | Migración 033 + sección CLAUDE.md | DROP CASCADE documentado |
 | **0.5 · ✅ hecho** | Migración 034 (external_payments + previous_club_name) — Q1/Q2 = sí | DROP TABLE / DROP COLUMN |
-| **1 · ⬅ SIGUIENTE** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` (Q1 = sí, va incluido) | Borrar archivos |
-| **2 · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) | Borrar archivo + route |
+| **1 · ✅ hecho** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` + 48 tests | Borrar archivos |
+| **2 · ⬅ SIGUIENTE · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) | Borrar archivo + route |
 | **3 · fichaje + handoff** | `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js` + tests de transacción atómica | Borrar archivos + routes |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
@@ -163,6 +170,6 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md` en la rama `claude/cantera-sprint-continue-fB7hD`. Las capas schema (033) y 0.5 (034 · external_payments + previous_club_name) están commiteadas y pusheadas. Las 4 Q se cerraron con los defaults (§4). Continúo con la **capa 1 · helpers** (`lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js`), cada uno con sus tests.
+> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5 (migraciones 033+034) mergeadas a `main`; capa 1 (helpers + 48 tests) en `claude/cantera-capa1-helpers`. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 2 · auth tutor**: `parent-auth.js` + `purpose:'parent-panel'` en `lib/panel-auth.js`, reusando los helpers de capa 1.
 
-La capa 1 (helpers) es el siguiente commit. Como `external-payments` ya tiene tabla (Q1 = sí), su helper entra en el mismo bloque.
+La capa 2 (auth tutor) es lo siguiente: el modelo multi-admin de `card_admins` (cada tutor con su `edit_token`) necesita su propio magic-link / JWT, espejo de `panel-auth.js` pero scoped a una card de player en lugar de a una org.
