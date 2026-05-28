@@ -446,6 +446,11 @@ Carril sports_club montado sobre la infra B2B existente (no es un fork, es una e
 - **`parent_subscriptions`** — cuotas mensuales padre→club vía Stripe Connect. Diferenciada de `org_invoices` (que es B2B genérico no-Connect). Cobro a la cuenta conectada del club; `application_fee_bps` cae en la cuenta platform.
 - **`match_stats`** — eventos crudos de partido. Opcional (clubes que usen la app de stats). Lo agrega `member_club_seasons.stats_jsonb` periódicamente.
 
+**Tablas/columnas (migración 034 · capa 0.5)** — aterriza Q1=sí (Bizum/efectivo en MVP) y Q2=texto libre (histórico pre-plataforma) del handoff:
+
+- **`external_payments`** — cobros manuales fuera de Stripe Connect (Bizum personal del coordinador, efectivo, transferencia). Una fila por pago: `card_slug` + `organization_id` + `period` (mes facturado, nullable para pagos sueltos) + `amount_cents` + `currency` + `method` (`bizum`/`efectivo`/`transferencia`/`otro`) + `recorded_by` (email del admin que lo apuntó) + `paid_at` + `receipt_number` (nullable, número del recibo informativo si el padre lo pide) + `notes`. La pestaña **Cobros** del Studio une `parent_subscriptions` (Stripe) + `external_payments` (manual) en una sola vista de "quién pagó". **NO es registro fiscal**: la factura/recibo SEPA legal la emite el club fuera de PerfilaPro; `receipt_number` es para el recibo informativo (plantilla "recibo", no "factura", de `invoice-utils.js`). FK sin `ON DELETE` (mismo criterio que `parent_subscriptions`): un cobro no se borra en cascada al limpiar la card. Índice único parcial sobre `receipt_number` cuando no es NULL.
+- **`member_club_seasons.previous_club_name`** (text, nullable) — nombre legible del club del que llega el jugador cuando ese club **no** está en PerfilaPro (caso dominante en fase 1: casi todos los fichajes entrantes vienen de clubes off-platform). No enlaza a `organizations` — es captura de histórico legible, no relación. El handoff transaccional entre clubes PerfilaPro sigue usando `organization_id`.
+
 **Ownership y portabilidad de la card**:
 
 La card pertenece al jugador, no al club. Cuando un chaval cambia de club, su `cards` row no se duplica — viaja con él. Lo que cambia es:

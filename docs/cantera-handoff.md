@@ -2,13 +2,18 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-05-28 (hilo de diseño + capa schema).
+Última actualización: 2026-05-28 (hilo de diseño + capa schema + capa 0.5 · migración 034).
 
 ---
 
 ## 1 · Qué está aterrizado
 
-**Branch**: `claude/perfilapro-youth-sports-VR55w` (commit `24571c5`).
+**Branch**: el trabajo continúa en `claude/cantera-sprint-continue-fB7hD` (la capa schema 033 + este handoff se fast-forwardearon desde `claude/perfilapro-youth-sports-VR55w`).
+
+**Capa 0.5 · migración 034** — `supabase/migrations/034_cantera_external_payments.sql`. Pusheada, **NO ejecutada en producción**. Aterriza las respuestas a Q1 y Q2 (ver §4):
+- `external_payments` (Bizum/efectivo/transferencia manuales) — la pestaña Cobros del Studio une esto + `parent_subscriptions`. NO es registro fiscal.
+- `member_club_seasons.previous_club_name` (texto libre) — histórico legible del club off-platform de origen.
+- RLS + REVOKE + contramigración documentada al final del archivo. Doc inline en CLAUDE.md.
 
 **Capa schema · migración 033** — `supabase/migrations/033_cantera_v1.sql`. Está pusheada pero **NO ejecutada en producción Supabase**. La ejecución manual la hace el founder cuando esté listo para encender el carril.
 
@@ -79,7 +84,20 @@ Y el flujo de baja del player a un club off-platform debe cerrar limpio: `member
 
 ---
 
-## 4 · Decisiones abiertas (lo primero del próximo hilo)
+## 4 · Decisiones abiertas → CERRADAS (2026-05-28)
+
+Las cuatro se respondieron con los defaults propuestos:
+
+- **Q1 · Bizum/efectivo manual** → **SÍ, MVP**. Aterrizado en migración 034 (`external_payments`).
+- **Q2 · histórico pre-plataforma** → **texto libre**. Aterrizado en migración 034 (`member_club_seasons.previous_club_name`).
+- **Q3 · discurso Stripe** → **upgrade voluntario por padre**. No toca código; es copy del Studio + email al padre (lo aplica la capa 6 · UI). Métrica "% padres en Stripe" visible al club.
+- **Q4 · cuota dividida (custodia 50/50)** → **Sprint 2**. MVP asume 1 pagador; otros tutores son admin sin pago. `parent_subscriptions` se queda 1-a-1 con `card_slug` por ahora.
+
+> Pendiente operativo (no bloquea código): confirmar con el founder el % real de custodia compartida en el club beachhead. Si resulta >15%, reabrir Q4 a Sprint 1 (tabla `subscription_payers` + multi-payer Stripe).
+
+El registro original de las cuatro preguntas se conserva abajo como contexto del razonamiento.
+
+---
 
 Cuatro preguntas que cambian la migración 034 + el copy comercial. Hasta que se respondan, no escribo más SQL ni endpoints encima.
 
@@ -116,9 +134,9 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 
 | Capa | Contenido | Reversible borrando |
 |---|---|---|
-| **0 · ya hecho** | Migración 033 + sección CLAUDE.md | DROP CASCADE documentado |
-| **0.5 · pre-código** | Migración 034 si Q1/Q2 = sí (external_payments + previous_club_name) | DROP TABLE / DROP COLUMN |
-| **1 · helpers** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` (si Q1) | Borrar archivos |
+| **0 · ✅ hecho** | Migración 033 + sección CLAUDE.md | DROP CASCADE documentado |
+| **0.5 · ✅ hecho** | Migración 034 (external_payments + previous_club_name) — Q1/Q2 = sí | DROP TABLE / DROP COLUMN |
+| **1 · ⬅ SIGUIENTE** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` (Q1 = sí, va incluido) | Borrar archivos |
 | **2 · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) | Borrar archivo + route |
 | **3 · fichaje + handoff** | `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js` + tests de transacción atómica | Borrar archivos + routes |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
@@ -143,8 +161,8 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 ## 7 · Cómo arrancar el próximo hilo
 
-Mensaje sugerido para el próximo hilo (después de que el usuario responda las 4 Q):
+Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md` en la rama `claude/perfilapro-youth-sports-VR55w`. La capa schema (migración 033) está commiteada y pusheada. Las 4 decisiones pendientes (Q1-Q4 del handoff) son [respuestas del usuario]. Continúo con [capa 0.5 si Q1/Q2 cambian schema, o directamente capa 1 si no].
+> Sigo desde `docs/cantera-handoff.md` en la rama `claude/cantera-sprint-continue-fB7hD`. Las capas schema (033) y 0.5 (034 · external_payments + previous_club_name) están commiteadas y pusheadas. Las 4 Q se cerraron con los defaults (§4). Continúo con la **capa 1 · helpers** (`lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js`), cada uno con sus tests.
 
-Si las 4 Q se responden con los defaults propuestos, el próximo commit es la **migración 034** (`external_payments` + `previous_club_name`), y después la **capa 1 (helpers)**.
+La capa 1 (helpers) es el siguiente commit. Como `external-payments` ya tiene tabla (Q1 = sí), su helper entra en el mismo bloque.
