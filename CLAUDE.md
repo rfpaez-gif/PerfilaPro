@@ -422,6 +422,101 @@ The implementation lands in Sprint 3, after:
 
 Env vars (see `.env.example`): `QUIPU_CLIENT_ID`, `QUIPU_CLIENT_SECRET`, `QUIPU_API_BASE`, `QUIPU_ENV`.
 
+### Cantera · vertical deporte base
+
+Carril sports_club montado sobre la infra B2B existente (no es un fork, es una extensión gateada por discriminadores). Activación runtime con `CANTERA_VERTICAL_ACTIVE=1`; cualquier otro valor lo apaga limpiamente. Las tablas y columnas creadas por la migración 033 quedan dormidas — cero impacto en autónomos y B2B genérico.
+
+> **Estado actual del sprint + decisiones pendientes**: ver `docs/cantera-handoff.md`. Cuando arranque un hilo nuevo, leerlo después de esta sección.
+
+**Decisiones-marco** (D1/D2/D3 — heredadas, no re-debatir):
+
+- **D1** · Una sola tabla `cards` con discriminador `card_kind` (`autonomo` | `player` | `club_staff`). Reusa foto_url, edit_token, kit_email_sent_at, visits, slug-as-PK, idioma, downloads. Campos no aplicables (sector, servicios, whatsapp comercial) quedan NULL para cards no-autónomas.
+- **D2** · `cards.organization_id` se mantiene como "club actual activo" (estado denormalizado, fast queries). La verdad histórica vive en `member_club_seasons`. El handoff entre clubes = transacción que cierra la fila vieja, abre la nueva y actualiza `cards.organization_id`. Esto preserva `card.js` y `org.js` sin tocarlos.
+- **D3** · `organizations.kind` (`business` | `sports_club`) + `organizations.sport` (`futbol`, `baloncesto`, …) permiten que despachos/consultoras y clubes deportivos convivan. El Studio, panel cliente y `/e/:slug` ramifican por `kind`. Multi-deporte está por diseño aunque el seed sólo contiene fútbol.
+
+**Tablas (migración 033)**:
+
+- **`cards` extendida** — `card_kind` (default `'autonomo'`), `birth_date_encrypted` (pgcrypto + `CANTERA_PII_KEY`), `birth_year` (en claro, único campo necesario para queries de categoría), `gender` (`M`/`F`/`X` nullable), `public_card` (boolean; para `card_kind='player'` arranca `false` hasta consentimiento parental, gatea `/c/:slug`).
+- **`organizations` extendida** — `kind`, `sport`, `stripe_connect_account_id`, `stripe_connect_charges_enabled`, `stripe_connect_payouts_enabled`. Connect Standard (la responsabilidad fiscal queda 100% en el club; PerfilaPro cobra `application_fee_percent`).
+- **`card_admins`** — multi-admin sobre la card del jugador. Roles: `tutor_legal`, `tutor_secundario`, `player_self`, `club_admin`. Cada admin tiene su propio `edit_token` (32-byte hex). Reemplaza el modelo single-token `cards.edit_token` sólo cuando `card_kind='player'`; para autónomos sigue intacto.
+- **`card_consents`** — audit trail LOPDGDD append-only. Tipos: `parental_initial`, `data_processing`, `public_visibility`, `club_handoff`, `image_rights`, `transfer_to_player`. RLS bloquea UPDATE/DELETE (`REVOKE UPDATE, DELETE ... FROM PUBLIC`) incluso para service_role — blindaje contra un endpoint mal escrito que borre evidencias.
+- **`sports_categories`** — lookup multi-deporte. Sport + code (`alevin`, `infantil`, `cadete`, …) + display_name_es/ca + offsets birth_year. Seed inicial sólo fútbol (7 categorías). Read-only público vía policy.
+- **`member_club_seasons`** — *core relacional*. Una fila por `(card, club, temporada, role)`. Para jugadores: dorsal + position + category + stats_jsonb. Para staff (entrenador, delegado, médico, fisio, preparador, presidente, directiva): mismos campos pero sin dorsal/position. CHECK `dorsal IS NULL OR role='jugador'` lo garantiza. Índice único parcial `idx_player_active_globally` (sobre `card_slug WHERE left_at IS NULL AND role='jugador'`) implementa la regla federativa de "un jugador no puede estar fichado por dos clubes a la vez" (se relaja a `(card_slug, sport)` cuando se active multi-deporte). Al cerrar fila (`left_at NOT NULL`), `closed_snapshot_jsonb` congela stats + dorsal + categoría — histórico inmutable aunque luego cambien las stats por correcciones.
+- **`card_print_orders`** — pedido de carnet PVC + NFC. Status (`pending` → `paid` → `sent_to_printer` → `shipped` → `delivered`). Kind (`setup`/`renewal`/`replacement`). El cobro va directo a PerfilaPro (no Connect): 19€ setup, 9€ renovación anual. NFC UID se registra al impresionar; índice único parcial sobre `nfc_uid` para que un chip no pueda asignarse a dos cards.
+- **`parent_subscriptions`** — cuotas mensuales padre→club vía Stripe Connect. Diferenciada de `org_invoices` (que es B2B genérico no-Connect). Cobro a la cuenta conectada del club; `application_fee_bps` cae en la cuenta platform.
+- **`match_stats`** — eventos crudos de partido. Opcional (clubes que usen la app de stats). Lo agrega `member_club_seasons.stats_jsonb` periódicamente.
+
+**Tablas/columnas (migración 034 · capa 0.5)** — aterriza Q1=sí (Bizum/efectivo en MVP) y Q2=texto libre (histórico pre-plataforma) del handoff:
+
+- **`external_payments`** — cobros manuales fuera de Stripe Connect (Bizum personal del coordinador, efectivo, transferencia). Una fila por pago: `card_slug` + `organization_id` + `period` (mes facturado, nullable para pagos sueltos) + `amount_cents` + `currency` + `method` (`bizum`/`efectivo`/`transferencia`/`otro`) + `recorded_by` (email del admin que lo apuntó) + `paid_at` + `receipt_number` (nullable, número del recibo informativo si el padre lo pide) + `notes`. La pestaña **Cobros** del Studio une `parent_subscriptions` (Stripe) + `external_payments` (manual) en una sola vista de "quién pagó". **NO es registro fiscal**: la factura/recibo SEPA legal la emite el club fuera de PerfilaPro; `receipt_number` es para el recibo informativo (plantilla "recibo", no "factura", de `invoice-utils.js`). FK sin `ON DELETE` (mismo criterio que `parent_subscriptions`): un cobro no se borra en cascada al limpiar la card. Índice único parcial sobre `receipt_number` cuando no es NULL.
+- **`member_club_seasons.previous_club_name`** (text, nullable) — nombre legible del club del que llega el jugador cuando ese club **no** está en PerfilaPro (caso dominante en fase 1: casi todos los fichajes entrantes vienen de clubes off-platform). No enlaza a `organizations` — es captura de histórico legible, no relación. El handoff transaccional entre clubes PerfilaPro sigue usando `organization_id`.
+
+**Ownership y portabilidad de la card**:
+
+La card pertenece al jugador, no al club. Cuando un chaval cambia de club, su `cards` row no se duplica — viaja con él. Lo que cambia es:
+
+1. `member_club_seasons` cierra la fila vieja (`left_at = NOW()`, `exit_reason = 'fichaje'`, `closed_snapshot_jsonb` = stats finales).
+2. Inserta fila nueva (mismo `card_slug`, nuevo `organization_id`, dorsal/categoría del club nuevo).
+3. `cards.organization_id` se actualiza al nuevo club.
+4. `card_consents` recibe insert con `consent_type = 'club_handoff'` y `related_club_id = club_anterior`.
+
+Las 4 ops viven en una transacción. El visit log (`visits`), foto, edit_tokens de los tutores y todo el histórico previo queda intacto.
+
+**Roles y permisos**:
+
+- **Tutor legal** (padre/madre con potestad) — admin completo de la card del menor mientras éste no haya transferido la titularidad. Aprueba handoffs entre clubes. Único que puede ejercer `delete-account` y `export-data` para datos del menor.
+- **Tutor secundario** (segundo progenitor, abuelo, tutor pedagógico) — admin compartido. Puede editar foto/datos, no puede aprobar handoff ni ejercer derechos LOPD.
+- **Club admin** — escribe `dorsal`, `category`, `position`, `team_name`, `stats_jsonb` mientras la membership esté activa. No toca nombre, foto ni datos del menor. Pierde acceso al cerrar `left_at`.
+- **Player self** — se activa a los 16 años con opt-in parental (`consent_type='transfer_to_player'`). Los tutores NO se revocan automáticamente; el chaval decide si los mantiene o no.
+
+**Consentimiento parental LOPDGDD (art. 7 LO 3/2018)**:
+
+Doble verificación obligatoria antes de marcar `public_card=true`, antes del primer handoff y antes de cualquier `image_rights`. Mecanismo: (1) click en magic-link enviado al `tutor_legal.email`, (2) confirmación adicional via code SMS al teléfono que el club registró al fichar o validación NIF parcial. Sólo entonces se inserta `card_consents` con `granted_by_email`, `ip_address`, `user_agent` y `evidence_jsonb` con snapshot del documento aceptado + hash. El audit trail es append-only por construcción RLS.
+
+**Carnet físico PVC + NFC**:
+
+`printable-card-utils.js` extendido con `buildPlayerCardPVC({ card, club, season, nfcUrl })` — formato ISO 7810 (85.6×54mm), branded con `color_primary` del club, escudo, foto, dorsal grande, QR + URL para NFC. Setup fee 19€ por nuevo fichaje (cobrado al club). Renovación anual 9€ opcional. El operario de impresión escanea NFC + QR al impresionar; `nfc-register.js` registra el UID en la fila correspondiente.
+
+**Studio del club** (`/panel.html` con `org.kind='sports_club'`):
+
+Tabs: Plantilla (acordeón de categorías + grid de jugadores/staff por categoría con dorsal/cuota), Stats (KPIs club + partidos), Fichajes (bandeja entrante/saliente + form alta), Carnets (impresión batch + tracking), Cobros (MRR del club + status cuotas + onboarding Stripe Connect), Branding (escudo + colores, reusa B2B), ⚙ (legal + cuota por categoría + invitar otros admins).
+
+**Panel del padre** (`/panel.html` con JWT de `card_admins`):
+
+Vista simple: card del hijo (o tabs si tiene varios hijos), stats temporada, cuota mensual, histórico de clubes, derechos LOPD (exportar + borrar). Banner contextual cuando llega solicitud de handoff con doble verificación inline.
+
+**Env vars Cantera** (todas opcionales — el carril se apaga limpio borrándolas):
+
+```
+CANTERA_VERTICAL_ACTIVE          # "1" enciende. Sin ella, endpoints devuelven 410 Gone.
+CANTERA_PII_KEY                  # AES key (32 bytes hex) para pgcrypto sobre birth_date_encrypted.
+STRIPE_CONNECT_CLIENT_ID         # OAuth client ID Standard accounts.
+STRIPE_CONNECT_WEBHOOK_SECRET    # Webhook secret separado para eventos Connect.
+STRIPE_PLATFORM_FEE_BPS          # bps comisión platform sobre cuota padre. Default 0.
+STRIPE_PRICE_PLAYER_SETUP_FEE    # 19€ carnet setup.
+STRIPE_PRICE_PLAYER_RENEWAL      # 9€ renovación anual.
+STRIPE_PRICE_PARENT_PREMIUM      # 4-6€/mes premium padre (opcional Sprint 2).
+STRIPE_PRICE_CARD_MAINTENANCE    # 1€/mes mantenimiento entre clubes (opcional Sprint 2).
+PRINT_PROVIDER                   # 'manual' (founder exporta CSV) | 'helloprint' | 'tarjetasdpvc'.
+PRINT_PROVIDER_API_KEY           # sólo si PRINT_PROVIDER != 'manual'.
+PARENT_PANEL_JWT_SECRET          # fallback a ORG_PANEL_JWT_SECRET si no está.
+```
+
+**Reversibilidad**:
+
+- Apagado runtime: borrar `CANTERA_VERTICAL_ACTIVE`. Las orgs `kind='sports_club'` siguen existiendo pero ningún endpoint del carril responde.
+- Apagado quirúrgico (pieza a pieza): borrar la env var del precio Stripe correspondiente o de la pieza concreta. Por ejemplo `PRINT_PROVIDER` vacío → carnet físico off.
+- Apagado total: contramigración SQL al final de `033_cantera_v1.sql` (DROP en orden inverso). Cero efecto sobre autónomos y B2B genérico — `card_kind` default `'autonomo'` y `organizations.kind` nullable preservan el comportamiento legacy.
+
+**Fuera de scope MVP** (deuda consciente):
+
+- W3C Verifiable Credentials firmadas — el `card_consents.evidence_jsonb` es preparación; firma + DID llega en fase 2.
+- `org_admins` con permisos diferenciados dentro del club (presidente vs coordinador vs entrenador) — modelo actual asume 1 admin por club.
+- Integración federativa autonómica — fase 2 cuando haya primera federación firmada.
+- Sincronización con Verifactu/Quipu del cobro padre→club — la factura SEPA al padre la emite el club fuera de PerfilaPro hasta Sprint 3.
+- App nativa móvil — todo email + web al menos 12 meses.
+- Marketplace de ojeadores, vídeo highlights, multi-idioma fuera es/ca — explícitamente post-MVP.
+
 ### Environment variables required
 
 ```
