@@ -436,7 +436,7 @@ Carril sports_club montado sobre la infra B2B existente (no es un fork, es una e
 
 **Tablas (migración 033)**:
 
-- **`cards` extendida** — `card_kind` (default `'autonomo'`), `birth_date_encrypted` (pgcrypto + `CANTERA_PII_KEY`), `birth_year` (en claro, único campo necesario para queries de categoría), `gender` (`M`/`F`/`X` nullable), `public_card` (boolean; para `card_kind='player'` arranca `false` hasta consentimiento parental, gatea `/c/:slug`).
+- **`cards` extendida** — `card_kind` (default `'autonomo'`), `birth_date_encrypted` (bytea; cifrado AES-256-GCM app-side con `CANTERA_PII_KEY` vía `lib/pii-crypto.js` — ver nota de capa 1 abajo), `birth_year` (en claro, único campo necesario para queries de categoría), `gender` (`M`/`F`/`X` nullable), `public_card` (boolean; para `card_kind='player'` arranca `false` hasta consentimiento parental, gatea `/c/:slug`).
 - **`organizations` extendida** — `kind`, `sport`, `stripe_connect_account_id`, `stripe_connect_charges_enabled`, `stripe_connect_payouts_enabled`. Connect Standard (la responsabilidad fiscal queda 100% en el club; PerfilaPro cobra `application_fee_percent`).
 - **`card_admins`** — multi-admin sobre la card del jugador. Roles: `tutor_legal`, `tutor_secundario`, `player_self`, `club_admin`. Cada admin tiene su propio `edit_token` (32-byte hex). Reemplaza el modelo single-token `cards.edit_token` sólo cuando `card_kind='player'`; para autónomos sigue intacto.
 - **`card_consents`** — audit trail LOPDGDD append-only. Tipos: `parental_initial`, `data_processing`, `public_visibility`, `club_handoff`, `image_rights`, `transfer_to_player`. RLS bloquea UPDATE/DELETE (`REVOKE UPDATE, DELETE ... FROM PUBLIC`) incluso para service_role — blindaje contra un endpoint mal escrito que borre evidencias.
@@ -450,6 +450,14 @@ Carril sports_club montado sobre la infra B2B existente (no es un fork, es una e
 
 - **`external_payments`** — cobros manuales fuera de Stripe Connect (Bizum personal del coordinador, efectivo, transferencia). Una fila por pago: `card_slug` + `organization_id` + `period` (mes facturado, nullable para pagos sueltos) + `amount_cents` + `currency` + `method` (`bizum`/`efectivo`/`transferencia`/`otro`) + `recorded_by` (email del admin que lo apuntó) + `paid_at` + `receipt_number` (nullable, número del recibo informativo si el padre lo pide) + `notes`. La pestaña **Cobros** del Studio une `parent_subscriptions` (Stripe) + `external_payments` (manual) en una sola vista de "quién pagó". **NO es registro fiscal**: la factura/recibo SEPA legal la emite el club fuera de PerfilaPro; `receipt_number` es para el recibo informativo (plantilla "recibo", no "factura", de `invoice-utils.js`). FK sin `ON DELETE` (mismo criterio que `parent_subscriptions`): un cobro no se borra en cascada al limpiar la card. Índice único parcial sobre `receipt_number` cuando no es NULL.
 - **`member_club_seasons.previous_club_name`** (text, nullable) — nombre legible del club del que llega el jugador cuando ese club **no** está en PerfilaPro (caso dominante en fase 1: casi todos los fichajes entrantes vienen de clubes off-platform). No enlaza a `organizations` — es captura de histórico legible, no relación. El handoff transaccional entre clubes PerfilaPro sigue usando `organization_id`.
+
+**Helpers (capa 1)** — ladrillos puros que reusan todos los endpoints del carril; cada uno aislado y testeado (`tests/lib-cantera-*.test.js`, `lib-card-kind`, `lib-pii-crypto`, `lib-sports-categories`, `lib-external-payments`):
+
+- **`lib/cantera-flag.js`** — `isCanteraActive()` (true sólo con `CANTERA_VERTICAL_ACTIVE='1'`) + `canteraDisabledResponse()` (410 Gone). El gate que abre cada endpoint del carril.
+- **`lib/card-kind.js`** — constantes `CARD_KINDS` + guards `isAutonomo/isPlayer/isClubStaff/isClubMember`. `cardKindOf` normaliza undefined/null/'' → `'autonomo'` (default de BD), así una card legacy nunca se confunde con player.
+- **`lib/pii-crypto.js`** — **decisión de implementación**: la fecha de nacimiento se cifra con **AES-256-GCM en Node** (no pgcrypto DB-side). Motivo: pgcrypto vía supabase-js exigiría funciones SQL SECURITY DEFINER y pasar la clave a la BD en cada query; con AES app-side la clave nunca sale del entorno Netlify y es testeable offline. La columna sigue siendo `bytea` (se guarda el blob `[iv|authTag|ciphertext]` como hex `\x…`). `CANTERA_PII_KEY` se lee LAZY (importar el módulo nunca rompe si falta la env var). `decryptBirthDate` es defensivo (devuelve null, no lanza). `birthYearFromDate` puebla el `birth_year` en claro.
+- **`lib/sports-categories.js`** — resuelve categoría desde `birth_year` + offsets del catálogo, relativos al año de inicio de temporada (`categoryForBirthYear`). `currentSeasonStartYear` usa cutoff julio (temporada española arranca en verano). `parseSeasonStartYear`/`formatSeason` manejan `YYYY-YY`. `listSportsCategories(db, sport)` carga el catálogo ordenado.
+- **`lib/external-payments.js`** — `PAYMENT_METHODS` + `buildPaymentRow` (valida/normaliza, devuelve `{row,error}` sin tocar BD) + `recordExternalPayment` (inserta tras validar) + `listPaymentsByClub`/`listPaymentsByCard`. Period opcional `YYYY-MM`, amount entero ≥ 0, currency default `eur`.
 
 **Ownership y portabilidad de la card**:
 
@@ -489,7 +497,7 @@ Vista simple: card del hijo (o tabs si tiene varios hijos), stats temporada, cuo
 
 ```
 CANTERA_VERTICAL_ACTIVE          # "1" enciende. Sin ella, endpoints devuelven 410 Gone.
-CANTERA_PII_KEY                  # AES key (32 bytes hex) para pgcrypto sobre birth_date_encrypted.
+CANTERA_PII_KEY                  # AES key (32 bytes hex, `openssl rand -hex 32`) para AES-256-GCM app-side sobre birth_date_encrypted (lib/pii-crypto.js). NO rotar con datos cifrados sin re-cifrar.
 STRIPE_CONNECT_CLIENT_ID         # OAuth client ID Standard accounts.
 STRIPE_CONNECT_WEBHOOK_SECRET    # Webhook secret separado para eventos Connect.
 STRIPE_PLATFORM_FEE_BPS          # bps comisión platform sobre cuota padre. Default 0.
