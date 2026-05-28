@@ -78,11 +78,24 @@ de estas condiciones:
 - Cualquier nueva migración que introduzca una tabla debe
   `ENABLE ROW LEVEL SECURITY` en la misma migración, aunque no
   declare policies (postura por defecto del proyecto).
+- Además del RLS, la migración debe emitir
+  `REVOKE ALL ON TABLE <t> FROM anon, authenticated;` salvo que
+  esa tabla concreta tenga que servirse por la Data API
+  (PostgREST / GraphQL / supabase-js). Hoy no hay ninguna en esa
+  situación. RLS sin policies ya bloquea las queries, pero el
+  REVOKE saca la tabla del schema cache de PostgREST — segunda
+  capa cero-coste y, además, alinea el proyecto con el cambio
+  anunciado por Supabase: a partir del 30 de octubre de 2026,
+  las tablas nuevas creadas en proyectos existentes ya no se
+  exponen por defecto a la Data API y requerirán GRANT explícito.
+  Adoptamos el patrón ya para no acumular deuda.
 - Si la nueva tabla sí necesita ser accesible desde `anon` o
-  `authenticated`, declarar las policies en la misma migración.
-  Nunca dejar una policy permisiva (`USING (true)`) por
-  comodidad — eso es equivalente a tener RLS off pero con peor
-  legibilidad.
+  `authenticated`, declarar las policies en la misma migración
+  y, en ese mismo bloque, emitir el `GRANT` específico
+  (`SELECT`, `INSERT`, etc.) sobre las columnas/operaciones
+  que correspondan. Nunca dejar una policy permisiva
+  (`USING (true)`) por comodidad — eso es equivalente a tener
+  RLS off pero con peor legibilidad.
 - Cualquier nueva VIEW en `public` debe crearse con
   `WITH (security_invoker = on)`. Una view sin esa opción se
   ejecuta con permisos del creador (postgres) y bypassa la RLS
