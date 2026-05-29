@@ -8,7 +8,12 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capa schema 033 + capa 0.5 (034) mergeadas a `main` (PR #141). La capa 1 (helpers) vive en `claude/cantera-capa1-helpers`.
+**Branch**: capas 0/0.5/1 mergeadas a `main` (PRs #141, #142). La capa 2 (auth tutor) vive en `claude/cantera-capa2-parent-auth`.
+
+**Capa 2 · auth tutor** — `claude/cantera-capa2-parent-auth`. 14 tests (`tests/parent-auth.test.js`), suite total 1168/1168.
+- `parent-auth.js` (`POST /api/parent-auth`): magic-link passwordless al email de un `card_admins` activo (roles `tutor_legal`/`tutor_secundario`/`player_self`, NO `club_admin`). Siempre 200 (anti-enumeration), gateado por `isCanteraActive()` (410 off), rate-limit 5/10min/IP. CTA → `/panel.html?session=<jwt>`.
+- `lib/panel-auth.js` extendido: `signParentSession({email})`/`verifyParentSession`/`parentAuthFromEvent` con `purpose:'parent-panel'` (secreto `PARENT_PANEL_JWT_SECRET` → `ORG_PANEL_JWT_SECRET` → `AGENT_JWT_SECRET`). Sesión scoped al **email** (tutor con varios hijos = todas sus cards). Aislada de org-panel por el claim `purpose`.
+- Ruta en `netlify.toml` bajo bloque `# CANTERA` (borrable de golpe).
 
 **Capa 1 · helpers** — `claude/cantera-capa1-helpers`. 5 libs puros + 48 tests (`tests/lib-cantera-flag`, `lib-card-kind`, `lib-pii-crypto`, `lib-sports-categories`, `lib-external-payments`). Suite total 1154/1154.
 - `lib/cantera-flag.js` — gate `isCanteraActive()` + `canteraDisabledResponse()` (410).
@@ -144,8 +149,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **0 · ✅ hecho** | Migración 033 + sección CLAUDE.md | DROP CASCADE documentado |
 | **0.5 · ✅ hecho** | Migración 034 (external_payments + previous_club_name) — Q1/Q2 = sí | DROP TABLE / DROP COLUMN |
 | **1 · ✅ hecho** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` + 48 tests | Borrar archivos |
-| **2 · ⬅ SIGUIENTE · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) | Borrar archivo + route |
-| **3 · fichaje + handoff** | `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js` + tests de transacción atómica | Borrar archivos + routes |
+| **2 · ✅ hecho · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) + 14 tests | Borrar archivo + route |
+| **3 · ⬅ SIGUIENTE · fichaje + handoff** | `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js` + tests de transacción atómica | Borrar archivos + routes |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
@@ -170,6 +175,6 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5 (migraciones 033+034) mergeadas a `main`; capa 1 (helpers + 48 tests) en `claude/cantera-capa1-helpers`. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 2 · auth tutor**: `parent-auth.js` + `purpose:'parent-panel'` en `lib/panel-auth.js`, reusando los helpers de capa 1.
+> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 mergeadas (PRs #141, #142 + capa 2 pendiente de merge en `claude/cantera-capa2-parent-auth`). Las 4 Q cerradas con defaults (§4). Continúo con la **capa 3 · fichaje + handoff**: `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js`, con tests de transacción atómica.
 
-La capa 2 (auth tutor) es lo siguiente: el modelo multi-admin de `card_admins` (cada tutor con su `edit_token`) necesita su propio magic-link / JWT, espejo de `panel-auth.js` pero scoped a una card de player en lugar de a una org.
+La capa 3 (fichaje + handoff) es lo siguiente y es la más densa: el alta de player con 3 caminos (nuevo / desde club PerfilaPro / desde club off-platform con `previous_club_name`), el handoff transaccional (cerrar `member_club_seasons` vieja + abrir nueva + UPDATE `cards.organization_id` + insert `card_consents`), y el consentimiento parental con doble verificación. Reusa los helpers de capa 1 (`pii-crypto`, `sports-categories`, `card-kind`) y la auth de capa 2.

@@ -493,6 +493,8 @@ Tabs: Plantilla (acordeón de categorías + grid de jugadores/staff por categor�
 
 Vista simple: card del hijo (o tabs si tiene varios hijos), stats temporada, cuota mensual, histórico de clubes, derechos LOPD (exportar + borrar). Banner contextual cuando llega solicitud de handoff con doble verificación inline.
 
+**Auth del tutor (capa 2)** — `parent-auth.js` (`POST /api/parent-auth { email, idioma? }`) es el espejo de `panel-auth.js` para padres/tutores. Magic-link passwordless: si el email coincide con al menos un `card_admins` activo de rol `tutor_legal`/`tutor_secundario`/`player_self` (NO `club_admin` — ése entra por el Studio B2B), firma un JWT `purpose:'parent-panel'` (TTL 7d, secreto `PARENT_PANEL_JWT_SECRET` con fallback `ORG_PANEL_JWT_SECRET` → `AGENT_JWT_SECRET`) y manda `${SITE_URL}/panel.html?session=<jwt>`. La sesión está scoped al **email**, no a una card: un tutor con varios hijos administra todas las cards donde aparece con ese email. Siempre devuelve 200 (anti-enumeration, igual que `send-edit-link`/`panel-auth`); gateado por `isCanteraActive()` (410 si el carril está off); rate-limit 5 req / 10 min / IP. Las primitivas JWT (`signParentSession`/`verifyParentSession`/`parentAuthFromEvent`) viven en `lib/panel-auth.js` junto a las de org, aisladas por el claim `purpose` (un token org-panel nunca verifica como parent-panel y viceversa).
+
 **Env vars Cantera** (todas opcionales — el carril se apaga limpio borrándolas):
 
 ```
@@ -600,6 +602,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/register-b2b` | `register-b2b` |
 | `/api/ocupaciones-search` | `ocupaciones-search` |
 | `/api/cp-lookup` | `cp-lookup` |
+| `/api/parent-auth` | `parent-auth` (CANTERA) |
 
 ### Internacionalización (es / ca)
 
