@@ -8,7 +8,16 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capas 0/0.5/1/2/3a mergeadas a `main` (PRs #141–#144). La capa 3 va en sub-PRs (3a/3b/3c); **3b (handoff transaccional)** vive en `claude/cantera-capa3b-handoff`.
+**Branch**: capas 0/0.5/1/2/3a/3b mergeadas a `main` (PRs #141–#145). **3c (consentimiento parental)** vive en `claude/cantera-capa3c-consent`.
+
+**Capa 3c · consentimiento parental LOPDGDD** — `claude/cantera-capa3c-consent`. 16 tests (`tests/parent-consent.test.js` + nuevo caso en `cantera-transfers`), suite total 1224/1224. **Sin migración** (reusa `card_consents`).
+- `lib/consent.js`: `verifySecondFactor` (2º factor = fecha de nacimiento del menor, contra `birth_date_encrypted` o fallback `birth_year`), `buildConsentEvidence` (hash sha256 + ip + ua), `recordConsent`, `clientIp`/`userAgentOf`, `CONSENT_TYPES`.
+- `parent-consent.js` (`POST /api/parent-consent`, auth parent-panel): tutor_legal otorga `parental_initial`/`data_processing`/`public_visibility`/`image_rights`. `public_visibility` → `cards.public_card=true`.
+- `accept-transfer.js` ahora **exige el 2º factor** (`birth_date`) antes de ejecutar el handoff (gate LOPDGDD que la 3b dejó pendiente).
+- Ruta `/api/parent-consent` en bloque `# CANTERA`.
+- **Decisión MVP**: 2º factor = fecha de nacimiento (sin infra SMS). Reemplazable por OTP SMS tocando solo `lib/consent.verifySecondFactor`.
+
+**Branch (3b)**: capa **3b (handoff transaccional)** mergeada (PR #145).
 
 **Capa 3b · handoff transaccional** — `claude/cantera-capa3b-handoff`. 25 tests (`tests/cantera-transfers.test.js`), suite total 1208/1208.
 - **Migración 035** (NO ejecutada en prod): `club_transfers` + RPCs `SECURITY DEFINER` `cantera_execute_transfer` / `cantera_close_membership` (atomicidad real en Postgres, no compensación app-side) + amplía CHECK `card_consents.granted_by_role` con `'founder'`. RLS + REVOKE/GRANT EXECUTE a service_role + contramigración.
@@ -166,8 +175,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **2 · ✅ hecho · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) + 14 tests | Borrar archivo + route |
 | **3a · ✅ hecho** | `register-player.js` (alta player/staff, caminos 1 y 3) + 15 tests | Borrar archivo + route |
 | **3b · ✅ hecho** | migración 035 (RPCs atómicas) + `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` + override `transfer_resolve` en admin-orgs + 25 tests | Borrar archivos + routes + DROP 035 |
-| **3c · ⬅ SIGUIENTE** | `parent-consent.js` (doble verificación LOPDGDD: magic-link + 2º factor → `card_consents`, `public_card=true`; gate sobre accept-transfer) | Borrar archivo + route |
-| **admin-incidencias** (tras 3c) | consola founder sobre `admin-orgs.js`: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD | Revert acciones |
+| **3c · ✅ hecho** | `parent-consent.js` + `lib/consent.js` (doble verificación → `card_consents`, `public_card=true`) + gate 2º factor sobre accept-transfer + 16 tests | Borrar archivos + route |
+| **admin-incidencias · ⬅ SIGUIENTE** | consola founder sobre `admin-orgs.js`: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD | Revert acciones |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
@@ -192,7 +201,7 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a + 3b mergeadas (sub-PRs 3a/3b/3c). Las 4 Q cerradas con defaults (§4). Atomicidad del handoff resuelta con RPCs SECURITY DEFINER (migración 035). Continúo con **3c · consentimiento parental**: `parent-consent.js` (doble verificación → `card_consents` + `public_card=true`), incluyendo el gate de 2º factor sobre accept-transfer.
+> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a + 3b + 3c mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **consola de incidencias del founder** (decidida en sesión: tras 3c, sobre `admin-orgs.js`, con las 4 familias de utilidades). Después, capa 4 (Stripe Connect + cobros).
 
 **Decisiones del founder en esta sesión** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.

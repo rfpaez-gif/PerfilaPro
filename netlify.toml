@@ -315,6 +315,12 @@
   to     = "/.netlify/functions/cancel-membership"
   status = 200
 
+# Capa 3c · consentimiento parental LOPDGDD (doble verificación).
+[[redirects]]
+  from   = "/api/parent-consent"
+  to     = "/.netlify/functions/parent-consent"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"

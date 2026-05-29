@@ -481,6 +481,8 @@ Las 4 ops viven en una transacción. El visit log (`visits`), foto, edit_tokens 
 
 Doble verificación obligatoria antes de marcar `public_card=true`, antes del primer handoff y antes de cualquier `image_rights`. Mecanismo: (1) click en magic-link enviado al `tutor_legal.email`, (2) confirmación adicional via code SMS al teléfono que el club registró al fichar o validación NIF parcial. Sólo entonces se inserta `card_consents` con `granted_by_email`, `ip_address`, `user_agent` y `evidence_jsonb` con snapshot del documento aceptado + hash. El audit trail es append-only por construcción RLS.
 
+**Implementación (capa 3c)** — `parent-consent.js` (`POST /api/parent-consent`) + `lib/consent.js`. Auth parent-panel (1er factor = control del email). **2º factor MVP = la fecha de nacimiento del menor** (`body.birth_date`, verificada contra `birth_date_encrypted` vía `lib/pii-crypto`, con fallback a `birth_year` si no hay `CANTERA_PII_KEY`): es el dato que el club registró al fichar, un factor de conocimiento sin infra extra, **reemplazable/reforzable por OTP SMS** cuando se cablee un proveedor (solo toca `lib/consent.verifySecondFactor`). Tipos que concede el tutor: `parental_initial`, `data_processing`, `public_visibility` (pone `cards.public_card=true`), `image_rights`. `lib/consent.recordConsent` inserta en `card_consents` con `evidence_jsonb` = `{document_version, document_hash (sha256), second_factor, accepted_at, ip_address, user_agent}`. El gate del 2º factor también se aplica en **`accept-transfer`** (el handoff exige doble verificación): sin `birth_date` correcto, el traspaso no se ejecuta. `club_handoff` lo graba la RPC de 3b; `transfer_to_player` (opt-in jugador 16+) queda fuera de MVP.
+
 **Carnet físico PVC + NFC**:
 
 `printable-card-utils.js` extendido con `buildPlayerCardPVC({ card, club, season, nfcUrl })` — formato ISO 7810 (85.6×54mm), branded con `color_primary` del club, escudo, foto, dorsal grande, QR + URL para NFC. Setup fee 19€ por nuevo fichaje (cobrado al club). Renovación anual 9€ opcional. El operario de impresión escanea NFC + QR al impresionar; `nfc-register.js` registra el UID en la fila correspondiente.
@@ -615,6 +617,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/request-transfer` | `request-transfer` (CANTERA) |
 | `/api/accept-transfer` | `accept-transfer` (CANTERA) |
 | `/api/cancel-membership` | `cancel-membership` (CANTERA) |
+| `/api/parent-consent` | `parent-consent` (CANTERA) |
 
 ### Internacionalización (es / ca)
 

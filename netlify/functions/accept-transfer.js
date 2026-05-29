@@ -11,15 +11,17 @@
 // Auth: JWT parent-panel (scoped al email del tutor).
 // Gateado por isCanteraActive().
 //
-// Nota: la 2ª verificación LOPDGDD (SMS / NIF parcial) la añade la capa
-// 3c sobre este endpoint; hoy la prueba de identidad es el control del
-// email (magic-link parent-panel).
+// Doble verificación LOPDGDD (capa 3c): 1er factor = control del email
+// (magic-link parent-panel); 2º factor = fecha de nacimiento del menor
+// (body.birth_date, verificada en lib/consent.verifySecondFactor). El
+// handoff es uno de los actos que la exigen.
 
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { parentAuthFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
+const { verifySecondFactor } = require('./lib/consent');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const defaultEmail = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -66,6 +68,15 @@ function makeHandler(db, emailClient) {
       .limit(1).maybeSingle();
     if (aErr) return jsonResponse(500, { error: aErr.message });
     if (!admin) return jsonResponse(403, { error: 'Solo el tutor legal puede aprobar el traspaso' });
+
+    // 2º factor LOPDGDD: fecha de nacimiento del menor.
+    const { data: card, error: cErr } = await db
+      .from('cards').select('birth_year, birth_date_encrypted')
+      .eq('slug', transfer.card_slug).maybeSingle();
+    if (cErr) return jsonResponse(500, { error: cErr.message });
+    if (!verifySecondFactor(card, body.birth_date)) {
+      return jsonResponse(403, { error: 'Verificación fallida: la fecha de nacimiento no coincide' });
+    }
 
     // Ejecución atómica.
     const { data, error } = await db.rpc('cantera_execute_transfer', {
