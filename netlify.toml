@@ -344,6 +344,17 @@
   to     = "/.netlify/functions/record-external-payment"
   status = 200
 
+# Capa 5 · carnet físico PVC+NFC: export imprenta + registro NFC (founder).
+[[redirects]]
+  from   = "/api/print-order-export"
+  to     = "/.netlify/functions/print-order-export"
+  status = 200
+
+[[redirects]]
+  from   = "/api/nfc-register"
+  to     = "/.netlify/functions/nfc-register"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"

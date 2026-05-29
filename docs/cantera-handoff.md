@@ -8,7 +8,11 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: **capa 4 COMPLETA** (4a/4b/4c/4d). **4d (webhook Connect)** vive en `claude/cantera-capa4d-webhook`.
+**Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
+
+**Capa 5 · carnet físico PVC+NFC** — `buildPlayerCardPVC` + `buildPlayerCardsBookletPDF` en `printable-card-utils.js` (ISO 7810, escudo+foto+dorsal+QR); `print-order-export.js` (founder: CSV del lote para imprenta / PDF booklet de carnets); `nfc-register.js` (founder: registra nfc_uid al impresionar → status sent_to_printer, 409 si UID duplicado). 12 tests, suite 1308/1308. Sin migración (usa card_print_orders de 033). Consumidor UI (botones en el Studio) → capa 6.
+
+**Branch**: **capa 4 COMPLETA** (4a/4b/4c/4d). 4d vive en `claude/cantera-capa4d-webhook`.
 
 **Capa 4d · eventos webhook Connect** — `lib/cantera-webhook.js` enrutado desde `stripe-webhook.js` antes de B2B/autónomo. Firma dual (`STRIPE_WEBHOOK_SECRET` + fallback `STRIPE_CONNECT_WEBHOOK_SECRET`). `account.updated` → flags Connect; `checkout.session.completed kind=cantera-parent-fee` → upsert `parent_subscriptions`; `customer.subscription.*` parent-fee → estado/periodo/importe; `checkout.session.completed kind=cantera-print` → `card_print_orders` paid; `invoice.paid` parent-fee → ACK. 15 tests, suite 1296/1296. Sin migración/route nueva.
 
@@ -197,9 +201,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **4b · ✅ hecho** | migración 036 (`organizations.cantera_monthly_fee_cents`) + `create-parent-checkout.js` (subscription direct-charge en cuenta conectada + application_fee) + 11 tests | Borrar archivo + route + DROP 036 |
 | **4c · ✅ hecho** | `create-setup-fee-checkout.js` (carnet, directo plataforma) + `record-external-payment.js` (Bizum/efectivo → external_payments) + 13 tests | Borrar archivos + routes |
 | **4d · ✅ hecho** | `lib/cantera-webhook.js` + enrutado en `stripe-webhook.js` (firma dual, account.updated, parent-fee sub/checkout/invoice, print checkout) + 15 tests | Borrar lib + ramas del webhook |
-| **5 · ⬅ SIGUIENTE · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
-| **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
-| **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
+| **5 · ✅ hecho · carnet físico** | `buildPlayerCardPVC` + `buildPlayerCardsBookletPDF` en `printable-card-utils.js`, `print-order-export.js` (CSV/PDF), `nfc-register.js` + 12 tests | Borrar funciones + routes |
+| **6 · ⬅ SIGUIENTE · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
 
 Cada capa commit separado. Cada capa con tests. `netlify.toml` se actualiza por capa con un bloque etiquetado `# CANTERA · ...` para borrado en bloque.
 
@@ -221,7 +224,9 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias + **capa 4 cobros completa** (4a/4b/4c/4d) mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con **capa 5 · carnet físico PVC+NFC** (`buildPlayerCardPVC` en printable-card-utils + `print-order-export.js` + `nfc-register.js`).
+> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias + capa 4 (cobros) + **capa 5 (carnet)** mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 6 · UI** — la última: ramificar `panel.html` por `org.kind='sports_club'` (Studio del club: Plantilla/Stats/Fichajes/Carnets/Cobros) + vista del padre (JWT parent-panel: card del hijo, stats, cuota, histórico, LOPD). Es la capa que pone cara a todo el backend Cantera ya construido.
+
+La capa 6 es grande y es de frontend (panel.html + org-panel.js). Conviene partirla por pestañas/vistas. El backend que consume ya existe: register-player, transfers, parent-consent, cobros (4a-d), carnet (print-order-export/nfc-register), consola incidencias. Falta sobre todo: endpoints de lectura para el Studio deportivo (plantilla por categorías, stats club) + la vista del padre, y cablear los botones a los endpoints existentes.
 
 La capa 5 materializa el carnet PVC+NFC: `buildPlayerCardPVC({card, club, season, nfcUrl})` (ISO 7810 85.6×54mm, escudo + foto + dorsal + QR/NFC) en `printable-card-utils.js`; `print-order-export.js` (founder exporta CSV de `card_print_orders` paid → imprenta, gated por `PRINT_PROVIDER`); `nfc-register.js` (el operario registra el NFC UID al impresionar). El carnet se cobra en 4c (ya hecho); 5 es la generación + tracking físico.
 
