@@ -1,0 +1,134 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as cw from '../netlify/functions/lib/cantera-webhook.js';
+import { makeHandler } from '../netlify/functions/stripe-webhook.js';
+
+const resolve = (v) => () => Promise.resolve(v);
+
+// ───────────────────────── lib ─────────────────────────
+
+describe('handleAccountUpdated', () => {
+  it('refresca flags por stripe_connect_account_id', async () => {
+    const updates = [];
+    const db = { from: () => ({ update: (p) => { updates.push(p); return { eq: resolve({ error: null }) }; } }) };
+    const r = await cw.handleAccountUpdated({ db, account: { id: 'acct_1', charges_enabled: true, payouts_enabled: false } });
+    expect(r.ok).toBe(true);
+    expect(updates[0]).toEqual({ stripe_connect_charges_enabled: true, stripe_connect_payouts_enabled: false });
+  });
+  it('falla sin account', async () => {
+    expect((await cw.handleAccountUpdated({ db: {}, account: null })).ok).toBe(false);
+  });
+});
+
+describe('handleParentCheckoutCompleted', () => {
+  function db() { const ups = []; return { ups, from: () => ({ upsert: (row, opts) => { ups.push([row, opts]); return Promise.resolve({ error: null }); } }) }; }
+  it('upsert parent_subscriptions por stripe_subscription_id', async () => {
+    const d = db();
+    const session = { subscription: 'sub_1', customer: 'cus_1', amount_total: 3000, metadata: { kind: 'cantera-parent-fee', card_slug: 'p-1', org_id: 'club-1', parent_email: 't@e.es' } };
+    const r = await cw.handleParentCheckoutCompleted({ db: d, session });
+    expect(r.ok).toBe(true);
+    expect(d.ups[0][0]).toMatchObject({ stripe_subscription_id: 'sub_1', card_slug: 'p-1', organization_id: 'club-1', parent_email: 't@e.es', status: 'active' });
+    expect(d.ups[0][1]).toEqual({ onConflict: 'stripe_subscription_id' });
+  });
+  it('ignora si no es parent-fee', async () => {
+    expect((await cw.handleParentCheckoutCompleted({ db: db(), session: { metadata: { kind: 'other' } } })).ok).toBe(false);
+  });
+  it('ignora si no hay subscription', async () => {
+    expect((await cw.handleParentCheckoutCompleted({ db: db(), session: { metadata: { kind: 'cantera-parent-fee' } } })).reason).toBe('no_subscription');
+  });
+});
+
+describe('handleParentSubscription', () => {
+  function db() { const u = []; return { u, from: () => ({ update: (p) => { u.push(p); return { eq: resolve({ error: null }) }; } }) }; }
+  const sub = { id: 'sub_1', status: 'active', current_period_end: 1700000000, metadata: { kind: 'cantera-parent-fee' }, items: { data: [{ price: { unit_amount: 3000 } }] } };
+  it('actualiza estado/periodo/importe', async () => {
+    const d = db();
+    const r = await cw.handleParentSubscription({ db: d, subscription: sub });
+    expect(r.ok).toBe(true);
+    expect(d.u[0].status).toBe('active');
+    expect(d.u[0].amount_cents).toBe(3000);
+    expect(d.u[0].current_period_end).toMatch(/^20\d\d-/);
+  });
+  it('deleted marca canceled + canceled_at', async () => {
+    const d = db();
+    await cw.handleParentSubscription({ db: d, subscription: sub, deleted: true });
+    expect(d.u[0].status).toBe('canceled');
+    expect(d.u[0].canceled_at).toBeTruthy();
+  });
+  it('ignora si no es parent-fee', async () => {
+    expect((await cw.handleParentSubscription({ db: db(), subscription: { id: 's', metadata: {} } })).ok).toBe(false);
+  });
+});
+
+describe('handlePrintCheckoutCompleted', () => {
+  it('marca card_print_orders paid por session id', async () => {
+    const chain = []; let lastEq;
+    const db = { from: () => ({ update: (p) => { chain.push(p); return { eq: (c, v) => { lastEq = [c, v]; return { eq: resolve({ error: null }) }; } }; } }) };
+    const r = await cw.handlePrintCheckoutCompleted({ db, session: { id: 'cs_1', metadata: { kind: 'cantera-print' } } });
+    expect(r.ok).toBe(true);
+    expect(chain[0]).toEqual({ status: 'paid' });
+    expect(lastEq).toEqual(['stripe_payment_intent_id', 'cs_1']);
+  });
+});
+
+describe('discriminadores', () => {
+  it('isParentFeeSubscription / isParentFeeInvoice', () => {
+    expect(cw.isParentFeeSubscription({ metadata: { kind: 'cantera-parent-fee' } })).toBe(true);
+    expect(cw.isParentFeeSubscription({ metadata: { kind: 'org-subscription' } })).toBe(false);
+    expect(cw.isParentFeeInvoice({ subscription_details: { metadata: { kind: 'cantera-parent-fee' } } })).toBe(true);
+    expect(cw.isParentFeeInvoice({})).toBe(false);
+  });
+});
+
+// ──────────────── stripe-webhook routing ────────────────
+
+function stripeWith(eventObj) {
+  return { webhooks: { constructEvent: vi.fn(() => eventObj) } };
+}
+function ev() { return { httpMethod: 'POST', headers: { 'stripe-signature': 'sig' }, body: '{}' }; }
+
+describe('stripe-webhook · enrutado Cantera', () => {
+  beforeEach(() => { process.env.STRIPE_WEBHOOK_SECRET = 'whsec'; });
+  afterEach(() => { delete process.env.STRIPE_WEBHOOK_SECRET; });
+
+  it('account.updated → refresca flags del club', async () => {
+    const updates = [];
+    const db = { from: () => ({ update: (p) => { updates.push(p); return { eq: resolve({ error: null }) }; } }) };
+    const stripe = stripeWith({ type: 'account.updated', data: { object: { id: 'acct_1', charges_enabled: true, payouts_enabled: true } } });
+    const res = await makeHandler(stripe, db)(ev());
+    expect(res.statusCode).toBe(200);
+    expect(updates[0]).toEqual({ stripe_connect_charges_enabled: true, stripe_connect_payouts_enabled: true });
+  });
+
+  it('checkout.session.completed kind=cantera-parent-fee → upsert parent_subscriptions', async () => {
+    const ups = [];
+    const db = { from: (t) => t === 'parent_subscriptions' ? { upsert: (r, o) => { ups.push(r); return Promise.resolve({ error: null }); } } : {} };
+    const stripe = stripeWith({ type: 'checkout.session.completed', data: { object: { subscription: 'sub_9', customer: 'cus', amount_total: 2500, metadata: { kind: 'cantera-parent-fee', card_slug: 'p-1', org_id: 'c1', parent_email: 'e@e.es' } } } });
+    const res = await makeHandler(stripe, db)(ev());
+    expect(res.statusCode).toBe(200);
+    expect(ups[0].stripe_subscription_id).toBe('sub_9');
+  });
+
+  it('checkout.session.completed kind=cantera-print → carnets paid', async () => {
+    const updated = [];
+    const db = { from: (t) => t === 'card_print_orders' ? { update: (p) => { updated.push(p); return { eq: () => ({ eq: resolve({ error: null }) }) }; } } : {} };
+    const stripe = stripeWith({ type: 'checkout.session.completed', data: { object: { id: 'cs_5', metadata: { kind: 'cantera-print' } } } });
+    const res = await makeHandler(stripe, db)(ev());
+    expect(res.statusCode).toBe(200);
+    expect(updated[0]).toEqual({ status: 'paid' });
+  });
+
+  it('customer.subscription.updated parent-fee → handleParentSubscription', async () => {
+    const u = [];
+    const db = { from: () => ({ update: (p) => { u.push(p); return { eq: resolve({ error: null }) }; } }) };
+    const stripe = stripeWith({ type: 'customer.subscription.updated', data: { object: { id: 'sub_1', status: 'active', current_period_end: 1700000000, metadata: { kind: 'cantera-parent-fee' }, items: { data: [{ price: { unit_amount: 3000 } }] } } } });
+    const res = await makeHandler(stripe, db)(ev());
+    expect(res.statusCode).toBe(200);
+    expect(u[0].status).toBe('active');
+  });
+
+  it('firma inválida → 400', async () => {
+    const stripe = { webhooks: { constructEvent: vi.fn(() => { throw new Error('bad sig'); }) } };
+    const res = await makeHandler(stripe, {})(ev());
+    expect(res.statusCode).toBe(400);
+  });
+});

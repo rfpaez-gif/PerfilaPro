@@ -8,7 +8,13 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capa 4a+4b+4c mergeadas (la 4 va en tramos 4a/4b/4c/4d). **4c (setup-fee + cobros manuales)** vive en `claude/cantera-capa4c-setup-fee`.
+**Branch**: **capa 4 COMPLETA** (4a/4b/4c/4d). **4d (webhook Connect)** vive en `claude/cantera-capa4d-webhook`.
+
+**Capa 4d · eventos webhook Connect** — `lib/cantera-webhook.js` enrutado desde `stripe-webhook.js` antes de B2B/autónomo. Firma dual (`STRIPE_WEBHOOK_SECRET` + fallback `STRIPE_CONNECT_WEBHOOK_SECRET`). `account.updated` → flags Connect; `checkout.session.completed kind=cantera-parent-fee` → upsert `parent_subscriptions`; `customer.subscription.*` parent-fee → estado/periodo/importe; `checkout.session.completed kind=cantera-print` → `card_print_orders` paid; `invoice.paid` parent-fee → ACK. 15 tests, suite 1296/1296. Sin migración/route nueva.
+
+**Carril de cobros (capa 4) cerrado**: onboarding Connect → cuota padre→club → setup-fee carnet + cobros manuales → webhook que lo materializa todo.
+
+**Branch (4c)**: capa **4c (setup-fee + cobros manuales)** mergeada (PR #151).
 
 **Capa 4c · setup-fee carnet + cobros manuales** — `create-setup-fee-checkout.js` (org-panel): cobro directo a plataforma por carnets (Checkout payment, quantity=nº jugadores, Price IDs setup/renewal), crea `card_print_orders pending` enlazados a la sesión (4d los marca paid). `record-external-payment.js` (org-panel, record/list): registra Bizum/efectivo en `external_payments` vía `lib/external-payments`, solo jugadores del club. 13 tests, suite 1281/1281. Sin migración (usa card_print_orders de 033 + external_payments de 034).
 
@@ -190,7 +196,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **4a · ✅ hecho** | `stripe-connect-onboard.js` (Connect Standard, Account Links, onboard+status) + 10 tests | Borrar archivo + route |
 | **4b · ✅ hecho** | migración 036 (`organizations.cantera_monthly_fee_cents`) + `create-parent-checkout.js` (subscription direct-charge en cuenta conectada + application_fee) + 11 tests | Borrar archivo + route + DROP 036 |
 | **4c · ✅ hecho** | `create-setup-fee-checkout.js` (carnet, directo plataforma) + `record-external-payment.js` (Bizum/efectivo → external_payments) + 13 tests | Borrar archivos + routes |
-| **4d · ⬅ SIGUIENTE** | eventos webhook Connect (`account.updated`, `invoice.paid`/`customer.subscription.*` → `parent_subscriptions`; `checkout.session.completed kind=cantera-print` → card_print_orders paid) en `stripe-webhook.js` + lib | Borrar sección del webhook + env vars |
+| **4d · ✅ hecho** | `lib/cantera-webhook.js` + enrutado en `stripe-webhook.js` (firma dual, account.updated, parent-fee sub/checkout/invoice, print checkout) + 15 tests | Borrar lib + ramas del webhook |
+| **5 · ⬅ SIGUIENTE · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
 
@@ -214,7 +221,9 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias + 4a + 4b + 4c mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con **4d · eventos webhook Connect** — cierra el carril de cobros: `account.updated` (refresca flags Connect del club), `customer.subscription.*`/`invoice.paid` con `kind=cantera-parent-fee` → materializa/actualiza `parent_subscriptions`, `checkout.session.completed kind=cantera-print` → marca `card_print_orders` paid. Va en `stripe-webhook.js` (+ lib `lib/cantera-webhook.js`). Ojo: eventos Connect llegan con su propio `STRIPE_CONNECT_WEBHOOK_SECRET` y header `Stripe-Account`; decidir si endpoint webhook separado o el mismo con verificación dual.
+> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias + **capa 4 cobros completa** (4a/4b/4c/4d) mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con **capa 5 · carnet físico PVC+NFC** (`buildPlayerCardPVC` en printable-card-utils + `print-order-export.js` + `nfc-register.js`).
+
+La capa 5 materializa el carnet PVC+NFC: `buildPlayerCardPVC({card, club, season, nfcUrl})` (ISO 7810 85.6×54mm, escudo + foto + dorsal + QR/NFC) en `printable-card-utils.js`; `print-order-export.js` (founder exporta CSV de `card_print_orders` paid → imprenta, gated por `PRINT_PROVIDER`); `nfc-register.js` (el operario registra el NFC UID al impresionar). El carnet se cobra en 4c (ya hecho); 5 es la generación + tracking físico.
 
 La capa 4 va en 4 tramos: 4a Connect onboarding ✅ · 4b cuota padre→club · 4c setup-fee + cobros manuales · 4d eventos webhook Connect. Connect es Standard, application_fee vía `STRIPE_PLATFORM_FEE_BPS`. La cuota mensual la cobra la cuenta conectada del club (`stripe_connect_account_id`); PerfilaPro retiene el fee. parent_subscriptions (033) guarda el espejo.
 
