@@ -2,11 +2,13 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-05-28 (hilo de diseño + capa schema + capa 0.5 · migración 034).
+Última actualización: 2026-05-29 (capas 0–5 completas y mergeadas a `main`; migración de hilo antes de la capa 6 · UI).
 
 ---
 
 ## 1 · Qué está aterrizado
+
+> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 5 COMPLETAS y mergeadas a `main`** (PRs #141–#153). Trabajar **desde `main`** (todo el backend Cantera vive ahí). Suite **1308/1308**. Migraciones SQL 033/034/035/036 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril, en orden, + env vars). **Único pendiente: capa 6 · UI** (frontend), en sub-PRs **6a/6b/6c** — ver §5 y §7. El resto de esta sección es historial por capa.
 
 **Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
 
@@ -202,7 +204,9 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **4c · ✅ hecho** | `create-setup-fee-checkout.js` (carnet, directo plataforma) + `record-external-payment.js` (Bizum/efectivo → external_payments) + 13 tests | Borrar archivos + routes |
 | **4d · ✅ hecho** | `lib/cantera-webhook.js` + enrutado en `stripe-webhook.js` (firma dual, account.updated, parent-fee sub/checkout/invoice, print checkout) + 15 tests | Borrar lib + ramas del webhook |
 | **5 · ✅ hecho · carnet físico** | `buildPlayerCardPVC` + `buildPlayerCardsBookletPDF` en `printable-card-utils.js`, `print-order-export.js` (CSV/PDF), `nfc-register.js` + 12 tests | Borrar funciones + routes |
-| **6 · ⬅ SIGUIENTE · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
+| **6a · ⬅ SIGUIENTE · lecturas Studio deportivo** | endpoints de lectura en `org-panel.js` (plantilla por categorías, stats club, listado fichajes/cobros) que el Studio necesita pero aún no existen | Revert acciones org-panel |
+| **6b · UI Studio del club** | ramificar `panel.html` por `org.kind='sports_club'`: tabs Plantilla / Stats / Fichajes / Carnets / Cobros, cableando los endpoints ya existentes (register-player, transfers, print-order-export, nfc-register, create-setup-fee/parent-checkout, record-external-payment, connect-onboard) + 6a | Revert HTML/JS |
+| **6c · Vista del padre** | `panel.html` con JWT parent-panel: card del hijo (o tabs si varios), stats temporada, cuota (create-parent-checkout), histórico de clubes, derechos LOPD (export/delete), banner de handoff con doble verificación (accept-transfer + parent-consent) | Revert HTML/JS |
 
 Cada capa commit separado. Cada capa con tests. `netlify.toml` se actualiza por capa con un bloque etiquetado `# CANTERA · ...` para borrado en bloque.
 
@@ -222,15 +226,19 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 ## 7 · Cómo arrancar el próximo hilo
 
-Mensaje sugerido para el próximo hilo:
+**Mensaje para arrancar el hilo nuevo** (copiar tal cual):
 
-> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias + capa 4 (cobros) + **capa 5 (carnet)** mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 6 · UI** — la última: ramificar `panel.html` por `org.kind='sports_club'` (Studio del club: Plantilla/Stats/Fichajes/Carnets/Cobros) + vista del padre (JWT parent-panel: card del hijo, stats, cuota, histórico, LOPD). Es la capa que pone cara a todo el backend Cantera ya construido.
+> Continúo el sprint Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` (banner de migración en §1). Capas 0–5 están mergeadas a `main` — trabaja desde `main`. Queda solo la **capa 6 · UI** en sub-PRs. Arranca con **6a · lecturas del Studio deportivo**: añade a `org-panel.js` los endpoints de lectura que el Studio del club necesita (plantilla agrupada por categoría con dorsal/cuota/estado de pago, stats agregadas del club, bandeja de fichajes entrantes/salientes), con tests. Después seguimos con 6b (UI Studio) y 6c (vista del padre).
 
-La capa 6 es grande y es de frontend (panel.html + org-panel.js). Conviene partirla por pestañas/vistas. El backend que consume ya existe: register-player, transfers, parent-consent, cobros (4a-d), carnet (print-order-export/nfc-register), consola incidencias. Falta sobre todo: endpoints de lectura para el Studio deportivo (plantilla por categorías, stats club) + la vista del padre, y cablear los botones a los endpoints existentes.
+**Cómo está montado el backend que la capa 6 consume** (todo en `main`):
+- Alta/fichaje: `register-player` (3a), `request/accept/cancel` transfer (3b), `parent-consent` (3c).
+- Auth: `panel-auth` (org-panel, club) + `parent-auth` (parent-panel, tutor). `lib/panel-auth` firma/verifica ambos por `purpose`.
+- Cobros: `stripe-connect-onboard` (4a), `create-parent-checkout` (4b), `create-setup-fee-checkout` + `record-external-payment` (4c), webhook `lib/cantera-webhook` (4d).
+- Carnet: `buildPlayerCardPVC`/`buildPlayerCardsBookletPDF`, `print-order-export`, `nfc-register` (5).
+- Incidencias founder: `lib/cantera-incidents` + acciones `cantera_*` en `admin-orgs` (+ UI en admin-orgs.html).
+- Helpers (1): `cantera-flag`, `card-kind`, `pii-crypto`, `sports-categories`, `external-payments`, `consent`.
 
-La capa 5 materializa el carnet PVC+NFC: `buildPlayerCardPVC({card, club, season, nfcUrl})` (ISO 7810 85.6×54mm, escudo + foto + dorsal + QR/NFC) en `printable-card-utils.js`; `print-order-export.js` (founder exporta CSV de `card_print_orders` paid → imprenta, gated por `PRINT_PROVIDER`); `nfc-register.js` (el operario registra el NFC UID al impresionar). El carnet se cobra en 4c (ya hecho); 5 es la generación + tracking físico.
-
-La capa 4 va en 4 tramos: 4a Connect onboarding ✅ · 4b cuota padre→club · 4c setup-fee + cobros manuales · 4d eventos webhook Connect. Connect es Standard, application_fee vía `STRIPE_PLATFORM_FEE_BPS`. La cuota mensual la cobra la cuenta conectada del club (`stripe_connect_account_id`); PerfilaPro retiene el fee. parent_subscriptions (033) guarda el espejo.
+**Lo que la capa 6 tiene que CREAR (no existe aún)**: endpoints de lectura del Studio deportivo en `org-panel.js` (6a) + el frontend de `panel.html` ramificado por `org.kind` (6b Studio club / 6c vista padre). El grueso de 6b/6c es cablear botones a endpoints ya existentes.
 
 **Decisiones del founder en esta sesión** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.
