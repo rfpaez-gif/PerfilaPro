@@ -489,6 +489,7 @@ Doble verificación obligatoria antes de marcar `public_card=true`, antes del pr
 
 - **Onboarding (capa 4a)** — `stripe-connect-onboard.js` (`POST /api/stripe-connect-onboard`, auth org-panel del club, solo `kind='sports_club'`). Connect **Standard** (NIF/IBAN/responsabilidad fiscal del club; PerfilaPro cobra `application_fee` sobre las cuotas). Onboarding **API-based vía Account Links** (no OAuth → no necesita `STRIPE_CONNECT_CLIENT_ID`): `action:'onboard'` crea la cuenta `standard` si falta (persiste `stripe_connect_account_id`) y devuelve un Account Link hospedado; `action:'status'` hace retrieve y persiste `stripe_connect_charges_enabled`/`payouts_enabled`. 503 si Stripe no está configurado. El Studio (capa 6) consumirá ambos. La frescura proactiva de los flags vendrá del evento `account.updated` en la capa 4d.
 - **Cuota mensual padre→club (capa 4b)** — `create-parent-checkout.js` (`POST /api/create-parent-checkout`, auth parent-panel del tutor). Q3=voluntario: el tutor activa la cuota de su hijo/a desde el panel. Checkout Session en modo `subscription` como **direct charge sobre la cuenta conectada del club** (header `stripeAccount`), con `price_data` inline (€ mensual = `organizations.cantera_monthly_fee_cents`, migración 036) y `application_fee_percent = STRIPE_PLATFORM_FEE_BPS/100` (omitido si 0). 409 si el club no está conectado / sin `charges_enabled` / sin cuota configurada / ya hay cuota activa para el jugador. La fila `parent_subscriptions` la materializa el webhook (capa 4d); aquí solo se genera la sesión. La cuota por club (no por categoría) es MVP; per-categoría es refinamiento futuro.
+- **Setup-fee carnet + cobros manuales (capa 4c)** — `create-setup-fee-checkout.js` (auth org-panel): el club paga a PerfilaPro la impresión de carnets PVC+NFC (19€ setup / 9€ renovación, Stripe Price IDs `STRIPE_PRICE_PLAYER_SETUP_FEE`/`_RENEWAL`) en una Checkout Session modo `payment` **directa a la plataforma** (no Connect), `quantity` = nº de jugadores válidos del club. Crea filas `card_print_orders` `pending` enlazadas a la sesión (`stripe_payment_intent_id=session.id`); el webhook (4d) las marca `paid`. `record-external-payment.js` (auth org-panel, acciones `record`/`list`) registra cobros manuales Bizum/efectivo/transferencia en `external_payments` (vía `lib/external-payments`), `recorded_by='org:<slug>'`, solo jugadores del propio club — NO mueve dinero, es la "lista de quién pagó" que une Stripe + manual en la pestaña Cobros.
 
 **Carnet físico PVC + NFC**:
 
@@ -627,6 +628,8 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/parent-consent` | `parent-consent` (CANTERA) |
 | `/api/stripe-connect-onboard` | `stripe-connect-onboard` (CANTERA) |
 | `/api/create-parent-checkout` | `create-parent-checkout` (CANTERA) |
+| `/api/create-setup-fee-checkout` | `create-setup-fee-checkout` (CANTERA) |
+| `/api/record-external-payment` | `record-external-payment` (CANTERA) |
 
 ### Internacionalización (es / ca)
 

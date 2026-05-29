@@ -333,6 +333,17 @@
   to     = "/.netlify/functions/create-parent-checkout"
   status = 200
 
+# Capa 4c · setup-fee carnet (directo plataforma) + cobros manuales.
+[[redirects]]
+  from   = "/api/create-setup-fee-checkout"
+  to     = "/.netlify/functions/create-setup-fee-checkout"
+  status = 200
+
+[[redirects]]
+  from   = "/api/record-external-payment"
+  to     = "/.netlify/functions/record-external-payment"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
