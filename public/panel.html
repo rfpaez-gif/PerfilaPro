@@ -183,8 +183,22 @@
     .pp-modal__box { position: relative; background: #fff; border-radius: var(--pp-r-lg, 16px); padding: 1.75rem 1.5rem; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(10,31,68,.25); margin: auto; }
     .pp-modal__close { position: absolute; top: .75rem; right: 1rem; background: none; border: none; font-size: 1.5rem; line-height: 1; color: #6B7280; cursor: pointer; }
     .pp-modal__title { font-family: var(--font-serif); font-weight: 400; font-size: 1.3rem; letter-spacing: -0.01em; margin: 0 0 1rem; }
+    /* Vista del padre (Cantera 6c) */
+    .pp-child { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.5rem; margin-bottom: 1.25rem; }
+    .pp-child__head { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .pp-child__avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #E5E7EB; flex-shrink: 0; }
+    .pp-child__name { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; margin: 0; letter-spacing: -0.01em; }
+    .pp-child__club { font-size: 13px; color: #6B7280; margin: .15rem 0 0; }
+    .pp-child__grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1.25rem; margin: 1rem 0; }
+    .pp-child__field { font-size: 13px; }
+    .pp-child__field strong { display: block; color: #6B7280; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; margin-bottom: .15rem; }
+    .pp-child__actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .pp-child__alert { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 1rem; margin: 1rem 0; font-size: 13px; color: #9A3412; }
+    .pp-child__hist { margin-top: 1rem; }
+    .pp-child__hist summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--color-verde-dark, #00A865); }
 
     @media (max-width: 600px) {
+      .pp-child__grid { grid-template-columns: 1fr; }
       .pp-invite__row { grid-template-columns: 1fr; }
       .pp-content { padding: 1rem; }
       .pp-section { padding: 1rem; }
@@ -626,6 +640,27 @@
       <button type="button" class="pp-modal__close" data-modal-close aria-label="Cerrar">×</button>
       <h3 class="pp-modal__title" id="modalTitle">—</h3>
       <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ── Vista del padre/tutor (Cantera · capa 6c) ─────────
+       Se muestra cuando el JWT es parent-panel (purpose='parent-panel').
+       Oculta los dos juegos de tabs B2B/Studio y pinta una tarjeta por
+       hijo/a administrado. -->
+  <main class="pp-content" id="parentContent" style="display:none">
+    <div class="pp-toast pp-toast--ok"  id="pToastOk"></div>
+    <div class="pp-toast pp-toast--err" id="pToastErr"></div>
+    <div id="parentTabs" class="pp-tabs" role="tablist" style="display:none"></div>
+    <div id="parentChildren"><p class="pp-table__empty">Cargando…</p></div>
+  </main>
+
+  <!-- Modal de la vista del padre (cuota / consentimiento / aprobar fichaje) -->
+  <div class="pp-modal" id="parentModal" style="display:none">
+    <div class="pp-modal__backdrop" data-pmodal-close></div>
+    <div class="pp-modal__box" role="dialog" aria-modal="true">
+      <button type="button" class="pp-modal__close" data-pmodal-close aria-label="Cerrar">×</button>
+      <h3 class="pp-modal__title" id="pModalTitle">—</h3>
+      <div id="pModalBody"></div>
     </div>
   </div>
 </div>
@@ -1802,6 +1837,245 @@
     return res.json().catch(() => ({}));
   }
 
+  // ════════════════════════════════════════════════════════
+  // Vista del padre/tutor (Cantera · capa 6c)
+  // Auth = JWT parent-panel. Lee /api/parent-data (get_children) y pinta
+  // una tarjeta por hijo/a con membresía, cuota, histórico y, si procede,
+  // el banner de traspaso pendiente con doble verificación inline.
+  // Acciones de escritura: create-parent-checkout (cuota), accept-transfer
+  // (aprobar fichaje, exige fecha de nacimiento como 2º factor LOPD),
+  // cancel-membership (baja).
+  // ════════════════════════════════════════════════════════
+
+  let parentChildren = [];
+
+  function pToast(kind, msg) {
+    const el = kind === 'ok' ? $('pToastOk') : $('pToastErr');
+    if (!el) return showToast(kind, msg);
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  function applyParentChrome() {
+    $('b2bTabs').style.display = 'none';
+    $('sportsTabs').style.display = 'none';
+    document.querySelector('.pp-content').style.display = 'none';
+    $('sportsContent').style.display = 'none';
+    $('parentContent').style.display = '';
+    // Topbar: el padre no tiene "página pública de org".
+    const pub = $('topbarPublic'); if (pub) pub.style.display = 'none';
+  }
+
+  const PAY_HUMAN = (p) => {
+    if (!p) return 'Sin datos';
+    if (p.status === 'active') return 'Cuota al día (Stripe)';
+    if (p.status === 'paid') return 'Pagado este mes (' + (p.method || 'manual') + ')';
+    return 'Pendiente de pago';
+  };
+
+  async function loadParentDashboard() {
+    $('topbarOrgName').textContent = 'Panel del tutor';
+    applyParentChrome();
+    try {
+      const data = await apiRaw('/api/parent-data', { action: 'get_children' });
+      parentChildren = data.children || [];
+      renderParentChildren(data);
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') {
+        $('parentChildren').innerHTML = `<p class="pp-table__empty">No se pudo cargar: ${escapeHtml(e.message)}</p>`;
+      }
+    }
+  }
+
+  function renderParentChildren(data) {
+    if (!parentChildren.length) {
+      $('parentChildren').innerHTML = `<section class="pp-section"><p class="pp-table__empty">No hay fichas asociadas a tu email todavía. Si tu club te ha dado de alta hace poco, pídele que verifique el email registrado.</p></section>`;
+      return;
+    }
+    $('parentChildren').innerHTML = parentChildren.map((c, i) => {
+      const m = c.membership;
+      const stats = m && m.stats ? Object.entries(m.stats) : [];
+      const statsHtml = stats.length
+        ? stats.map(([k, v]) => `<span class="pp-chip">${escapeHtml(k)}: ${escapeHtml(String(v))}</span>`).join(' ')
+        : '<span style="color:#6B7280">Sin estadísticas registradas</span>';
+      const pendingHtml = c.pending_transfer ? `
+        <div class="pp-child__alert">
+          <strong>📋 Solicitud de fichaje pendiente</strong><br>
+          ${escapeHtml(c.pending_transfer.to_club_name || 'Un club')} quiere fichar a ${escapeHtml(c.nombre || 'tu hijo/a')}
+          ${c.pending_transfer.season ? 'para la temporada ' + escapeHtml(c.pending_transfer.season) : ''}.
+          Como tutor/a legal, debes aprobarlo.
+          <div class="pp-child__actions">
+            <button type="button" class="pp-btn pp-btn--primary" data-approve="${i}">Revisar y aprobar →</button>
+          </div>
+        </div>` : '';
+      const isLegal = c.my_role === 'tutor_legal';
+      const hist = (c.history || []).length ? `
+        <details class="pp-child__hist"><summary>Histórico de clubes (${c.history.length})</summary>
+          <div style="overflow-x:auto;margin-top:.5rem"><table class="pp-table"><thead><tr><th>Temporada</th><th>Club</th><th>Categoría</th><th>Dorsal</th><th>Motivo salida</th></tr></thead><tbody>${
+            c.history.map(h => `<tr><td>${escapeHtml(h.season || '—')}</td><td>${escapeHtml(h.club_name || '—')}</td><td>${escapeHtml(h.category || '—')}</td><td>${h.dorsal != null ? h.dorsal : '—'}</td><td>${escapeHtml(h.exit_reason || '—')}</td></tr>`).join('')
+          }</tbody></table></div>
+        </details>` : '';
+
+      const avatar = c.foto_url ? `<img class="pp-child__avatar" src="${escapeHtml(c.foto_url)}" alt="">` : `<span class="pp-child__avatar"></span>`;
+      const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
+      const canPayStripe = c.club && c.payment && c.payment.status !== 'active';
+
+      return `<section class="pp-child">
+        <div class="pp-child__head">
+          ${avatar}
+          <div>
+            <h2 class="pp-child__name">${escapeHtml(c.nombre || '—')}</h2>
+            <p class="pp-child__club">${c.club ? '⚽ ' + escapeHtml(c.club.name) : 'Sin club activo'}${m && m.category ? ' · ' + escapeHtml(m.category) : ''}${isLegal ? ' · tutor/a legal' : ' · tutor/a secundario'}</p>
+          </div>
+        </div>
+        ${pendingHtml}
+        <div class="pp-child__grid">
+          <div class="pp-child__field"><strong>Dorsal</strong>${m && m.dorsal != null ? m.dorsal : '—'}</div>
+          <div class="pp-child__field"><strong>Equipo</strong>${escapeHtml((m && m.team_name) || '—')}</div>
+          <div class="pp-child__field"><strong>Posición</strong>${escapeHtml((m && m.position) || '—')}</div>
+          <div class="pp-child__field"><strong>Temporada</strong>${escapeHtml((m && m.season) || '—')}</div>
+          <div class="pp-child__field"><strong>Cuota mensual</strong>${fee || '—'}</div>
+          <div class="pp-child__field"><strong>Estado del pago</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>
+          <div class="pp-child__field"><strong>Ficha pública</strong>${c.public_card ? 'Sí · visible en /c/' + escapeHtml(c.slug) : 'No (oculta hasta tu consentimiento)'}</div>
+          <div class="pp-child__field"><strong>Estadísticas</strong>${statsHtml}</div>
+        </div>
+        <div class="pp-child__actions">
+          ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">Ver ficha ↗</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">Hacer pública la ficha</button>` : '')}
+          ${canPayStripe ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : ''}
+          ${isLegal && c.club ? `<button type="button" class="pp-btn pp-btn--ghost" data-baja="${i}" style="color:#B0392A">Dar de baja del club</button>` : ''}
+        </div>
+        ${hist}
+      </section>`;
+    }).join('');
+
+    // Wire de acciones (event delegation simple por data-attr).
+    $('parentChildren').querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => openApproveTransfer(parentChildren[+b.dataset.approve])));
+    $('parentChildren').querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => startParentCheckout(parentChildren[+b.dataset.pay], b)));
+    $('parentChildren').querySelectorAll('[data-baja]').forEach(b => b.addEventListener('click', () => openCancelMembership(parentChildren[+b.dataset.baja])));
+    $('parentChildren').querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => openConsent(parentChildren[+b.dataset.consent])));
+  }
+
+  // ── Modal del padre ──────────────────────────────────────
+  function openPModal(title, html) {
+    $('pModalTitle').textContent = title;
+    $('pModalBody').innerHTML = html;
+    $('parentModal').style.display = 'flex';
+  }
+  function closePModal() { $('parentModal').style.display = 'none'; $('pModalBody').innerHTML = ''; }
+  document.querySelectorAll('[data-pmodal-close]').forEach(el => el.addEventListener('click', closePModal));
+
+  // Cuota con tarjeta → create-parent-checkout (redirige a Stripe).
+  async function startParentCheckout(child, btn) {
+    if (!child.club) { pToast('err', 'La ficha no tiene club activo.'); return; }
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
+    try {
+      const json = await apiRaw('/api/create-parent-checkout', { card_slug: child.slug });
+      if (!json.url) throw new Error('No se pudo iniciar el pago');
+      window.location.href = json.url;
+    } catch (e) {
+      pToast('err', e.message);
+      if (btn && original) { btn.disabled = false; btn.textContent = original; }
+    }
+  }
+
+  // Aprobar fichaje → accept-transfer (2º factor LOPD = fecha de nacimiento).
+  function openApproveTransfer(child) {
+    const t = child.pending_transfer;
+    if (!t) return;
+    openPModal('Aprobar fichaje', `
+      <p class="pp-section__sub"><strong>${escapeHtml(t.to_club_name || 'Un club')}</strong> quiere fichar a <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong>${t.season ? ' para la temporada ' + escapeHtml(t.season) : ''}. Al aprobar, la ficha se traslada al nuevo club con su histórico intacto.</p>
+      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')} (el dato que registró el club).</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="apBirth">Fecha de nacimiento</label>
+          <input class="pp-input" id="apBirth" type="date"></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="apSubmit">Aprobar el fichaje →</button></div>
+        <p class="pp-form__hint" id="apError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('apSubmit').addEventListener('click', async () => {
+      const err = $('apError'); err.textContent = '';
+      const birth = $('apBirth').value.trim();
+      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
+      const btn = $('apSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Aprobando…';
+      try {
+        await apiRaw('/api/accept-transfer', { transfer_id: t.transfer_id, birth_date: birth });
+        pToast('ok', 'Fichaje aprobado. La ficha ya está en el nuevo club.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Aprobar el fichaje →';
+      }
+    });
+  }
+
+  // Consentimiento de visibilidad pública → parent-consent (2º factor).
+  function openConsent(child) {
+    openPModal('Hacer pública la ficha', `
+      <p class="pp-section__sub">Al dar tu consentimiento, la ficha de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> será visible públicamente en <code style="font-family:var(--font-mono);font-size:12px">/c/${escapeHtml(child.slug)}</code>. Puedes revocarlo más tarde escribiendo al club.</p>
+      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')}.</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="csBirth">Fecha de nacimiento</label>
+          <input class="pp-input" id="csBirth" type="date"></div>
+        <div class="pp-form__row"><label style="font-size:13px;display:flex;gap:.5rem;align-items:flex-start">
+          <input type="checkbox" id="csAccept" style="margin-top:.2rem">
+          <span>Soy el tutor/a legal y autorizo la publicación de la ficha y los datos deportivos de mi hijo/a.</span></label></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="csSubmit">Dar consentimiento →</button></div>
+        <p class="pp-form__hint" id="csError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('csSubmit').addEventListener('click', async () => {
+      const err = $('csError'); err.textContent = '';
+      const birth = $('csBirth').value.trim();
+      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
+      if (!$('csAccept').checked) { err.textContent = 'Debes marcar la casilla de autorización.'; return; }
+      const btn = $('csSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+      try {
+        await apiRaw('/api/parent-consent', { card_slug: child.slug, consent_type: 'public_visibility', accepted: true, birth_date: birth });
+        pToast('ok', 'Consentimiento registrado. La ficha ya es pública.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Dar consentimiento →';
+      }
+    });
+  }
+
+  // Baja del club → cancel-membership.
+  function openCancelMembership(child) {
+    openPModal('Dar de baja del club', `
+      <p class="pp-section__sub">Vas a cerrar la membresía de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> en <strong>${escapeHtml((child.club && child.club.name) || 'el club')}</strong>. La ficha y su histórico se conservan; queda sin club activo.</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="cmReason">Motivo</label>
+          <select class="pp-input" id="cmReason">
+            <option value="baja_voluntaria">Baja voluntaria</option>
+            <option value="fin_temporada">Fin de temporada</option>
+            <option value="fichaje">Se va a otro club (fuera de PerfilaPro)</option>
+            <option value="baja">Otra baja</option>
+          </select></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="cmSubmit" style="background:#B0392A;border-color:#B0392A">Confirmar baja →</button></div>
+        <p class="pp-form__hint" id="cmError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('cmSubmit').addEventListener('click', async () => {
+      const err = $('cmError'); err.textContent = '';
+      const btn = $('cmSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Procesando…';
+      try {
+        await apiRaw('/api/cancel-membership', { card_slug: child.slug, exit_reason: $('cmReason').value });
+        pToast('ok', 'Membresía cerrada.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Confirmar baja →';
+      }
+    });
+  }
+
   // ── Boot ─────────────────────────────────────────────────
   function boot() {
     // Si hay session= en la URL (magic-link cliente O impersonate founder),
@@ -1828,10 +2102,20 @@
       return;
     }
 
+    // Detectar tipo de sesión: parent-panel (tutor, Cantera 6c) vs
+    // org-panel (cliente B2B / Studio club). El claim purpose lo decide.
+    const payload = decodeJwtPayload(session);
+    const isParent = payload && payload.purpose === 'parent-panel';
+
     if (founderMode) renderFounderBar();
 
     showDash();
-    addRow(); // primera fila vacía del invite
+    if (isParent) {
+      loadParentDashboard();
+      return;
+    }
+
+    addRow(); // primera fila vacía del invite (solo carril org-panel)
     loadDashboard();
   }
 
