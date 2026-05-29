@@ -35,6 +35,13 @@ const {
   fetchLogoAsPngBuffer,
 } = require('./printable-card-utils');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+// CANTERA · lecturas del Studio deportivo (capa 6a). Estos imports sólo
+// se usan dentro de las acciones sports_* gateadas por isCanteraActive(),
+// que a su vez sólo se encienden cuando las migraciones 033-036 ya están
+// aplicadas — así el carril B2B genérico no toca ninguna columna nueva.
+const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
+const { listSportsCategories, currentSeasonStartYear, formatSeason } = require('./lib/sports-categories');
+const { listPaymentsByClub } = require('./lib/external-payments');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -126,6 +133,22 @@ function makeHandler(db, emailClient) {
 
       const stats = await computeOrgStats(db, org.id);
 
+      // CANTERA: el discriminador kind/sport (migración 033) sólo existe en
+      // BD cuando el carril está encendido. Lo leemos en una query aparte
+      // gateada por el flag para no romper el SELECT compartido en entornos
+      // B2B donde la 033 aún no se ha aplicado. El frontend usa org.kind
+      // para ramificar al Studio deportivo.
+      let kind = null;
+      let sport = null;
+      if (isCanteraActive()) {
+        const { data: k } = await db
+          .from('organizations')
+          .select('kind, sport')
+          .eq('id', org.id)
+          .maybeSingle();
+        if (k) { kind = k.kind || null; sport = k.sport || null; }
+      }
+
       // Componemos la lista de miembros con stats por slug. computeOrgStats
       // ya devuelve by_member, pero solo de cards activas y sin algunos
       // campos (plan, created_at). Hacemos merge.
@@ -158,6 +181,8 @@ function makeHandler(db, emailClient) {
           logo_url: org.logo_url,
           color_primary: org.color_primary,
           created_at: org.created_at,
+          kind,
+          sport,
         },
         members,
         stats: {
@@ -476,8 +501,338 @@ function makeHandler(db, emailClient) {
       }
     }
 
+    // ── CANTERA · lecturas del Studio deportivo (capa 6a) ──
+    // get_roster (plantilla por categoría + cuota/estado de pago),
+    // get_club_stats (KPIs agregados), get_transfers (bandeja de fichajes).
+    // Gateadas por el flag del carril y restringidas a kind='sports_club'.
+    // El org se re-resuelve con SELECT * (incluye kind/sport/connect/fee de
+    // las migraciones 033-036) sin tocar el SELECT compartido de arriba.
+    if (SPORTS_READ_ACTIONS.has(action)) {
+      if (!isCanteraActive()) return canteraDisabledResponse();
+      const loaded = await loadSportsOrg(db, org.id);
+      if (loaded.error) return loaded.error;
+      const sportsOrg = loaded.org;
+      if (action === 'get_roster')     return await getRoster(db, sportsOrg);
+      if (action === 'get_club_stats') return await getClubStats(db, sportsOrg);
+      if (action === 'get_transfers')  return await getTransfers(db, sportsOrg);
+    }
+
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
   };
+}
+
+// ============================================================
+// CANTERA · helpers de lectura del Studio deportivo (capa 6a)
+// ============================================================
+
+const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
+const PAYING_SUB_STATUSES = ['active', 'trialing'];
+
+function formatPeriod(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function sanitizeSportsOrg(org) {
+  return {
+    id: org.id,
+    name: org.name,
+    slug: org.slug,
+    kind: org.kind || null,
+    sport: org.sport || null,
+    logo_url: org.logo_url || null,
+    color_primary: org.color_primary || null,
+    monthly_fee_cents: org.cantera_monthly_fee_cents ?? null,
+    stripe_connect_charges_enabled: !!org.stripe_connect_charges_enabled,
+    stripe_connect_payouts_enabled: !!org.stripe_connect_payouts_enabled,
+  };
+}
+
+// Re-resuelve la org con todas las columnas Cantera y verifica que es un
+// club deportivo. Devuelve { org } o { error: <respuesta> } para early-return.
+async function loadSportsOrg(db, orgId) {
+  const { data: org, error } = await db
+    .from('organizations')
+    .select('*')
+    .eq('id', orgId)
+    .maybeSingle();
+  if (error || !org) return { error: jsonResponse(404, { error: 'org no encontrada' }) };
+  if (org.kind !== 'sports_club') {
+    return { error: jsonResponse(400, { error: 'esta organización no es un club deportivo' }) };
+  }
+  return { org };
+}
+
+// Índice de pago por card para un periodo: cuota Stripe (parent_subscriptions)
+// + pago manual Bizum/efectivo (external_payments) registrado para ese mes.
+async function buildPaymentIndex(db, orgId, period) {
+  const { data: subs } = await db
+    .from('parent_subscriptions')
+    .select('card_slug, status, amount_cents, current_period_end')
+    .eq('organization_id', orgId);
+  const subBySlug = new Map();
+  for (const s of subs || []) {
+    const prev = subBySlug.get(s.card_slug);
+    const paying = PAYING_SUB_STATUSES.includes(s.status);
+    // Preferimos una cuota activa sobre una cancelada/incompleta.
+    if (!prev || (paying && !PAYING_SUB_STATUSES.includes(prev.status))) {
+      subBySlug.set(s.card_slug, s);
+    }
+  }
+
+  const { payments } = await listPaymentsByClub(db, orgId);
+  const manualBySlug = new Map();
+  for (const p of payments || []) {
+    if (p.period !== period) continue; // sólo pagos fechados cuentan para el mes
+    if (!manualBySlug.has(p.card_slug)) manualBySlug.set(p.card_slug, p);
+  }
+
+  return { subBySlug, manualBySlug };
+}
+
+function paymentFor(slug, idx) {
+  const sub = idx.subBySlug.get(slug);
+  if (sub && PAYING_SUB_STATUSES.includes(sub.status)) {
+    return {
+      source: 'stripe',
+      status: 'active',
+      amount_cents: sub.amount_cents ?? null,
+      current_period_end: sub.current_period_end ?? null,
+    };
+  }
+  const manual = idx.manualBySlug.get(slug);
+  if (manual) {
+    return {
+      source: 'manual',
+      status: 'paid',
+      method: manual.method,
+      amount_cents: manual.amount_cents ?? null,
+      period: manual.period,
+    };
+  }
+  if (sub) {
+    return { source: 'stripe', status: sub.status || 'inactive', amount_cents: sub.amount_cents ?? null };
+  }
+  return { status: 'unpaid' };
+}
+
+function isPaid(payment) {
+  return payment.status === 'active' || payment.status === 'paid';
+}
+
+// get_roster: plantilla activa agrupada por categoría con dorsal + cuota.
+async function getRoster(db, org) {
+  const { data: seasons } = await db
+    .from('member_club_seasons')
+    .select('card_slug, role, dorsal, position, category_id, team_name, season, previous_club_name')
+    .eq('organization_id', org.id)
+    .is('left_at', null);
+  const memberships = seasons || [];
+  const slugs = [...new Set(memberships.map((m) => m.card_slug))];
+
+  const cardBySlug = new Map();
+  if (slugs.length) {
+    const { data: cards } = await db
+      .from('cards')
+      .select('slug, nombre, foto_url, public_card, birth_year, card_kind')
+      .in('slug', slugs);
+    for (const c of cards || []) cardBySlug.set(c.slug, c);
+  }
+
+  const period = formatPeriod();
+  const idx = await buildPaymentIndex(db, org.id, period);
+
+  // El catálogo da nombre legible y orden a cada category_id.
+  const catalog = org.sport ? await listSportsCategories(db, org.sport) : [];
+  const catById = new Map();
+  catalog.forEach((c, i) => catById.set(c.id, {
+    code: c.code,
+    display_name: c.display_name_es,
+    display_name_ca: c.display_name_ca || null,
+    order: c.sort_order ?? i,
+  }));
+
+  const players = [];
+  const staff = [];
+  for (const m of memberships) {
+    const card = cardBySlug.get(m.card_slug) || {};
+    const entry = {
+      slug: m.card_slug,
+      nombre: card.nombre || null,
+      foto_url: card.foto_url || null,
+      public_card: card.public_card ?? null,
+      birth_year: card.birth_year ?? null,
+      role: m.role,
+      dorsal: m.dorsal ?? null,
+      position: m.position || null,
+      team_name: m.team_name || null,
+      category_id: m.category_id || null,
+      season: m.season || null,
+      previous_club_name: m.previous_club_name || null,
+      payment: paymentFor(m.card_slug, idx),
+    };
+    if (m.role === 'jugador') players.push(entry); else staff.push(entry);
+  }
+
+  const groups = new Map();
+  for (const p of players) {
+    const key = p.category_id || '__none__';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+  const categories = [...groups.entries()].map(([id, members]) => {
+    const meta = catById.get(id);
+    return {
+      category_id: id === '__none__' ? null : id,
+      code: meta ? meta.code : null,
+      display_name: meta ? meta.display_name : (id === '__none__' ? 'Sin categoría' : id),
+      display_name_ca: meta ? meta.display_name_ca : null,
+      order: meta ? meta.order : 9999,
+      members: members.sort((a, b) => (a.dorsal ?? 999) - (b.dorsal ?? 999)),
+    };
+  }).sort((a, b) => a.order - b.order);
+
+  const paying = players.filter((p) => isPaid(p.payment)).length;
+
+  return jsonResponse(200, {
+    ok: true,
+    org: sanitizeSportsOrg(org),
+    season: formatSeason(currentSeasonStartYear()),
+    categories,
+    staff: staff.sort((a, b) => (a.role || '').localeCompare(b.role || '')),
+    totals: {
+      players: players.length,
+      staff: staff.length,
+      paying,
+      unpaid: players.length - paying,
+    },
+  });
+}
+
+// get_club_stats: KPIs agregados (miembros, visitas, cobros, fichajes).
+async function getClubStats(db, org) {
+  const { data: seasons } = await db
+    .from('member_club_seasons')
+    .select('card_slug, role')
+    .eq('organization_id', org.id)
+    .is('left_at', null);
+  const memberships = seasons || [];
+  const playerSlugs = [...new Set(memberships.filter((m) => m.role === 'jugador').map((m) => m.card_slug))];
+  const staffCount = memberships.filter((m) => m.role !== 'jugador').length;
+
+  // Visitas agregadas del club. computeOrgStats ya agrega sobre las cards
+  // con organization_id = club (D2: cards.organization_id = club actual).
+  let stats = { totals: { visits_7d: 0, visits_30d: 0, visits_all: 0 }, by_day: [] };
+  try {
+    stats = await computeOrgStats(db, org.id);
+  } catch (err) {
+    console.warn('org-panel get_club_stats: computeOrgStats falló:', err.message);
+  }
+
+  const period = formatPeriod();
+  const idx = await buildPaymentIndex(db, org.id, period);
+  let stripeActive = 0;
+  let manualThisPeriod = 0;
+  let mrrCents = 0;
+  let paying = 0;
+  for (const slug of playerSlugs) {
+    const pay = paymentFor(slug, idx);
+    if (pay.status === 'active') {
+      stripeActive += 1;
+      paying += 1;
+      mrrCents += pay.amount_cents || org.cantera_monthly_fee_cents || 0;
+    } else if (pay.status === 'paid') {
+      manualThisPeriod += 1;
+      paying += 1;
+    }
+  }
+  const coverage = playerSlugs.length ? Math.round((paying / playerSlugs.length) * 100) : 0;
+
+  const { data: tin } = await db
+    .from('club_transfers').select('id').eq('to_org_id', org.id).eq('status', 'pending');
+  const { data: tout } = await db
+    .from('club_transfers').select('id').eq('from_org_id', org.id).eq('status', 'pending');
+
+  return jsonResponse(200, {
+    ok: true,
+    org: sanitizeSportsOrg(org),
+    season: formatSeason(currentSeasonStartYear()),
+    members: { players: playerSlugs.length, staff: staffCount, total: playerSlugs.length + staffCount },
+    visits: {
+      total: (stats.totals && stats.totals.visits_all) || 0,
+      last7: (stats.totals && stats.totals.visits_7d) || 0,
+      last30: (stats.totals && stats.totals.visits_30d) || 0,
+      by_day: stats.by_day || [],
+    },
+    payments: {
+      paying,
+      unpaid: playerSlugs.length - paying,
+      coverage_pct: coverage,
+      stripe_active: stripeActive,
+      manual_this_period: manualThisPeriod,
+      mrr_cents: mrrCents,
+      period,
+    },
+    transfers: { pending_in: (tin || []).length, pending_out: (tout || []).length },
+    connect: {
+      account_id: org.stripe_connect_account_id || null,
+      charges_enabled: !!org.stripe_connect_charges_enabled,
+      payouts_enabled: !!org.stripe_connect_payouts_enabled,
+    },
+  });
+}
+
+// get_transfers: bandeja de fichajes entrantes + salientes del club.
+async function getTransfers(db, org) {
+  const { data: inc } = await db
+    .from('club_transfers')
+    .select('*')
+    .eq('to_org_id', org.id)
+    .order('created_at', { ascending: false });
+  const { data: out } = await db
+    .from('club_transfers')
+    .select('*')
+    .eq('from_org_id', org.id)
+    .order('created_at', { ascending: false });
+  const incoming = inc || [];
+  const outgoing = out || [];
+
+  const slugs = [...new Set([...incoming, ...outgoing].map((t) => t.card_slug))];
+  const cardBySlug = new Map();
+  if (slugs.length) {
+    const { data: cards } = await db.from('cards').select('slug, nombre').in('slug', slugs);
+    for (const c of cards || []) cardBySlug.set(c.slug, c);
+  }
+
+  const shape = (t, direction) => ({
+    id: t.id,
+    direction,
+    card_slug: t.card_slug,
+    nombre: (cardBySlug.get(t.card_slug) || {}).nombre || null,
+    from_org_id: t.from_org_id || null,
+    to_org_id: t.to_org_id || null,
+    status: t.status,
+    season: t.season || null,
+    dorsal: t.dorsal ?? null,
+    position: t.position || null,
+    team_name: t.team_name || null,
+    requested_by_email: t.requested_by_email || null,
+    note: t.note || null,
+    created_at: t.created_at || null,
+    resolved_at: t.resolved_at || null,
+    resolved_by_email: t.resolved_by_email || null,
+  });
+
+  return jsonResponse(200, {
+    ok: true,
+    incoming: incoming.map((t) => shape(t, 'incoming')),
+    outgoing: outgoing.map((t) => shape(t, 'outgoing')),
+    pending: {
+      incoming: incoming.filter((t) => t.status === 'pending').length,
+      outgoing: outgoing.filter((t) => t.status === 'pending').length,
+    },
+  });
 }
 
 exports.handler = makeHandler(defaultDb, defaultEmail);

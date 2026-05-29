@@ -293,6 +293,13 @@
   to     = "/.netlify/functions/parent-auth"
   status = 200
 
+# Capa 6c · lectura del panel del padre (JWT parent-panel): lista de hijos
+# administrados + membresía + cuota + histórico + traspaso pendiente.
+[[redirects]]
+  from   = "/api/parent-data"
+  to     = "/.netlify/functions/parent-data"
+  status = 200
+
 # Capa 3a · alta de jugador/staff desde el Studio del club (JWT org-panel).
 [[redirects]]
   from   = "/api/register-player"

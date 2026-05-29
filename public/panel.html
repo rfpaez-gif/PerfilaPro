@@ -162,7 +162,43 @@
     .pp-wizard__color-swatch:hover { transform: scale(1.06); }
     .pp-wizard__color-swatch.is-selected { border-color: var(--color-tinta, #0A1F44); box-shadow: 0 0 0 2px #fff inset; }
 
+    /* ── Studio del club (Cantera 6b) ─────────────────────── */
+    .pp-roster__totals { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+    .pp-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; font-size: 12px; font-weight: 600; background: #F1F3F5; color: var(--color-tinta, #0A1F44); }
+    .pp-chip--ok   { background: rgba(0,194,119,.14); color: var(--color-verde-dark, #00A865); }
+    .pp-chip--warn { background: rgba(176,57,42,.12); color: #B0392A; }
+    .pp-cat { margin-bottom: 1.25rem; }
+    .pp-cat__head { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 400; margin: 0 0 .4rem; display: flex; align-items: baseline; gap: .5rem; }
+    .pp-cat__count { font-size: 12px; color: #6B7280; font-weight: 400; font-family: var(--font-sans); }
+    .pp-dorsal { display: inline-block; min-width: 1.6rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pp-pay { font-size: 11px; font-weight: 700; padding: .12rem .5rem; border-radius: 999px; white-space: nowrap; }
+    .pp-pay--paid   { background: rgba(0,194,119,.14); color: var(--color-verde-dark, #00A865); }
+    .pp-pay--unpaid { background: rgba(176,57,42,.12); color: #B0392A; }
+    .pp-connect-banner { padding: 1rem 1.25rem; border-radius: var(--pp-r-lg, 16px); background: #FFF7ED; border: 1px solid #FED7AA; font-size: 13px; line-height: 1.5; color: #9A3412; }
+    .pp-connect-banner.is-ok { background: rgba(0,194,119,.08); border-color: rgba(0,194,119,.3); color: var(--color-verde-dark, #00A865); }
+    .pp-connect-banner a, .pp-connect-banner button.pp-link { color: inherit; font-weight: 700; }
+    /* Modal */
+    .pp-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
+    .pp-modal__backdrop { position: fixed; inset: 0; background: rgba(10,31,68,.45); }
+    .pp-modal__box { position: relative; background: #fff; border-radius: var(--pp-r-lg, 16px); padding: 1.75rem 1.5rem; max-width: 520px; width: 100%; box-shadow: 0 20px 60px rgba(10,31,68,.25); margin: auto; }
+    .pp-modal__close { position: absolute; top: .75rem; right: 1rem; background: none; border: none; font-size: 1.5rem; line-height: 1; color: #6B7280; cursor: pointer; }
+    .pp-modal__title { font-family: var(--font-serif); font-weight: 400; font-size: 1.3rem; letter-spacing: -0.01em; margin: 0 0 1rem; }
+    /* Vista del padre (Cantera 6c) */
+    .pp-child { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.5rem; margin-bottom: 1.25rem; }
+    .pp-child__head { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .pp-child__avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #E5E7EB; flex-shrink: 0; }
+    .pp-child__name { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; margin: 0; letter-spacing: -0.01em; }
+    .pp-child__club { font-size: 13px; color: #6B7280; margin: .15rem 0 0; }
+    .pp-child__grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1.25rem; margin: 1rem 0; }
+    .pp-child__field { font-size: 13px; }
+    .pp-child__field strong { display: block; color: #6B7280; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; margin-bottom: .15rem; }
+    .pp-child__actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .pp-child__alert { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 12px; padding: 1rem; margin: 1rem 0; font-size: 13px; color: #9A3412; }
+    .pp-child__hist { margin-top: 1rem; }
+    .pp-child__hist summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--color-verde-dark, #00A865); }
+
     @media (max-width: 600px) {
+      .pp-child__grid { grid-template-columns: 1fr; }
       .pp-invite__row { grid-template-columns: 1fr; }
       .pp-content { padding: 1rem; }
       .pp-section { padding: 1rem; }
@@ -325,10 +361,22 @@
     </div>
   </div>
 
-  <div class="pp-tabs" role="tablist">
+  <div class="pp-tabs" role="tablist" id="b2bTabs">
     <button class="pp-tab pp-tab--active" data-tab="stats">Estadísticas</button>
     <button class="pp-tab"                  data-tab="team">Equipo</button>
     <button class="pp-tab"                  data-tab="branding">Branding</button>
+  </div>
+
+  <!-- ── Studio del club deportivo (Cantera · capa 6b) ──────
+       Tabs paralelos que se muestran SOLO cuando org.kind='sports_club'.
+       El JS oculta #b2bTabs + sus panes y muestra #sportsTabs + #sportsContent. -->
+  <div class="pp-tabs" role="tablist" id="sportsTabs" style="display:none">
+    <button class="pp-tab pp-tab--active" data-stab="roster">Plantilla</button>
+    <button class="pp-tab"                  data-stab="sstats">Estadísticas</button>
+    <button class="pp-tab"                  data-stab="transfers">Fichajes</button>
+    <button class="pp-tab"                  data-stab="cards">Carnets</button>
+    <button class="pp-tab"                  data-stab="payments">Cobros</button>
+    <button class="pp-tab"                  data-stab="sbranding">Branding</button>
   </div>
 
   <main class="pp-content">
@@ -474,6 +522,147 @@
     </div>
 
   </main>
+
+  <!-- ── Studio del club · contenido (Cantera · capa 6b) ──── -->
+  <main class="pp-content" id="sportsContent" style="display:none">
+    <div class="pp-toast pp-toast--ok"  id="sToastOk"></div>
+    <div class="pp-toast pp-toast--err" id="sToastErr"></div>
+
+    <!-- ── Tab: Plantilla ─────────────────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="roster">
+      <section class="pp-section">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
+          <div>
+            <h2 class="pp-section__title">Plantilla <span id="rosterSeason" style="font-weight:400;color:#6B7280;font-size:.7em"></span></h2>
+            <p class="pp-section__sub" style="margin-bottom:0">Jugadores agrupados por categoría con dorsal y estado de cuota. El cuerpo técnico aparece al final.</p>
+          </div>
+          <button type="button" class="pp-btn pp-btn--primary" id="openRegisterBtn">+ Dar de alta</button>
+        </div>
+        <div class="pp-roster__totals" id="rosterTotals"></div>
+        <div id="rosterGroups"><p class="pp-table__empty">Cargando plantilla…</p></div>
+        <div id="rosterStaff" style="margin-top:1.5rem"></div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Estadísticas del club ─────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="sstats" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Resumen del club</h2>
+        <p class="pp-section__sub">Miembros, tráfico de las fichas y cobertura de cobros.</p>
+        <div class="pp-kpis">
+          <div class="pp-kpi"><p class="pp-kpi__label">Jugadores</p><p class="pp-kpi__value" id="sKpiPlayers">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Cuerpo técnico</p><p class="pp-kpi__value" id="sKpiStaff">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Visitas 30 días</p><p class="pp-kpi__value" id="sKpi30d">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Cobros al día</p><p class="pp-kpi__value" id="sKpiCoverage">—</p></div>
+        </div>
+        <div class="pp-spark">
+          <p class="pp-spark__title">Visitas · últimos 30 días</p>
+          <svg id="sSparkSvg" width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none" style="display:block"></svg>
+        </div>
+        <div class="pp-roster__totals" id="sStatsCobros" style="margin-top:1rem"></div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Fichajes ──────────────────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="transfers" style="display:none">
+      <section class="pp-section">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
+          <div>
+            <h2 class="pp-section__title">Fichajes</h2>
+            <p class="pp-section__sub" style="margin-bottom:0">Solicitudes de traspaso entrantes (jugadores que quieres fichar de otro club PerfilaPro) y salientes.</p>
+          </div>
+          <button type="button" class="pp-btn pp-btn--ghost" id="openTransferBtn" title="Solicitar el traspaso de un jugador que ya tiene ficha en otro club PerfilaPro.">+ Solicitar fichaje</button>
+        </div>
+        <h3 class="pp-spark__title" style="margin-top:1rem">Entrantes</h3>
+        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Estado</th><th>Temporada</th><th>Dorsal</th></tr></thead><tbody id="transfersInTbody"></tbody></table></div>
+        <h3 class="pp-spark__title" style="margin-top:1.5rem">Salientes</h3>
+        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Estado</th><th>Temporada</th><th>Dorsal</th></tr></thead><tbody id="transfersOutTbody"></tbody></table></div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Carnets ───────────────────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="cards" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Carnets físicos PVC + NFC</h2>
+        <p class="pp-section__sub">Pide a PerfilaPro la impresión del carnet de cada jugador. <strong>19 € por carnet nuevo</strong>, 9 € renovación anual. El pago va directo a PerfilaPro (no a tu cuenta de cobros).</p>
+        <div class="pp-form__row">
+          <label class="pp-form__label" for="cardOrderKind">Tipo de pedido</label>
+          <select class="pp-input" id="cardOrderKind">
+            <option value="setup">Carnets nuevos (19 €/ud)</option>
+            <option value="renewal">Renovación anual (9 €/ud)</option>
+          </select>
+        </div>
+        <p class="pp-form__hint" id="cardOrderHint">Se generará un pedido para todos los jugadores activos del club.</p>
+        <div class="pp-form__actions" style="margin-top:1rem">
+          <button type="button" class="pp-btn pp-btn--primary" id="cardOrderBtn">Pedir carnets de la plantilla →</button>
+        </div>
+        <p class="pp-section__sub" style="margin-top:1.25rem;font-size:13px">Una vez confirmes el pago, preparamos los carnets y los enviamos al club. Recibirás un email con el seguimiento.</p>
+      </section>
+    </div>
+
+    <!-- ── Tab: Cobros ────────────────────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="payments" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Cobros del club</h2>
+        <p class="pp-section__sub">Quién ha pagado la cuota este mes — cuotas por Stripe y pagos manuales (Bizum, efectivo) en una sola vista.</p>
+        <div class="pp-kpis">
+          <div class="pp-kpi"><p class="pp-kpi__label">Al día</p><p class="pp-kpi__value" id="payKpiPaid">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Pendientes</p><p class="pp-kpi__value" id="payKpiUnpaid">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">MRR estimado</p><p class="pp-kpi__value" id="payKpiMrr">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label">Cobertura</p><p class="pp-kpi__value" id="payKpiCoverage">—</p></div>
+        </div>
+
+        <div id="connectBanner" class="pp-connect-banner" style="display:none"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.25rem 0 .5rem">
+          <h3 class="pp-spark__title" style="margin:0">Estado por jugador</h3>
+          <button type="button" class="pp-btn pp-btn--ghost" id="openRecordPaymentBtn">+ Apuntar pago manual</button>
+        </div>
+        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Categoría</th><th>Estado</th><th>Vía</th></tr></thead><tbody id="paymentsTbody"></tbody></table></div>
+      </section>
+    </div>
+
+    <!-- ── Tab: Branding del club ─────────────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="sbranding" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Branding del club</h2>
+        <p class="pp-section__sub">El escudo, el color y el lema aparecen en la página pública del club (<code style="font-family:var(--font-mono);font-size:12px">/e/<span id="sBrandSlug">…</span></code>) y en los carnets de los jugadores. El branding se edita desde la pestaña Branding del panel general.</p>
+        <p class="pp-section__sub" style="font-size:13px">Para cambiar el escudo o el nombre del club, escribe a <a href="mailto:hola@perfilapro.es" style="color:var(--color-verde-dark,#00A865)">hola@perfilapro.es</a>.</p>
+        <button type="button" class="pp-btn pp-btn--ghost" id="sGotoBrandingBtn" style="margin-top:.5rem">Editar lema y color →</button>
+      </section>
+    </div>
+  </main>
+
+  <!-- ── Modales del Studio (alta / fichaje / cobro manual) ── -->
+  <div class="pp-modal" id="sportsModal" style="display:none">
+    <div class="pp-modal__backdrop" data-modal-close></div>
+    <div class="pp-modal__box" role="dialog" aria-modal="true">
+      <button type="button" class="pp-modal__close" data-modal-close aria-label="Cerrar">×</button>
+      <h3 class="pp-modal__title" id="modalTitle">—</h3>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ── Vista del padre/tutor (Cantera · capa 6c) ─────────
+       Se muestra cuando el JWT es parent-panel (purpose='parent-panel').
+       Oculta los dos juegos de tabs B2B/Studio y pinta una tarjeta por
+       hijo/a administrado. -->
+  <main class="pp-content" id="parentContent" style="display:none">
+    <div class="pp-toast pp-toast--ok"  id="pToastOk"></div>
+    <div class="pp-toast pp-toast--err" id="pToastErr"></div>
+    <div id="parentTabs" class="pp-tabs" role="tablist" style="display:none"></div>
+    <div id="parentChildren"><p class="pp-table__empty">Cargando…</p></div>
+  </main>
+
+  <!-- Modal de la vista del padre (cuota / consentimiento / aprobar fichaje) -->
+  <div class="pp-modal" id="parentModal" style="display:none">
+    <div class="pp-modal__backdrop" data-pmodal-close></div>
+    <div class="pp-modal__box" role="dialog" aria-modal="true">
+      <button type="button" class="pp-modal__close" data-pmodal-close aria-label="Cerrar">×</button>
+      <h3 class="pp-modal__title" id="pModalTitle">—</h3>
+      <div id="pModalBody"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -816,6 +1005,19 @@
     try {
       const data = await api('get_org');
       renderOrg(data.org);
+
+      // Club deportivo (Cantera): chrome distinto. El get_org genérico no
+      // trae kind; lo deducimos del JWT (orgKind, si el magic-link lo llevó)
+      // o lo confirmamos con la primera lectura del Studio. Para simplicidad
+      // marcamos por el campo kind si el backend lo expone, con fallback a
+      // detección perezosa vía get_roster.
+      if (data.org.kind === 'sports_club') {
+        showDash();
+        applyChrome('sports');
+        await loadSportsStudio();
+        return;
+      }
+
       renderStats(data.stats, data.members.length);
       renderMembers(data.members);
 
@@ -824,6 +1026,7 @@
       // renderOrg() ya ha rellenado los campos del branding form, así que
       // si el cliente sale del wizard al dashboard, encuentra el panel
       // pre-poblado.
+      applyChrome('b2b');
       if (!data.org.logo_url && !wizardDismissed(data.org.slug)) {
         startWizard(data.org);
       } else {
@@ -832,6 +1035,16 @@
     } catch (e) {
       if (e.message !== 'Sesión expirada') showToast('err', 'No se pudo cargar tu panel: ' + e.message);
     }
+  }
+
+  // Alterna el chrome del dashboard entre el panel B2B genérico y el Studio
+  // deportivo. Sólo toca visibilidad de los dos juegos de tabs + content.
+  function applyChrome(mode) {
+    const sports = mode === 'sports';
+    $('b2bTabs').style.display      = sports ? 'none' : '';
+    $('sportsTabs').style.display   = sports ? '' : 'none';
+    document.querySelector('.pp-content').style.display = sports ? 'none' : '';
+    $('sportsContent').style.display = sports ? '' : 'none';
   }
 
   // ── Wizard (Bloque E) ────────────────────────────────────
@@ -1196,6 +1409,673 @@
     }
   });
 
+  // ════════════════════════════════════════════════════════
+  // Studio del club deportivo (Cantera · capa 6b)
+  // Cablea las lecturas de 6a (get_roster/get_club_stats/get_transfers)
+  // + los endpoints de escritura ya existentes (register-player,
+  // request-transfer, create-setup-fee-checkout, record-external-payment,
+  // stripe-connect-onboard). Todo sobre el JWT org-panel del club.
+  // ════════════════════════════════════════════════════════
+
+  let sportsOrg = null;       // org sanitizada que devuelve get_roster/get_club_stats
+  let rosterData = null;      // último get_roster (para los selects de los modales)
+  let sportsLoaded = false;   // evita recargar en cada cambio de tab
+
+  function sToast(kind, msg) {
+    const el = kind === 'ok' ? $('sToastOk') : $('sToastErr');
+    if (!el) return showToast(kind, msg);
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  const POS_LABEL = { jugador: 'Jugador', entrenador: 'Entrenador', delegado: 'Delegado', medico: 'Médico', fisio: 'Fisio', preparador: 'Preparador', presidente: 'Presidente', directiva: 'Directiva', otro: 'Otro' };
+  const eurFromCents = (c) => (c == null ? '—' : (c / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }));
+
+  // Tabs del Studio.
+  document.querySelectorAll('#sportsTabs .pp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.stab;
+      document.querySelectorAll('#sportsTabs .pp-tab').forEach(b => b.classList.toggle('pp-tab--active', b === btn));
+      document.querySelectorAll('#sportsContent .pp-stabpanel').forEach(p => {
+        p.style.display = p.dataset.stabpanel === target ? 'block' : 'none';
+      });
+    });
+  });
+
+  async function loadSportsStudio() {
+    try {
+      const [roster, stats, transfers] = await Promise.all([
+        api('get_roster'),
+        api('get_club_stats'),
+        api('get_transfers'),
+      ]);
+      sportsOrg = roster.org;
+      rosterData = roster;
+      renderRoster(roster);
+      renderClubStats(stats);
+      renderTransfers(transfers);
+      renderPayments(roster, stats);
+      const sb = $('sBrandSlug'); if (sb) sb.textContent = (sportsOrg && sportsOrg.slug) || '';
+      sportsLoaded = true;
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar el Studio: ' + e.message);
+    }
+  }
+
+  function payBadge(payment) {
+    if (!payment) return '<span class="pp-pay pp-pay--unpaid">Sin datos</span>';
+    if (payment.status === 'active') return '<span class="pp-pay pp-pay--paid">Cuota Stripe</span>';
+    if (payment.status === 'paid')   return `<span class="pp-pay pp-pay--paid">Pagado · ${escapeHtml(payment.method || 'manual')}</span>`;
+    return '<span class="pp-pay pp-pay--unpaid">Pendiente</span>';
+  }
+
+  // ── Plantilla ────────────────────────────────────────────
+  function renderRoster(data) {
+    $('rosterSeason').textContent = data.season ? '· ' + data.season : '';
+    const t = data.totals || {};
+    $('rosterTotals').innerHTML =
+      `<span class="pp-chip">${t.players || 0} jugadores</span>` +
+      `<span class="pp-chip">${t.staff || 0} cuerpo técnico</span>` +
+      `<span class="pp-chip pp-chip--ok">${t.paying || 0} al día</span>` +
+      `<span class="pp-chip pp-chip--warn">${t.unpaid || 0} pendientes</span>`;
+
+    const groups = data.categories || [];
+    if (!groups.length) {
+      $('rosterGroups').innerHTML = `<p class="pp-table__empty">Aún no hay jugadores. Pulsa “+ Dar de alta” para fichar al primero.</p>`;
+    } else {
+      $('rosterGroups').innerHTML = groups.map(cat => {
+        const rows = cat.members.map(m => `<tr>
+          <td><span class="pp-dorsal">${m.dorsal != null ? m.dorsal : '—'}</span> <strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
+          <td>${escapeHtml(m.position || '—')}</td>
+          <td>${escapeHtml(m.team_name || '—')}</td>
+          <td>${payBadge(m.payment)}</td>
+          <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}</td>
+        </tr>`).join('');
+        return `<div class="pp-cat">
+          <h3 class="pp-cat__head">${escapeHtml(cat.display_name || 'Sin categoría')} <span class="pp-cat__count">${cat.members.length} jugador${cat.members.length === 1 ? '' : 'es'}</span></h3>
+          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Dorsal · Nombre</th><th>Posición</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+        </div>`;
+      }).join('');
+    }
+
+    const staff = data.staff || [];
+    $('rosterStaff').innerHTML = staff.length
+      ? `<h3 class="pp-cat__head">Cuerpo técnico <span class="pp-cat__count">${staff.length}</span></h3>
+         <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Equipo</th></tr></thead><tbody>${
+           staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td></tr>`).join('')
+         }</tbody></table></div>`
+      : '';
+  }
+
+  // ── Estadísticas del club ────────────────────────────────
+  function renderClubStats(stats) {
+    const m = stats.members || {}, p = stats.payments || {}, v = stats.visits || {};
+    $('sKpiPlayers').textContent  = m.players ?? '—';
+    $('sKpiStaff').textContent    = m.staff ?? '—';
+    $('sKpi30d').textContent      = v.last30 ?? '—';
+    $('sKpiCoverage').textContent = (p.coverage_pct != null ? p.coverage_pct + '%' : '—');
+    renderSportsSparkline(v.by_day || []);
+    $('sStatsCobros').innerHTML =
+      `<span class="pp-chip pp-chip--ok">${p.stripe_active || 0} por Stripe</span>` +
+      `<span class="pp-chip">${p.manual_this_period || 0} manuales este mes</span>` +
+      `<span class="pp-chip">MRR estimado ${eurFromCents(p.mrr_cents)}</span>`;
+  }
+
+  function renderSportsSparkline(byDay) {
+    const svg = $('sSparkSvg');
+    if (!svg) return;
+    if (!byDay.length) { svg.innerHTML = ''; return; }
+    const W = 300, H = 60, PAD = 4;
+    const counts = byDay.map(d => (typeof d === 'number' ? d : (d.count || 0)));
+    const max = Math.max(1, ...counts);
+    const step = counts.length > 1 ? (W - 2 * PAD) / (counts.length - 1) : 0;
+    let path = '';
+    counts.forEach((c, i) => {
+      const x = PAD + i * step;
+      const y = H - PAD - (c / max) * (H - 2 * PAD);
+      path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    });
+    const fill = path + `L${W - PAD},${H - PAD} L${PAD},${H - PAD} Z`;
+    svg.innerHTML = `<path d="${fill}" fill="rgba(0,194,119,0.15)"/><path d="${path}" fill="none" stroke="#00C277" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+
+  // ── Fichajes ─────────────────────────────────────────────
+  const TRANSFER_STATUS = { pending: 'Pendiente', accepted: 'Aceptado', cancelled: 'Cancelado', rejected: 'Rechazado' };
+  function renderTransfers(data) {
+    const fill = (tbody, rows, emptyMsg) => {
+      $(tbody).innerHTML = rows.length
+        ? rows.map(t => `<tr><td><strong>${escapeHtml(t.nombre || t.card_slug)}</strong></td><td>${escapeHtml(TRANSFER_STATUS[t.status] || t.status)}</td><td>${escapeHtml(t.season || '—')}</td><td>${t.dorsal != null ? t.dorsal : '—'}</td></tr>`).join('')
+        : `<tr><td colspan="4" class="pp-table__empty">${emptyMsg}</td></tr>`;
+    };
+    fill('transfersInTbody',  data.incoming || [], 'Sin fichajes entrantes.');
+    fill('transfersOutTbody', data.outgoing || [], 'Sin fichajes salientes.');
+  }
+
+  // ── Cobros ───────────────────────────────────────────────
+  function renderPayments(roster, stats) {
+    const p = stats.payments || {};
+    $('payKpiPaid').textContent     = p.paying ?? '—';
+    $('payKpiUnpaid').textContent   = p.unpaid ?? '—';
+    $('payKpiMrr').textContent      = eurFromCents(p.mrr_cents);
+    $('payKpiCoverage').textContent = (p.coverage_pct != null ? p.coverage_pct + '%' : '—');
+
+    // Banner de Stripe Connect según los flags del club.
+    const c = stats.connect || {};
+    const banner = $('connectBanner');
+    if (c.charges_enabled) {
+      banner.className = 'pp-connect-banner is-ok';
+      banner.innerHTML = '✓ Stripe Connect activo. Los padres pueden pagar la cuota con tarjeta y el dinero llega a tu cuenta del club.';
+      banner.style.display = '';
+    } else {
+      banner.className = 'pp-connect-banner';
+      banner.innerHTML = `Conecta tu cuenta de Stripe para cobrar las cuotas con tarjeta directamente a tu club. ${c.account_id ? 'Tu onboarding está a medias.' : ''} <button type="button" class="pp-link" id="connectStartBtn" style="background:none;border:none;cursor:pointer;text-decoration:underline;font:inherit">${c.account_id ? 'Continuar onboarding →' : 'Conectar Stripe →'}</button>`;
+      banner.style.display = '';
+      const b = $('connectStartBtn');
+      if (b) b.addEventListener('click', startConnectOnboard);
+    }
+
+    // Lista de jugadores con estado de pago (de la plantilla).
+    const players = [];
+    (roster.categories || []).forEach(cat => cat.members.forEach(m => players.push({ ...m, _cat: cat.display_name })));
+    $('paymentsTbody').innerHTML = players.length
+      ? players.map(m => `<tr><td><strong>${escapeHtml(m.nombre || m.slug)}</strong></td><td>${escapeHtml(m._cat || '—')}</td><td>${payBadge(m.payment)}</td><td>${m.payment && m.payment.source ? escapeHtml(m.payment.source === 'stripe' ? 'Stripe' : (m.payment.method || 'Manual')) : '—'}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="pp-table__empty">Sin jugadores todavía.</td></tr>`;
+  }
+
+  async function startConnectOnboard() {
+    try {
+      const res = await fetch('/api/stripe-connect-onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session}` },
+        body: JSON.stringify({ action: 'onboard' }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) throw new Error(json.error || 'No se pudo iniciar el onboarding');
+      window.location.href = json.url;
+    } catch (e) {
+      sToast('err', e.message);
+    }
+  }
+
+  // ── Modales ──────────────────────────────────────────────
+  function openModal(title, bodyHtml) {
+    $('modalTitle').textContent = title;
+    $('modalBody').innerHTML = bodyHtml;
+    $('sportsModal').style.display = 'flex';
+  }
+  function closeModal() {
+    $('sportsModal').style.display = 'none';
+    $('modalBody').innerHTML = '';
+  }
+  document.querySelectorAll('[data-modal-close]').forEach(el => el.addEventListener('click', closeModal));
+
+  // Alta de jugador / staff → register-player
+  $('openRegisterBtn').addEventListener('click', () => {
+    openModal('Dar de alta', `
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="rgRole">Rol</label>
+          <select class="pp-input" id="rgRole">
+            <option value="jugador">Jugador</option>
+            <option value="entrenador">Entrenador</option>
+            <option value="delegado">Delegado</option>
+            <option value="medico">Médico</option>
+            <option value="fisio">Fisio</option>
+            <option value="preparador">Preparador físico</option>
+            <option value="presidente">Presidente</option>
+            <option value="directiva">Directiva</option>
+            <option value="otro">Otro</option>
+          </select></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rgName">Nombre y apellidos</label>
+          <input class="pp-input" id="rgName" type="text" placeholder="Lucía Fernández"></div>
+        <div class="pp-form__row" data-player-only><label class="pp-form__label" for="rgBirth">Fecha de nacimiento <small>YYYY-MM-DD</small></label>
+          <input class="pp-input" id="rgBirth" type="date"></div>
+        <div class="pp-form__row" data-player-only><label class="pp-form__label" for="rgDorsal">Dorsal <small>opcional</small></label>
+          <input class="pp-input" id="rgDorsal" type="number" min="0" max="999" placeholder="10"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rgPosition">Posición / cargo <small>opcional</small></label>
+          <input class="pp-input" id="rgPosition" type="text" placeholder="Delantera"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rgTeam">Equipo <small>opcional</small></label>
+          <input class="pp-input" id="rgTeam" type="text" placeholder="Alevín A"></div>
+        <div class="pp-form__row" data-player-only><label class="pp-form__label" for="rgPrevClub">Club anterior <small>opcional, texto libre</small></label>
+          <input class="pp-input" id="rgPrevClub" type="text" placeholder="CD Ejemplo"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rgTutor">Email del tutor legal <small>obligatorio para jugadores</small></label>
+          <input class="pp-input" id="rgTutor" type="email" placeholder="madre@email.com" autocapitalize="off"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rgTutor2">Email tutor secundario <small>opcional</small></label>
+          <input class="pp-input" id="rgTutor2" type="email" placeholder="padre@email.com" autocapitalize="off"></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="rgSubmit">Dar de alta →</button></div>
+        <p class="pp-form__hint" id="rgError" style="color:#B0392A"></p>
+      </div>
+    `);
+    const syncRole = () => {
+      const isPlayer = $('rgRole').value === 'jugador';
+      $('modalBody').querySelectorAll('[data-player-only]').forEach(el => { el.style.display = isPlayer ? '' : 'none'; });
+    };
+    $('rgRole').addEventListener('change', syncRole);
+    syncRole();
+    $('rgSubmit').addEventListener('click', submitRegister);
+  });
+
+  async function submitRegister() {
+    const role = $('rgRole').value;
+    const isPlayer = role === 'jugador';
+    const payload = {
+      role,
+      nombre: $('rgName').value.trim(),
+      position: $('rgPosition').value.trim() || undefined,
+      team_name: $('rgTeam').value.trim() || undefined,
+      tutor_legal_email: $('rgTutor').value.trim() || undefined,
+      tutor_secundario_email: $('rgTutor2').value.trim() || undefined,
+    };
+    if (isPlayer) {
+      payload.birth_date = $('rgBirth').value.trim() || undefined;
+      const d = $('rgDorsal').value.trim();
+      if (d) payload.dorsal = Number(d);
+      payload.previous_club_name = $('rgPrevClub').value.trim() || undefined;
+    }
+    const err = $('rgError'); err.textContent = '';
+    if (!payload.nombre) { err.textContent = 'El nombre es obligatorio.'; return; }
+    if (isPlayer && !payload.birth_date) { err.textContent = 'La fecha de nacimiento es obligatoria para jugadores.'; return; }
+    if (isPlayer && !payload.tutor_legal_email) { err.textContent = 'El email del tutor legal es obligatorio para jugadores.'; return; }
+
+    const btn = $('rgSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Dando de alta…';
+    try {
+      await apiRaw('/api/register-player', payload);
+      sToast('ok', `${payload.nombre} dado/a de alta. ${isPlayer ? 'El tutor recibirá un email para completar la ficha.' : ''}`);
+      closeModal();
+      await loadSportsStudio();
+    } catch (e) {
+      err.textContent = e.message;
+      btn.disabled = false; btn.textContent = 'Dar de alta →';
+    }
+  }
+
+  // Solicitar fichaje (handoff) → request-transfer
+  $('openTransferBtn').addEventListener('click', () => {
+    openModal('Solicitar fichaje', `
+      <p class="pp-section__sub">Para fichar a un jugador que ya tiene ficha en <strong>otro club de PerfilaPro</strong>. Su tutor legal recibirá un email para aprobar el traspaso. Necesitas el identificador de su ficha (slug).</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="trSlug">Identificador del jugador <small>slug p-xxxxxxxx</small></label>
+          <input class="pp-input" id="trSlug" type="text" placeholder="p-a1b2c3d4" autocapitalize="off"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="trDorsal">Dorsal en tu club <small>opcional</small></label>
+          <input class="pp-input" id="trDorsal" type="number" min="0" max="999"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="trPosition">Posición <small>opcional</small></label>
+          <input class="pp-input" id="trPosition" type="text"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="trTeam">Equipo <small>opcional</small></label>
+          <input class="pp-input" id="trTeam" type="text"></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="trSubmit">Enviar solicitud →</button></div>
+        <p class="pp-form__hint" id="trError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('trSubmit').addEventListener('click', submitTransfer);
+  });
+
+  async function submitTransfer() {
+    const err = $('trError'); err.textContent = '';
+    const card_slug = $('trSlug').value.trim();
+    if (!card_slug) { err.textContent = 'El identificador del jugador es obligatorio.'; return; }
+    const payload = {
+      card_slug,
+      position: $('trPosition').value.trim() || undefined,
+      team_name: $('trTeam').value.trim() || undefined,
+    };
+    const d = $('trDorsal').value.trim();
+    if (d) payload.dorsal = Number(d);
+    const btn = $('trSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+    try {
+      await apiRaw('/api/request-transfer', payload);
+      sToast('ok', 'Solicitud enviada. El tutor legal recibirá un email para aprobar el fichaje.');
+      closeModal();
+      await loadSportsStudio();
+    } catch (e) {
+      err.textContent = e.message;
+      btn.disabled = false; btn.textContent = 'Enviar solicitud →';
+    }
+  }
+
+  // Apuntar pago manual → record-external-payment
+  $('openRecordPaymentBtn').addEventListener('click', () => {
+    const players = [];
+    (rosterData?.categories || []).forEach(cat => cat.members.forEach(m => players.push(m)));
+    const opts = players.map(m => `<option value="${escapeHtml(m.slug)}">${escapeHtml(m.nombre || m.slug)}</option>`).join('');
+    const period = new Date().toISOString().slice(0, 7);
+    openModal('Apuntar pago manual', `
+      <p class="pp-section__sub">Registra un cobro recibido fuera de Stripe (Bizum, efectivo, transferencia). No mueve dinero — solo deja constancia de quién pagó.</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="rpPlayer">Jugador</label>
+          <select class="pp-input" id="rpPlayer">${opts || '<option value="">— sin jugadores —</option>'}</select></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rpAmount">Importe <small>€</small></label>
+          <input class="pp-input" id="rpAmount" type="number" min="0" step="0.01" placeholder="30.00"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rpMethod">Método</label>
+          <select class="pp-input" id="rpMethod"><option value="bizum">Bizum</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rpPeriod">Mes <small>YYYY-MM</small></label>
+          <input class="pp-input" id="rpPeriod" type="month" value="${period}"></div>
+        <div class="pp-form__row"><label class="pp-form__label" for="rpNotes">Notas <small>opcional</small></label>
+          <input class="pp-input" id="rpNotes" type="text" placeholder="Cuota marzo"></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="rpSubmit">Registrar pago →</button></div>
+        <p class="pp-form__hint" id="rpError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('rpSubmit').addEventListener('click', submitPaymentRecord);
+  });
+
+  async function submitPaymentRecord() {
+    const err = $('rpError'); err.textContent = '';
+    const card_slug = $('rpPlayer').value;
+    const amount = parseFloat($('rpAmount').value);
+    if (!card_slug) { err.textContent = 'Elige un jugador.'; return; }
+    if (!(amount >= 0)) { err.textContent = 'Importe inválido.'; return; }
+    const payload = {
+      action: 'record',
+      card_slug,
+      amount_cents: Math.round(amount * 100),
+      method: $('rpMethod').value,
+      period: $('rpPeriod').value || undefined,
+      notes: $('rpNotes').value.trim() || undefined,
+    };
+    const btn = $('rpSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Registrando…';
+    try {
+      await apiRaw('/api/record-external-payment', payload);
+      sToast('ok', 'Pago registrado.');
+      closeModal();
+      await loadSportsStudio();
+    } catch (e) {
+      err.textContent = e.message;
+      btn.disabled = false; btn.textContent = 'Registrar pago →';
+    }
+  }
+
+  // Pedir carnets → create-setup-fee-checkout (redirige a Stripe Checkout)
+  $('cardOrderKind').addEventListener('change', () => {
+    const k = $('cardOrderKind').value;
+    $('cardOrderHint').textContent = k === 'renewal'
+      ? 'Renovación anual del carnet de todos los jugadores activos (9 €/ud).'
+      : 'Se generará un pedido para todos los jugadores activos del club (19 €/ud).';
+  });
+  $('cardOrderBtn').addEventListener('click', async () => {
+    const players = [];
+    (rosterData?.categories || []).forEach(cat => cat.members.forEach(m => players.push(m.slug)));
+    if (!players.length) { sToast('err', 'No hay jugadores activos para pedir carnets.'); return; }
+    if (!confirm(`Vas a pedir ${players.length} carnet${players.length === 1 ? '' : 's'} (${$('cardOrderKind').value === 'renewal' ? '9' : '19'} € cada uno). Te llevamos a la pasarela de pago. ¿Continuar?`)) return;
+    const btn = $('cardOrderBtn'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Preparando pago…';
+    try {
+      const res = await fetch('/api/create-setup-fee-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session}` },
+        body: JSON.stringify({ kind: $('cardOrderKind').value, card_slugs: players }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) throw new Error(json.error || 'No se pudo crear el pedido');
+      window.location.href = json.url;
+    } catch (e) {
+      sToast('err', e.message);
+      btn.disabled = false; btn.textContent = 'Pedir carnets de la plantilla →';
+    }
+  });
+
+  // Atajo: llevar al Branding general desde la pestaña Branding del club.
+  $('sGotoBrandingBtn').addEventListener('click', () => {
+    applyChrome('b2b');
+    document.querySelectorAll('#b2bTabs .pp-tab').forEach(b => b.classList.toggle('pp-tab--active', b.dataset.tab === 'branding'));
+    document.querySelectorAll('.pp-content .pp-tabpanel').forEach(p => { p.style.display = p.dataset.tabpanel === 'branding' ? 'block' : 'none'; });
+  });
+
+  // Helper para los endpoints Cantera que NO viven en /api/org-panel.
+  // Mismo JWT en Authorization, manejo de 401 igual que api().
+  async function apiRaw(url, payload = {}) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session}` },
+      body: JSON.stringify(payload),
+    });
+    if (res.status === 401) { clearSession(); showLogin(); throw new Error('Sesión expirada'); }
+    if (!res.ok) {
+      let err = 'Error desconocido';
+      try { err = (await res.json()).error || err; } catch {}
+      throw new Error(err);
+    }
+    return res.json().catch(() => ({}));
+  }
+
+  // ════════════════════════════════════════════════════════
+  // Vista del padre/tutor (Cantera · capa 6c)
+  // Auth = JWT parent-panel. Lee /api/parent-data (get_children) y pinta
+  // una tarjeta por hijo/a con membresía, cuota, histórico y, si procede,
+  // el banner de traspaso pendiente con doble verificación inline.
+  // Acciones de escritura: create-parent-checkout (cuota), accept-transfer
+  // (aprobar fichaje, exige fecha de nacimiento como 2º factor LOPD),
+  // cancel-membership (baja).
+  // ════════════════════════════════════════════════════════
+
+  let parentChildren = [];
+
+  function pToast(kind, msg) {
+    const el = kind === 'ok' ? $('pToastOk') : $('pToastErr');
+    if (!el) return showToast(kind, msg);
+    el.textContent = msg;
+    el.style.display = 'block';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  function applyParentChrome() {
+    $('b2bTabs').style.display = 'none';
+    $('sportsTabs').style.display = 'none';
+    document.querySelector('.pp-content').style.display = 'none';
+    $('sportsContent').style.display = 'none';
+    $('parentContent').style.display = '';
+    // Topbar: el padre no tiene "página pública de org".
+    const pub = $('topbarPublic'); if (pub) pub.style.display = 'none';
+  }
+
+  const PAY_HUMAN = (p) => {
+    if (!p) return 'Sin datos';
+    if (p.status === 'active') return 'Cuota al día (Stripe)';
+    if (p.status === 'paid') return 'Pagado este mes (' + (p.method || 'manual') + ')';
+    return 'Pendiente de pago';
+  };
+
+  async function loadParentDashboard() {
+    $('topbarOrgName').textContent = 'Panel del tutor';
+    applyParentChrome();
+    try {
+      const data = await apiRaw('/api/parent-data', { action: 'get_children' });
+      parentChildren = data.children || [];
+      renderParentChildren(data);
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') {
+        $('parentChildren').innerHTML = `<p class="pp-table__empty">No se pudo cargar: ${escapeHtml(e.message)}</p>`;
+      }
+    }
+  }
+
+  function renderParentChildren(data) {
+    if (!parentChildren.length) {
+      $('parentChildren').innerHTML = `<section class="pp-section"><p class="pp-table__empty">No hay fichas asociadas a tu email todavía. Si tu club te ha dado de alta hace poco, pídele que verifique el email registrado.</p></section>`;
+      return;
+    }
+    $('parentChildren').innerHTML = parentChildren.map((c, i) => {
+      const m = c.membership;
+      const stats = m && m.stats ? Object.entries(m.stats) : [];
+      const statsHtml = stats.length
+        ? stats.map(([k, v]) => `<span class="pp-chip">${escapeHtml(k)}: ${escapeHtml(String(v))}</span>`).join(' ')
+        : '<span style="color:#6B7280">Sin estadísticas registradas</span>';
+      const pendingHtml = c.pending_transfer ? `
+        <div class="pp-child__alert">
+          <strong>📋 Solicitud de fichaje pendiente</strong><br>
+          ${escapeHtml(c.pending_transfer.to_club_name || 'Un club')} quiere fichar a ${escapeHtml(c.nombre || 'tu hijo/a')}
+          ${c.pending_transfer.season ? 'para la temporada ' + escapeHtml(c.pending_transfer.season) : ''}.
+          Como tutor/a legal, debes aprobarlo.
+          <div class="pp-child__actions">
+            <button type="button" class="pp-btn pp-btn--primary" data-approve="${i}">Revisar y aprobar →</button>
+          </div>
+        </div>` : '';
+      const isLegal = c.my_role === 'tutor_legal';
+      const hist = (c.history || []).length ? `
+        <details class="pp-child__hist"><summary>Histórico de clubes (${c.history.length})</summary>
+          <div style="overflow-x:auto;margin-top:.5rem"><table class="pp-table"><thead><tr><th>Temporada</th><th>Club</th><th>Categoría</th><th>Dorsal</th><th>Motivo salida</th></tr></thead><tbody>${
+            c.history.map(h => `<tr><td>${escapeHtml(h.season || '—')}</td><td>${escapeHtml(h.club_name || '—')}</td><td>${escapeHtml(h.category || '—')}</td><td>${h.dorsal != null ? h.dorsal : '—'}</td><td>${escapeHtml(h.exit_reason || '—')}</td></tr>`).join('')
+          }</tbody></table></div>
+        </details>` : '';
+
+      const avatar = c.foto_url ? `<img class="pp-child__avatar" src="${escapeHtml(c.foto_url)}" alt="">` : `<span class="pp-child__avatar"></span>`;
+      const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
+      const canPayStripe = c.club && c.payment && c.payment.status !== 'active';
+
+      return `<section class="pp-child">
+        <div class="pp-child__head">
+          ${avatar}
+          <div>
+            <h2 class="pp-child__name">${escapeHtml(c.nombre || '—')}</h2>
+            <p class="pp-child__club">${c.club ? '⚽ ' + escapeHtml(c.club.name) : 'Sin club activo'}${m && m.category ? ' · ' + escapeHtml(m.category) : ''}${isLegal ? ' · tutor/a legal' : ' · tutor/a secundario'}</p>
+          </div>
+        </div>
+        ${pendingHtml}
+        <div class="pp-child__grid">
+          <div class="pp-child__field"><strong>Dorsal</strong>${m && m.dorsal != null ? m.dorsal : '—'}</div>
+          <div class="pp-child__field"><strong>Equipo</strong>${escapeHtml((m && m.team_name) || '—')}</div>
+          <div class="pp-child__field"><strong>Posición</strong>${escapeHtml((m && m.position) || '—')}</div>
+          <div class="pp-child__field"><strong>Temporada</strong>${escapeHtml((m && m.season) || '—')}</div>
+          <div class="pp-child__field"><strong>Cuota mensual</strong>${fee || '—'}</div>
+          <div class="pp-child__field"><strong>Estado del pago</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>
+          <div class="pp-child__field"><strong>Ficha pública</strong>${c.public_card ? 'Sí · visible en /c/' + escapeHtml(c.slug) : 'No (oculta hasta tu consentimiento)'}</div>
+          <div class="pp-child__field"><strong>Estadísticas</strong>${statsHtml}</div>
+        </div>
+        <div class="pp-child__actions">
+          ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">Ver ficha ↗</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">Hacer pública la ficha</button>` : '')}
+          ${canPayStripe ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : ''}
+          ${isLegal && c.club ? `<button type="button" class="pp-btn pp-btn--ghost" data-baja="${i}" style="color:#B0392A">Dar de baja del club</button>` : ''}
+        </div>
+        ${hist}
+      </section>`;
+    }).join('');
+
+    // Wire de acciones (event delegation simple por data-attr).
+    $('parentChildren').querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => openApproveTransfer(parentChildren[+b.dataset.approve])));
+    $('parentChildren').querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => startParentCheckout(parentChildren[+b.dataset.pay], b)));
+    $('parentChildren').querySelectorAll('[data-baja]').forEach(b => b.addEventListener('click', () => openCancelMembership(parentChildren[+b.dataset.baja])));
+    $('parentChildren').querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => openConsent(parentChildren[+b.dataset.consent])));
+  }
+
+  // ── Modal del padre ──────────────────────────────────────
+  function openPModal(title, html) {
+    $('pModalTitle').textContent = title;
+    $('pModalBody').innerHTML = html;
+    $('parentModal').style.display = 'flex';
+  }
+  function closePModal() { $('parentModal').style.display = 'none'; $('pModalBody').innerHTML = ''; }
+  document.querySelectorAll('[data-pmodal-close]').forEach(el => el.addEventListener('click', closePModal));
+
+  // Cuota con tarjeta → create-parent-checkout (redirige a Stripe).
+  async function startParentCheckout(child, btn) {
+    if (!child.club) { pToast('err', 'La ficha no tiene club activo.'); return; }
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
+    try {
+      const json = await apiRaw('/api/create-parent-checkout', { card_slug: child.slug });
+      if (!json.url) throw new Error('No se pudo iniciar el pago');
+      window.location.href = json.url;
+    } catch (e) {
+      pToast('err', e.message);
+      if (btn && original) { btn.disabled = false; btn.textContent = original; }
+    }
+  }
+
+  // Aprobar fichaje → accept-transfer (2º factor LOPD = fecha de nacimiento).
+  function openApproveTransfer(child) {
+    const t = child.pending_transfer;
+    if (!t) return;
+    openPModal('Aprobar fichaje', `
+      <p class="pp-section__sub"><strong>${escapeHtml(t.to_club_name || 'Un club')}</strong> quiere fichar a <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong>${t.season ? ' para la temporada ' + escapeHtml(t.season) : ''}. Al aprobar, la ficha se traslada al nuevo club con su histórico intacto.</p>
+      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')} (el dato que registró el club).</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="apBirth">Fecha de nacimiento</label>
+          <input class="pp-input" id="apBirth" type="date"></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="apSubmit">Aprobar el fichaje →</button></div>
+        <p class="pp-form__hint" id="apError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('apSubmit').addEventListener('click', async () => {
+      const err = $('apError'); err.textContent = '';
+      const birth = $('apBirth').value.trim();
+      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
+      const btn = $('apSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Aprobando…';
+      try {
+        await apiRaw('/api/accept-transfer', { transfer_id: t.transfer_id, birth_date: birth });
+        pToast('ok', 'Fichaje aprobado. La ficha ya está en el nuevo club.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Aprobar el fichaje →';
+      }
+    });
+  }
+
+  // Consentimiento de visibilidad pública → parent-consent (2º factor).
+  function openConsent(child) {
+    openPModal('Hacer pública la ficha', `
+      <p class="pp-section__sub">Al dar tu consentimiento, la ficha de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> será visible públicamente en <code style="font-family:var(--font-mono);font-size:12px">/c/${escapeHtml(child.slug)}</code>. Puedes revocarlo más tarde escribiendo al club.</p>
+      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')}.</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="csBirth">Fecha de nacimiento</label>
+          <input class="pp-input" id="csBirth" type="date"></div>
+        <div class="pp-form__row"><label style="font-size:13px;display:flex;gap:.5rem;align-items:flex-start">
+          <input type="checkbox" id="csAccept" style="margin-top:.2rem">
+          <span>Soy el tutor/a legal y autorizo la publicación de la ficha y los datos deportivos de mi hijo/a.</span></label></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="csSubmit">Dar consentimiento →</button></div>
+        <p class="pp-form__hint" id="csError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('csSubmit').addEventListener('click', async () => {
+      const err = $('csError'); err.textContent = '';
+      const birth = $('csBirth').value.trim();
+      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
+      if (!$('csAccept').checked) { err.textContent = 'Debes marcar la casilla de autorización.'; return; }
+      const btn = $('csSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+      try {
+        await apiRaw('/api/parent-consent', { card_slug: child.slug, consent_type: 'public_visibility', accepted: true, birth_date: birth });
+        pToast('ok', 'Consentimiento registrado. La ficha ya es pública.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Dar consentimiento →';
+      }
+    });
+  }
+
+  // Baja del club → cancel-membership.
+  function openCancelMembership(child) {
+    openPModal('Dar de baja del club', `
+      <p class="pp-section__sub">Vas a cerrar la membresía de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> en <strong>${escapeHtml((child.club && child.club.name) || 'el club')}</strong>. La ficha y su histórico se conservan; queda sin club activo.</p>
+      <div class="pp-form">
+        <div class="pp-form__row"><label class="pp-form__label" for="cmReason">Motivo</label>
+          <select class="pp-input" id="cmReason">
+            <option value="baja_voluntaria">Baja voluntaria</option>
+            <option value="fin_temporada">Fin de temporada</option>
+            <option value="fichaje">Se va a otro club (fuera de PerfilaPro)</option>
+            <option value="baja">Otra baja</option>
+          </select></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="cmSubmit" style="background:#B0392A;border-color:#B0392A">Confirmar baja →</button></div>
+        <p class="pp-form__hint" id="cmError" style="color:#B0392A"></p>
+      </div>
+    `);
+    $('cmSubmit').addEventListener('click', async () => {
+      const err = $('cmError'); err.textContent = '';
+      const btn = $('cmSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Procesando…';
+      try {
+        await apiRaw('/api/cancel-membership', { card_slug: child.slug, exit_reason: $('cmReason').value });
+        pToast('ok', 'Membresía cerrada.');
+        closePModal();
+        await loadParentDashboard();
+      } catch (e) {
+        err.textContent = e.message;
+        btn.disabled = false; btn.textContent = 'Confirmar baja →';
+      }
+    });
+  }
+
   // ── Boot ─────────────────────────────────────────────────
   function boot() {
     // Si hay session= en la URL (magic-link cliente O impersonate founder),
@@ -1222,10 +2102,20 @@
       return;
     }
 
+    // Detectar tipo de sesión: parent-panel (tutor, Cantera 6c) vs
+    // org-panel (cliente B2B / Studio club). El claim purpose lo decide.
+    const payload = decodeJwtPayload(session);
+    const isParent = payload && payload.purpose === 'parent-panel';
+
     if (founderMode) renderFounderBar();
 
     showDash();
-    addRow(); // primera fila vacía del invite
+    if (isParent) {
+      loadParentDashboard();
+      return;
+    }
+
+    addRow(); // primera fila vacía del invite (solo carril org-panel)
     loadDashboard();
   }
 
