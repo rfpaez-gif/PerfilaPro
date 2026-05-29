@@ -116,16 +116,20 @@ describe('request-transfer', () => {
 
 // ───────────────────────── accept-transfer ─────────────────────────
 
-function acceptDb({ transfer = { id: 'tr-1', card_slug: 'p-1', status: 'pending' }, admin = { id: 'a1' }, rpc = { data: { ok: true, new_membership_id: 'ms-new', category_id: 'cat-x' }, error: null } } = {}) {
+function acceptDb({ transfer = { id: 'tr-1', card_slug: 'p-1', status: 'pending' }, admin = { id: 'a1' }, card = { birth_year: 2012, birth_date_encrypted: null }, rpc = { data: { ok: true, new_membership_id: 'ms-new', category_id: 'cat-x' }, error: null } } = {}) {
   return {
     from: vi.fn((t) => {
       if (t === 'club_transfers') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: transfer, error: null }) }) }) };
       if (t === 'card_admins') return { select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ is: () => ({ limit: () => ({ maybeSingle: resolve({ data: admin, error: null }) }) }) }) }) }) }) };
+      if (t === 'cards') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: card, error: null }) }) }) };
       return {};
     }),
     rpc: vi.fn(resolve(rpc)),
   };
 }
+
+// 2º factor por defecto (año coincide con birth_year del mock).
+const BD = '2012-05-10';
 
 describe('accept-transfer', () => {
   it('401 sin JWT parent', async () => {
@@ -150,9 +154,16 @@ describe('accept-transfer', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('403 si la fecha de nacimiento (2º factor) no coincide', async () => {
+    const db = acceptDb();
+    const res = await makeAccept(db, null)(ev({ auth: parentBearer(), body: { transfer_id: 'tr-1', birth_date: '2000-01-01' } }));
+    expect(res.statusCode).toBe(403);
+    expect(db.rpc).not.toHaveBeenCalled();
+  });
+
   it('200 ejecuta la RPC atómica y devuelve la nueva membresía', async () => {
     const db = acceptDb();
-    const res = await makeAccept(db, null)(ev({ auth: parentBearer(), body: { transfer_id: 'tr-1' } }));
+    const res = await makeAccept(db, null)(ev({ auth: parentBearer(), body: { transfer_id: 'tr-1', birth_date: BD } }));
     expect(res.statusCode).toBe(200);
     expect(db.rpc).toHaveBeenCalledWith('cantera_execute_transfer', expect.objectContaining({ p_transfer_id: 'tr-1', p_actor_role: 'tutor_legal', p_actor_email: 'tutor@example.com' }));
     expect(JSON.parse(res.body).new_membership_id).toBe('ms-new');
@@ -160,7 +171,7 @@ describe('accept-transfer', () => {
 
   it('mapea error de RPC transfer_not_pending → 409', async () => {
     const db = acceptDb({ rpc: { data: null, error: { message: 'transfer_not_pending' } } });
-    const res = await makeAccept(db, null)(ev({ auth: parentBearer(), body: { transfer_id: 'tr-1' } }));
+    const res = await makeAccept(db, null)(ev({ auth: parentBearer(), body: { transfer_id: 'tr-1', birth_date: BD } }));
     expect(res.statusCode).toBe(409);
   });
 });
