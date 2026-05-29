@@ -8,7 +8,11 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capa 3 completa (3a/3b/3c) mergeada (PRs #141–#146). **consola de incidencias (backend)** vive en `claude/cantera-admin-incidencias`.
+**Branch**: capa 3 completa + consola de incidencias (backend+UI) mergeadas (PRs #141–#148). La capa 4 va en 4 tramos (4a/4b/4c/4d); **4a (Connect onboarding)** vive en `claude/cantera-capa4a-connect-onboard`.
+
+**Capa 4a · Stripe Connect onboarding** — `claude/cantera-capa4a-connect-onboard`. `stripe-connect-onboard.js` (auth org-panel, solo sports_club): Connect Standard vía Account Links (no OAuth → sin `STRIPE_CONNECT_CLIENT_ID`). `onboard` crea cuenta + link; `status` retrieve + persiste flags. 503 si Stripe off. 10 tests, suite 1257/1257. Ruta en bloque `# CANTERA`. Sin migración (usa columnas `stripe_connect_*` de la 033).
+
+**Branch (consola)**: consola de incidencias (backend) vivió en `claude/cantera-admin-incidencias`.
 
 **Consola de incidencias del founder (backend)** — `claude/cantera-admin-incidencias`. `lib/cantera-incidents.js` + 9 acciones `cantera_*` en `admin-orgs.js` (auth password+TOTP, auditadas en `admin_audit_log`). 4 familias: traspasos+membresías (overview/edit/close/reassign), tutores (revoke/add admin), consentimiento+visibilidad (overview read-only + set_visibility), PII+LOPD (reveal_birthdate descifrado + delete_player soft/hard). 23 tests, suite 1247/1247. Sin migración/route/env nuevos. **UI**: sección colapsable "🚑 Incidencias Cantera" en `admin-orgs.html` (buscador por slug → overview → botones por acción). Consola completa (backend + UI).
 
@@ -179,7 +183,10 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **3b · ✅ hecho** | migración 035 (RPCs atómicas) + `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` + override `transfer_resolve` en admin-orgs + 25 tests | Borrar archivos + routes + DROP 035 |
 | **3c · ✅ hecho** | `parent-consent.js` + `lib/consent.js` (doble verificación → `card_consents`, `public_card=true`) + gate 2º factor sobre accept-transfer + 16 tests | Borrar archivos + route |
 | **admin-incidencias · ✅ hecho (backend + UI)** | `lib/cantera-incidents.js` + 9 acciones `cantera_*` en admin-orgs + 23 tests + sección "🚑 Incidencias Cantera" en admin-orgs.html | Borrar lib + bloque dispatch + sección HTML |
-| **4 · ⬅ SIGUIENTE · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
+| **4a · ✅ hecho** | `stripe-connect-onboard.js` (Connect Standard, Account Links, onboard+status) + 10 tests | Borrar archivo + route |
+| **4b · ⬅ SIGUIENTE** | `create-parent-checkout.js` (cuota mensual padre→club, subscription en cuenta conectada + application_fee) | Borrar archivo + route |
+| **4c** | `create-setup-fee-checkout.js` (carnet 19€, directo a plataforma) + `record-external-payment.js` (Bizum/efectivo → external_payments) | Borrar archivos + routes |
+| **4d** | eventos webhook Connect (`account.updated`, `invoice.paid`/`customer.subscription.*` → `parent_subscriptions`) en `stripe-webhook.js` + lib | Borrar sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
 
@@ -203,7 +210,9 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capa 3 completa + consola de incidencias (backend) mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 4 · Stripe Connect + cobros** (cuotas padre→club vía Connect Standard + `record-external-payment` sobre la tabla `external_payments` de la 034). Pendiente menor: UI de la consola de incidencias en `admin-orgs.html`.
+> Sigo desde `docs/cantera-handoff.md`. Capa 3 + consola incidencias (backend+UI) + capa 4a (Connect onboarding) mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con **4b · cuota mensual padre→club** (`create-parent-checkout.js`: subscription en la cuenta conectada del club + `application_fee_percent`/`application_fee_amount`). Luego 4c (setup-fee carnet + record-external-payment) y 4d (eventos webhook Connect).
+
+La capa 4 va en 4 tramos: 4a Connect onboarding ✅ · 4b cuota padre→club · 4c setup-fee + cobros manuales · 4d eventos webhook Connect. Connect es Standard, application_fee vía `STRIPE_PLATFORM_FEE_BPS`. La cuota mensual la cobra la cuenta conectada del club (`stripe_connect_account_id`); PerfilaPro retiene el fee. parent_subscriptions (033) guarda el espejo.
 
 **Decisiones del founder en esta sesión** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.
