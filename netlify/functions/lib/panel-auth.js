@@ -19,6 +19,16 @@ const TOKEN_TTL = '7d';
 const FOUNDER_TOKEN_TTL = '1h';
 const PURPOSE = 'org-panel';
 
+// Carril Cantera · sesión del panel del padre/tutor (capa 2).
+// Espejo de la sesión org-panel pero scoped al EMAIL del tutor en lugar
+// de a una org: un tutor con varios hijos administra todas las cards
+// donde aparece en card_admins con ese email. El claim
+// `purpose:'parent-panel'` impide que un JWT de org o de agente se
+// reuse aquí (y viceversa). Secreto propio PARENT_PANEL_JWT_SECRET con
+// fallback a ORG_PANEL_JWT_SECRET → AGENT_JWT_SECRET para no obligar a
+// configurar una env var nueva el día 1.
+const PARENT_PURPOSE = 'parent-panel';
+
 function panelJwtSecret() {
   return process.env.ORG_PANEL_JWT_SECRET
     || process.env.AGENT_JWT_SECRET
@@ -78,12 +88,60 @@ function unauthorizedResponse() {
   };
 }
 
+// --- Parent panel (Cantera) ---------------------------------------
+
+function parentPanelJwtSecret() {
+  return process.env.PARENT_PANEL_JWT_SECRET
+    || process.env.ORG_PANEL_JWT_SECRET
+    || process.env.AGENT_JWT_SECRET
+    || 'changeme';
+}
+
+// Firma un JWT del panel del padre. El email se normaliza (lower+trim)
+// para que el claim sea estable; la prueba de control del email es el
+// propio magic-link, así que el email es el ancla de identidad.
+function signParentSession({ email }) {
+  const e = typeof email === 'string' ? email.toLowerCase().trim() : '';
+  if (!e) throw new Error('signParentSession: email requerido');
+  return jwt.sign({ purpose: PARENT_PURPOSE, email: e }, parentPanelJwtSecret(), {
+    expiresIn: TOKEN_TTL,
+  });
+}
+
+// Devuelve { email } si el token es válido + purpose parent-panel.
+// null en cualquier otro caso (firma inválida, expirado, otro purpose).
+function verifyParentSession(token) {
+  if (!token || typeof token !== 'string') return null;
+  let decoded;
+  try {
+    decoded = jwt.verify(token, parentPanelJwtSecret());
+  } catch {
+    return null;
+  }
+  if (!decoded || decoded.purpose !== PARENT_PURPOSE) return null;
+  if (!decoded.email) return null;
+  return { email: decoded.email };
+}
+
+// Extrae y verifica el JWT parent-panel del header Authorization.
+function parentAuthFromEvent(event) {
+  const h = (event && event.headers) || {};
+  const raw = h.authorization || h.Authorization || '';
+  const m = /^Bearer\s+(.+)$/i.exec(raw.trim());
+  if (!m) return null;
+  return verifyParentSession(m[1]);
+}
+
 module.exports = {
   TOKEN_TTL,
   FOUNDER_TOKEN_TTL,
   PURPOSE,
+  PARENT_PURPOSE,
   signPanelSession,
   verifyPanelSession,
   authFromEvent,
   unauthorizedResponse,
+  signParentSession,
+  verifyParentSession,
+  parentAuthFromEvent,
 };
