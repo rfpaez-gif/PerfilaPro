@@ -8,7 +8,16 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capas 0/0.5/1/2 mergeadas a `main` (PRs #141, #142, #143). La capa 3 va en sub-PRs (3a/3b/3c); **3a (register-player + alta)** vive en `claude/cantera-capa3a-register-player`.
+**Branch**: capas 0/0.5/1/2/3a mergeadas a `main` (PRs #141–#144). La capa 3 va en sub-PRs (3a/3b/3c); **3b (handoff transaccional)** vive en `claude/cantera-capa3b-handoff`.
+
+**Capa 3b · handoff transaccional** — `claude/cantera-capa3b-handoff`. 25 tests (`tests/cantera-transfers.test.js`), suite total 1208/1208.
+- **Migración 035** (NO ejecutada en prod): `club_transfers` + RPCs `SECURITY DEFINER` `cantera_execute_transfer` / `cantera_close_membership` (atomicidad real en Postgres, no compensación app-side) + amplía CHECK `card_consents.granted_by_role` con `'founder'`. RLS + REVOKE/GRANT EXECUTE a service_role + contramigración.
+- `request-transfer.js` (org-panel, club que ficha): valida player con membresía activa en otro club → crea `club_transfers pending` → avisa al tutor.
+- `accept-transfer.js` (parent-panel, tutor_legal): dispara `cantera_execute_transfer`.
+- `cancel-membership.js` (auth dual org-panel **o** parent-panel): `cantera_close_membership` (baja / off-platform).
+- `admin-orgs.js` acción `transfer_resolve` (override founder: force_accept / cancel) — la utilidad súper-admin decidida para esta capa.
+- 3 rutas en bloque `# CANTERA` de `netlify.toml`.
+- **Deuda anotada**: la 2ª verificación LOPDGDD (SMS/NIF) sobre accept-transfer se añade en 3c; hoy la identidad del tutor es el magic-link parent-panel.
 
 **Capa 3a · register-player + alta** — `claude/cantera-capa3a-register-player`. 15 tests (`tests/register-player.test.js`), suite total 1183/1183.
 - `register-player.js` (`POST /api/register-player`, auth org-panel JWT del club): crea card player/club_staff (slug opaco `p-xxxxxxxx`, `public_card=false`, birth_year + birth_date_encrypted) + `member_club_seasons` (categoría resuelta vía sports-categories, dorsal/posición/temporada) + `card_admins` (tutor legal + secundario opcional). Cubre camino 1 (nuevo) y camino 3 (off-platform, `previous_club_name`). Compensación por borrado de card ante fallo (no hay transacción en la Data API). Email best-effort al tutor con magic-link parent-panel. Gate `isCanteraActive()`.
@@ -156,8 +165,9 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **1 · ✅ hecho** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` + 48 tests | Borrar archivos |
 | **2 · ✅ hecho · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) + 14 tests | Borrar archivo + route |
 | **3a · ✅ hecho** | `register-player.js` (alta player/staff, caminos 1 y 3) + 15 tests | Borrar archivo + route |
-| **3b · ⬅ SIGUIENTE** | `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` (handoff transaccional entre clubes PerfilaPro, camino 2) | Borrar archivos + routes |
-| **3c** | `parent-consent.js` (doble verificación LOPDGDD: magic-link + 2º factor → `card_consents`, `public_card=true`) | Borrar archivo + route |
+| **3b · ✅ hecho** | migración 035 (RPCs atómicas) + `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` + override `transfer_resolve` en admin-orgs + 25 tests | Borrar archivos + routes + DROP 035 |
+| **3c · ⬅ SIGUIENTE** | `parent-consent.js` (doble verificación LOPDGDD: magic-link + 2º factor → `card_consents`, `public_card=true`; gate sobre accept-transfer) | Borrar archivo + route |
+| **admin-incidencias** (tras 3c) | consola founder sobre `admin-orgs.js`: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD | Revert acciones |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
@@ -182,6 +192,11 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a mergeadas (la capa 3 va en sub-PRs 3a/3b/3c por decisión del founder). Las 4 Q cerradas con defaults (§4). Continúo con **3b · handoff transaccional**: `request-transfer.js` / `accept-transfer.js` / `cancel-membership.js`.
+> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a + 3b mergeadas (sub-PRs 3a/3b/3c). Las 4 Q cerradas con defaults (§4). Atomicidad del handoff resuelta con RPCs SECURITY DEFINER (migración 035). Continúo con **3c · consentimiento parental**: `parent-consent.js` (doble verificación → `card_consents` + `public_card=true`), incluyendo el gate de 2º factor sobre accept-transfer.
 
-La capa 3b es el handoff entre clubes PerfilaPro (camino 2): cerrar la `member_club_seasons` vieja (`left_at`, `exit_reason='fichaje'`, `closed_snapshot_jsonb`) + abrir la nueva + UPDATE `cards.organization_id` + insert `card_consents` con `consent_type='club_handoff'`, todo coordinado. Ojo: la Data API no tiene transacción multi-statement — para el handoff atómico hay que valorar una RPC SQL (función `SECURITY DEFINER`) o un orden con compensación robusto. Decidir esto al arrancar 3b. `cancel-membership` cierra la fila a club off-platform (`exit_reason='fichaje'`/`'baja'`, card sin `organization_id` activo). Reusa helpers de capa 1 + auth org-panel.
+**Decisiones del founder en esta sesión** (no re-debatir):
+- Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.
+- Quien ficha = **admin del club** vía Studio (JWT org-panel). Confirmado.
+- Súper-admin de incidencias: **override de traspaso en 3b** (hecho: `transfer_resolve`) + **consola completa como capa propia tras 3c**, con las utilidades que Claude vea más lógicas (las 4 familias: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD).
+
+La capa 3c es el consentimiento parental LOPDGDD (art. 7 LO 3/2018): doble verificación (magic-link al tutor_legal + 2º factor SMS o NIF parcial) antes de `public_card=true`, antes del primer handoff (gate sobre accept-transfer) y antes de `image_rights`. Inserta `card_consents` con `evidence_jsonb` (snapshot + hash), `ip_address`, `user_agent`. Reusa parent-auth (capa 2) + helpers capa 1.

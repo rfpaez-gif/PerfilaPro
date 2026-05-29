@@ -1351,6 +1351,45 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       });
     }
 
+    // ── CANTERA · override de traspaso atascado (founder) ──
+    // force_accept: ejecuta la RPC atómica como founder (queda en el audit
+    // trail como granted_by_role='founder'). cancel: marca el traspaso
+    // cancelado sin mover nada. Desbloquea handoffs en disputa entre clubes.
+    if (action === 'transfer_resolve') {
+      const { transfer_id, decision } = body;
+      if (!transfer_id) return jsonResponse(400, { error: 'transfer_id requerido' });
+      if (!['force_accept', 'cancel'].includes(decision)) {
+        return jsonResponse(400, { error: 'decision debe ser force_accept o cancel' });
+      }
+
+      const { data: transfer, error: tErr } = await db
+        .from('club_transfers').select('id, status').eq('id', transfer_id).maybeSingle();
+      if (tErr) return jsonResponse(500, { error: tErr.message });
+      if (!transfer) return jsonResponse(404, { error: 'Traspaso no encontrado' });
+      if (transfer.status !== 'pending') return jsonResponse(409, { error: 'El traspaso ya no está pendiente' });
+
+      if (decision === 'cancel') {
+        const { error } = await db.from('club_transfers')
+          .update({ status: 'cancelled', resolved_at: new Date().toISOString(), resolved_by_email: 'founder-override' })
+          .eq('id', transfer_id);
+        if (error) return jsonResponse(500, { error: error.message });
+        return jsonResponse(200, { ok: true, status: 'cancelled' });
+      }
+
+      // force_accept → RPC atómica con rol founder.
+      const { data, error } = await db.rpc('cantera_execute_transfer', {
+        p_transfer_id: transfer_id,
+        p_actor_email: 'founder-override',
+        p_actor_role: 'founder',
+      });
+      if (error) {
+        console.error('admin-orgs transfer_resolve: RPC error:', error.message);
+        return jsonResponse(500, { error: 'No se pudo ejecutar el traspaso' });
+      }
+      const result = Array.isArray(data) ? data[0] : data;
+      return jsonResponse(200, { ok: true, status: 'accepted', new_membership_id: result?.new_membership_id || null });
+    }
+
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
   };
 }
