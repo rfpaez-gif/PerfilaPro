@@ -8,7 +8,7 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 5 COMPLETAS y mergeadas a `main`** (PRs #141–#153). Trabajar **desde `main`** (todo el backend Cantera vive ahí). Suite **1308/1308**. Migraciones SQL 033/034/035/036 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril, en orden, + env vars). **Único pendiente: capa 6 · UI** (frontend), en sub-PRs **6a/6b/6c** — ver §5 y §7. El resto de esta sección es historial por capa.
+> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 5 COMPLETAS y mergeadas a `main`** (PRs #141–#153). Trabajar **desde `main`** (todo el backend Cantera vive ahí). Migraciones SQL 033/034/035/036 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril, en orden, + env vars). **Capa 6 · UI** en sub-PRs: **6a ✅ hecho** (lecturas del Studio en `org-panel.js`, branch `claude/cantera-layer-6-ui-qn3py`, suite 1315/1315); **pendientes 6b** (UI Studio del club) **y 6c** (vista del padre) — ver §5 y §7. El resto de esta sección es historial por capa.
 
 **Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
 
@@ -204,8 +204,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **4c · ✅ hecho** | `create-setup-fee-checkout.js` (carnet, directo plataforma) + `record-external-payment.js` (Bizum/efectivo → external_payments) + 13 tests | Borrar archivos + routes |
 | **4d · ✅ hecho** | `lib/cantera-webhook.js` + enrutado en `stripe-webhook.js` (firma dual, account.updated, parent-fee sub/checkout/invoice, print checkout) + 15 tests | Borrar lib + ramas del webhook |
 | **5 · ✅ hecho · carnet físico** | `buildPlayerCardPVC` + `buildPlayerCardsBookletPDF` en `printable-card-utils.js`, `print-order-export.js` (CSV/PDF), `nfc-register.js` + 12 tests | Borrar funciones + routes |
-| **6a · ⬅ SIGUIENTE · lecturas Studio deportivo** | endpoints de lectura en `org-panel.js` (plantilla por categorías, stats club, listado fichajes/cobros) que el Studio necesita pero aún no existen | Revert acciones org-panel |
-| **6b · UI Studio del club** | ramificar `panel.html` por `org.kind='sports_club'`: tabs Plantilla / Stats / Fichajes / Carnets / Cobros, cableando los endpoints ya existentes (register-player, transfers, print-order-export, nfc-register, create-setup-fee/parent-checkout, record-external-payment, connect-onboard) + 6a | Revert HTML/JS |
+| **6a · ✅ hecho · lecturas Studio deportivo** | acciones `get_roster` / `get_club_stats` / `get_transfers` en `org-panel.js` (gateadas por `isCanteraActive()` + `kind='sports_club'`; el org se re-resuelve con `SELECT *` sólo dentro de las acciones gateadas para no tocar el SELECT compartido B2B) + 7 tests (`tests/org-panel-cantera.test.js`). Suite 1315/1315. Branch `claude/cantera-layer-6-ui-qn3py` | Revert acciones org-panel |
+| **6b · ⬅ SIGUIENTE · UI Studio del club** | ramificar `panel.html` por `org.kind='sports_club'`: tabs Plantilla / Stats / Fichajes / Carnets / Cobros, cableando los endpoints de lectura de 6a (`get_roster`/`get_club_stats`/`get_transfers`) + los de escritura ya existentes (register-player, transfers, print-order-export, nfc-register, create-setup-fee/parent-checkout, record-external-payment, connect-onboard) | Revert HTML/JS |
 | **6c · Vista del padre** | `panel.html` con JWT parent-panel: card del hijo (o tabs si varios), stats temporada, cuota (create-parent-checkout), histórico de clubes, derechos LOPD (export/delete), banner de handoff con doble verificación (accept-transfer + parent-consent) | Revert HTML/JS |
 
 Cada capa commit separado. Cada capa con tests. `netlify.toml` se actualiza por capa con un bloque etiquetado `# CANTERA · ...` para borrado en bloque.
