@@ -495,6 +495,8 @@ Vista simple: card del hijo (o tabs si tiene varios hijos), stats temporada, cuo
 
 **Auth del tutor (capa 2)** — `parent-auth.js` (`POST /api/parent-auth { email, idioma? }`) es el espejo de `panel-auth.js` para padres/tutores. Magic-link passwordless: si el email coincide con al menos un `card_admins` activo de rol `tutor_legal`/`tutor_secundario`/`player_self` (NO `club_admin` — ése entra por el Studio B2B), firma un JWT `purpose:'parent-panel'` (TTL 7d, secreto `PARENT_PANEL_JWT_SECRET` con fallback `ORG_PANEL_JWT_SECRET` → `AGENT_JWT_SECRET`) y manda `${SITE_URL}/panel.html?session=<jwt>`. La sesión está scoped al **email**, no a una card: un tutor con varios hijos administra todas las cards donde aparece con ese email. Siempre devuelve 200 (anti-enumeration, igual que `send-edit-link`/`panel-auth`); gateado por `isCanteraActive()` (410 si el carril está off); rate-limit 5 req / 10 min / IP. Las primitivas JWT (`signParentSession`/`verifyParentSession`/`parentAuthFromEvent`) viven en `lib/panel-auth.js` junto a las de org, aisladas por el claim `purpose` (un token org-panel nunca verifica como parent-panel y viceversa).
 
+**Alta de jugador/staff (capa 3a)** — `register-player.js` (`POST /api/register-player`). Lo llama el admin del club desde el Studio (auth JWT **org-panel**, scoped a `session.orgId`; el alta queda forzosamente atada a ese club). Crea: (1) una `cards` con `card_kind='player'` (o `'club_staff'` si `role!='jugador'`), slug **opaco `p-xxxxxxxx`** (anti-doxxing de menores, NO derivado del nombre), `public_card=false` (el menor no es público hasta consentimiento, capa 3c), `birth_year` en claro + `birth_date_encrypted` (si `CANTERA_PII_KEY` está configurada, vía `lib/pii-crypto`); (2) una fila `member_club_seasons` de la temporada vigente (cutoff julio) con dorsal/posición/categoría — la categoría se resuelve con `lib/sports-categories` desde `birth_year` + `organizations.sport`; (3) los `card_admins` (tutor legal obligatorio + tutor secundario opcional, cada uno con su `edit_token`). Cubre dos de los tres caminos del fichaje: **nuevo en plataforma** y **llega de club off-platform** (campo libre `previous_club_name`); el tercero (handoff entre clubes PerfilaPro) es la capa 3b sobre una card existente — `register-player` SIEMPRE crea card nueva. Email best-effort al tutor legal con magic-link parent-panel. Sin transacción multi-statement en la Data API: ante fallo de membership o admins se compensa borrando la card (FK `ON DELETE CASCADE`). Gateado por `isCanteraActive()` (410 off).
+
 **Env vars Cantera** (todas opcionales — el carril se apaga limpio borrándolas):
 
 ```
@@ -603,6 +605,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/ocupaciones-search` | `ocupaciones-search` |
 | `/api/cp-lookup` | `cp-lookup` |
 | `/api/parent-auth` | `parent-auth` (CANTERA) |
+| `/api/register-player` | `register-player` (CANTERA) |
 
 ### Internacionalización (es / ca)
 
