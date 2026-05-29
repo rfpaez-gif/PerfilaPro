@@ -8,7 +8,9 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capas 0/0.5/1/2/3a/3b mergeadas a `main` (PRs #141–#145). **3c (consentimiento parental)** vive en `claude/cantera-capa3c-consent`.
+**Branch**: capa 3 completa (3a/3b/3c) mergeada (PRs #141–#146). **consola de incidencias (backend)** vive en `claude/cantera-admin-incidencias`.
+
+**Consola de incidencias del founder (backend)** — `claude/cantera-admin-incidencias`. `lib/cantera-incidents.js` + 9 acciones `cantera_*` en `admin-orgs.js` (auth password+TOTP, auditadas en `admin_audit_log`). 4 familias: traspasos+membresías (overview/edit/close/reassign), tutores (revoke/add admin), consentimiento+visibilidad (overview read-only + set_visibility), PII+LOPD (reveal_birthdate descifrado + delete_player soft/hard). 23 tests, suite 1247/1247. Sin migración/route/env nuevos. **Pendiente: UI en `admin-orgs.html`** (esta entrega es la API; la pantalla es follow-up).
 
 **Capa 3c · consentimiento parental LOPDGDD** — `claude/cantera-capa3c-consent`. 16 tests (`tests/parent-consent.test.js` + nuevo caso en `cantera-transfers`), suite total 1224/1224. **Sin migración** (reusa `card_consents`).
 - `lib/consent.js`: `verifySecondFactor` (2º factor = fecha de nacimiento del menor, contra `birth_date_encrypted` o fallback `birth_year`), `buildConsentEvidence` (hash sha256 + ip + ua), `recordConsent`, `clientIp`/`userAgentOf`, `CONSENT_TYPES`.
@@ -176,8 +178,8 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **3a · ✅ hecho** | `register-player.js` (alta player/staff, caminos 1 y 3) + 15 tests | Borrar archivo + route |
 | **3b · ✅ hecho** | migración 035 (RPCs atómicas) + `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` + override `transfer_resolve` en admin-orgs + 25 tests | Borrar archivos + routes + DROP 035 |
 | **3c · ✅ hecho** | `parent-consent.js` + `lib/consent.js` (doble verificación → `card_consents`, `public_card=true`) + gate 2º factor sobre accept-transfer + 16 tests | Borrar archivos + route |
-| **admin-incidencias · ⬅ SIGUIENTE** | consola founder sobre `admin-orgs.js`: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD | Revert acciones |
-| **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
+| **admin-incidencias · ✅ hecho (backend)** | `lib/cantera-incidents.js` + 9 acciones `cantera_*` en admin-orgs + 23 tests. Falta UI en admin-orgs.html | Borrar lib + bloque dispatch |
+| **4 · ⬅ SIGUIENTE · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
 
@@ -201,7 +203,7 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a + 3b + 3c mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **consola de incidencias del founder** (decidida en sesión: tras 3c, sobre `admin-orgs.js`, con las 4 familias de utilidades). Después, capa 4 (Stripe Connect + cobros).
+> Sigo desde `docs/cantera-handoff.md`. Capa 3 completa + consola de incidencias (backend) mergeadas. Las 4 Q cerradas con defaults (§4). Continúo con la **capa 4 · Stripe Connect + cobros** (cuotas padre→club vía Connect Standard + `record-external-payment` sobre la tabla `external_payments` de la 034). Pendiente menor: UI de la consola de incidencias en `admin-orgs.html`.
 
 **Decisiones del founder en esta sesión** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.

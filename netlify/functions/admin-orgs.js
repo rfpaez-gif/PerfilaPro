@@ -23,6 +23,7 @@ const {
 const { inviteTeamMembers } = require('./lib/team-invite');
 const { signPanelSession } = require('./lib/panel-auth');
 const { offboardCard, restoreCard, COURTESY_DAYS } = require('./lib/card-offboard');
+const cantera = require('./lib/cantera-incidents');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -40,6 +41,17 @@ function jsonResponse(statusCode, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   };
+}
+
+// Audit best-effort de las acciones de incidencias Cantera (founder).
+// La auth admin no tiene identidad por-usuario, así que el rastro es
+// acción + slug + ip + timestamp en admin_audit_log.
+function auditIncident(db, ip, action, slug, detail) {
+  db.from('admin_audit_log').insert({
+    action, entity_slug: slug || null, field: null,
+    old_value: null, new_value: detail != null ? String(detail) : null, ip: ip || 'unknown',
+  }).then(({ error }) => { if (error) console.error('audit_log error:', error.message); })
+    .catch(() => {});
 }
 
 function stripTagsInline(str) {
@@ -1388,6 +1400,102 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       }
       const result = Array.isArray(data) ? data[0] : data;
       return jsonResponse(200, { ok: true, status: 'accepted', new_membership_id: result?.new_membership_id || null });
+    }
+
+    // ── CANTERA · consola de incidencias del founder ──
+    // 4 familias: traspasos+membresías, tutores, consentimiento+visibilidad,
+    // PII+borrado LOPD. Auth founder (password+TOTP) ya validada arriba.
+    if (action && action.startsWith('cantera_')) {
+      const ip = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+
+      // Familia 1+2+3 (read): vista completa de un jugador.
+      if (action === 'cantera_player_overview') {
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+        const overview = await cantera.playerOverview(db, body.card_slug);
+        if (!overview) return jsonResponse(404, { error: 'Jugador no encontrado' });
+        return jsonResponse(200, { ok: true, ...overview });
+      }
+
+      // Familia 1: editar membresía abierta.
+      if (action === 'cantera_edit_membership') {
+        if (!body.membership_id) return jsonResponse(400, { error: 'membership_id requerido' });
+        const { error } = await cantera.editMembership(db, body.membership_id, {
+          dorsal: body.dorsal, position: body.position, team_name: body.team_name, category_id: body.category_id,
+        });
+        if (error) return jsonResponse(400, { error: error.message });
+        auditIncident(db, ip, 'cantera_edit_membership', body.card_slug, body.membership_id);
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Familia 1: cerrar membresía activa (baja).
+      if (action === 'cantera_close_membership') {
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+        const { error } = await cantera.closeMembership(db, body.card_slug, body.exit_reason || 'baja');
+        if (error) {
+          if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'Sin membresía activa' });
+          return jsonResponse(400, { error: error.message });
+        }
+        auditIncident(db, ip, 'cantera_close_membership', body.card_slug, body.exit_reason);
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Familia 1: reasignar de club (transfer atómico founder).
+      if (action === 'cantera_reassign_club') {
+        if (!body.card_slug || !body.to_org_id || !body.season) {
+          return jsonResponse(400, { error: 'card_slug, to_org_id y season requeridos' });
+        }
+        const { error } = await cantera.reassignClub(db, {
+          cardSlug: body.card_slug, toOrgId: body.to_org_id, season: body.season,
+          dorsal: body.dorsal ?? null, position: body.position ?? null, teamName: body.team_name ?? null,
+        });
+        if (error) return jsonResponse(400, { error: error.message });
+        auditIncident(db, ip, 'cantera_reassign_club', body.card_slug, body.to_org_id);
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Familia 2: revocar admin (tutor).
+      if (action === 'cantera_revoke_admin') {
+        if (!body.admin_id) return jsonResponse(400, { error: 'admin_id requerido' });
+        const { error } = await cantera.revokeAdmin(db, body.admin_id);
+        if (error) return jsonResponse(500, { error: error.message });
+        auditIncident(db, ip, 'cantera_revoke_admin', body.card_slug, body.admin_id);
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Familia 2: añadir admin (tutor).
+      if (action === 'cantera_add_admin') {
+        const { data, error } = await cantera.addAdmin(db, { cardSlug: body.card_slug, email: body.email, role: body.role });
+        if (error) return jsonResponse(400, { error: error.message });
+        auditIncident(db, ip, 'cantera_add_admin', body.card_slug, `${body.role}:${body.email}`);
+        return jsonResponse(200, { ok: true, admin_id: data?.id || null });
+      }
+
+      // Familia 3: forzar/revocar visibilidad pública.
+      if (action === 'cantera_set_visibility') {
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+        const { error } = await cantera.setVisibility(db, body.card_slug, body.public_card === true);
+        if (error) return jsonResponse(500, { error: error.message });
+        auditIncident(db, ip, 'cantera_set_visibility', body.card_slug, body.public_card === true);
+        return jsonResponse(200, { ok: true, public_card: body.public_card === true });
+      }
+
+      // Familia 4: descifrar fecha de nacimiento (soporte, auditado).
+      if (action === 'cantera_reveal_birthdate') {
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+        const { data, error } = await cantera.revealBirthDate(db, body.card_slug);
+        if (error) return jsonResponse(404, { error: error.message });
+        auditIncident(db, ip, 'cantera_reveal_birthdate', body.card_slug, 'PII access');
+        return jsonResponse(200, { ok: true, ...data });
+      }
+
+      // Familia 4: borrado LOPD (soft por defecto, hard opcional).
+      if (action === 'cantera_delete_player') {
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+        const { error, mode } = await cantera.deletePlayer(db, body.card_slug, { hard: body.hard === true });
+        if (error) return jsonResponse(500, { error: error.message });
+        auditIncident(db, ip, 'cantera_delete_player', body.card_slug, mode);
+        return jsonResponse(200, { ok: true, mode });
+      }
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
