@@ -494,7 +494,9 @@ Doble verificación obligatoria antes de marcar `public_card=true`, antes del pr
 
 **Carnet físico PVC + NFC**:
 
-`printable-card-utils.js` extendido con `buildPlayerCardPVC({ card, club, season, nfcUrl })` — formato ISO 7810 (85.6×54mm), branded con `color_primary` del club, escudo, foto, dorsal grande, QR + URL para NFC. Setup fee 19€ por nuevo fichaje (cobrado al club). Renovación anual 9€ opcional. El operario de impresión escanea NFC + QR al impresionar; `nfc-register.js` registra el UID en la fila correspondiente.
+`printable-card-utils.js` extendido con `buildPlayerCardPVC({ card, club, season, nfcUrl })` — formato ISO 7810 (85×55mm, mismas dims que la tarjeta de visita B2B), branded con `color_primary` del club, escudo (logo_url fetcheado defensivo), foto del jugador (`card.foto_url`), dorsal grande, categoría/equipo y QR que apunta a `/c/:slug` (objetivo del NFC). `buildPlayerCardsBookletPDF({ players, club, siteUrl })` genera el booklet multi-página (un carnet por jugador, escudo cacheado una vez, fotos en paralelo). Setup fee 19€ por fichaje / 9€ renovación los cobra la capa 4c.
+
+**Export e impresión (capa 5)** — `print-order-export.js` (`POST /api/print-order-export`, auth founder password+TOTP): `format='csv'` (default) devuelve el lote de `card_print_orders` filtrado por `status` (default `paid`) y opcional `org_slug`, con el nombre del jugador resuelto — es el CSV que el founder manda a la imprenta (`PRINT_PROVIDER='manual'`); `format='pdf'` arma el booklet de carnets (`buildPlayerCardsBookletPDF`) para los pedidos del club, devuelto como `pdf_base64`. `nfc-register.js` (`POST /api/nfc-register`, auth founder): el operario registra el `nfc_uid` del chip al impresionar (por `order_id` o último pedido del `card_slug`), avanza el estado a `sent_to_printer`; colisión de UID (índice único parcial de la 033) → 409.
 
 **Studio del club** (`/panel.html` con `org.kind='sports_club'`):
 
@@ -631,6 +633,8 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/create-parent-checkout` | `create-parent-checkout` (CANTERA) |
 | `/api/create-setup-fee-checkout` | `create-setup-fee-checkout` (CANTERA) |
 | `/api/record-external-payment` | `record-external-payment` (CANTERA) |
+| `/api/print-order-export` | `print-order-export` (CANTERA) |
+| `/api/nfc-register` | `nfc-register` (CANTERA) |
 
 ### Internacionalización (es / ca)
 

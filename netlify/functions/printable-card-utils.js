@@ -680,6 +680,143 @@ async function buildBusinessCardsBookletPDF({ cards, org, siteUrl } = {}) {
   });
 }
 
+// ── Carnet del jugador · PVC + NFC (Cantera capa 5) ──────────────────────
+// Formato tarjeta ISO 7810 (85×55mm, mismas dims que la de visita B2B).
+// Franja con color del club + escudo, foto del jugador, dorsal grande,
+// categoría/equipo y QR que apunta a la card pública (objetivo del NFC).
+function renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer, photoBuffer, cardUrl }) {
+  const W = BIZCARD_WIDTH, H = BIZCARD_HEIGHT;
+  const color = club && club.color_primary && /^#[0-9a-fA-F]{6}$/.test(club.color_primary)
+    ? club.color_primary : COLORS.ink;
+  const clubName = club && club.name ? String(club.name).trim() : '';
+  const name = card && card.nombre ? String(card.nombre).trim() : '—';
+  const s = season || {};
+  const dorsal = s.dorsal != null && s.dorsal !== '' ? String(s.dorsal) : '';
+  const categoryName = s.category_name ? String(s.category_name).trim() : '';
+  const teamName = s.team_name ? String(s.team_name).trim() : '';
+
+  doc.rect(0, 0, W, H).fill(COLORS.surface);
+
+  // Franja superior con color del club + escudo + nombre.
+  const STRIP_H = 30;
+  doc.rect(0, 0, W, STRIP_H).fill(color);
+  let nameX = 8;
+  if (logoBuffer) {
+    try {
+      doc.roundedRect(5, 4, 24, 22, 2).fill('#FFFFFF');
+      doc.image(logoBuffer, 6, 5, { fit: [22, 20], align: 'center', valign: 'center' });
+      nameX = 34;
+    } catch { /* sin escudo */ }
+  }
+  doc.fillColor('#FFFFFF').font('PP-Sans-SemiBold').fontSize(9)
+    .text(clubName, nameX, 11, { width: W - nameX - 8, lineBreak: false, ellipsis: true });
+
+  // Foto del jugador (izquierda).
+  const photoY = STRIP_H + 8, photoX = 8, photoW = 54, photoH = 68;
+  doc.roundedRect(photoX, photoY, photoW, photoH, 3).fill(COLORS.border);
+  if (photoBuffer) {
+    try {
+      doc.save();
+      doc.roundedRect(photoX, photoY, photoW, photoH, 3).clip();
+      doc.image(photoBuffer, photoX, photoY, { cover: [photoW, photoH], align: 'center', valign: 'center' });
+      doc.restore();
+    } catch { /* sin foto */ }
+  }
+
+  // Dorsal grande (arriba derecha).
+  if (dorsal) {
+    doc.fillColor(color).font('PP-Sans-SemiBold').fontSize(44)
+      .text(dorsal, W - 86, photoY - 6, { width: 78, align: 'right' });
+  }
+
+  // Nombre + categoría/equipo (bajo la foto, columna derecha).
+  const infoX = photoX + photoW + 10;
+  let ty = photoY + photoH - 34;
+  doc.fillColor(COLORS.ink).font('PP-Sans-SemiBold').fontSize(12)
+    .text(name, infoX, ty, { width: W - infoX - 8 });
+  ty = doc.y + 1;
+  const sub = [categoryName, teamName].filter(Boolean).join(' · ');
+  if (sub) {
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(8)
+      .text(sub, infoX, ty, { width: W - infoX - 8, lineBreak: false, ellipsis: true });
+  }
+
+  // QR (objetivo NFC) abajo derecha, ~14mm.
+  const qrSize = 42;
+  if (qrBuffer) {
+    try { doc.image(qrBuffer, W - qrSize - 8, H - qrSize - 8, { fit: [qrSize, qrSize] }); } catch { /* sin QR */ }
+  }
+  // URL diminuta abajo izquierda.
+  doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(5)
+    .text(cardUrl, 8, H - 9, { width: W - qrSize - 22, lineBreak: false, ellipsis: true });
+}
+
+// Genera el carnet PVC de un jugador. Si no se pasan buffers, fetchea
+// escudo (club.logo_url) y foto (card.foto_url) de forma defensiva.
+async function buildPlayerCardPVC({ card, club, season, nfcUrl, logoBuffer, photoBuffer, siteUrl } = {}) {
+  if (!card || !card.slug) throw new Error('buildPlayerCardPVC: card.slug es obligatorio');
+  const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+  const cardUrl = nfcUrl || `${baseUrl}/c/${card.slug}`;
+  const qrBuffer = rasterizeQrSvgToPng(cardUrl, 600);
+
+  const logo = logoBuffer !== undefined ? logoBuffer
+    : (club && club.logo_url ? await fetchLogoAsPngBuffer(club.logo_url) : null);
+  const photo = photoBuffer !== undefined ? photoBuffer
+    : (card.foto_url ? await fetchLogoAsPngBuffer(card.foto_url) : null);
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: [BIZCARD_WIDTH, BIZCARD_HEIGHT],
+      margin: 0,
+      info: { Title: `Carnet ${card.slug} - PerfilaPro`, Author: 'PerfilaPro', Creator: 'PerfilaPro' },
+    });
+    registerFonts(doc, FONTS_DIR);
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer: logo, photoBuffer: photo, cardUrl });
+    doc.end();
+  });
+}
+
+// Booklet multi-página: un carnet por jugador. El escudo del club se
+// fetchea una vez; la foto de cada jugador por separado.
+async function buildPlayerCardsBookletPDF({ players, club, siteUrl } = {}) {
+  if (!Array.isArray(players) || !players.length) {
+    throw new Error('buildPlayerCardsBookletPDF: players debe ser un array no vacío');
+  }
+  const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+  const logoBuffer = club && club.logo_url ? await fetchLogoAsPngBuffer(club.logo_url) : null;
+
+  // Fotos en paralelo (defensivo: null si falla).
+  const photos = await Promise.all(players.map(p =>
+    p && p.card && p.card.foto_url ? fetchLogoAsPngBuffer(p.card.foto_url).catch(() => null) : Promise.resolve(null)
+  ));
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0, autoFirstPage: false,
+      info: { Title: `Carnets ${club && club.slug ? club.slug : 'club'} - PerfilaPro`, Author: 'PerfilaPro', Creator: 'PerfilaPro' },
+    });
+    registerFonts(doc, FONTS_DIR);
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    players.forEach((p, i) => {
+      if (!p || !p.card || !p.card.slug) return;
+      doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
+      const cardUrl = `${baseUrl}/c/${p.card.slug}`;
+      renderPlayerCard(doc, {
+        card: p.card, club, season: p.season, cardUrl,
+        qrBuffer: rasterizeQrSvgToPng(cardUrl, 600), logoBuffer, photoBuffer: photos[i],
+      });
+    });
+    doc.end();
+  });
+}
+
 module.exports = {
   buildPrintableCardPDF,
   buildBusinessCardPDF,
@@ -688,6 +825,8 @@ module.exports = {
   buildEscaparateQrPng,
   formatSpanishPhone,
   fetchLogoAsPngBuffer,
+  buildPlayerCardPVC,
+  buildPlayerCardsBookletPDF,
   A6_WIDTH,
   A6_HEIGHT,
   BIZCARD_WIDTH,
