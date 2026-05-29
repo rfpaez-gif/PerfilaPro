@@ -8,7 +8,12 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ## 1 · Qué está aterrizado
 
-**Branch**: capas 0/0.5/1 mergeadas a `main` (PRs #141, #142). La capa 2 (auth tutor) vive en `claude/cantera-capa2-parent-auth`.
+**Branch**: capas 0/0.5/1/2 mergeadas a `main` (PRs #141, #142, #143). La capa 3 va en sub-PRs (3a/3b/3c); **3a (register-player + alta)** vive en `claude/cantera-capa3a-register-player`.
+
+**Capa 3a · register-player + alta** — `claude/cantera-capa3a-register-player`. 15 tests (`tests/register-player.test.js`), suite total 1183/1183.
+- `register-player.js` (`POST /api/register-player`, auth org-panel JWT del club): crea card player/club_staff (slug opaco `p-xxxxxxxx`, `public_card=false`, birth_year + birth_date_encrypted) + `member_club_seasons` (categoría resuelta vía sports-categories, dorsal/posición/temporada) + `card_admins` (tutor legal + secundario opcional). Cubre camino 1 (nuevo) y camino 3 (off-platform, `previous_club_name`). Compensación por borrado de card ante fallo (no hay transacción en la Data API). Email best-effort al tutor con magic-link parent-panel. Gate `isCanteraActive()`.
+- Ruta `/api/register-player` en el bloque `# CANTERA` de `netlify.toml`.
+- **Camino 2 (handoff entre clubes PerfilaPro) queda para 3b**: register-player siempre crea card NUEVA.
 
 **Capa 2 · auth tutor** — `claude/cantera-capa2-parent-auth`. 14 tests (`tests/parent-auth.test.js`), suite total 1168/1168.
 - `parent-auth.js` (`POST /api/parent-auth`): magic-link passwordless al email de un `card_admins` activo (roles `tutor_legal`/`tutor_secundario`/`player_self`, NO `club_admin`). Siempre 200 (anti-enumeration), gateado por `isCanteraActive()` (410 off), rate-limit 5/10min/IP. CTA → `/panel.html?session=<jwt>`.
@@ -150,7 +155,9 @@ Asumiendo que las cuatro Q de arriba se cierran con los defaults, el orden de co
 | **0.5 · ✅ hecho** | Migración 034 (external_payments + previous_club_name) — Q1/Q2 = sí | DROP TABLE / DROP COLUMN |
 | **1 · ✅ hecho** | `lib/cantera-flag.js`, `lib/card-kind.js`, `lib/pii-crypto.js`, `lib/sports-categories.js`, `lib/external-payments.js` + 48 tests | Borrar archivos |
 | **2 · ✅ hecho · auth tutor** | `parent-auth.js` + extensión `lib/panel-auth.js` (`purpose:'parent-panel'`) + 14 tests | Borrar archivo + route |
-| **3 · ⬅ SIGUIENTE · fichaje + handoff** | `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js` + tests de transacción atómica | Borrar archivos + routes |
+| **3a · ✅ hecho** | `register-player.js` (alta player/staff, caminos 1 y 3) + 15 tests | Borrar archivo + route |
+| **3b · ⬅ SIGUIENTE** | `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js` (handoff transaccional entre clubes PerfilaPro, camino 2) | Borrar archivos + routes |
+| **3c** | `parent-consent.js` (doble verificación LOPDGDD: magic-link + 2º factor → `card_consents`, `public_card=true`) | Borrar archivo + route |
 | **4 · Stripe Connect + cobros** | `stripe-connect-onboard.js`, `create-parent-checkout.js`, `create-setup-fee-checkout.js`, `record-external-payment.js` (si Q1), handler eventos Connect en `stripe-webhook.js` | Borrar archivos + sección del webhook + env vars |
 | **5 · carnet físico** | `buildPlayerCardPVC` en `printable-card-utils.js`, `print-order-export.js`, `nfc-register.js` | Borrar funciones + routes |
 | **6 · UI Studio + Panel padre** | Ramificación de `panel.html` por `org.kind`, extensión `org-panel.js` con acciones deportivas, vista padre | Revert HTML/JS |
@@ -175,6 +182,6 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 Mensaje sugerido para el próximo hilo:
 
-> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 mergeadas (PRs #141, #142 + capa 2 pendiente de merge en `claude/cantera-capa2-parent-auth`). Las 4 Q cerradas con defaults (§4). Continúo con la **capa 3 · fichaje + handoff**: `register-player.js`, `request-transfer.js`, `accept-transfer.js`, `cancel-membership.js`, `parent-consent.js`, con tests de transacción atómica.
+> Sigo desde `docs/cantera-handoff.md`. Capas 0/0.5/1/2 + 3a mergeadas (la capa 3 va en sub-PRs 3a/3b/3c por decisión del founder). Las 4 Q cerradas con defaults (§4). Continúo con **3b · handoff transaccional**: `request-transfer.js` / `accept-transfer.js` / `cancel-membership.js`.
 
-La capa 3 (fichaje + handoff) es lo siguiente y es la más densa: el alta de player con 3 caminos (nuevo / desde club PerfilaPro / desde club off-platform con `previous_club_name`), el handoff transaccional (cerrar `member_club_seasons` vieja + abrir nueva + UPDATE `cards.organization_id` + insert `card_consents`), y el consentimiento parental con doble verificación. Reusa los helpers de capa 1 (`pii-crypto`, `sports-categories`, `card-kind`) y la auth de capa 2.
+La capa 3b es el handoff entre clubes PerfilaPro (camino 2): cerrar la `member_club_seasons` vieja (`left_at`, `exit_reason='fichaje'`, `closed_snapshot_jsonb`) + abrir la nueva + UPDATE `cards.organization_id` + insert `card_consents` con `consent_type='club_handoff'`, todo coordinado. Ojo: la Data API no tiene transacción multi-statement — para el handoff atómico hay que valorar una RPC SQL (función `SECURITY DEFINER`) o un orden con compensación robusto. Decidir esto al arrancar 3b. `cancel-membership` cierra la fila a club off-platform (`exit_reason='fichaje'`/`'baja'`, card sin `organization_id` activo). Reusa helpers de capa 1 + auth org-panel.

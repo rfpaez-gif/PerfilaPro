@@ -286,11 +286,17 @@
 
 # CANTERA · carril deporte base. Bloque borrable de golpe para revertir
 # el vertical (ver docs/cantera-handoff.md §reversibilidad).
-# Capa 2 · auth tutor: magic-link → JWT parent-panel 7d. Gated en runtime
-# por CANTERA_VERTICAL_ACTIVE (410 Gone si está off).
+# Todos gated en runtime por CANTERA_VERTICAL_ACTIVE (410 Gone si off).
+# Capa 2 · auth tutor: magic-link → JWT parent-panel 7d.
 [[redirects]]
   from   = "/api/parent-auth"
   to     = "/.netlify/functions/parent-auth"
+  status = 200
+
+# Capa 3a · alta de jugador/staff desde el Studio del club (JWT org-panel).
+[[redirects]]
+  from   = "/api/register-player"
+  to     = "/.netlify/functions/register-player"
   status = 200
 
 [[redirects]]
