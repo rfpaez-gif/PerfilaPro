@@ -13,6 +13,7 @@ const {
   handleSubscriptionDeleted,
   handleInvoicePaid,
 } = require('./lib/org-subscription');
+const cantera = require('./lib/cantera-webhook');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -291,11 +292,54 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.error('Webhook signature error:', err.message);
-      return { statusCode: 400, body: `Webhook Error: ${err.message}` };
+      // Los eventos Connect de Cantera (cuotas direct-charge en cuentas
+      // conectadas) pueden venir firmados con un secreto separado. Si está
+      // configurado, reintentamos antes de rechazar.
+      if (process.env.STRIPE_CONNECT_WEBHOOK_SECRET) {
+        try {
+          stripeEvent = stripeClient.webhooks.constructEvent(
+            event.body, sig, process.env.STRIPE_CONNECT_WEBHOOK_SECRET
+          );
+        } catch (err2) {
+          console.error('Webhook signature error (platform+connect):', err.message, '/', err2.message);
+          return { statusCode: 400, body: `Webhook Error: ${err.message}` };
+        }
+      } else {
+        console.error('Webhook signature error:', err.message);
+        return { statusCode: 400, body: `Webhook Error: ${err.message}` };
+      }
     }
 
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+
+    // ── CANTERA (capa 4d) ───────────────────────────────────────────────────
+    // Eventos del carril deporte base, enrutados ANTES del B2B/autónomo.
+    // account.updated refresca los flags Connect del club.
+    if (stripeEvent.type === 'account.updated') {
+      const result = await cantera.handleAccountUpdated({ db, account: stripeEvent.data.object });
+      if (!result.ok) console.log('cantera account.updated skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+    // Subscription de cuota padre→club (direct charge en cuenta conectada).
+    if ((stripeEvent.type === 'customer.subscription.updated' ||
+         stripeEvent.type === 'customer.subscription.created') &&
+        cantera.isParentFeeSubscription(stripeEvent.data.object)) {
+      const result = await cantera.handleParentSubscription({ db, subscription: stripeEvent.data.object });
+      if (!result.ok) console.log('cantera subscription skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+    if (stripeEvent.type === 'customer.subscription.deleted' &&
+        cantera.isParentFeeSubscription(stripeEvent.data.object)) {
+      const result = await cantera.handleParentSubscription({ db, subscription: stripeEvent.data.object, deleted: true });
+      if (!result.ok) console.log('cantera subscription deleted skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
+    // invoice.paid de una cuota padre→club: el estado/periodo lo refresca el
+    // evento de subscription; aquí solo confirmamos recepción para que no
+    // caiga en el handler B2B.
+    if (stripeEvent.type === 'invoice.paid' && cantera.isParentFeeInvoice(stripeEvent.data.object)) {
+      return { statusCode: 200, body: JSON.stringify({ received: true, ok: true, cantera: 'parent_invoice' }) };
+    }
 
     // ── B2B Stripe Subscription (Bloque B) ──────────────────────────────────
     // Los eventos de subscription se procesan ANTES del autónomo para
@@ -326,6 +370,18 @@ function makeHandler(stripeClient, db, emailClient = resend) {
 
     if (stripeEvent.type === 'checkout.session.completed') {
       const session = stripeEvent.data.object;
+
+      // Desvío CANTERA: cuota padre→club o pedido de carnets.
+      if (session.metadata && session.metadata.kind === cantera.PARENT_FEE_KIND) {
+        const result = await cantera.handleParentCheckoutCompleted({ db, session });
+        if (!result.ok) console.log('cantera parent checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
+      if (session.metadata && session.metadata.kind === cantera.PRINT_KIND) {
+        const result = await cantera.handlePrintCheckoutCompleted({ db, session });
+        if (!result.ok) console.log('cantera print checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
 
       // Desvío B2B: si la session lleva metadata.kind === 'org-subscription',
       // delega al lib y no entra al carril autónomo. Devuelve 200 igualmente
