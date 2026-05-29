@@ -405,6 +405,24 @@
           </div>
         </details>
       </section>
+
+      <!-- ── 🚑 Consola de incidencias Cantera (founder) ───────── -->
+      <section class="pp-section">
+        <details>
+          <summary style="cursor:pointer;font-weight:600;font-size:14px;color:var(--color-tinta);margin-bottom:.25rem">
+            🚑 Incidencias Cantera (deporte base)
+          </summary>
+          <p class="pp-section__hint" style="margin:.5rem 0 .75rem">
+            Herramientas founder para resolver incidencias de fichas de jugadores: membresías,
+            tutores, visibilidad, consentimiento y borrado LOPD. Cada acción queda auditada.
+          </p>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <input type="text" class="pp-input" id="incSlug" placeholder="slug del jugador (p-xxxxxxxx)" style="flex:1;min-width:220px">
+            <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incLoad()">Cargar ficha</button>
+          </div>
+          <div id="incOut"><p class="pp-empty">Introduce el slug de una ficha de jugador y pulsa «Cargar ficha».</p></div>
+        </details>
+      </section>
     </div>
 
     <!-- ── Columna derecha: preview ─────────────────── -->
@@ -1702,6 +1720,143 @@ function escapeHtml(s) {
 function escapeAttr(s) {
   // Para insertar en atributos con comillas simples (onclick='X')
   return String(s || '').replace(/['"<>&]/g, c => ({ "'": '&#39;', '"': '&quot;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   🚑 Consola de incidencias Cantera (founder)
+   Reusa callAdmin() → acciones cantera_* en admin-orgs.
+   ─────────────────────────────────────────────────────────── */
+let incCurrent = null; // overview cargado
+
+async function incLoad() {
+  const slug = ($('incSlug').value || '').trim();
+  if (!slug) return toast('Introduce un slug', 'err');
+  $('incOut').innerHTML = '<p class="pp-empty">Cargando…</p>';
+  try {
+    const json = await callAdmin({ action: 'cantera_player_overview', card_slug: slug });
+    incCurrent = json;
+    incRender();
+  } catch (err) {
+    $('incOut').innerHTML = `<p class="pp-empty">${escapeHtml(err.message)}</p>`;
+  }
+}
+
+function incRender() {
+  const { card, memberships, admins, consents, transfers } = incCurrent;
+  const s = escapeAttr(card.slug);
+  const row = (label, val) => `<div style="display:flex;gap:.5rem"><span style="color:var(--color-gris-500);min-width:130px">${label}</span><span>${val}</span></div>`;
+
+  const memberHtml = (memberships.length ? memberships.map(m => {
+    const open = !m.left_at;
+    return `<div style="border:1px solid var(--color-gris-200);border-radius:8px;padding:.5rem .6rem;margin:.35rem 0">
+      <div style="font-size:12px">${open ? '🟢 activa' : '⚪ cerrada'} · ${escapeHtml(m.season)} · ${escapeHtml(m.role)}${m.dorsal != null ? ' · #' + m.dorsal : ''}${m.team_name ? ' · ' + escapeHtml(m.team_name) : ''}${m.previous_club_name ? ' · ⬅ ' + escapeHtml(m.previous_club_name) : ''}</div>
+      <div style="font-size:11px;color:var(--color-gris-500)">org: ${escapeHtml(m.organization_id || '—')}${m.left_at ? ' · baja: ' + escapeHtml(m.exit_reason || '') : ''}</div>
+      ${open ? `<div style="margin-top:.4rem;display:flex;gap:.35rem;flex-wrap:wrap">
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incEditMembership('${escapeAttr(m.id)}')">✏️ Editar</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incCloseMembership()">🚪 Dar de baja</button>
+      </div>` : ''}
+    </div>`;
+  }).join('') : '<p class="pp-empty">Sin membresías.</p>');
+
+  const adminHtml = (admins.length ? admins.map(a => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;font-size:12px;padding:.25rem 0">
+      <span>${escapeHtml(a.email)} · <b>${escapeHtml(a.role)}</b>${a.revoked_at ? ' · <span style="color:var(--color-gris-500)">revocado</span>' : ''}</span>
+      ${a.revoked_at ? '' : `<button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incRevokeAdmin('${escapeAttr(a.id)}')">Revocar</button>`}
+    </div>`).join('') : '<p class="pp-empty">Sin tutores.</p>');
+
+  const consentHtml = (consents.length ? consents.map(c => `
+    <div style="font-size:11px;color:var(--color-gris-500);padding:.15rem 0">${escapeHtml(c.granted_at)} · ${escapeHtml(c.consent_type)} · ${escapeHtml(c.granted_by_role)} (${escapeHtml(c.granted_by_email)})</div>`).join('') : '<p class="pp-empty">Sin consentimientos registrados.</p>');
+
+  const transferHtml = (transfers.length ? transfers.map(t => `
+    <div style="font-size:11px;color:var(--color-gris-500);padding:.15rem 0">${escapeHtml(t.created_at)} · ${escapeHtml(t.status)} · ${escapeHtml(t.from_org_id || '—')} → ${escapeHtml(t.to_org_id)}
+      ${t.status === 'pending' ? `<button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incResolveTransfer('${escapeAttr(t.id)}','force_accept')">Forzar</button> <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incResolveTransfer('${escapeAttr(t.id)}','cancel')">Cancelar</button>` : ''}</div>`).join('') : '<p class="pp-empty">Sin traspasos.</p>');
+
+  $('incOut').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:.25rem;font-size:13px;margin-bottom:.6rem">
+      ${row('Nombre', escapeHtml(card.nombre || '—'))}
+      ${row('Slug / tipo', `${escapeHtml(card.slug)} · ${escapeHtml(card.card_kind)}`)}
+      ${row('Club actual', escapeHtml(card.organization_id || '— (sin club)'))}
+      ${row('Pública', card.public_card ? '🌐 sí' : '🔒 no')}
+      ${row('Año nac.', card.birth_year || '—')}
+      ${row('Estado', `${escapeHtml(card.status || '—')}${card.deleted_at ? ' · 🗑 borrada ' + escapeHtml(card.deleted_at) : ''}`)}
+    </div>
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incRevealBirthdate()">👁 Revelar fecha nac.</button>
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incSetVisibility(${card.public_card ? 'false' : 'true'})">${card.public_card ? '🔒 Ocultar' : '🌐 Hacer pública'}</button>
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incReassign()">🔄 Reasignar club</button>
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incDelete(false)">🗑 Borrar (soft)</button>
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incDelete(true)" style="color:#b00">⚠️ Borrar definitivo</button>
+    </div>
+    <h4 style="margin:.5rem 0 .25rem;font-size:12px">Membresías</h4>${memberHtml}
+    <h4 style="margin:.75rem 0 .25rem;font-size:12px">Tutores</h4>${adminHtml}
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0">
+      <input type="text" class="pp-input" id="incAdminEmail" placeholder="email tutor" style="flex:1;min-width:160px">
+      <select class="pp-input" id="incAdminRole" style="max-width:160px"><option value="tutor_legal">tutor_legal</option><option value="tutor_secundario">tutor_secundario</option><option value="player_self">player_self</option></select>
+      <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incAddAdmin()">+ Tutor</button>
+    </div>
+    <h4 style="margin:.75rem 0 .25rem;font-size:12px">Consentimientos (audit)</h4>${consentHtml}
+    <h4 style="margin:.75rem 0 .25rem;font-size:12px">Traspasos</h4>${transferHtml}`;
+}
+
+async function incAction(payload, okMsg) {
+  try {
+    const json = await callAdmin(payload);
+    toast(okMsg || 'Hecho', 'ok');
+    await incLoad(); // refresca la vista
+    return json;
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+
+function incSlugNow() { return incCurrent && incCurrent.card.slug; }
+
+function incRevealBirthdate() {
+  callAdmin({ action: 'cantera_reveal_birthdate', card_slug: incSlugNow() })
+    .then(j => toast(`Fecha: ${j.birth_date || '(no cifrada)'} · año ${j.birth_year || '—'}`, 'ok'))
+    .catch(err => toast(err.message, 'err'));
+}
+function incSetVisibility(v) {
+  incAction({ action: 'cantera_set_visibility', card_slug: incSlugNow(), public_card: v }, v ? 'Ficha pública' : 'Ficha oculta');
+}
+function incDelete(hard) {
+  if (hard && !confirm('Borrado DEFINITIVO de la ficha (cascade membresías + tutores). Irreversible. ¿Seguro?')) return;
+  if (!hard && !confirm('Soft-delete de la ficha (recuperable). ¿Continuar?')) return;
+  incAction({ action: 'cantera_delete_player', card_slug: incSlugNow(), hard }, hard ? 'Borrada definitivamente' : 'Borrada (soft)');
+}
+function incRevokeAdmin(adminId) {
+  if (!confirm('¿Revocar este tutor?')) return;
+  incAction({ action: 'cantera_revoke_admin', card_slug: incSlugNow(), admin_id: adminId }, 'Tutor revocado');
+}
+function incAddAdmin() {
+  const email = ($('incAdminEmail').value || '').trim();
+  const role = $('incAdminRole').value;
+  if (!email) return toast('Falta el email', 'err');
+  incAction({ action: 'cantera_add_admin', card_slug: incSlugNow(), email, role }, 'Tutor añadido');
+}
+function incCloseMembership() {
+  const reason = prompt('Motivo de baja (fichaje / baja / fin_temporada / expulsion / baja_voluntaria / cese_actividad):', 'baja_voluntaria');
+  if (!reason) return;
+  incAction({ action: 'cantera_close_membership', card_slug: incSlugNow(), exit_reason: reason }, 'Membresía cerrada');
+}
+function incEditMembership(membershipId) {
+  const dorsal = prompt('Nuevo dorsal (vacío = no cambiar):', '');
+  const teamName = prompt('Nuevo equipo (vacío = no cambiar):', '');
+  const payload = { action: 'cantera_edit_membership', card_slug: incSlugNow(), membership_id: membershipId };
+  if (dorsal !== null && dorsal.trim() !== '') payload.dorsal = parseInt(dorsal, 10);
+  if (teamName !== null && teamName.trim() !== '') payload.team_name = teamName.trim();
+  incAction(payload, 'Membresía actualizada');
+}
+function incReassign() {
+  const toOrgId = prompt('ID (UUID) del club destino:', '');
+  if (!toOrgId) return;
+  const season = prompt('Temporada destino (YYYY-YY):', '');
+  if (!season) return;
+  incAction({ action: 'cantera_reassign_club', card_slug: incSlugNow(), to_org_id: toOrgId.trim(), season: season.trim() }, 'Jugador reasignado');
+}
+function incResolveTransfer(transferId, decision) {
+  if (!confirm(decision === 'force_accept' ? '¿Forzar la ejecución de este traspaso?' : '¿Cancelar este traspaso?')) return;
+  incAction({ action: 'transfer_resolve', transfer_id: transferId, decision }, 'Traspaso resuelto');
 }
 
 // Auto-login si ya hay JWT válido en sessionStorage (refresh de página).
