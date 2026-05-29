@@ -327,6 +327,12 @@
   to     = "/.netlify/functions/stripe-connect-onboard"
   status = 200
 
+# Capa 4b · cuota mensual padre→club (Connect direct charge + app fee).
+[[redirects]]
+  from   = "/api/create-parent-checkout"
+  to     = "/.netlify/functions/create-parent-checkout"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
