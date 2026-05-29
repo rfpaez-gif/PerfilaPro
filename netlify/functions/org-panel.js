@@ -133,6 +133,22 @@ function makeHandler(db, emailClient) {
 
       const stats = await computeOrgStats(db, org.id);
 
+      // CANTERA: el discriminador kind/sport (migración 033) sólo existe en
+      // BD cuando el carril está encendido. Lo leemos en una query aparte
+      // gateada por el flag para no romper el SELECT compartido en entornos
+      // B2B donde la 033 aún no se ha aplicado. El frontend usa org.kind
+      // para ramificar al Studio deportivo.
+      let kind = null;
+      let sport = null;
+      if (isCanteraActive()) {
+        const { data: k } = await db
+          .from('organizations')
+          .select('kind, sport')
+          .eq('id', org.id)
+          .maybeSingle();
+        if (k) { kind = k.kind || null; sport = k.sport || null; }
+      }
+
       // Componemos la lista de miembros con stats por slug. computeOrgStats
       // ya devuelve by_member, pero solo de cards activas y sin algunos
       // campos (plan, created_at). Hacemos merge.
@@ -165,6 +181,8 @@ function makeHandler(db, emailClient) {
           logo_url: org.logo_url,
           color_primary: org.color_primary,
           created_at: org.created_at,
+          kind,
+          sport,
         },
         members,
         stats: {

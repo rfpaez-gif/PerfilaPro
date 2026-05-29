@@ -238,4 +238,15 @@ describe('org-panel · Cantera reads (layer 6a)', () => {
     const res = await handler(event('get_roster', {}));
     expect(res.statusCode).toBe(401);
   });
+
+  it('get_org enriches the response with kind/sport when the vertical is active', async () => {
+    // Reusa los resolvers de roster: organizations devuelve el club deportivo,
+    // cards/visits vacíos (computeOrgStats real agrega sin error sobre [] ).
+    const handler = makeHandler(makeDb(ROSTER_RESOLVERS), null);
+    const res = await handler(event('get_org', {}, token));
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.org.kind).toBe('sports_club');
+    expect(body.org.sport).toBe('futbol');
+  });
 });
