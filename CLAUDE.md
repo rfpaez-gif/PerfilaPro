@@ -485,6 +485,10 @@ Doble verificación obligatoria antes de marcar `public_card=true`, antes del pr
 
 **Implementación (capa 3c)** — `parent-consent.js` (`POST /api/parent-consent`) + `lib/consent.js`. Auth parent-panel (1er factor = control del email). **2º factor MVP = la fecha de nacimiento del menor** (`body.birth_date`, verificada contra `birth_date_encrypted` vía `lib/pii-crypto`, con fallback a `birth_year` si no hay `CANTERA_PII_KEY`): es el dato que el club registró al fichar, un factor de conocimiento sin infra extra, **reemplazable/reforzable por OTP SMS** cuando se cablee un proveedor (solo toca `lib/consent.verifySecondFactor`). Tipos que concede el tutor: `parental_initial`, `data_processing`, `public_visibility` (pone `cards.public_card=true`), `image_rights`. `lib/consent.recordConsent` inserta en `card_consents` con `evidence_jsonb` = `{document_version, document_hash (sha256), second_factor, accepted_at, ip_address, user_agent}`. El gate del 2º factor también se aplica en **`accept-transfer`** (el handoff exige doble verificación): sin `birth_date` correcto, el traspaso no se ejecuta. `club_handoff` lo graba la RPC de 3b; `transfer_to_player` (opt-in jugador 16+) queda fuera de MVP.
 
+**Cobros · Stripe Connect (capa 4)**:
+
+- **Onboarding (capa 4a)** — `stripe-connect-onboard.js` (`POST /api/stripe-connect-onboard`, auth org-panel del club, solo `kind='sports_club'`). Connect **Standard** (NIF/IBAN/responsabilidad fiscal del club; PerfilaPro cobra `application_fee` sobre las cuotas). Onboarding **API-based vía Account Links** (no OAuth → no necesita `STRIPE_CONNECT_CLIENT_ID`): `action:'onboard'` crea la cuenta `standard` si falta (persiste `stripe_connect_account_id`) y devuelve un Account Link hospedado; `action:'status'` hace retrieve y persiste `stripe_connect_charges_enabled`/`payouts_enabled`. 503 si Stripe no está configurado. El Studio (capa 6) consumirá ambos. La frescura proactiva de los flags vendrá del evento `account.updated` en la capa 4d.
+
 **Carnet físico PVC + NFC**:
 
 `printable-card-utils.js` extendido con `buildPlayerCardPVC({ card, club, season, nfcUrl })` — formato ISO 7810 (85.6×54mm), branded con `color_primary` del club, escudo, foto, dorsal grande, QR + URL para NFC. Setup fee 19€ por nuevo fichaje (cobrado al club). Renovación anual 9€ opcional. El operario de impresión escanea NFC + QR al impresionar; `nfc-register.js` registra el UID en la fila correspondiente.
@@ -620,6 +624,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/accept-transfer` | `accept-transfer` (CANTERA) |
 | `/api/cancel-membership` | `cancel-membership` (CANTERA) |
 | `/api/parent-consent` | `parent-consent` (CANTERA) |
+| `/api/stripe-connect-onboard` | `stripe-connect-onboard` (CANTERA) |
 
 ### Internacionalización (es / ca)
 

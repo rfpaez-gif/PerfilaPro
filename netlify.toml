@@ -321,6 +321,12 @@
   to     = "/.netlify/functions/parent-consent"
   status = 200
 
+# Capa 4a · onboarding Stripe Connect Standard del club (JWT org-panel).
+[[redirects]]
+  from   = "/api/stripe-connect-onboard"
+  to     = "/.netlify/functions/stripe-connect-onboard"
+  status = 200
+
 [[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
