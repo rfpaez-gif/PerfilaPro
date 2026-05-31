@@ -205,4 +205,57 @@ describe('org-panel · Cantera enrollment (capa I3)', () => {
     expect(out.duplicate_dorsals).toHaveLength(1);
     expect(out.duplicate_dorsals[0].dorsal).toBe(10);
   });
+
+  it('billing_matrix concilia Stripe + manual por jugador y periodo', async () => {
+    const db = makeDb(baseResolvers({
+      enrollment_campaigns: () => ({ data: { id: 'camp-1', season: '2025-26', status: 'open', matricula_cents: 3500, monthly_fee_cents: 3000, num_installments: 9 }, error: null }),
+      member_club_seasons: () => ({ data: [
+        { card_slug: 'p-aaaaaaaa', role: 'jugador', team_name: 'Alevín A', category_id: 'cat-ale' },
+        { card_slug: 'p-bbbbbbbb', role: 'jugador', team_name: 'Alevín A', category_id: 'cat-ale' },
+        { card_slug: 's-1', role: 'entrenador', team_name: null, category_id: null },
+      ], error: null }),
+      cards: () => ({ data: [{ slug: 'p-aaaaaaaa', nombre: 'Ana' }, { slug: 'p-bbbbbbbb', nombre: 'Beto' }], error: null }),
+      parent_subscriptions: () => ({ data: [
+        { card_slug: 'p-aaaaaaaa', status: 'active', current_period_end: '2025-12-15T00:00:00Z', started_at: '2025-09-01T00:00:00Z', matricula_cents: 3500, matricula_paid_at: '2025-09-01T00:00:00Z' },
+      ], error: null }),
+      external_payments: () => ({ data: [
+        { card_slug: 'p-bbbbbbbb', period: '2025-09', amount_cents: 3000, method: 'bizum' },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('billing_matrix', {}, token));
+    expect(res.statusCode).toBe(200);
+    const out = JSON.parse(res.body);
+    expect(out.season).toBe('2025-26');
+    expect(out.periods).toHaveLength(9);
+    expect(out.has_matricula).toBe(true);
+    // Solo jugadores (el entrenador se filtra).
+    expect(out.players).toHaveLength(2);
+
+    const ana = out.players.find(p => p.slug === 'p-aaaaaaaa');
+    expect(ana.matricula.status).toBe('paid');         // matricula_paid_at
+    const anaSep = ana.periods.find(x => x.period === '2025-09');
+    expect(anaSep.status).toBe('paid');                 // cubierto por suscripción activa
+    expect(anaSep.source).toBe('auto');
+
+    const beto = out.players.find(p => p.slug === 'p-bbbbbbbb');
+    expect(beto.matricula.status).toBe('pending');      // nadie pagó su matrícula
+    const betoSep = beto.periods.find(x => x.period === '2025-09');
+    expect(betoSep.status).toBe('paid');                // bizum manual
+    expect(betoSep.source).toBe('manual');
+  });
+
+  it('billing_matrix sin campaña usa la cuota del club y matrícula 0', async () => {
+    const db = makeDb(baseResolvers({
+      enrollment_campaigns: () => ({ data: null, error: null }),
+      member_club_seasons: () => ({ data: [{ card_slug: 'p-aaaaaaaa', role: 'jugador', team_name: null, category_id: null }], error: null }),
+      cards: () => ({ data: [{ slug: 'p-aaaaaaaa', nombre: 'Ana' }], error: null }),
+      parent_subscriptions: () => ({ data: [], error: null }),
+      external_payments: () => ({ data: [], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('billing_matrix', {}, token));
+    const out = JSON.parse(res.body);
+    expect(out.has_matricula).toBe(false);
+    expect(out.amounts.monthly_fee_cents).toBe(3000); // cuota del club (SPORTS_ORG)
+    expect(out.players[0].pending_count).toBe(9);
+  });
 });

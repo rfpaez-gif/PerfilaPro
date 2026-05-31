@@ -49,6 +49,7 @@ const {
   normalizeInstallments,
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
+const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -538,6 +539,7 @@ function makeHandler(db, emailClient) {
       if (action === 'enrollment_open')   return await enrollmentOpen(db, sportsOrg, body, siteUrl);
       if (action === 'enrollment_close')  return await enrollmentClose(db, sportsOrg, body);
       if (action === 'enrollment_assign') return await enrollmentAssign(db, sportsOrg, body);
+      if (action === 'billing_matrix')    return await billingMatrix(db, sportsOrg, body);
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
@@ -549,7 +551,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
-const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign']);
+const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'billing_matrix']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
 
@@ -719,6 +721,95 @@ async function enrollmentAssign(db, org, body) {
     results: { ok, failed },
     duplicate_dorsals: duplicates,
     summary: `${ok.length} de ${assignments.length} asignados${failed.length ? `, ${failed.length} con error` : ''}`,
+  });
+}
+
+// billing_matrix: el centro de cobros (pantalla B). Devuelve la matriz
+// jugador × periodo (matrícula + N mensualidades) conciliando Stripe
+// (parent_subscriptions) + manual (external_payments) vía
+// lib/season-billing.reconcilePlayerBilling. Una sola foto de "quién pagó".
+async function billingMatrix(db, org, body) {
+  // Temporada: la de la campaña abierta si la hay, si no la del body o la
+  // vigente. Los importes salen de la campaña; sin campaña, de la cuota del
+  // club (la matrícula queda 0 — no se cobró por inscripción).
+  let campaign = null;
+  const reqSeason = body.season && String(body.season).trim();
+  {
+    const q = db.from('enrollment_campaigns')
+      .select('id, season, status, matricula_cents, monthly_fee_cents, num_installments')
+      .eq('organization_id', org.id);
+    const { data } = reqSeason
+      ? await q.eq('season', reqSeason).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      : await q.eq('status', 'open').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    campaign = data || null;
+  }
+
+  const season = (campaign && campaign.season) || reqSeason || formatSeason(currentSeasonStartYear());
+  const matriculaCents = campaign ? (campaign.matricula_cents ?? 0) : 0;
+  const monthlyFeeCents = (campaign && campaign.monthly_fee_cents) || org.cantera_monthly_fee_cents || 0;
+  const numInstallments = (campaign && campaign.num_installments) || 9;
+  const campaignForCalc = { season, matricula_cents: matriculaCents, monthly_fee_cents: monthlyFeeCents, num_installments: numInstallments };
+
+  // Jugadores activos del club (membresías abiertas, rol jugador).
+  const { data: seasons } = await db
+    .from('member_club_seasons')
+    .select('card_slug, role, dorsal, team_name, category_id')
+    .eq('organization_id', org.id)
+    .is('left_at', null);
+  const playerSeasons = (seasons || []).filter((m) => m.role === 'jugador');
+  const slugs = [...new Set(playerSeasons.map((m) => m.card_slug))];
+
+  const cardBySlug = new Map();
+  if (slugs.length) {
+    const { data: cards } = await db.from('cards').select('slug, nombre').in('slug', slugs);
+    for (const c of cards || []) cardBySlug.set(c.slug, c);
+  }
+
+  // Suscripciones Stripe del club (una activa preferida por jugador).
+  const { data: subs } = await db
+    .from('parent_subscriptions')
+    .select('card_slug, status, current_period_end, started_at, matricula_cents, matricula_paid_at')
+    .eq('organization_id', org.id);
+  const subBySlug = new Map();
+  for (const s of subs || []) {
+    const prev = subBySlug.get(s.card_slug);
+    const paying = s.status === 'active' || s.status === 'trialing';
+    if (!prev || (paying && !(prev.status === 'active' || prev.status === 'trialing'))) subBySlug.set(s.card_slug, s);
+  }
+
+  // Pagos manuales del club, agrupados por jugador.
+  const { payments } = await listPaymentsByClub(db, org.id);
+  const manualBySlug = new Map();
+  for (const p of payments || []) {
+    if (!manualBySlug.has(p.card_slug)) manualBySlug.set(p.card_slug, []);
+    manualBySlug.get(p.card_slug).push(p);
+  }
+
+  const rows = playerSeasons.map((m) => {
+    const recon = reconcilePlayerBilling({
+      campaign: campaignForCalc,
+      subscription: subBySlug.get(m.card_slug) || null,
+      externalPayments: manualBySlug.get(m.card_slug) || [],
+    });
+    return {
+      slug: m.card_slug,
+      nombre: (cardBySlug.get(m.card_slug) || {}).nombre || null,
+      team_name: m.team_name || null,
+      category_id: m.category_id || null,
+      matricula: recon.matricula,
+      periods: recon.periods,
+      paid_count: recon.paid_count,
+      pending_count: recon.pending_count,
+    };
+  }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+
+  return jsonResponse(200, {
+    ok: true,
+    season,
+    periods: seasonInstallmentPeriods(season, { count: numInstallments }),
+    amounts: { matricula_cents: matriculaCents, monthly_fee_cents: monthlyFeeCents, num_installments: numInstallments },
+    has_matricula: matriculaCents > 0,
+    players: rows,
   });
 }
 
