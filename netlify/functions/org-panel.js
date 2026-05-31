@@ -50,6 +50,7 @@ const {
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
+const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -540,6 +541,7 @@ function makeHandler(db, emailClient) {
       if (action === 'enrollment_close')  return await enrollmentClose(db, sportsOrg, body);
       if (action === 'enrollment_assign') return await enrollmentAssign(db, sportsOrg, body);
       if (action === 'billing_matrix')    return await billingMatrix(db, sportsOrg, body);
+      if (action === 'enrollment_invite') return await enrollmentInvite(db, emailClient, sportsOrg, body, siteUrl);
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
@@ -551,7 +553,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
-const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'billing_matrix']);
+const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'billing_matrix', 'enrollment_invite']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
 
@@ -674,6 +676,56 @@ async function enrollmentClose(db, org, body) {
   if (error) return jsonResponse(500, { error: error.message });
 
   return jsonResponse(200, { ok: true, campaign_id: campaignId, status: 'closed' });
+}
+
+// enrollment_invite: invitación múltiple a inscribirse (Cantera · Opción A).
+// El club pega una lista de { email, nombre? } y cada familia recibe el
+// enlace de la campaña ABIERTA para rellenar la ficha ellos mismos. NO crea
+// cards (LOPD-limpio: los datos del menor los mete el padre al inscribirse).
+// Loop ok/failed por email, ≤200. Reusa lib/enrollment-invite.
+async function enrollmentInvite(db, emailClient, org, body, siteUrl) {
+  if (!emailClient) return jsonResponse(500, { error: 'Resend no configurado' });
+
+  const { rows, errors } = validateInviteList(body.invites);
+  if (rows.length === 0) {
+    return jsonResponse(400, { error: 'No hay emails válidos en la lista', failed: errors });
+  }
+  if (rows.length > 200) {
+    return jsonResponse(400, { error: 'máximo 200 invitaciones por lote' });
+  }
+
+  // Necesita una campaña ABIERTA: el email lleva su enlace público.
+  const { data: campaign, error: cErr } = await db
+    .from('enrollment_campaigns')
+    .select('public_token, season, status')
+    .eq('organization_id', org.id)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (cErr) return jsonResponse(500, { error: cErr.message });
+  if (!campaign) {
+    return jsonResponse(409, { error: 'Abre las inscripciones antes de invitar a las familias' });
+  }
+
+  const enrollUrl = enrollmentUrl(siteUrl, campaign.public_token);
+  const ok = [];
+  const failed = errors.slice(); // arrastra los inválidos de la validación
+  for (const r of rows) {
+    try {
+      const { subject, html } = buildEnrollInviteEmail({ clubName: org.name, nombre: r.nombre, enrollUrl, idioma: 'es' });
+      await emailClient.emails.send({ from: 'PerfilaPro <hola@perfilapro.es>', to: r.email, subject, html });
+      ok.push(r.email);
+    } catch (err) {
+      failed.push({ email: r.email, error: 'email no enviado' });
+    }
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    results: { ok, failed },
+    summary: `${ok.length} invitaciones enviadas${failed.length ? `, ${failed.length} con error` : ''}`,
+  });
 }
 
 // enrollment_assign: encuadre en lote. El club asigna equipo/dorsal/
