@@ -2072,7 +2072,7 @@
     const players = [];
     (rosterData?.categories || []).forEach(cat => cat.members.forEach(m => players.push(m.slug)));
     if (!players.length) { sToast('err', 'No hay jugadores activos para pedir carnets.'); return; }
-    if (!confirm(`Vas a pedir ${players.length} carnet${players.length === 1 ? '' : 's'} (${$('cardOrderKind').value === 'renewal' ? '9' : '19'} € cada uno). Te llevamos a la pasarela de pago. ¿Continuar?`)) return;
+    if (!confirm(`Vas a pedir ${players.length} carnet${players.length === 1 ? '' : 's'} (${$('cardOrderKind').value === 'renewal' ? '6' : '12'} € cada uno). Te llevamos a la pasarela de pago. ¿Continuar?`)) return;
     const btn = $('cardOrderBtn'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Preparando pago…';
     try {
       const res = await fetch('/api/create-setup-fee-checkout', {
