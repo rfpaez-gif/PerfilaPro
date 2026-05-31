@@ -5,7 +5,7 @@ const { Resend } = require('resend');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 
 const TEAM_SIZES   = new Set(['5-20', '20-100', '100-500', '500+']);
-const SECTORS      = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'red_comercial', 'otro']);
+const SECTORS      = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'red_comercial', 'club_deportivo', 'otro']);
 const PLAN_INTERES = new Set(['equipo', 'organizacion', 'enterprise', 'no_se']);
 
 const PLAN_LABEL = {
@@ -22,6 +22,7 @@ const SECTOR_LABEL = {
   publico:        'Administración / organismo público',
   ong:            'ONG / fundación',
   red_comercial:  'Red comercial autónoma (comercializadora, seguros, telefonía)',
+  club_deportivo: 'Club / escuela deportiva',
   otro:           'Otro',
 };
 
