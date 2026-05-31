@@ -1,4 +1,4 @@
--- Migración 040 · Cantera · inscripción de temporada (capa I0)
+-- Migración 037 · Cantera · inscripción de temporada (capa I0)
 --
 -- Esquema DORMIDO para la captación masiva de inicio de temporada
 -- (docs/cantera-inscripcion-temporada.md). Cero impacto en autónomos,
