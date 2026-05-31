@@ -377,7 +377,6 @@
   <div class="pp-tabs" role="tablist" id="sportsTabs" style="display:none">
     <button class="pp-tab pp-tab--active" data-stab="roster">Plantilla</button>
     <button class="pp-tab"                  data-stab="sstats">Estadísticas</button>
-    <button class="pp-tab"                  data-stab="transfers">Fichajes</button>
     <button class="pp-tab"                  data-stab="enroll">Inscripciones</button>
     <button class="pp-tab"                  data-stab="cards">Carnets</button>
     <button class="pp-tab"                  data-stab="payments">Cobros</button>
@@ -565,23 +564,6 @@
           <svg id="sSparkSvg" width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none" style="display:block"></svg>
         </div>
         <div class="pp-roster__totals" id="sStatsCobros" style="margin-top:1rem"></div>
-      </section>
-    </div>
-
-    <!-- ── Tab: Fichajes ──────────────────────────────────── -->
-    <div class="pp-stabpanel" data-stabpanel="transfers" style="display:none">
-      <section class="pp-section">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
-          <div>
-            <h2 class="pp-section__title">Fichajes</h2>
-            <p class="pp-section__sub" style="margin-bottom:0">Solicitudes de traspaso entrantes (jugadores que quieres fichar de otro club PerfilaPro) y salientes.</p>
-          </div>
-          <button type="button" class="pp-btn pp-btn--ghost" id="openTransferBtn" title="Solicitar el traspaso de un jugador que ya tiene ficha en otro club PerfilaPro.">+ Solicitar fichaje</button>
-        </div>
-        <h3 class="pp-spark__title" style="margin-top:1rem">Entrantes</h3>
-        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Estado</th><th>Temporada</th><th>Dorsal</th></tr></thead><tbody id="transfersInTbody"></tbody></table></div>
-        <h3 class="pp-spark__title" style="margin-top:1.5rem">Salientes</h3>
-        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Estado</th><th>Temporada</th><th>Dorsal</th></tr></thead><tbody id="transfersOutTbody"></tbody></table></div>
       </section>
     </div>
 
@@ -1491,10 +1473,12 @@
 
   // ════════════════════════════════════════════════════════
   // Studio del club deportivo (Cantera · capa 6b)
-  // Cablea las lecturas de 6a (get_roster/get_club_stats/get_transfers)
+  // Cablea las lecturas de 6a (get_roster/get_club_stats)
   // + los endpoints de escritura ya existentes (register-player,
-  // request-transfer, create-setup-fee-checkout, record-external-payment,
+  // create-setup-fee-checkout, record-external-payment,
   // stripe-connect-onboard). Todo sobre el JWT org-panel del club.
+  // El alta de jugadores entra por Inscripciones (campaña pública); la
+  // tab Fichajes (traspaso entre clubes) se retiró del Studio.
   // ════════════════════════════════════════════════════════
 
   let sportsOrg = null;       // org sanitizada que devuelve get_roster/get_club_stats
@@ -1530,16 +1514,14 @@
 
   async function loadSportsStudio() {
     try {
-      const [roster, stats, transfers] = await Promise.all([
+      const [roster, stats] = await Promise.all([
         api('get_roster'),
         api('get_club_stats'),
-        api('get_transfers'),
       ]);
       sportsOrg = roster.org;
       rosterData = roster;
       renderRoster(roster);
       renderClubStats(stats);
-      renderTransfers(transfers);
       renderPayments(roster, stats);
       const sb = $('sBrandSlug'); if (sb) sb.textContent = (sportsOrg && sportsOrg.slug) || '';
       sportsLoaded = true;
@@ -1790,18 +1772,6 @@
     svg.innerHTML = `<path d="${fill}" fill="rgba(0,194,119,0.15)"/><path d="${path}" fill="none" stroke="#00C277" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
 
-  // ── Fichajes ─────────────────────────────────────────────
-  const TRANSFER_STATUS = { pending: 'Pendiente', accepted: 'Aceptado', cancelled: 'Cancelado', rejected: 'Rechazado' };
-  function renderTransfers(data) {
-    const fill = (tbody, rows, emptyMsg) => {
-      $(tbody).innerHTML = rows.length
-        ? rows.map(t => `<tr><td><strong>${escapeHtml(t.nombre || t.card_slug)}</strong></td><td>${escapeHtml(TRANSFER_STATUS[t.status] || t.status)}</td><td>${escapeHtml(t.season || '—')}</td><td>${t.dorsal != null ? t.dorsal : '—'}</td></tr>`).join('')
-        : `<tr><td colspan="4" class="pp-table__empty">${emptyMsg}</td></tr>`;
-    };
-    fill('transfersInTbody',  data.incoming || [], 'Sin fichajes entrantes.');
-    fill('transfersOutTbody', data.outgoing || [], 'Sin fichajes salientes.');
-  }
-
   // ── Cobros ───────────────────────────────────────────────
   function renderPayments(roster, stats) {
     const p = stats.payments || {};
@@ -2000,48 +1970,6 @@
     }
   }
 
-  // Solicitar fichaje (handoff) → request-transfer
-  $('openTransferBtn').addEventListener('click', () => {
-    openModal('Solicitar fichaje', `
-      <p class="pp-section__sub">Para fichar a un jugador que ya tiene ficha en <strong>otro club de PerfilaPro</strong>. Su tutor legal recibirá un email para aprobar el traspaso. Necesitas el identificador de su ficha (slug).</p>
-      <div class="pp-form">
-        <div class="pp-form__row"><label class="pp-form__label" for="trSlug">Identificador del jugador <small>slug p-xxxxxxxx</small></label>
-          <input class="pp-input" id="trSlug" type="text" placeholder="p-a1b2c3d4" autocapitalize="off"></div>
-        <div class="pp-form__row"><label class="pp-form__label" for="trDorsal">Dorsal en tu club <small>opcional</small></label>
-          <input class="pp-input" id="trDorsal" type="number" min="0" max="999"></div>
-        <div class="pp-form__row"><label class="pp-form__label" for="trPosition">Posición <small>opcional</small></label>
-          <input class="pp-input" id="trPosition" type="text"></div>
-        <div class="pp-form__row"><label class="pp-form__label" for="trTeam">Equipo <small>opcional</small></label>
-          <input class="pp-input" id="trTeam" type="text"></div>
-        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="trSubmit">Enviar solicitud →</button></div>
-        <p class="pp-form__hint" id="trError" style="color:#B0392A"></p>
-      </div>
-    `);
-    $('trSubmit').addEventListener('click', submitTransfer);
-  });
-
-  async function submitTransfer() {
-    const err = $('trError'); err.textContent = '';
-    const card_slug = $('trSlug').value.trim();
-    if (!card_slug) { err.textContent = 'El identificador del jugador es obligatorio.'; return; }
-    const payload = {
-      card_slug,
-      position: $('trPosition').value.trim() || undefined,
-      team_name: $('trTeam').value.trim() || undefined,
-    };
-    const d = $('trDorsal').value.trim();
-    if (d) payload.dorsal = Number(d);
-    const btn = $('trSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
-    try {
-      await apiRaw('/api/request-transfer', payload);
-      sToast('ok', 'Solicitud enviada. El tutor legal recibirá un email para aprobar el fichaje.');
-      closeModal();
-      await loadSportsStudio();
-    } catch (e) {
-      err.textContent = e.message;
-      btn.disabled = false; btn.textContent = 'Enviar solicitud →';
-    }
-  }
 
   // Apuntar pago manual → record-external-payment
   $('openRecordPaymentBtn').addEventListener('click', () => {
@@ -2152,7 +2080,7 @@
   // Auth = JWT parent-panel. Lee /api/parent-data (get_children) y pinta
   // una tarjeta por hijo/a con membresía, cuota, histórico y, si procede,
   // el banner de traspaso pendiente con doble verificación inline.
-  // Acciones de escritura: create-parent-checkout (cuota), accept-transfer
+  // Acciones de escritura: create-enrollment-checkout (cuota), accept-transfer
   // (aprobar fichaje, exige fecha de nacimiento como 2º factor LOPD),
   // cancel-membership (baja).
   // ════════════════════════════════════════════════════════
@@ -2276,13 +2204,15 @@
   function closePModal() { $('parentModal').style.display = 'none'; $('pModalBody').innerHTML = ''; }
   document.querySelectorAll('[data-pmodal-close]').forEach(el => el.addEventListener('click', closePModal));
 
-  // Cuota con tarjeta → create-parent-checkout (redirige a Stripe).
+  // Cuota → create-enrollment-checkout (matrícula + cuota + SEPA, redirige a
+  // Stripe). Sin campaign_id cobra solo la cuota mensual del club, pero por el
+  // mismo camino que la inscripción pública: gana SEPA y un único endpoint.
   async function startParentCheckout(child, btn) {
     if (!child.club) { pToast('err', 'La ficha no tiene club activo.'); return; }
     const original = btn ? btn.textContent : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
     try {
-      const json = await apiRaw('/api/create-parent-checkout', { card_slug: child.slug });
+      const json = await apiRaw('/api/create-enrollment-checkout', { card_slug: child.slug });
       if (!json.url) throw new Error('No se pudo iniciar el pago');
       window.location.href = json.url;
     } catch (e) {
