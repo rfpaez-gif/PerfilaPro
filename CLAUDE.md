@@ -635,6 +635,9 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/api/record-external-payment` | `record-external-payment` (CANTERA) |
 | `/api/print-order-export` | `print-order-export` (CANTERA) |
 | `/api/nfc-register` | `nfc-register` (CANTERA) |
+| `/api/create-enrollment-checkout` | `create-enrollment-checkout` (CANTERA · inscripción) |
+| `/api/enrollment-submit` | `enrollment-submit` (CANTERA · inscripción) |
+| `/{es,ca}/inscripcion/:token` | `enrollment-page` (CANTERA · inscripción) |
 
 ### Internacionalización (es / ca)
 
