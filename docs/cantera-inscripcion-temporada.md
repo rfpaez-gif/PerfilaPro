@@ -302,7 +302,7 @@ testeable por separado y reversible. Orden por dependencias.
 
 | Capa | Qué | Depende de |
 |---|---|---|
-| **I0 · Migración 037** | Tabla `enrollment_campaigns`; columnas `cards.{doc_kind,doc_number,nationality}`; `card_admins.{name,dni,phone}`; tabla `card_documents` (slug, kind, url, uploaded_at, uploaded_by). Todo nullable/nuevo → cero impacto. Contramigración al pie. | — |
+| **I0 · Migración 040** ✅ | Tabla `enrollment_campaigns`; columnas `cards.{doc_kind,doc_number,nationality}`; `card_admins.{name,dni,phone}`; tabla `card_documents`; `parent_subscriptions.{enrollment_campaign_id,matricula_cents,matricula_paid_at}`. Todo nullable/nuevo → cero impacto. Contramigración al pie. | — |
 | **I1 · Libs puros** | `lib/player-create.js` (extraer la creación de ficha de `register-player`, refactor con sus tests verdes); `lib/enrollment.js` (validar/normalizar payload del padre, doc flexible); `lib/season-billing.js` (9 periodos `YYYY-MM` de la temporada + conciliación jugador×periodo desde `parent_subscriptions` + `external_payments` + matrícula). Tests offline. | — |
 | **I2 · Checkout de inscripción** | `create-enrollment-checkout`: `mode:'subscription'` + `add_invoice_items` (matrícula one-shot) + `payment_method_types:['card','sepa_debit']` + `application_fee_percent`. `metadata.kind='cantera-enrollment'`. Webhook reconoce la 1ª `invoice.paid` (matrícula+cuota) y materializa `parent_subscriptions` + marca matrícula pagada. | I0 |
 | **I3 · Abrir campaña (Studio)** | Acciones `org-panel`: `enrollment_open` / `enrollment_close` / `enrollment_get` (token + enlace + QR + contador). UI sección "Inscripciones" en el Studio `sports_club`. | I0 |
