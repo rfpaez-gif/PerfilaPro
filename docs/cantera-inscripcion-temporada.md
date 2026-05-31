@@ -282,20 +282,34 @@ ausente, datos del tutor incompletos). Integración federativa real = fase 2.
 4. **Temporada = matrícula + 9 mensualidades** ✅. El centro de cobros (§7)
    pinta la matrícula + 9 meses.
 
-**Pendientes de confirmar (con recomendación):**
-
-3. **Gate del Dashboard por carnets** → *recomendado: gate comercial, no
-   técnico.* Hoy cualquier `sports_club` entra al Studio sin pagar carnets.
-   Se propone dejarlo así: el club entra, ve valor y carga plantilla; el
-   carnet es el paso natural del onboarding, no un muro de entrada. No
-   urgente para el MVP.
-5. **Visibilidad del perfil del menor (`public_card`)** → *recomendado:
-   consentir imagen habilita pero no dispara.* Distinguir:
+3. **Gate del Dashboard por carnets → comercial, no técnico** ✅. Cualquier
+   `sports_club` entra al Studio sin pagar carnets; el carnet es el paso
+   natural del onboarding, no un muro de entrada.
+5. **Visibilidad del perfil del menor (`public_card`) → habilita pero no
+   dispara** ✅. Distinguir:
    - **Licencia federativa** = la da la federación; fuera de PerfilaPro.
    - **Tarjeta digital `/c/:slug`** = nuestra; arranca oculta
      (`public_card=false`).
-   Tensión a resolver: el **carnet físico lleva QR/NFC → `/c/:slug`**; si el
-   perfil está oculto, el QR no abre. Propuesta: el consentimiento de imagen
-   hace el perfil **accesible por su URL** (para que el carnet funcione) pero
-   **siempre `noindex`** (nunca googleable para un menor); la visibilidad
-   plena sigue siendo un acto explícito posterior.
+   El **carnet físico lleva QR/NFC → `/c/:slug`**. Regla acordada: consentir
+   imagen hace el perfil **accesible por su URL** (para que el carnet
+   funcione) pero **siempre `noindex`** (nunca googleable para un menor); la
+   visibilidad plena sigue siendo un acto explícito posterior.
+
+## 12. Plan de implementación por capas (MVP)
+
+Estilo Cantera: cada capa es pequeña, gateada por `isCanteraActive()`,
+testeable por separado y reversible. Orden por dependencias.
+
+| Capa | Qué | Depende de |
+|---|---|---|
+| **I0 · Migración 037** | Tabla `enrollment_campaigns`; columnas `cards.{doc_kind,doc_number,nationality}`; `card_admins.{name,dni,phone}`; tabla `card_documents` (slug, kind, url, uploaded_at, uploaded_by). Todo nullable/nuevo → cero impacto. Contramigración al pie. | — |
+| **I1 · Libs puros** | `lib/player-create.js` (extraer la creación de ficha de `register-player`, refactor con sus tests verdes); `lib/enrollment.js` (validar/normalizar payload del padre, doc flexible); `lib/season-billing.js` (9 periodos `YYYY-MM` de la temporada + conciliación jugador×periodo desde `parent_subscriptions` + `external_payments` + matrícula). Tests offline. | — |
+| **I2 · Checkout de inscripción** | `create-enrollment-checkout`: `mode:'subscription'` + `add_invoice_items` (matrícula one-shot) + `payment_method_types:['card','sepa_debit']` + `application_fee_percent`. `metadata.kind='cantera-enrollment'`. Webhook reconoce la 1ª `invoice.paid` (matrícula+cuota) y materializa `parent_subscriptions` + marca matrícula pagada. | I0 |
+| **I3 · Abrir campaña (Studio)** | Acciones `org-panel`: `enrollment_open` / `enrollment_close` / `enrollment_get` (token + enlace + QR + contador). UI sección "Inscripciones" en el Studio `sports_club`. | I0 |
+| **I4 · Inscripción pública (pantalla A)** | `enrollment-submit` (público, valida `public_token` de campaña abierta, honeypot, rate-limit) → crea ficha vía `lib/player-create` + consentimientos + (si online) lanza I2. Página `/inscripcion/:token` (es/ca) con el formulario del padre + upload foto/docs opcionales. | I1, I2, I3 |
+| **I5 · Encuadre del club** | `org-panel`: `enrollment_inbox` (inscripciones agrupadas por categoría auto) + `enrollment_assign` (equipo/dorsal en lote). UI bandeja. | I0, I4 |
+| **I6 · Centro de cobros (pantalla B)** | `org-panel`: `billing_matrix` (jugador×periodo vía `lib/season-billing`). UI matriz + "+ apuntar" (reusa `record-external-payment`) + export CSV. | I0, I1, I2 |
+| **I7 · Completar documentos después** | Panel del padre: subir los docs que faltaron en la inscripción → `card_documents`. (Export federativo estandarizado = fase 2.) | I0, I4 |
+
+**Núcleo MVP:** I0 → I6 (I7 parcial entra por la decisión 2). Cada capa se
+commitea y, donde aplique, se acompaña de sus tests Vitest.
