@@ -171,6 +171,10 @@
     .pp-cat__head { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 400; margin: 0 0 .4rem; display: flex; align-items: baseline; gap: .5rem; }
     .pp-cat__count { font-size: 12px; color: #6B7280; font-weight: 400; font-family: var(--font-sans); }
     .pp-dorsal { display: inline-block; min-width: 1.6rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pp-input--mini { padding: .35rem .5rem; font-size: .9rem; max-width: 9rem; }
+    input.pp-input--mini[type="number"] { max-width: 5rem; }
+    .pp-billing th, .pp-billing td { text-align: center; padding: .4rem .45rem; white-space: nowrap; }
+    .pp-billing th:first-child, .pp-billing td:first-child { text-align: left; }
     .pp-pay { font-size: 11px; font-weight: 700; padding: .12rem .5rem; border-radius: 999px; white-space: nowrap; }
     .pp-pay--paid   { background: rgba(0,194,119,.14); color: var(--color-verde-dark, #00A865); }
     .pp-pay--unpaid { background: rgba(176,57,42,.12); color: #B0392A; }
@@ -374,6 +378,7 @@
     <button class="pp-tab pp-tab--active" data-stab="roster">Plantilla</button>
     <button class="pp-tab"                  data-stab="sstats">Estadísticas</button>
     <button class="pp-tab"                  data-stab="transfers">Fichajes</button>
+    <button class="pp-tab"                  data-stab="enroll">Inscripciones</button>
     <button class="pp-tab"                  data-stab="cards">Carnets</button>
     <button class="pp-tab"                  data-stab="payments">Cobros</button>
     <button class="pp-tab"                  data-stab="sbranding">Branding</button>
@@ -580,16 +585,75 @@
       </section>
     </div>
 
+    <!-- ── Tab: Inscripciones (capa I3) ───────────────────── -->
+    <div class="pp-stabpanel" data-stabpanel="enroll" style="display:none">
+      <section class="pp-section">
+        <h2 class="pp-section__title">Inscripción de temporada</h2>
+        <p class="pp-section__sub">Abre las inscripciones y comparte un enlace + QR con las familias. Cada padre rellena la ficha de su hijo/a, da su consentimiento y paga matrícula + cuota desde el móvil — sin que tengas que teclear nada.</p>
+
+        <!-- Estado: sin campaña abierta → formulario para abrir -->
+        <div id="enrollEmpty" style="display:none">
+          <div class="pp-form">
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="enrSeason">Temporada</label>
+              <input class="pp-input" id="enrSeason" type="text" placeholder="2026-27">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="enrMatricula">Matrícula <small>€ (pago único, opcional)</small></label>
+              <input class="pp-input" id="enrMatricula" type="number" min="0" step="0.01" placeholder="35">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="enrFee">Cuota mensual <small>€ (si vacío, usa la del club)</small></label>
+              <input class="pp-input" id="enrFee" type="number" min="0" step="0.01" placeholder="30">
+            </div>
+            <div class="pp-form__row">
+              <label class="pp-form__label" for="enrInstallments">Mensualidades</label>
+              <input class="pp-input" id="enrInstallments" type="number" min="1" max="24" value="9">
+            </div>
+            <div class="pp-form__actions" style="margin-top:1rem">
+              <button type="button" class="pp-btn pp-btn--primary" id="enrOpenBtn">Abrir inscripciones →</button>
+            </div>
+            <p class="pp-form__hint" id="enrError" style="color:#B0392A"></p>
+          </div>
+        </div>
+
+        <!-- Estado: campaña abierta → enlace + QR + contador -->
+        <div id="enrollOpen" style="display:none">
+          <div class="pp-roster__totals" style="margin-bottom:1rem">
+            <span class="pp-pay pp-pay--paid">● Inscripciones abiertas · <span id="enrOpenSeason"></span></span>
+            <span class="pp-pay pp-pay--unpaid" id="enrCount">0 inscripciones</span>
+          </div>
+          <div class="pp-form__row">
+            <label class="pp-form__label">Enlace para las familias</label>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+              <input class="pp-input" id="enrUrl" type="text" readonly style="flex:1;min-width:240px">
+              <button type="button" class="pp-btn pp-btn--ghost" id="enrCopyBtn">Copiar</button>
+            </div>
+          </div>
+          <div style="margin:1rem 0;text-align:center">
+            <img id="enrQr" alt="QR de inscripción" style="max-width:200px;border:1px solid #E5E7EB;border-radius:8px;padding:8px;background:#fff">
+            <p class="pp-form__hint">Imprime este QR para la reunión de inicio de temporada.</p>
+          </div>
+          <div class="pp-form__row" style="font-size:13px;color:#6B7280">
+            <span id="enrAmounts"></span>
+          </div>
+          <div class="pp-form__actions" style="margin-top:1rem">
+            <button type="button" class="pp-btn pp-btn--ghost" id="enrCloseBtn">Cerrar inscripciones</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <!-- ── Tab: Carnets ───────────────────────────────────── -->
     <div class="pp-stabpanel" data-stabpanel="cards" style="display:none">
       <section class="pp-section">
         <h2 class="pp-section__title">Carnets físicos PVC + NFC</h2>
-        <p class="pp-section__sub">Pide a PerfilaPro la impresión del carnet de cada jugador. <strong>19 € por carnet nuevo</strong>, 9 € renovación anual. El pago va directo a PerfilaPro (no a tu cuenta de cobros).</p>
+        <p class="pp-section__sub">Pide a PerfilaPro la impresión del carnet de cada jugador. <strong>12 € por carnet nuevo</strong>, 6 € renovación anual. El pago va directo a PerfilaPro (no a tu cuenta de cobros).</p>
         <div class="pp-form__row">
           <label class="pp-form__label" for="cardOrderKind">Tipo de pedido</label>
           <select class="pp-input" id="cardOrderKind">
-            <option value="setup">Carnets nuevos (19 €/ud)</option>
-            <option value="renewal">Renovación anual (9 €/ud)</option>
+            <option value="setup">Carnets nuevos (12 €/ud)</option>
+            <option value="renewal">Renovación anual (6 €/ud)</option>
           </select>
         </div>
         <p class="pp-form__hint" id="cardOrderHint">Se generará un pedido para todos los jugadores activos del club.</p>
@@ -619,6 +683,14 @@
           <button type="button" class="pp-btn pp-btn--ghost" id="openRecordPaymentBtn">+ Apuntar pago manual</button>
         </div>
         <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Categoría</th><th>Estado</th><th>Vía</th></tr></thead><tbody id="paymentsTbody"></tbody></table></div>
+
+        <!-- Centro de cobros: matriz jugador × temporada (capa I6) -->
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.75rem 0 .5rem">
+          <h3 class="pp-spark__title" style="margin:0">Matriz de la temporada <span id="billingSeason" style="font-weight:400;color:#6B7280;font-size:.8em"></span></h3>
+          <button type="button" class="pp-btn pp-btn--ghost" id="billingExportBtn">Exportar CSV</button>
+        </div>
+        <p class="pp-form__hint">Matrícula + cuotas mes a mes. ✅ pagado · 🟡 parcial · ⏳ pendiente. Une cuotas Stripe y pagos manuales.</p>
+        <div style="overflow-x:auto"><table class="pp-table pp-billing"><thead id="billingHead"></thead><tbody id="billingTbody"></tbody></table></div>
       </section>
     </div>
 
@@ -1441,6 +1513,10 @@
       document.querySelectorAll('#sportsContent .pp-stabpanel').forEach(p => {
         p.style.display = p.dataset.stabpanel === target ? 'block' : 'none';
       });
+      // Inscripciones: carga perezosa al abrir la pestaña.
+      if (target === 'enroll') loadEnrollment();
+      // Cobros: la matriz de temporada se carga perezosamente al abrir.
+      if (target === 'payments') loadBillingMatrix();
     });
   });
 
@@ -1464,6 +1540,93 @@
     }
   }
 
+  // ── Inscripciones (capa I3) ──────────────────────────────
+  let enrollCampaign = null;
+
+  async function loadEnrollment() {
+    try {
+      const r = await api('enrollment_get');
+      enrollCampaign = r.campaign || null;
+      renderEnrollment();
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar inscripciones: ' + e.message);
+    }
+  }
+
+  function renderEnrollment() {
+    const open = !!enrollCampaign;
+    $('enrollEmpty').style.display = open ? 'none' : 'block';
+    $('enrollOpen').style.display  = open ? 'block' : 'none';
+    if (!open) {
+      // Prefill temporada por defecto si está vacío.
+      if (!$('enrSeason').value && sportsOrg) {
+        const now = new Date(); const y = now.getMonth() + 1 >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+        $('enrSeason').value = `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
+      }
+      return;
+    }
+    const c = enrollCampaign;
+    $('enrOpenSeason').textContent = c.season || '';
+    $('enrCount').textContent = (c.submitted_count != null ? c.submitted_count : 0) + ' inscripciones';
+    $('enrUrl').value = c.url || '';
+    $('enrQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(c.url || '');
+    const parts = [];
+    if (c.matricula_cents != null) parts.push('Matrícula: ' + eurFromCents(c.matricula_cents));
+    if (c.monthly_fee_cents != null) parts.push('Cuota: ' + eurFromCents(c.monthly_fee_cents) + '/mes × ' + (c.num_installments || 9));
+    $('enrAmounts').textContent = parts.join(' · ');
+  }
+
+  function eurToCents(v) {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    if (!isFinite(n) || n < 0) return null;
+    return Math.round(n * 100);
+  }
+
+  const _enrOpenBtn = $('enrOpenBtn');
+  if (_enrOpenBtn) _enrOpenBtn.addEventListener('click', async () => {
+    const err = $('enrError'); err.textContent = '';
+    const body = {
+      season: $('enrSeason').value.trim() || undefined,
+      matricula_cents: eurToCents($('enrMatricula').value),
+      monthly_fee_cents: eurToCents($('enrFee').value),
+      num_installments: $('enrInstallments').value ? Number($('enrInstallments').value) : undefined,
+    };
+    const btn = _enrOpenBtn; btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Abriendo…';
+    try {
+      const r = await api('enrollment_open', body);
+      enrollCampaign = r.campaign;
+      renderEnrollment();
+      sToast('ok', 'Inscripciones abiertas. Comparte el enlace con las familias.');
+    } catch (e) {
+      err.textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Abrir inscripciones →';
+    }
+  });
+
+  const _enrCopyBtn = $('enrCopyBtn');
+  if (_enrCopyBtn) _enrCopyBtn.addEventListener('click', () => {
+    const inp = $('enrUrl'); inp.select();
+    navigator.clipboard?.writeText(inp.value).then(
+      () => sToast('ok', 'Enlace copiado'),
+      () => { try { document.execCommand('copy'); sToast('ok', 'Enlace copiado'); } catch { sToast('err', 'No se pudo copiar'); } }
+    );
+  });
+
+  const _enrCloseBtn = $('enrCloseBtn');
+  if (_enrCloseBtn) _enrCloseBtn.addEventListener('click', async () => {
+    if (!enrollCampaign || !confirm('¿Cerrar las inscripciones? El enlace dejará de aceptar nuevas familias.')) return;
+    try {
+      await api('enrollment_close', { campaign_id: enrollCampaign.id });
+      enrollCampaign = null;
+      renderEnrollment();
+      sToast('ok', 'Inscripciones cerradas.');
+    } catch (e) {
+      sToast('err', e.message);
+    }
+  });
+
   function payBadge(payment) {
     if (!payment) return '<span class="pp-pay pp-pay--unpaid">Sin datos</span>';
     if (payment.status === 'active') return '<span class="pp-pay pp-pay--paid">Cuota Stripe</span>';
@@ -1486,18 +1649,18 @@
       $('rosterGroups').innerHTML = `<p class="pp-table__empty">Aún no hay jugadores. Pulsa “+ Dar de alta” para fichar al primero.</p>`;
     } else {
       $('rosterGroups').innerHTML = groups.map(cat => {
-        const rows = cat.members.map(m => `<tr>
-          <td><span class="pp-dorsal">${m.dorsal != null ? m.dorsal : '—'}</span> <strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
-          <td>${escapeHtml(m.position || '—')}</td>
-          <td>${escapeHtml(m.team_name || '—')}</td>
+        const rows = cat.members.map(m => `<tr data-slug="${escapeHtml(m.slug)}">
+          <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
+          <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
+          <td><input class="pp-input pp-input--mini" type="text" data-field="team_name" value="${escapeHtml(m.team_name || '')}" placeholder="Equipo"></td>
           <td>${payBadge(m.payment)}</td>
           <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}</td>
         </tr>`).join('');
         return `<div class="pp-cat">
           <h3 class="pp-cat__head">${escapeHtml(cat.display_name || 'Sin categoría')} <span class="pp-cat__count">${cat.members.length} jugador${cat.members.length === 1 ? '' : 'es'}</span></h3>
-          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Dorsal · Nombre</th><th>Posición</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Dorsal</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>`;
-      }).join('');
+      }).join('') + `<div class="pp-form__actions" style="margin-top:1rem"><button type="button" class="pp-btn pp-btn--primary" id="rosterSaveBtn">Guardar encuadre →</button><span id="rosterSaveMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span></div>`;
     }
 
     const staff = data.staff || [];
@@ -1507,6 +1670,58 @@
            staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td></tr>`).join('')
          }</tbody></table></div>`
       : '';
+
+    // Snapshot de valores originales para detectar cambios en el encuadre.
+    rosterOriginals = {};
+    (data.categories || []).forEach(cat => cat.members.forEach(m => {
+      rosterOriginals[m.slug] = { dorsal: m.dorsal != null ? String(m.dorsal) : '', team_name: m.team_name || '' };
+    }));
+    const saveBtn = $('rosterSaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveRosterAssignments);
+  }
+
+  // ── Encuadre en lote (capa I5) ───────────────────────────
+  let rosterOriginals = {};
+
+  async function saveRosterAssignments() {
+    const btn = $('rosterSaveBtn'); const msg = $('rosterSaveMsg');
+    const assignments = [];
+    document.querySelectorAll('#rosterGroups tr[data-slug]').forEach(tr => {
+      const slug = tr.dataset.slug;
+      const orig = rosterOriginals[slug] || { dorsal: '', team_name: '' };
+      const dorsalEl = tr.querySelector('[data-field="dorsal"]');
+      const teamEl = tr.querySelector('[data-field="team_name"]');
+      const dorsalVal = dorsalEl ? dorsalEl.value.trim() : '';
+      const teamVal = teamEl ? teamEl.value.trim() : '';
+      const row = { card_slug: slug };
+      let changed = false;
+      if (dorsalVal !== orig.dorsal) { row.dorsal = dorsalVal === '' ? null : Number(dorsalVal); changed = true; }
+      if (teamVal !== orig.team_name) { row.team_name = teamVal === '' ? null : teamVal; changed = true; }
+      if (changed) assignments.push(row);
+    });
+    if (!assignments.length) { msg.textContent = 'No hay cambios que guardar.'; return; }
+    btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Guardando…'; msg.textContent = '';
+    try {
+      const r = await api('enrollment_assign', { assignments });
+      msg.textContent = r.summary || 'Encuadre guardado.';
+      if (r.duplicate_dorsals && r.duplicate_dorsals.length) {
+        msg.textContent += ` ⚠ Dorsales repetidos: ${r.duplicate_dorsals.map(d => '#' + d.dorsal + (d.team_name ? ' (' + d.team_name + ')' : '')).join(', ')}`;
+      }
+      await loadSportsStudioReload();
+    } catch (e) {
+      msg.textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar encuadre →';
+    }
+  }
+
+  // Recarga solo el roster (tras guardar) sin recargar todo el Studio.
+  async function loadSportsStudioReload() {
+    try {
+      const roster = await api('get_roster');
+      rosterData = roster;
+      renderRoster(roster);
+    } catch (e) { /* el mensaje de guardado ya se mostró */ }
   }
 
   // ── Estadísticas del club ────────────────────────────────
@@ -1598,6 +1813,67 @@
       sToast('err', e.message);
     }
   }
+
+  // ── Centro de cobros · matriz de temporada (capa I6) ─────
+  let billingData = null;
+  const CELL = { paid: '✅', partial: '🟡', pending: '⏳' };
+  const monthLabel = (p) => { const [, m] = p.split('-'); return ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][Number(m)] || p; };
+
+  async function loadBillingMatrix() {
+    try {
+      billingData = await api('billing_matrix');
+      renderBillingMatrix(billingData);
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar la matriz: ' + e.message);
+    }
+  }
+
+  function renderBillingMatrix(d) {
+    $('billingSeason').textContent = d.season ? '· ' + d.season : '';
+    const cols = d.periods || [];
+    const head = '<tr><th>Jugador</th>' + (d.has_matricula ? '<th>Matríc.</th>' : '') +
+      cols.map(p => `<th>${monthLabel(p)}</th>`).join('') + '</tr>';
+    $('billingHead').innerHTML = head;
+    if (!d.players || !d.players.length) {
+      $('billingTbody').innerHTML = `<tr><td colspan="${cols.length + 2}" class="pp-table__empty">Sin jugadores todavía.</td></tr>`;
+      return;
+    }
+    $('billingTbody').innerHTML = d.players.map(pl => {
+      const byPeriod = {}; (pl.periods || []).forEach(x => { byPeriod[x.period] = x; });
+      const matCell = d.has_matricula ? `<td title="${pl.matricula.source || ''}">${CELL[pl.matricula.status] || '⏳'}</td>` : '';
+      const cells = cols.map(p => { const c = byPeriod[p]; return `<td title="${(c && c.source) || ''}">${c ? (CELL[c.status] || '⏳') : '⏳'}</td>`; }).join('');
+      return `<tr><td><strong>${escapeHtml(pl.nombre || pl.slug)}</strong></td>${matCell}${cells}</tr>`;
+    }).join('');
+  }
+
+  function billingToCsv(d) {
+    const cols = d.periods || [];
+    const header = ['Jugador', 'Equipo'].concat(d.has_matricula ? ['Matricula'] : []).concat(cols.map(monthLabel));
+    const lines = [header.join(';')];
+    (d.players || []).forEach(pl => {
+      const byPeriod = {}; (pl.periods || []).forEach(x => { byPeriod[x.period] = x; });
+      const row = [csvCell(pl.nombre || pl.slug), csvCell(pl.team_name || '')];
+      if (d.has_matricula) row.push(pl.matricula.status);
+      cols.forEach(p => row.push(byPeriod[p] ? byPeriod[p].status : 'pending'));
+      lines.push(row.join(';'));
+    });
+    return lines.join('\n');
+  }
+  function csvCell(s) { const v = String(s == null ? '' : s); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+
+  (function(){
+    const b = $('billingExportBtn');
+    if (b) b.addEventListener('click', () => {
+      if (!billingData || !billingData.players || !billingData.players.length) { sToast('err', 'Nada que exportar todavía.'); return; }
+      const csv = billingToCsv(billingData);
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cobros-${billingData.season || 'temporada'}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(a.href);
+    });
+  })();
 
   // ── Modales ──────────────────────────────────────────────
   function openModal(title, bodyHtml) {
@@ -1789,8 +2065,8 @@
   $('cardOrderKind').addEventListener('change', () => {
     const k = $('cardOrderKind').value;
     $('cardOrderHint').textContent = k === 'renewal'
-      ? 'Renovación anual del carnet de todos los jugadores activos (9 €/ud).'
-      : 'Se generará un pedido para todos los jugadores activos del club (19 €/ud).';
+      ? 'Renovación anual del carnet de todos los jugadores activos (6 €/ud).'
+      : 'Se generará un pedido para todos los jugadores activos del club (12 €/ud).';
   });
   $('cardOrderBtn').addEventListener('click', async () => {
     const players = [];

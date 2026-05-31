@@ -24,20 +24,12 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
-const crypto = require('crypto');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { authFromEvent, unauthorizedResponse, signParentSession } = require('./lib/panel-auth');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
-const { CARD_KINDS } = require('./lib/card-kind');
-const { isPiiCryptoConfigured, encryptBirthDate, birthYearFromDate } = require('./lib/pii-crypto');
-const {
-  listSportsCategories,
-  categoryForBirthYear,
-  parseSeasonStartYear,
-  currentSeasonStartYear,
-  formatSeason,
-} = require('./lib/sports-categories');
+const { birthYearFromDate } = require('./lib/pii-crypto');
+const { createPlayerCard } = require('./lib/player-create');
 const { capture: captureEvent } = require('./lib/posthog-server');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -190,98 +182,32 @@ function makeHandler(db, emailClient) {
     const teamName = body.team_name ? stripTags(body.team_name).substring(0, 80) : null;
     const previousClubName = body.previous_club_name ? stripTags(body.previous_club_name).substring(0, 120) : null;
 
-    // Temporada: la del body si parsea, si no la vigente (cutoff julio).
-    const seasonStartYear = parseSeasonStartYear(body.season) ?? currentSeasonStartYear();
-    const season = formatSeason(seasonStartYear);
-
-    // ── Categoría (solo jugadores, según deporte del club) ──
-    let categoryId = null;
-    if (isPlayer && org.sport && birthYear) {
-      const categories = await listSportsCategories(db, org.sport);
-      const match = categoryForBirthYear({ categories, birthYear, seasonStartYear });
-      categoryId = match ? match.id : null;
+    // ── Creación de la ficha (card + membership + tutores) ──
+    // La escritura vive en lib/player-create, compartida con la
+    // inscripción self-service del padre (capa I4).
+    const tutors = [{ email: tutorEmail, role: 'tutor_legal' }];
+    if (tutorSecundarioEmail && tutorSecundarioEmail !== tutorEmail) {
+      tutors.push({ email: tutorSecundarioEmail, role: 'tutor_secundario' });
     }
-
-    // ── PII: fecha de nacimiento cifrada (si CANTERA_PII_KEY configurada) ──
-    let birthDateEncrypted = null;
-    if (birthDate && isPiiCryptoConfigured()) {
-      try {
-        birthDateEncrypted = encryptBirthDate(birthDate);
-      } catch (err) {
-        console.error('register-player: fallo cifrando birth_date:', err.message);
-      }
-    }
-
-    // ── Slug opaco único ──
-    let slug = makePlayerSlug();
-    for (let i = 0; i < 5; i++) {
-      const { data: clash } = await db.from('cards').select('slug').eq('slug', slug).maybeSingle();
-      if (!clash) break;
-      slug = makePlayerSlug();
-    }
-
-    // ── INSERT card ──
-    const cardKind = isPlayer ? CARD_KINDS.PLAYER : CARD_KINDS.CLUB_STAFF;
-    const { error: cardErr } = await db.from('cards').insert({
-      slug,
-      card_kind: cardKind,
+    const result = await createPlayerCard(db, org, {
       nombre,
-      idioma,
-      organization_id: org.id,
-      status: 'active',
-      public_card: false,
-      birth_year: birthYear,
-      gender: gender || null,
-      birth_date_encrypted: birthDateEncrypted,
-    });
-    if (cardErr) {
-      console.error('register-player: error insertando card:', cardErr.message);
-      return jsonResponse(500, { error: 'No se pudo crear la ficha' });
-    }
-
-    // A partir de aquí, ante cualquier error borramos la card (las FK
-    // member_club_seasons y card_admins son ON DELETE CASCADE, así que el
-    // delete limpia todo lo creado). No hay transacción multi-statement en
-    // la Data API; ésta es la compensación.
-    const rollback = async (where, msg) => {
-      console.error(`register-player: ${where}:`, msg);
-      await db.from('cards').delete().eq('slug', slug);
-      return jsonResponse(500, { error: 'No se pudo completar el alta' });
-    };
-
-    // ── INSERT member_club_seasons ──
-    const { error: seasonErr } = await db.from('member_club_seasons').insert({
-      card_slug: slug,
-      organization_id: org.id,
-      season,
       role,
-      category_id: categoryId,
-      team_name: teamName,
+      birthDate: birthDate || null,
+      gender,
       dorsal,
       position,
-      previous_club_name: previousClubName,
+      teamName,
+      previousClubName,
+      season: body.season,
+      idioma,
+      publicCard: false,
+      tutors,
     });
-    if (seasonErr) return rollback('error insertando membership', seasonErr.message);
-
-    // ── INSERT card_admins (tutor legal + opcional secundario) ──
-    const admins = [{
-      card_slug: slug,
-      email: tutorEmail,
-      role: 'tutor_legal',
-      edit_token: crypto.randomBytes(32).toString('hex'),
-      edit_token_expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
-    }];
-    if (tutorSecundarioEmail && tutorSecundarioEmail !== tutorEmail) {
-      admins.push({
-        card_slug: slug,
-        email: tutorSecundarioEmail,
-        role: 'tutor_secundario',
-        edit_token: crypto.randomBytes(32).toString('hex'),
-        edit_token_expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
-      });
+    if (!result.ok) {
+      const msg = result.stage === 'card' ? 'No se pudo crear la ficha' : 'No se pudo completar el alta';
+      return jsonResponse(500, { error: msg });
     }
-    const { error: adminErr } = await db.from('card_admins').insert(admins);
-    if (adminErr) return rollback('error insertando card_admins', adminErr.message);
+    const { slug, card_kind: cardKind, season, category_id: categoryId } = result;
 
     // ── Email de invitación al tutor legal (best-effort, no bloquea) ──
     if (emailClient) {

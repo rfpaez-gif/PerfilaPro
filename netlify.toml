@@ -165,6 +165,25 @@
   status = 200
   force  = true
 
+# Cantera · inscripción de temporada (capa I4). Página pública del
+# formulario del padre; el club reparte /es|ca/inscripcion/:token.
+[[redirects]]
+  from   = "/inscripcion/:token"
+  to     = "/.netlify/functions/enrollment-page"
+  status = 200
+[[redirects]]
+  from   = "/es/inscripcion/:token"
+  to     = "/.netlify/functions/enrollment-page"
+  status = 200
+[[redirects]]
+  from   = "/ca/inscripcion/:token"
+  to     = "/.netlify/functions/enrollment-page"
+  status = 200
+[[redirects]]
+  from   = "/api/enrollment-submit"
+  to     = "/.netlify/functions/enrollment-submit"
+  status = 200
+
 # B2B demo: panel privado de estadísticas agregadas de una organización.
 # Token-protected (organizations.stats_token, TTL 90 días). El founder
 # genera el enlace desde admin-orgs (org_get_stats_link) y lo comparte
@@ -344,6 +363,12 @@
 [[redirects]]
   from   = "/api/create-setup-fee-checkout"
   to     = "/.netlify/functions/create-setup-fee-checkout"
+  status = 200
+
+# Inscripción de temporada I2 · matrícula one-shot + cuota (Connect, SEPA+tarjeta).
+[[redirects]]
+  from   = "/api/create-enrollment-checkout"
+  to     = "/.netlify/functions/create-enrollment-checkout"
   status = 200
 
 [[redirects]]

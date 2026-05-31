@@ -35,6 +35,32 @@ describe('handleParentCheckoutCompleted', () => {
   it('ignora si no hay subscription', async () => {
     expect((await cw.handleParentCheckoutCompleted({ db: db(), session: { metadata: { kind: 'cantera-parent-fee' } } })).reason).toBe('no_subscription');
   });
+
+  it('inscripción I2: snapshotea matrícula + campaña y marca matricula_paid_at', async () => {
+    const d = db();
+    const session = {
+      subscription: 'sub_2', customer: 'cus_2', amount_total: 6500,
+      metadata: { kind: 'cantera-parent-fee', card_slug: 'p-9', org_id: 'club-1', parent_email: 't@e.es',
+        monthly_fee_cents: '3000', matricula_cents: '3500', enrollment_campaign_id: 'camp-1' },
+    };
+    const r = await cw.handleParentCheckoutCompleted({ db: d, session });
+    expect(r.ok).toBe(true);
+    const row = d.ups[0][0];
+    expect(row.amount_cents).toBe(3000);            // cuota recurrente, no amount_total
+    expect(row.matricula_cents).toBe(3500);
+    expect(row.matricula_paid_at).toBeTruthy();
+    expect(row.enrollment_campaign_id).toBe('camp-1');
+  });
+
+  it('cuota suelta sin matrícula: amount_cents cae a amount_total, sin campos extra', async () => {
+    const d = db();
+    const session = { subscription: 'sub_3', amount_total: 3000, metadata: { kind: 'cantera-parent-fee', card_slug: 'p-1', org_id: 'c1', parent_email: 'e@e.es' } };
+    await cw.handleParentCheckoutCompleted({ db: d, session });
+    const row = d.ups[0][0];
+    expect(row.amount_cents).toBe(3000);
+    expect(row).not.toHaveProperty('matricula_cents');
+    expect(row).not.toHaveProperty('matricula_paid_at');
+  });
 });
 
 describe('handleParentSubscription', () => {
