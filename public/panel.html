@@ -171,6 +171,8 @@
     .pp-cat__head { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 400; margin: 0 0 .4rem; display: flex; align-items: baseline; gap: .5rem; }
     .pp-cat__count { font-size: 12px; color: #6B7280; font-weight: 400; font-family: var(--font-sans); }
     .pp-dorsal { display: inline-block; min-width: 1.6rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pp-input--mini { padding: .35rem .5rem; font-size: .9rem; max-width: 9rem; }
+    input.pp-input--mini[type="number"] { max-width: 5rem; }
     .pp-pay { font-size: 11px; font-weight: 700; padding: .12rem .5rem; border-radius: 999px; white-space: nowrap; }
     .pp-pay--paid   { background: rgba(0,194,119,.14); color: var(--color-verde-dark, #00A865); }
     .pp-pay--unpaid { background: rgba(176,57,42,.12); color: #B0392A; }
@@ -1635,18 +1637,18 @@
       $('rosterGroups').innerHTML = `<p class="pp-table__empty">Aún no hay jugadores. Pulsa “+ Dar de alta” para fichar al primero.</p>`;
     } else {
       $('rosterGroups').innerHTML = groups.map(cat => {
-        const rows = cat.members.map(m => `<tr>
-          <td><span class="pp-dorsal">${m.dorsal != null ? m.dorsal : '—'}</span> <strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
-          <td>${escapeHtml(m.position || '—')}</td>
-          <td>${escapeHtml(m.team_name || '—')}</td>
+        const rows = cat.members.map(m => `<tr data-slug="${escapeHtml(m.slug)}">
+          <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
+          <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
+          <td><input class="pp-input pp-input--mini" type="text" data-field="team_name" value="${escapeHtml(m.team_name || '')}" placeholder="Equipo"></td>
           <td>${payBadge(m.payment)}</td>
           <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}</td>
         </tr>`).join('');
         return `<div class="pp-cat">
           <h3 class="pp-cat__head">${escapeHtml(cat.display_name || 'Sin categoría')} <span class="pp-cat__count">${cat.members.length} jugador${cat.members.length === 1 ? '' : 'es'}</span></h3>
-          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Dorsal · Nombre</th><th>Posición</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Dorsal</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>`;
-      }).join('');
+      }).join('') + `<div class="pp-form__actions" style="margin-top:1rem"><button type="button" class="pp-btn pp-btn--primary" id="rosterSaveBtn">Guardar encuadre →</button><span id="rosterSaveMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span></div>`;
     }
 
     const staff = data.staff || [];
@@ -1656,6 +1658,58 @@
            staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td></tr>`).join('')
          }</tbody></table></div>`
       : '';
+
+    // Snapshot de valores originales para detectar cambios en el encuadre.
+    rosterOriginals = {};
+    (data.categories || []).forEach(cat => cat.members.forEach(m => {
+      rosterOriginals[m.slug] = { dorsal: m.dorsal != null ? String(m.dorsal) : '', team_name: m.team_name || '' };
+    }));
+    const saveBtn = $('rosterSaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveRosterAssignments);
+  }
+
+  // ── Encuadre en lote (capa I5) ───────────────────────────
+  let rosterOriginals = {};
+
+  async function saveRosterAssignments() {
+    const btn = $('rosterSaveBtn'); const msg = $('rosterSaveMsg');
+    const assignments = [];
+    document.querySelectorAll('#rosterGroups tr[data-slug]').forEach(tr => {
+      const slug = tr.dataset.slug;
+      const orig = rosterOriginals[slug] || { dorsal: '', team_name: '' };
+      const dorsalEl = tr.querySelector('[data-field="dorsal"]');
+      const teamEl = tr.querySelector('[data-field="team_name"]');
+      const dorsalVal = dorsalEl ? dorsalEl.value.trim() : '';
+      const teamVal = teamEl ? teamEl.value.trim() : '';
+      const row = { card_slug: slug };
+      let changed = false;
+      if (dorsalVal !== orig.dorsal) { row.dorsal = dorsalVal === '' ? null : Number(dorsalVal); changed = true; }
+      if (teamVal !== orig.team_name) { row.team_name = teamVal === '' ? null : teamVal; changed = true; }
+      if (changed) assignments.push(row);
+    });
+    if (!assignments.length) { msg.textContent = 'No hay cambios que guardar.'; return; }
+    btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Guardando…'; msg.textContent = '';
+    try {
+      const r = await api('enrollment_assign', { assignments });
+      msg.textContent = r.summary || 'Encuadre guardado.';
+      if (r.duplicate_dorsals && r.duplicate_dorsals.length) {
+        msg.textContent += ` ⚠ Dorsales repetidos: ${r.duplicate_dorsals.map(d => '#' + d.dorsal + (d.team_name ? ' (' + d.team_name + ')' : '')).join(', ')}`;
+      }
+      await loadSportsStudioReload();
+    } catch (e) {
+      msg.textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar encuadre →';
+    }
+  }
+
+  // Recarga solo el roster (tras guardar) sin recargar todo el Studio.
+  async function loadSportsStudioReload() {
+    try {
+      const roster = await api('get_roster');
+      rosterData = roster;
+      renderRoster(roster);
+    } catch (e) { /* el mensaje de guardado ya se mostró */ }
   }
 
   // ── Estadísticas del club ────────────────────────────────

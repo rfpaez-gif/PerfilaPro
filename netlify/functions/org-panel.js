@@ -48,6 +48,7 @@ const {
   normalizeCents,
   normalizeInstallments,
 } = require('./lib/enrollment-campaign');
+const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -533,9 +534,10 @@ function makeHandler(db, emailClient) {
       if (loaded.error) return loaded.error;
       const sportsOrg = loaded.org;
       const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
-      if (action === 'enrollment_get')   return await enrollmentGet(db, sportsOrg, siteUrl);
-      if (action === 'enrollment_open')  return await enrollmentOpen(db, sportsOrg, body, siteUrl);
-      if (action === 'enrollment_close') return await enrollmentClose(db, sportsOrg, body);
+      if (action === 'enrollment_get')    return await enrollmentGet(db, sportsOrg, siteUrl);
+      if (action === 'enrollment_open')   return await enrollmentOpen(db, sportsOrg, body, siteUrl);
+      if (action === 'enrollment_close')  return await enrollmentClose(db, sportsOrg, body);
+      if (action === 'enrollment_assign') return await enrollmentAssign(db, sportsOrg, body);
     }
 
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
@@ -547,7 +549,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
-const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close']);
+const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
 
@@ -670,6 +672,54 @@ async function enrollmentClose(db, org, body) {
   if (error) return jsonResponse(500, { error: error.message });
 
   return jsonResponse(200, { ok: true, campaign_id: campaignId, status: 'closed' });
+}
+
+// enrollment_assign: encuadre en lote. El club asigna equipo/dorsal/
+// posición/categoría a varios jugadores de una vez. Body: { assignments:
+// [{ card_slug, dorsal?, team_name?, position?, category_id? }] }. Cada
+// UPDATE va scoped al club (organization_id) + membresía activa
+// (left_at IS NULL) — un slug ajeno o sin membresía activa en este club
+// no afecta a ninguna fila. Loop con ok[]/failed[] por jugador, sin
+// transacción global (cada asignación es independiente).
+async function enrollmentAssign(db, org, body) {
+  const assignments = Array.isArray(body.assignments) ? body.assignments : null;
+  if (!assignments || assignments.length === 0) {
+    return jsonResponse(400, { error: 'assignments debe ser un array no vacío' });
+  }
+  if (assignments.length > 200) {
+    return jsonResponse(400, { error: 'máximo 200 asignaciones por lote' });
+  }
+
+  // Validamos todas las filas primero (puro), luego aplicamos.
+  const rows = assignments.map(buildAssignmentPatch);
+  const duplicates = findDuplicateDorsals(rows);
+
+  const ok = [];
+  const failed = [];
+  for (let i = 0; i < rows.length; i++) {
+    const { slug, patch, error } = rows[i];
+    if (error) { failed.push({ index: i, card_slug: slug, error }); continue; }
+    const { data: updated, error: updErr } = await db
+      .from('member_club_seasons')
+      .update(patch)
+      .eq('card_slug', slug)
+      .eq('organization_id', org.id)
+      .is('left_at', null)
+      .select('card_slug');
+    if (updErr) { failed.push({ index: i, card_slug: slug, error: updErr.message }); continue; }
+    if (!updated || updated.length === 0) {
+      failed.push({ index: i, card_slug: slug, error: 'sin membresía activa en este club' });
+      continue;
+    }
+    ok.push(slug);
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    results: { ok, failed },
+    duplicate_dorsals: duplicates,
+    summary: `${ok.length} de ${assignments.length} asignados${failed.length ? `, ${failed.length} con error` : ''}`,
+  });
 }
 
 function formatPeriod(now = new Date()) {

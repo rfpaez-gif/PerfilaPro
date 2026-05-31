@@ -161,4 +161,48 @@ describe('org-panel · Cantera enrollment (capa I3)', () => {
     const res = await makeHandler(db, null)(event('enrollment_close', {}, token));
     expect(res.statusCode).toBe(400);
   });
+
+  it('enrollment_assign 400 sin assignments', async () => {
+    const db = makeDb(baseResolvers());
+    const res = await makeHandler(db, null)(event('enrollment_assign', { assignments: [] }, token));
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('enrollment_assign aplica patches y reporta ok/failed', async () => {
+    // member_club_seasons.update().eq().eq().is().select() → fila actualizada.
+    const db = makeDb(baseResolvers({
+      member_club_seasons: (filters) => {
+        // p-good existe en el club; p-bad no devuelve filas.
+        if (filters.card_slug === 'p-bbbbbbbb') return { data: [], error: null };
+        return { data: [{ card_slug: filters.card_slug }], error: null };
+      },
+    }));
+    const res = await makeHandler(db, null)(event('enrollment_assign', {
+      assignments: [
+        { card_slug: 'p-aaaaaaaa', dorsal: 10, team_name: 'Alevín A' },
+        { card_slug: 'p-bbbbbbbb', dorsal: 7 },               // sin membresía activa
+        { card_slug: 'nope', dorsal: 1 },                     // slug inválido
+      ],
+    }, token));
+    expect(res.statusCode).toBe(200);
+    const out = JSON.parse(res.body);
+    expect(out.results.ok).toContain('p-aaaaaaaa');
+    expect(out.results.failed).toHaveLength(2);
+    expect(out.results.failed.map(f => f.card_slug)).toContain('p-bbbbbbbb');
+  });
+
+  it('enrollment_assign avisa de dorsales duplicados en el mismo equipo', async () => {
+    const db = makeDb(baseResolvers({
+      member_club_seasons: (filters) => ({ data: [{ card_slug: filters.card_slug }], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('enrollment_assign', {
+      assignments: [
+        { card_slug: 'p-aaaaaaaa', dorsal: 10, team_name: 'A' },
+        { card_slug: 'p-cccccccc', dorsal: 10, team_name: 'A' },
+      ],
+    }, token));
+    const out = JSON.parse(res.body);
+    expect(out.duplicate_dorsals).toHaveLength(1);
+    expect(out.duplicate_dorsals[0].dorsal).toBe(10);
+  });
 });
