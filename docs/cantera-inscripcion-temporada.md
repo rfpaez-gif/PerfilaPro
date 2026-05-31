@@ -192,8 +192,9 @@ la membresía de temporada con categoría auto, los `card_admins`, los
 
 ## 7. Boceto — Pantalla B · Centro de cobros del club (conciliación)
 
-Vista por jugador × mes de temporada. Une Stripe + manual. Estado por celda:
-✅ pagado · ⏳ pendiente · 🟡 parcial.
+Vista por jugador × periodo. Une Stripe + manual. Columnas: **matrícula
+(única) + 9 mensualidades**. Estado por celda: ✅ pagado · ⏳ pendiente ·
+🟡 parcial. (El boceto muestra los primeros meses por espacio.)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -267,16 +268,34 @@ ausente, datos del tutor incompletos). Integración federativa real = fase 2.
   + **SEPA** (`payment_method_types` / automatic) a `create-parent-checkout`
   o un nuevo `create-enrollment-checkout`.
 
-## 11. Decisiones abiertas (para validar antes de implementar)
+## 11. Decisiones
 
-1. **Matrícula one-shot en Stripe**: ¿cobrar en la primera factura de la
-   suscripción (`add_invoice_items`) o como pago separado? (afecta a cómo se
-   refleja en el centro de cobros).
-2. **Documentos federativos**: ¿entran en MVP (captura + export) o fase 2?
-3. **Gate del Dashboard por carnets pagados**: ¿el carnet es gate técnico o
-   solo comercial? (hoy cualquier `sports_club` entra sin pagar).
-4. **Número de mensualidades** de la temporada (¿sep-jun, 10 cuotas?) para
-   pintar el centro de cobros.
-5. **`public_card`**: la inscripción captura el consentimiento de imagen,
-   pero ¿se hace pública la ficha automáticamente al consentir, o sigue
-   requiriendo un paso explícito?
+**Cerradas:**
+
+1. **Matrícula one-shot** ✅. Se cobra **una sola vez**, en el mismo checkout
+   que arranca la cuota mensual (vía `subscription_data.add_invoice_items`):
+   el padre paga matrícula + primera cuota en un único pago y queda la
+   suscripción activa.
+2. **Documentos en MVP, completables después** ✅. El formulario los acepta en
+   la inscripción pero **opcionales**; lo que falte queda marcado como
+   "documentación pendiente" y se sube luego desde el panel (padre o club).
+4. **Temporada = matrícula + 9 mensualidades** ✅. El centro de cobros (§7)
+   pinta la matrícula + 9 meses.
+
+**Pendientes de confirmar (con recomendación):**
+
+3. **Gate del Dashboard por carnets** → *recomendado: gate comercial, no
+   técnico.* Hoy cualquier `sports_club` entra al Studio sin pagar carnets.
+   Se propone dejarlo así: el club entra, ve valor y carga plantilla; el
+   carnet es el paso natural del onboarding, no un muro de entrada. No
+   urgente para el MVP.
+5. **Visibilidad del perfil del menor (`public_card`)** → *recomendado:
+   consentir imagen habilita pero no dispara.* Distinguir:
+   - **Licencia federativa** = la da la federación; fuera de PerfilaPro.
+   - **Tarjeta digital `/c/:slug`** = nuestra; arranca oculta
+     (`public_card=false`).
+   Tensión a resolver: el **carnet físico lleva QR/NFC → `/c/:slug`**; si el
+   perfil está oculto, el QR no abre. Propuesta: el consentimiento de imagen
+   hace el perfil **accesible por su URL** (para que el carnet funcione) pero
+   **siempre `noindex`** (nunca googleable para un menor); la visibilidad
+   plena sigue siendo un acto explícito posterior.
