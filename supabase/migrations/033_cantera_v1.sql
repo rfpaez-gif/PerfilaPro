@@ -264,7 +264,7 @@ CREATE INDEX IF NOT EXISTS idx_member_by_card_history
   ON member_club_seasons (card_slug, joined_at DESC);
 
 -- 10. Pedido de carnet físico PVC + NFC -----------------------
---     Lo dispara el Studio del club: setup fee 19€ × N fichajes.
+--     Lo dispara el Studio del club: setup fee 12€ × N fichajes.
 --     El cobro va directo a PerfilaPro (no Connect). Al confirmar
 --     payment, status pasa de pending→paid y se genera el PDF.
 CREATE TABLE IF NOT EXISTS card_print_orders (

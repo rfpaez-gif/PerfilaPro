@@ -2,8 +2,8 @@
 
 // POST /api/create-setup-fee-checkout { card_slugs, kind }   ·   Cantera 4c
 //
-// El club paga a PerfilaPro la impresión del carnet PVC+NFC: 19€ setup
-// por fichaje nuevo, 9€ renovación anual. Cobro DIRECTO a la plataforma
+// El club paga a PerfilaPro la impresión del carnet PVC+NFC: 12€ setup
+// por fichaje nuevo, 6€ renovación anual. Cobro DIRECTO a la plataforma
 // (no Connect — esto lo factura PerfilaPro, no el club). Una sesión de
 // Checkout en modo `payment` con quantity = nº de carnets.
 //

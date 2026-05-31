@@ -584,12 +584,12 @@
     <div class="pp-stabpanel" data-stabpanel="cards" style="display:none">
       <section class="pp-section">
         <h2 class="pp-section__title">Carnets físicos PVC + NFC</h2>
-        <p class="pp-section__sub">Pide a PerfilaPro la impresión del carnet de cada jugador. <strong>19 € por carnet nuevo</strong>, 9 € renovación anual. El pago va directo a PerfilaPro (no a tu cuenta de cobros).</p>
+        <p class="pp-section__sub">Pide a PerfilaPro la impresión del carnet de cada jugador. <strong>12 € por carnet nuevo</strong>, 6 € renovación anual. El pago va directo a PerfilaPro (no a tu cuenta de cobros).</p>
         <div class="pp-form__row">
           <label class="pp-form__label" for="cardOrderKind">Tipo de pedido</label>
           <select class="pp-input" id="cardOrderKind">
-            <option value="setup">Carnets nuevos (19 €/ud)</option>
-            <option value="renewal">Renovación anual (9 €/ud)</option>
+            <option value="setup">Carnets nuevos (12 €/ud)</option>
+            <option value="renewal">Renovación anual (6 €/ud)</option>
           </select>
         </div>
         <p class="pp-form__hint" id="cardOrderHint">Se generará un pedido para todos los jugadores activos del club.</p>
@@ -1789,8 +1789,8 @@
   $('cardOrderKind').addEventListener('change', () => {
     const k = $('cardOrderKind').value;
     $('cardOrderHint').textContent = k === 'renewal'
-      ? 'Renovación anual del carnet de todos los jugadores activos (9 €/ud).'
-      : 'Se generará un pedido para todos los jugadores activos del club (19 €/ud).';
+      ? 'Renovación anual del carnet de todos los jugadores activos (6 €/ud).'
+      : 'Se generará un pedido para todos los jugadores activos del club (12 €/ud).';
   });
   $('cardOrderBtn').addEventListener('click', async () => {
     const players = [];
