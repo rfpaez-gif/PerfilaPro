@@ -33,20 +33,43 @@ async function handleAccountUpdated({ db, account }) {
 
 // checkout.session.completed (kind=cantera-parent-fee) → materializa la
 // fila parent_subscriptions. Idempotente: upsert por stripe_subscription_id.
+//
+// La inscripción de temporada (capa I2) reusa este kind pero añade
+// metadata extra: matricula_cents (one-shot vía add_invoice_items),
+// monthly_fee_cents y enrollment_campaign_id. Cuando vienen, se snapshotean
+// en la fila y la matrícula queda marcada como pagada (matricula_paid_at).
+// El alta de cuota suelta (create-parent-checkout) no los lleva → se
+// comporta igual que antes.
 async function handleParentCheckoutCompleted({ db, session }) {
   const m = session.metadata || {};
   if (m.kind !== PARENT_FEE_KIND) return { ok: false, reason: 'not_parent_fee' };
   if (!session.subscription) return { ok: false, reason: 'no_subscription' };
+
+  const monthly = parseInt(m.monthly_fee_cents, 10);
+  const matricula = parseInt(m.matricula_cents, 10);
+  const hasMatricula = Number.isInteger(matricula) && matricula > 0;
+
   const row = {
     card_slug: m.card_slug,
     organization_id: m.org_id,
     parent_email: m.parent_email,
     stripe_customer_id: session.customer || null,
     stripe_subscription_id: session.subscription,
-    amount_cents: session.amount_total != null ? session.amount_total : 0,
+    // amount_cents = cuota recurrente. Si la metadata trae la cuota
+    // explícita (inscripción), úsala; si no, cae a amount_total (cuota
+    // suelta sin matrícula, donde amount_total == cuota).
+    amount_cents: Number.isInteger(monthly) && monthly > 0
+      ? monthly
+      : (session.amount_total != null ? session.amount_total : 0),
     application_fee_bps: feeBps(),
     status: 'active',
   };
+  if (m.enrollment_campaign_id) row.enrollment_campaign_id = m.enrollment_campaign_id;
+  if (hasMatricula) {
+    row.matricula_cents = matricula;
+    row.matricula_paid_at = new Date().toISOString();
+  }
+
   const { error } = await db.from('parent_subscriptions')
     .upsert(row, { onConflict: 'stripe_subscription_id' });
   if (error) return { ok: false, reason: error.message };

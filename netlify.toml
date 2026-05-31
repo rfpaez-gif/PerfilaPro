@@ -346,6 +346,12 @@
   to     = "/.netlify/functions/create-setup-fee-checkout"
   status = 200
 
+# Inscripción de temporada I2 · matrícula one-shot + cuota (Connect, SEPA+tarjeta).
+[[redirects]]
+  from   = "/api/create-enrollment-checkout"
+  to     = "/.netlify/functions/create-enrollment-checkout"
+  status = 200
+
 [[redirects]]
   from   = "/api/record-external-payment"
   to     = "/.netlify/functions/record-external-payment"
