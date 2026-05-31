@@ -640,6 +640,14 @@
           <div class="pp-form__actions" style="margin-top:1rem">
             <button type="button" class="pp-btn pp-btn--ghost" id="enrCloseBtn">Cerrar inscripciones</button>
           </div>
+          <hr style="border:none;border-top:1px solid #E5E7EB;margin:1.5rem 0">
+          <h3 class="pp-spark__title" style="margin:0 0 .25rem">Invitar a las familias</h3>
+          <p class="pp-form__hint">Pega los emails de las familias (uno por línea, opcional "Nombre, email"). Cada una recibirá el enlace para inscribir a su hijo/a. No se crea ninguna ficha hasta que el padre la rellena.</p>
+          <textarea class="pp-input" id="enrInviteList" rows="5" placeholder="madre@email.com&#10;Ana, padre@email.com&#10;familia@email.com" style="font-family:var(--font-mono,monospace);font-size:.9rem"></textarea>
+          <div class="pp-form__actions" style="margin-top:.75rem">
+            <button type="button" class="pp-btn pp-btn--primary" id="enrInviteBtn">Enviar invitaciones →</button>
+            <span id="enrInviteMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span></span>
+          </div>
         </div>
       </section>
     </div>
@@ -1612,6 +1620,32 @@
       () => sToast('ok', 'Enlace copiado'),
       () => { try { document.execCommand('copy'); sToast('ok', 'Enlace copiado'); } catch { sToast('err', 'No se pudo copiar'); } }
     );
+  });
+
+  // Parsea el textarea de invitaciones: una por línea, "Nombre, email" o "email".
+  function parseInviteList(text) {
+    return String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(line => {
+      const comma = line.lastIndexOf(',');
+      if (comma >= 0) return { nombre: line.slice(0, comma).trim(), email: line.slice(comma + 1).trim() };
+      return { email: line };
+    });
+  }
+
+  const _enrInviteBtn = $('enrInviteBtn');
+  if (_enrInviteBtn) _enrInviteBtn.addEventListener('click', async () => {
+    const msg = $('enrInviteMsg');
+    const invites = parseInviteList($('enrInviteList').value);
+    if (!invites.length) { msg.textContent = 'Pega al menos un email.'; return; }
+    const btn = _enrInviteBtn; btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…'; msg.textContent = '';
+    try {
+      const r = await api('enrollment_invite', { invites });
+      msg.textContent = r.summary || 'Invitaciones enviadas.';
+      if (r.results && r.results.ok && r.results.ok.length) $('enrInviteList').value = '';
+    } catch (e) {
+      msg.textContent = e.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Enviar invitaciones →';
+    }
   });
 
   const _enrCloseBtn = $('enrCloseBtn');
