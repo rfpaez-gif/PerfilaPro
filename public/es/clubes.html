@@ -44,6 +44,61 @@
     .pp-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
     .pp-hero__cta .pp-btn { min-width: 200px; }
 
+    /* ── Hero con foto de fondo ───────────────────────────── */
+    /* Capas: scrim oscuro (arriba) · foto · degradado de marca (fallback
+       si la foto falta o 404). Pura CSS, sin JS. */
+    .pp-hero--photo {
+      max-width: none; margin: 0; text-align: center;
+      padding: clamp(4rem, 9vw, 7rem) 1.5rem clamp(3.5rem, 7vw, 5.5rem);
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(10,31,68,.58), rgba(10,31,68,.82)),
+        url("/assets/landing/clubes/hero-celebracion.jpg") center / cover no-repeat,
+        linear-gradient(135deg, #0A1F44, #0A6B45);
+    }
+    .pp-hero--photo .pp-hero__wrap { max-width: 880px; margin: 0 auto; }
+    .pp-hero--photo .pp-hero__eyebrow { color: var(--color-verde-match, #00C277); }
+    .pp-hero--photo .pp-hero__h1 { color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,.35); }
+    .pp-hero--photo .pp-hero__h1 em { color: var(--color-verde-match, #00C277); }
+    .pp-hero--photo .pp-hero__sub { color: rgba(255,255,255,.88); }
+    .pp-hero--photo .pp-hero__sub strong { color: #fff; }
+    /* Botón fantasma legible sobre fondo oscuro. */
+    .pp-hero--photo .pp-btn--ghost { background: rgba(255,255,255,.10); color: #fff; border-color: rgba(255,255,255,.55); }
+    .pp-hero--photo .pp-btn--ghost:hover { background: rgba(255,255,255,.20); border-color: #fff; }
+
+    /* ── Showcase (banda imagen + texto) ──────────────────── */
+    .pp-showcase { max-width: 1040px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-showcase__inner { display: grid; gap: 2rem; grid-template-columns: 1fr; align-items: center; }
+    @media (min-width: 820px) {
+      .pp-showcase__inner { grid-template-columns: 1.05fr 1fr; gap: 3rem; }
+      .pp-showcase--reverse .pp-showcase__media { order: 2; }
+    }
+    .pp-showcase__eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); margin-bottom: .75rem; }
+    .pp-showcase__title { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 1rem; color: var(--color-tinta, #0A1F44); }
+    .pp-showcase__body { font-size: 15px; color: var(--color-gris-500, #6B7280); line-height: 1.7; margin: 0 0 1.25rem; }
+    .pp-showcase__body strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-showcase__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .5rem; }
+    .pp-showcase__list li { display: flex; align-items: flex-start; gap: .5rem; font-size: 14px; color: var(--color-tinta, #0A1F44); line-height: 1.5; }
+    .pp-showcase__list li::before { content: '✓'; color: var(--color-verde-dark, #00A865); font-weight: 700; flex-shrink: 0; }
+
+    /* Marco de imagen con degradado de marca como fallback. Si el <img>
+       falta o 404 (onerror lo oculta), queda el degradado + la etiqueta. */
+    .pp-showcase__media { position: relative; border-radius: var(--pp-r-xl, 20px); overflow: hidden; min-height: 220px; box-shadow: var(--pp-sh-md, 0 12px 32px rgba(10,31,68,.10)); background: linear-gradient(135deg, #0A1F44, #00A865); display: flex; align-items: center; justify-content: center; }
+    .pp-showcase__media--card { background: linear-gradient(135deg, #1A3060, #0A6B45); }
+    .pp-showcase__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35rem; padding: 2rem; text-align: center; color: rgba(255,255,255,.7); pointer-events: none; }
+    .pp-showcase__placeholder strong { color: #fff; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 400; }
+    .pp-showcase__placeholder small { font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; opacity: .65; }
+    .pp-showcase__img { position: relative; z-index: 1; width: 100%; height: auto; display: block; }
+    /* La imagen del carnet es producto: respira con padding sobre el fondo. */
+    .pp-showcase__img--card { max-width: 380px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Mockup de navegador para el screenshot de la web del club. */
+    .pp-browser { position: relative; z-index: 1; width: 100%; background: #fff; }
+    .pp-browser__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #F1F3F5; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-browser__dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD2D9; }
+    .pp-browser__url { margin-left: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 6px; padding: 3px 10px; }
+    .pp-browser__img { width: 100%; height: auto; display: block; }
+
     /* ── Section headings ─────────────────────────────────── */
     .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
     .pp-section-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); text-align: center; margin-bottom: 1rem; }
@@ -148,14 +203,19 @@
 </header>
 
 <!-- ─────────── Hero ─────────── -->
-<section class="pp-hero">
-  <div class="pp-hero__eyebrow">Clubes · escuelas · secciones de fútbol base</div>
-  <h1 class="pp-hero__h1">Nueva temporada.<br><em>Goleada</em> de inscripciones, cero caos.</h1>
-  <p class="pp-hero__sub">Abre las inscripciones de tu club y comparte un enlace. Las familias rellenan la ficha,
-  firman el consentimiento y pagan la cuota <strong>desde el móvil</strong>. Tú solo tienes que hacer los equipos.</p>
-  <div class="pp-hero__cta">
-    <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Pídenos una demo →</a>
-    <a href="#como" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Ver cómo funciona</a>
+<!-- Foto de fondo: /assets/landing/clubes/hero-celebracion.jpg (definida en
+     .pp-hero--photo). Si no existe, el degradado de marca la sustituye sin
+     romper la maqueta. -->
+<section class="pp-hero pp-hero--photo">
+  <div class="pp-hero__wrap">
+    <div class="pp-hero__eyebrow">Clubes · escuelas · secciones de fútbol base</div>
+    <h1 class="pp-hero__h1">Nueva temporada.<br><em>Goleada</em> de inscripciones, cero caos.</h1>
+    <p class="pp-hero__sub">Abre las inscripciones de tu club y comparte un enlace. Las familias rellenan la ficha,
+    firman el consentimiento y pagan la cuota <strong>desde el móvil</strong>. Tú solo tienes que hacer los equipos.</p>
+    <div class="pp-hero__cta">
+      <a href="#contacto" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Pídenos una demo →</a>
+      <a href="#como" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Ver cómo funciona</a>
+    </div>
   </div>
 </section>
 
@@ -210,6 +270,56 @@
       <div class="pp-step__n" aria-hidden="true">✅</div>
       <h3 class="pp-step__title">Con los menores, todo en regla</h3>
       <p class="pp-step__body">Consentimiento parental, datos cifrados y la ficha del menor <strong>nunca pública</strong> sin permiso. Cumplimiento de la <strong>LOPDGDD</strong> de serie, sin que tengas que entender de leyes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: carnet PVC + NFC ─────────── -->
+<!-- Imagen: /assets/landing/clubes/carnet-pvc.png (producto en mano o sobre
+     fondo neutro). onerror oculta el <img> y deja el placeholder + degradado. -->
+<section class="pp-showcase">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media pp-showcase__media--card">
+      <div class="pp-showcase__placeholder"><strong>Carnet del jugador</strong><small>carnet-pvc.png</small></div>
+      <img class="pp-showcase__img pp-showcase__img--card" src="/assets/landing/clubes/carnet-pvc.png" alt="Carnet de jugador en PVC con escudo del club, foto, dorsal y chip NFC" loading="lazy" onerror="this.style.display='none'">
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">Carnet físico PVC + NFC</div>
+      <h2 class="pp-showcase__title">Un carnet de los de verdad, con el escudo de tu club</h2>
+      <p class="pp-showcase__body">Tarjeta rígida de PVC, como una bancaria, con <strong>chip NFC</strong>: el chaval acerca el móvil y se abre su ficha. La foto, el dorsal, la categoría y tu escudo. <strong>Como los de los grandes.</strong></p>
+      <ul class="pp-showcase__list">
+        <li>QR + NFC que abren la ficha del jugador</li>
+        <li>Booklet PDF de toda la plantilla, listo para imprenta</li>
+        <li>12 € por jugador · 6 € la renovación anual</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: web del club ─────────── -->
+<!-- Imagen: /assets/landing/clubes/web-club.png (screenshot de una /e/:slug
+     branded). Va dentro de un mockup de navegador. -->
+<section class="pp-showcase pp-showcase--reverse">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media">
+      <div class="pp-showcase__placeholder"><strong>La web de tu club</strong><small>web-club.png</small></div>
+      <div class="pp-browser">
+        <div class="pp-browser__bar">
+          <span class="pp-browser__dot"></span><span class="pp-browser__dot"></span><span class="pp-browser__dot"></span>
+          <span class="pp-browser__url">perfilapro.es/e/tu-club</span>
+        </div>
+        <img class="pp-browser__img" src="/assets/landing/clubes/web-club.png" alt="Página web del club con su escudo, colores y el listado de la plantilla" loading="lazy" onerror="this.closest('.pp-browser').style.display='none'">
+      </div>
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">La web de tu club</div>
+      <h2 class="pp-showcase__title">Una página propia que proyecta un club que va en serio</h2>
+      <p class="pp-showcase__body">Tu <strong>escudo</strong>, tus <strong>colores</strong> y el listado de tu plantilla en una URL que compartes por redes o pones en el cartel. Sin diseñador, sin mantenimiento: se actualiza sola con cada inscripción.</p>
+      <ul class="pp-showcase__list">
+        <li>Branding del club: escudo, color y nombre</li>
+        <li>Plantilla siempre al día, sin tocar nada</li>
+        <li>Una URL para compartir en cualquier sitio</li>
+      </ul>
     </div>
   </div>
 </section>

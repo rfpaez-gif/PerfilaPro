@@ -44,6 +44,54 @@
     .pp-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
     .pp-hero__cta .pp-btn { min-width: 200px; }
 
+    /* ── Hero amb foto de fons ────────────────────────────── */
+    .pp-hero--photo {
+      max-width: none; margin: 0; text-align: center;
+      padding: clamp(4rem, 9vw, 7rem) 1.5rem clamp(3.5rem, 7vw, 5.5rem);
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(10,31,68,.58), rgba(10,31,68,.82)),
+        url("/assets/landing/clubes/hero-celebracion.jpg") center / cover no-repeat,
+        linear-gradient(135deg, #0A1F44, #0A6B45);
+    }
+    .pp-hero--photo .pp-hero__wrap { max-width: 880px; margin: 0 auto; }
+    .pp-hero--photo .pp-hero__eyebrow { color: var(--color-verde-match, #00C277); }
+    .pp-hero--photo .pp-hero__h1 { color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,.35); }
+    .pp-hero--photo .pp-hero__h1 em { color: var(--color-verde-match, #00C277); }
+    .pp-hero--photo .pp-hero__sub { color: rgba(255,255,255,.88); }
+    .pp-hero--photo .pp-hero__sub strong { color: #fff; }
+    .pp-hero--photo .pp-btn--ghost { background: rgba(255,255,255,.10); color: #fff; border-color: rgba(255,255,255,.55); }
+    .pp-hero--photo .pp-btn--ghost:hover { background: rgba(255,255,255,.20); border-color: #fff; }
+
+    /* ── Showcase (banda imatge + text) ───────────────────── */
+    .pp-showcase { max-width: 1040px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+    .pp-showcase__inner { display: grid; gap: 2rem; grid-template-columns: 1fr; align-items: center; }
+    @media (min-width: 820px) {
+      .pp-showcase__inner { grid-template-columns: 1.05fr 1fr; gap: 3rem; }
+      .pp-showcase--reverse .pp-showcase__media { order: 2; }
+    }
+    .pp-showcase__eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); margin-bottom: .75rem; }
+    .pp-showcase__title { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 1rem; color: var(--color-tinta, #0A1F44); }
+    .pp-showcase__body { font-size: 15px; color: var(--color-gris-500, #6B7280); line-height: 1.7; margin: 0 0 1.25rem; }
+    .pp-showcase__body strong { color: var(--color-tinta, #0A1F44); font-weight: 600; }
+    .pp-showcase__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .5rem; }
+    .pp-showcase__list li { display: flex; align-items: flex-start; gap: .5rem; font-size: 14px; color: var(--color-tinta, #0A1F44); line-height: 1.5; }
+    .pp-showcase__list li::before { content: '✓'; color: var(--color-verde-dark, #00A865); font-weight: 700; flex-shrink: 0; }
+
+    .pp-showcase__media { position: relative; border-radius: var(--pp-r-xl, 20px); overflow: hidden; min-height: 220px; box-shadow: var(--pp-sh-md, 0 12px 32px rgba(10,31,68,.10)); background: linear-gradient(135deg, #0A1F44, #00A865); display: flex; align-items: center; justify-content: center; }
+    .pp-showcase__media--card { background: linear-gradient(135deg, #1A3060, #0A6B45); }
+    .pp-showcase__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35rem; padding: 2rem; text-align: center; color: rgba(255,255,255,.7); pointer-events: none; }
+    .pp-showcase__placeholder strong { color: #fff; font-family: var(--font-serif); font-size: 1.1rem; font-weight: 400; }
+    .pp-showcase__placeholder small { font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; opacity: .65; }
+    .pp-showcase__img { position: relative; z-index: 1; width: 100%; height: auto; display: block; }
+    .pp-showcase__img--card { max-width: 380px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .pp-browser { position: relative; z-index: 1; width: 100%; background: #fff; }
+    .pp-browser__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #F1F3F5; border-bottom: 1px solid var(--color-gris-200, #E5E7EB); }
+    .pp-browser__dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD2D9; }
+    .pp-browser__url { margin-left: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 6px; padding: 3px 10px; }
+    .pp-browser__img { width: 100%; height: auto; display: block; }
+
     /* ── Section headings ─────────────────────────────────── */
     .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
     .pp-section-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); text-align: center; margin-bottom: 1rem; }
@@ -148,14 +196,18 @@
 </header>
 
 <!-- ─────────── Hero ─────────── -->
-<section class="pp-hero">
-  <div class="pp-hero__eyebrow">Clubs · escoles · seccions de futbol base</div>
-  <h1 class="pp-hero__h1">Nova temporada.<br><em>Golejada</em> d'inscripcions, zero caos.</h1>
-  <p class="pp-hero__sub">Obre les inscripcions del teu club i comparteix un enllaç. Les famílies omplen la fitxa,
-  signen el consentiment i paguen la quota <strong>des del mòbil</strong>. Tu només has de fer els equips.</p>
-  <div class="pp-hero__cta">
-    <a href="#contacte" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Demana'ns una demo →</a>
-    <a href="#com" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Mira com funciona</a>
+<!-- Foto de fons: /assets/landing/clubes/hero-celebracion.jpg (definida a
+     .pp-hero--photo). Si no existeix, el degradat de marca la substitueix. -->
+<section class="pp-hero pp-hero--photo">
+  <div class="pp-hero__wrap">
+    <div class="pp-hero__eyebrow">Clubs · escoles · seccions de futbol base</div>
+    <h1 class="pp-hero__h1">Nova temporada.<br><em>Golejada</em> d'inscripcions, zero caos.</h1>
+    <p class="pp-hero__sub">Obre les inscripcions del teu club i comparteix un enllaç. Les famílies omplen la fitxa,
+    signen el consentiment i paguen la quota <strong>des del mòbil</strong>. Tu només has de fer els equips.</p>
+    <div class="pp-hero__cta">
+      <a href="#contacte" class="pp-btn pp-btn--primary pp-btn--lg pp-btn--pill">Demana'ns una demo →</a>
+      <a href="#com" class="pp-btn pp-btn--ghost pp-btn--lg pp-btn--pill">Mira com funciona</a>
+    </div>
   </div>
 </section>
 
@@ -210,6 +262,54 @@
       <div class="pp-step__n" aria-hidden="true">✅</div>
       <h3 class="pp-step__title">Amb els menors, tot en regla</h3>
       <p class="pp-step__body">Consentiment parental, dades xifrades i la fitxa del menor <strong>mai pública</strong> sense permís. Compliment de la <strong>LOPDGDD</strong> de sèrie, sense que hagis d'entendre de lleis.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: carnet PVC + NFC ─────────── -->
+<!-- Imatge: /assets/landing/clubes/carnet-pvc.png. onerror amaga l'<img>. -->
+<section class="pp-showcase">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media pp-showcase__media--card">
+      <div class="pp-showcase__placeholder"><strong>Carnet del jugador</strong><small>carnet-pvc.png</small></div>
+      <img class="pp-showcase__img pp-showcase__img--card" src="/assets/landing/clubes/carnet-pvc.png" alt="Carnet de jugador en PVC amb escut del club, foto, dorsal i xip NFC" loading="lazy" onerror="this.style.display='none'">
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">Carnet físic PVC + NFC</div>
+      <h2 class="pp-showcase__title">Un carnet dels de debò, amb l'escut del teu club</h2>
+      <p class="pp-showcase__body">Targeta rígida de PVC, com una bancària, amb <strong>xip NFC</strong>: el nen acosta el mòbil i s'obre la seva fitxa. La foto, el dorsal, la categoria i el teu escut. <strong>Com els dels grans.</strong></p>
+      <ul class="pp-showcase__list">
+        <li>QR + NFC que obren la fitxa del jugador</li>
+        <li>Booklet PDF de tota la plantilla, llest per a impremta</li>
+        <li>12 € per jugador · 6 € la renovació anual</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: web del club ─────────── -->
+<!-- Imatge: /assets/landing/clubes/web-club.png (screenshot d'una /e/:slug). -->
+<section class="pp-showcase pp-showcase--reverse">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media">
+      <div class="pp-showcase__placeholder"><strong>El web del teu club</strong><small>web-club.png</small></div>
+      <div class="pp-browser">
+        <div class="pp-browser__bar">
+          <span class="pp-browser__dot"></span><span class="pp-browser__dot"></span><span class="pp-browser__dot"></span>
+          <span class="pp-browser__url">perfilapro.es/e/el-teu-club</span>
+        </div>
+        <img class="pp-browser__img" src="/assets/landing/clubes/web-club.png" alt="Pàgina web del club amb el seu escut, colors i el llistat de la plantilla" loading="lazy" onerror="this.closest('.pp-browser').style.display='none'">
+      </div>
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">El web del teu club</div>
+      <h2 class="pp-showcase__title">Una pàgina pròpia que projecta un club que va de debò</h2>
+      <p class="pp-showcase__body">El teu <strong>escut</strong>, els teus <strong>colors</strong> i el llistat de la teva plantilla en una URL que comparteixes per xarxes o poses al cartell. Sense dissenyador, sense manteniment: s'actualitza sola amb cada inscripció.</p>
+      <ul class="pp-showcase__list">
+        <li>Branding del club: escut, color i nom</li>
+        <li>Plantilla sempre al dia, sense tocar res</li>
+        <li>Una URL per compartir a qualsevol lloc</li>
+      </ul>
     </div>
   </div>
 </section>
