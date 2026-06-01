@@ -7,6 +7,6 @@ pantalla y sin riesgo LOPD.
 
 | Archivo | Dónde | Formato | Notas |
 |---|---|---|---|
-| `hero-celebracion.jpg` | Fondo del hero | JPG ~1600×900, < 300 KB | Celebración / equipo. Lleva scrim oscuro encima: que tenga zonas no demasiado claras detrás del texto. **IA o stock con derechos — NO niños reales identificables sin cesión de imagen.** Mientras no exista, el hero usa un degradado de marca (fallback CSS). |
+| `hero-celebracion.png` | Fondo del hero | PNG ~1600×900 | Celebración / equipo. Lleva scrim oscuro encima: que tenga zonas no demasiado claras detrás del texto. **IA o stock con derechos — NO niños reales identificables sin cesión de imagen.** Mientras no exista, el hero usa un degradado de marca (fallback CSS). Conviene optimizar el peso (PNG de hero puede pesar varios MB). |
 
 Optimiza el peso (squoosh / tinypng) antes de subir: es una landing pública.
