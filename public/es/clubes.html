@@ -99,6 +99,36 @@
     .pp-browser__url { margin-left: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--color-gris-500, #6B7280); background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 6px; padding: 3px 10px; }
     .pp-browser__img { width: 100%; height: auto; display: block; }
 
+    /* ── Mockup carnet PVC (réplica del PDF buildPlayerCardPVC) ── */
+    /* Proporción ISO 7810 85×55mm. --club controla el color del club. */
+    .pp-carnet { position: relative; z-index: 1; --club: #1A3A7A; width: 340px; max-width: 86%; aspect-ratio: 85 / 55; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 16px 40px rgba(10,31,68,.28); font-family: var(--font-sans); }
+    .pp-carnet__strip { height: 22%; background: var(--club); display: flex; align-items: center; gap: 7px; padding: 0 9px; }
+    .pp-carnet__shield { width: 22px; height: 22px; border-radius: 4px; background: #fff; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: 13px; color: var(--club); flex-shrink: 0; }
+    .pp-carnet__club { color: #fff; font-weight: 600; font-size: 11px; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pp-carnet__body { position: relative; height: 78%; padding: 9px; box-sizing: border-box; }
+    .pp-carnet__photo { position: absolute; top: 9px; left: 9px; width: 30%; height: 64%; border-radius: 5px; background: linear-gradient(160deg, #E5E7EB, #CBD2D9); display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+    .pp-carnet__photo svg { width: 84%; height: 84%; opacity: .55; }
+    .pp-carnet__dorsal { position: absolute; top: 1px; right: 9px; font-family: var(--font-sans); font-weight: 800; font-size: 46px; line-height: 1; color: var(--club); }
+    .pp-carnet__name { position: absolute; left: calc(30% + 18px); bottom: 30%; font-weight: 700; font-size: 14px; color: var(--color-tinta, #0A1F44); }
+    .pp-carnet__sub { position: absolute; left: calc(30% + 18px); bottom: 23%; font-size: 9px; color: var(--color-gris-500, #6B7280); }
+    .pp-carnet__qr { position: absolute; right: 9px; bottom: 8px; width: 38px; height: 38px; border-radius: 4px; }
+    .pp-carnet__url { position: absolute; left: 9px; bottom: 4px; font-family: var(--font-mono); font-size: 6px; color: var(--color-gris-500, #6B7280); }
+    .pp-carnet__nfc { position: absolute; right: 52px; bottom: 13px; font-size: 8px; color: var(--color-gris-500, #6B7280); display: flex; align-items: center; gap: 3px; }
+
+    /* ── Mockup mini-web del club (réplica de /e/:slug) ── */
+    .pp-clubsite { --club: #1A3A7A; background: #fff; font-family: var(--font-sans); }
+    .pp-clubsite__hero { background: var(--club); padding: 16px 16px 18px; text-align: center; color: #fff; }
+    .pp-clubsite__shield { width: 38px; height: 38px; border-radius: 8px; background: #fff; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-style: italic; font-weight: 600; font-size: 22px; color: var(--club); }
+    .pp-clubsite__name { font-family: var(--font-serif); font-size: 17px; font-weight: 400; margin: 0 0 2px; }
+    .pp-clubsite__tag { font-size: 10px; opacity: .82; margin: 0; }
+    .pp-clubsite__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px; }
+    .pp-clubsite__card { border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; overflow: hidden; }
+    .pp-clubsite__photo { aspect-ratio: 1 / 1; background: linear-gradient(160deg, #E5E7EB, #CBD2D9); display: flex; align-items: flex-end; justify-content: center; }
+    .pp-clubsite__photo svg { width: 78%; height: 78%; opacity: .5; }
+    .pp-clubsite__cardname { font-size: 9px; font-weight: 600; color: var(--color-tinta, #0A1F44); padding: 5px 6px 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pp-clubsite__role { font-size: 8px; color: var(--color-gris-500, #6B7280); padding: 0 6px 6px; }
+    @media (max-width: 819px) { .pp-carnet { margin: 1.5rem auto; } }
+
     /* ── Section headings ─────────────────────────────────── */
     .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
     .pp-section-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-verde-dark, #00A865); text-align: center; margin-bottom: 1rem; }
@@ -275,13 +305,28 @@
 </section>
 
 <!-- ─────────── Showcase: carnet PVC + NFC ─────────── -->
-<!-- Imagen: /assets/landing/clubes/carnet-pvc.png (producto en mano o sobre
-     fondo neutro). onerror oculta el <img> y deja el placeholder + degradado. -->
+<!-- Mockup CSS fiel al PDF que genera renderPlayerCard (datos de muestra
+     ficticios). Sin foto, sin riesgo LOPD. --club = color del club demo. -->
 <section class="pp-showcase">
   <div class="pp-showcase__inner">
     <div class="pp-showcase__media pp-showcase__media--card">
-      <div class="pp-showcase__placeholder"><strong>Carnet del jugador</strong><small>carnet-pvc.png</small></div>
-      <img class="pp-showcase__img pp-showcase__img--card" src="/assets/landing/clubes/carnet-pvc.png" alt="Carnet de jugador en PVC con escudo del club, foto, dorsal y chip NFC" loading="lazy" onerror="this.style.display='none'">
+      <div class="pp-carnet" role="img" aria-label="Carnet de jugador en PVC con escudo del club, dorsal 10, categoría Alevín, y código QR a su ficha">
+        <div class="pp-carnet__strip">
+          <span class="pp-carnet__shield">P</span>
+          <span class="pp-carnet__club">CF DEMO · FÚTBOL BASE</span>
+        </div>
+        <div class="pp-carnet__body">
+          <div class="pp-carnet__photo">
+            <svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg>
+          </div>
+          <div class="pp-carnet__dorsal">10</div>
+          <div class="pp-carnet__name">Marc Soler</div>
+          <div class="pp-carnet__sub">Alevín A · Temporada 25/26</div>
+          <div class="pp-carnet__nfc">📶 NFC</div>
+          <img class="pp-carnet__qr" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='%23fff'/%3E%3Cpath fill='%230A1F44' d='M0 0h7v7h-7zM2 2v3h3v-3zM8 0h1v1h-1zM10 0h1v2h-1zM12 0h1v1h-1zM14 0h2v1h-2zM22 0h7v7h-7zM24 2v3h3v-3zM9 1h1v1h-1zM13 1h1v2h-1zM16 1h1v1h-1zM8 2h1v1h-1zM10 2h2v1h-2zM15 2h1v2h-1zM17 2h1v1h-1zM9 3h2v1h-2zM12 3h1v1h-1zM8 4h1v1h-1zM11 4h1v2h-1zM13 4h2v1h-2zM16 4h2v1h-2zM10 5h1v1h-1zM14 5h1v1h-1zM17 5h1v1h-1zM8 6h1v1h-1zM12 6h2v1h-2zM15 6h1v1h-1zM0 8h1v2h-1zM2 8h2v1h-2zM5 8h2v1h-2zM0 22h7v7h-7zM2 24v3h3v-3zM9 8h1v1h-1zM18 8h1v1h-1zM20 8h2v1h-2zM23 8h1v1h-1zM25 8h1v2h-1zM27 8h2v1h-2zM4 9h1v2h-1zM6 9h1v1h-1zM10 9h2v1h-2zM13 9h1v1h-1zM16 9h1v2h-1zM19 9h1v1h-1zM22 9h1v1h-1zM24 9h1v1h-1zM1 10h2v1h-2zM8 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM20 10h2v1h-2zM23 10h1v2h-1zM27 10h2v1h-2zM0 11h1v1h-1zM5 11h2v1h-2zM9 11h2v1h-2zM13 11h2v1h-2zM18 11h1v1h-1zM26 11h1v1h-1zM3 12h1v2h-1zM7 12h2v1h-2zM11 12h1v1h-1zM15 12h2v1h-2zM19 12h2v1h-2zM22 12h1v1h-1zM24 12h2v1h-2zM8 13h1v1h-1zM10 13h1v1h-1zM13 13h1v1h-1zM17 13h1v2h-1zM21 13h1v1h-1zM27 13h1v1h-1zM0 14h2v1h-2zM5 14h1v1h-1zM9 14h2v1h-2zM12 14h1v1h-1zM14 14h2v1h-2zM19 14h1v1h-1zM23 14h2v1h-2zM26 14h1v1h-1zM28 14h1v2h-1zM4 15h1v1h-1zM7 15h1v2h-1zM11 15h2v1h-2zM16 15h1v1h-1zM20 15h2v1h-2zM24 15h1v1h-1zM1 16h2v1h-2zM6 16h1v1h-1zM9 16h1v2h-1zM13 16h2v1h-2zM18 16h2v1h-2zM22 16h2v1h-2zM26 16h2v1h-2zM8 17h1v1h-1zM12 17h1v1h-1zM15 17h1v2h-1zM21 17h1v2h-1zM25 17h1v1h-1zM27 17h1v2h-1zM10 18h2v1h-2zM13 18h1v1h-1zM17 18h2v1h-2zM20 18h1v1h-1zM23 18h2v1h-2zM8 19h1v2h-1zM11 19h1v1h-1zM14 19h1v1h-1zM16 19h1v1h-1zM19 19h1v2h-1zM22 19h1v1h-1zM26 19h1v1h-1zM28 19h1v1h-1zM9 20h1v1h-1zM12 20h2v1h-2zM15 20h1v1h-1zM17 20h2v1h-2zM24 20h2v1h-2zM27 20h1v1h-1zM10 21h1v1h-1zM13 21h1v1h-1zM16 21h1v1h-1zM18 21h1v1h-1zM20 21h2v1h-2zM23 21h1v1h-1zM25 21h2v1h-2zM28 21h1v1h-1zM9 22h2v1h-2zM12 22h1v1h-1zM14 22h3v1h-3zM18 22h1v1h-1zM20 22h1v1h-1zM22 22h2v1h-2zM25 22h1v1h-1zM8 23h1v1h-1zM11 23h1v2h-1zM15 23h1v1h-1zM17 23h1v1h-1zM19 23h2v1h-2zM24 23h1v1h-1zM26 23h2v1h-2zM9 24h1v1h-1zM13 24h2v1h-2zM16 24h1v2h-1zM18 24h1v1h-1zM22 24h1v1h-1zM25 24h1v1h-1zM8 25h1v2h-1zM10 25h1v1h-1zM14 25h1v1h-1zM19 25h1v1h-1zM21 25h2v1h-2zM24 25h1v2h-1zM27 25h1v1h-1zM12 26h1v1h-1zM15 26h1v1h-1zM17 26h2v1h-2zM20 26h1v2h-1zM26 26h1v1h-1zM28 26h1v1h-1zM9 27h2v1h-2zM13 27h1v1h-1zM16 27h1v1h-1zM22 27h2v1h-2zM25 27h1v1h-1zM10 28h1v1h-1zM14 28h2v1h-2zM18 28h1v1h-1zM21 28h1v1h-1zM27 28h2v1h-2z'/%3E%3C/svg%3E" alt="">
+          <div class="pp-carnet__url">perfilapro.es/c/p-marcsoler</div>
+        </div>
+      </div>
     </div>
     <div class="pp-showcase__text">
       <div class="pp-showcase__eyebrow">Carnet físico PVC + NFC</div>
@@ -297,18 +342,31 @@
 </section>
 
 <!-- ─────────── Showcase: web del club ─────────── -->
-<!-- Imagen: /assets/landing/clubes/web-club.png (screenshot de una /e/:slug
-     branded). Va dentro de un mockup de navegador. -->
+<!-- Mockup CSS de una /e/:slug branded (réplica de org.js) dentro de un
+     marco de navegador. Datos de muestra ficticios. -->
 <section class="pp-showcase pp-showcase--reverse">
   <div class="pp-showcase__inner">
     <div class="pp-showcase__media">
-      <div class="pp-showcase__placeholder"><strong>La web de tu club</strong><small>web-club.png</small></div>
       <div class="pp-browser">
         <div class="pp-browser__bar">
           <span class="pp-browser__dot"></span><span class="pp-browser__dot"></span><span class="pp-browser__dot"></span>
-          <span class="pp-browser__url">perfilapro.es/e/tu-club</span>
+          <span class="pp-browser__url">perfilapro.es/e/cf-demo</span>
         </div>
-        <img class="pp-browser__img" src="/assets/landing/clubes/web-club.png" alt="Página web del club con su escudo, colores y el listado de la plantilla" loading="lazy" onerror="this.closest('.pp-browser').style.display='none'">
+        <div class="pp-clubsite" role="img" aria-label="Página web del club CF Demo con su escudo, colores y el listado de la plantilla">
+          <div class="pp-clubsite__hero">
+            <div class="pp-clubsite__shield">P</div>
+            <p class="pp-clubsite__name">CF Demo</p>
+            <p class="pp-clubsite__tag">Fútbol base · desde 1998</p>
+          </div>
+          <div class="pp-clubsite__grid">
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Marc Soler</div><div class="pp-clubsite__role">Alevín A · 10</div></div>
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Júlia Roca</div><div class="pp-clubsite__role">Infantil B · 7</div></div>
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Hugo Marín</div><div class="pp-clubsite__role">Cadete A · 4</div></div>
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Aitana Gil</div><div class="pp-clubsite__role">Alevín A · 9</div></div>
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Pol Vidal</div><div class="pp-clubsite__role">Infantil A · 11</div></div>
+            <div class="pp-clubsite__card"><div class="pp-clubsite__photo"><svg viewBox="0 0 24 24" fill="#94A3B8"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 22c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8z"/></svg></div><div class="pp-clubsite__cardname">Nora Pons</div><div class="pp-clubsite__role">Cadete B · 6</div></div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="pp-showcase__text">
