@@ -21,7 +21,7 @@ async function purge(db, { graceDays = GRACE_DAYS, now = new Date() } = {}) {
 
   const { data: candidates, error: selectError } = await db
     .from('cards')
-    .select('slug')
+    .select('slug, stripe_session_id')
     .not('deleted_at', 'is', null)
     .lt('deleted_at', cutoff);
 
@@ -33,7 +33,7 @@ async function purge(db, { graceDays = GRACE_DAYS, now = new Date() } = {}) {
   let purged = 0;
   let errors = 0;
 
-  for (const { slug } of candidates || []) {
+  for (const { slug, stripe_session_id } of candidates || []) {
     const { error: visitsError } = await db.from('visits').delete().eq('slug', slug);
     if (visitsError) {
       console.error(`purge-deleted [${slug}]: visits failed:`, visitsError.message);
@@ -41,11 +41,18 @@ async function purge(db, { graceDays = GRACE_DAYS, now = new Date() } = {}) {
       continue;
     }
 
-    const { error: facturasError } = await db.from('facturas').delete().eq('slug', slug);
-    if (facturasError) {
-      console.error(`purge-deleted [${slug}]: facturas failed:`, facturasError.message);
-      errors++;
-      continue;
+    // Las facturas se enlazan por stripe_session_id (la tabla no tiene
+    // columna `slug`). Las cards gratuitas/promo no tienen factura → se omite.
+    if (stripe_session_id) {
+      const { error: facturasError } = await db
+        .from('facturas')
+        .delete()
+        .eq('stripe_session_id', stripe_session_id);
+      if (facturasError) {
+        console.error(`purge-deleted [${slug}]: facturas failed:`, facturasError.message);
+        errors++;
+        continue;
+      }
     }
 
     const { error: cardError } = await db.from('cards').delete().eq('slug', slug);

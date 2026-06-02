@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler } from '../netlify/functions/lab-gemini.js';
+const { _resetRateLimit } = require('../netlify/functions/lib/rate-limit.js');
 
 const mockFetch = vi.fn();
 const mockGetEnv = vi.fn();
@@ -12,6 +13,7 @@ function buildEvent(body, method = 'POST') {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  _resetRateLimit();
   mockGetEnv.mockImplementation((k) => {
     if (k === 'ADMIN_PASSWORD') return 'secret';
     if (k === 'GEMINI_API_KEY') return 'gem-key';
@@ -115,5 +117,17 @@ describe('lab-gemini handler', () => {
     const res = await handler(buildEvent({ password: 'secret', prompt: 'x' }));
     expect(res.statusCode).toBe(502);
     expect(JSON.parse(res.body).error).toBe('network_error');
+  });
+
+  it('aplica rate-limit (20 req / 10 min) antes de la auth', async () => {
+    // 20 intentos (con password incorrecta → 401) consumen la cuota.
+    for (let i = 0; i < 20; i++) {
+      const res = await handler(buildEvent({ password: 'nope', prompt: 'x' }));
+      expect(res.statusCode).toBe(401);
+    }
+    // El 21º se bloquea con 429 sin llegar a comprobar la contraseña.
+    const blocked = await handler(buildEvent({ password: 'nope', prompt: 'x' }));
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.headers['Retry-After']).toBeDefined();
   });
 });

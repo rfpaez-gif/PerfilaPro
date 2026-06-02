@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { resolveJwtSecret } = require('./lib/jwt-secret');
 
 const MAX_FAILURES = 10;
 const WINDOW_MS = 15 * 60 * 1000;
@@ -11,7 +12,7 @@ const SESSION_TTL_MIN = Math.max(5, parseInt(process.env.ADMIN_SESSION_TTL_MINUT
 const SESSION_PURPOSE = 'admin-session';
 
 function adminJwtSecret() {
-  return process.env.ADMIN_JWT_SECRET || process.env.AGENT_JWT_SECRET || 'changeme';
+  return resolveJwtSecret('admin-auth', 'ADMIN_JWT_SECRET', 'AGENT_JWT_SECRET');
 }
 
 function signAdminSession() {

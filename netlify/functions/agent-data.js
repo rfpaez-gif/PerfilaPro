@@ -1,12 +1,13 @@
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
+const { resolveJwtSecret } = require('./lib/jwt-secret');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-const JWT_SECRET = process.env.AGENT_JWT_SECRET || 'changeme';
+const jwtSecret = () => resolveJwtSecret('agent-data', 'AGENT_JWT_SECRET');
 
 const PLAN_PRICES = { base: 9, pro: 19, renovacion: 5 };
 
@@ -15,7 +16,7 @@ function verifyToken(event) {
   const token = auth.replace(/^Bearer\s+/i, '');
   if (!token) return null;
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, jwtSecret());
   } catch {
     return null;
   }

@@ -49,13 +49,22 @@ Sin esto no se puede operar legal o comercialmente. Ordenados por dependencia/ur
 
 ### 1.C · Seguridad y GDPR transversales (baratos, hacer ya)
 
-| ID | Qué | Por qué importa | Archivos | Esf |
-|----|-----|-----------------|----------|-----|
-| **S1** | Fallback de secreto JWT **`'changeme'`** en 5 sitios | Si una env var de secreto no está en prod, los JWT (agente, panel B2B, **panel padre de menores**, sesión admin) se firman con un secreto público → forja de tokens y suplantación total. | `agent-auth.js:10`, `agent-data.js:9`, `lib/panel-auth.js:35,97`, `admin-auth.js:14` (fix: error duro en boot si falta secreto en prod) | S |
-| **S2** | GDPR roto por bug de schema: `export-data` y `purge-deleted` filtran `facturas` por columnas **inexistentes** (`slug`/`numero`) | La tabla usa `stripe_session_id`/`numero_factura` (verificado contra el insert en `stripe-webhook.js:606`). `export-data` no exporta facturas nunca (derecho de portabilidad); `purge-deleted` falla el delete y **la card nunca se hard-borra** (derecho de supresión nunca completa). Los tests no lo capturan: están escritos contra el schema **documentado**, no el real. | `export-data.js:62-65`, `purge-deleted.js:44` (fix: filtrar por `stripe_session_id`) | S |
-| **S3** | Sin headers de seguridad globales (CSP, HSTS, X-Frame-Options, X-Content-Type-Options) | Sitio con pagos y PII de menores sin baseline. `grep [[headers]]` en `netlify.toml` → 0. | `netlify.toml` (añadir bloque `[[headers]]`) | S |
-| **S4** | `lab-gemini` vivo en producción: **sin rate-limit**, `ADMIN_PASSWORD` comparada inline (fuerza-bruteable, sin lockout) y persistida en **localStorage** del navegador | Endpoint que quema dinero (Gemini de pago) por request sin throttle y expone la password que protege todo el admin. No enlazado desde navegación pero la ruta `/api/lab-gemini` está viva. | `lab-gemini.js:17-92,30-33`, `public/lab-gemini.html:124,149`, `public/preview-gemini-3.html`, ruta `netlify.toml:481` | S (borrar) / M (endurecer) |
-| **S5** | Redirect muerto `/api/save-card` → función inexistente | Devuelve 404 de función. Ruido/confusión. | `netlify.toml:147-150` (borrar) | S |
+> **✅ Hito 0 RESUELTO (2026-06-02, rama `claude/perfilapro-launch-audit-1MOw3`).** Los 5 puntos de abajo están corregidos y la suite sigue verde (1460 tests). Detalle de la implementación al pie de la tabla.
+
+| ID | Qué | Por qué importa | Archivos | Esf | Estado |
+|----|-----|-----------------|----------|-----|--------|
+| **S1** | Fallback de secreto JWT **`'changeme'`** en 5 sitios | Si una env var de secreto no está en prod, los JWT (agente, panel B2B, **panel padre de menores**, sesión admin) se firman con un secreto público → forja de tokens y suplantación total. | `agent-auth.js:10`, `agent-data.js:9`, `lib/panel-auth.js:35,97`, `admin-auth.js:14` | S | ✅ |
+| **S2** | GDPR roto por bug de schema: `export-data` y `purge-deleted` filtran `facturas` por columnas **inexistentes** (`slug`/`numero`) | La tabla usa `stripe_session_id`/`numero_factura` (verificado contra el insert en `stripe-webhook.js:606`). `export-data` no exporta facturas nunca (derecho de portabilidad); `purge-deleted` falla el delete y **la card nunca se hard-borra** (derecho de supresión nunca completa). Los tests no lo capturan: están escritos contra el schema **documentado**, no el real. | `export-data.js:62-65`, `purge-deleted.js:44` | S | ✅ |
+| **S3** | Sin headers de seguridad globales (HSTS, X-Frame-Options, X-Content-Type-Options) | Sitio con pagos y PII de menores sin baseline. `grep [[headers]]` en `netlify.toml` → 0. | `netlify.toml` | S | ✅ |
+| **S4** | `lab-gemini` vivo en producción: **sin rate-limit**, `ADMIN_PASSWORD` comparada inline (fuerza-bruteable, sin lockout) y persistida en **localStorage** del navegador | Endpoint que quema dinero (Gemini de pago) por request sin throttle y expone la password que protege todo el admin. No enlazado desde navegación pero la ruta `/api/lab-gemini` está viva. | `lab-gemini.js`, `public/lab-gemini.html:124,149` | S (borrar) / M (endurecer) | ✅ parcial |
+| **S5** | Redirect muerto `/api/save-card` → función inexistente | Devuelve 404 de función. Ruido/confusión. | `netlify.toml:147-150` | S | ✅ |
+
+**Implementación (Hito 0):**
+- **S1** — nuevo helper `lib/jwt-secret.js` (`resolveJwtSecret`) que lanza si ninguna env var candidata está configurada (fail-closed). Aplicado a los 5 sitios. `agent-auth`/`agent-data` pasados a resolución perezosa para no lanzar en import.
+- **S2** — `export-data` filtra facturas por `card.stripe_session_id` (omite la consulta para cards free/promo sin session id); `purge-deleted` selecciona `stripe_session_id` y borra facturas por esa columna. Tests reescritos contra el schema **real** + casos nuevos para el guard de cards sin factura.
+- **S3** — bloque `[[headers]]` global en `netlify.toml` (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS, Permissions-Policy). **CSP enforcing NO incluida a propósito** — rompería scripts inline/Stripe/PostHog; queda como tarea de afinado aparte (M, no S).
+- **S4** — **endurecido, no borrado** (es la herramienta interna del founder): rate-limit 20 req/10 min/IP antes de la auth, que cierra el vector remoto explotable (fuerza bruta del password + quema de dinero). **Residual consciente:** la `ADMIN_PASSWORD` sigue en `localStorage` del navegador del founder (`lab-gemini.html`) — exposición solo en su propio dispositivo; migrar a sesión JWT admin o borrar el lab si ya no se usa queda como decisión del founder.
+- **S5** — redirect muerto eliminado de `netlify.toml`.
 
 ---
 
@@ -118,12 +127,12 @@ El producto puede lanzarse **gratuito (captación, wedge B2C→B2B)** mucho ante
 
 ### Hito 0 — Antes de cualquier exposición pública (días, todo S salvo Q2/Q6)
 Cerrar la seguridad y el GDPR baratos. Nada aquí depende de Hacienda ni de Stripe live.
-1. **S1** — eliminar fallback `'changeme'` (forja de JWT). *Lo más urgente.*
-2. **S2** — arreglar schema GDPR en `export-data`/`purge-deleted` (filtrar por `stripe_session_id`).
-3. **S3** — añadir headers de seguridad globales en `netlify.toml`.
-4. **S4** — borrar o endurecer `lab-gemini`.
-5. **S5** — borrar redirect muerto `/api/save-card`.
-6. **Q1** (PostHog en privacidad), **Q2** (RLS 3 tablas), **Q3** (`.env.example`).
+1. ✅ **S1** — eliminar fallback `'changeme'` (forja de JWT). *Hecho.*
+2. ✅ **S2** — arreglar schema GDPR en `export-data`/`purge-deleted` (filtrar por `stripe_session_id`). *Hecho.*
+3. ✅ **S3** — añadir headers de seguridad globales en `netlify.toml`. *Hecho (CSP afinada pendiente).*
+4. ✅ **S4** — `lab-gemini` endurecido con rate-limit (residual localStorage anotado). *Hecho.*
+5. ✅ **S5** — borrar redirect muerto `/api/save-card`. *Hecho.*
+6. **Q1** (PostHog en privacidad), **Q2** (RLS 3 tablas), **Q3** (`.env.example`). *Pendientes (no son seguridad/GDPR).*
 
 ### Hito 1 — Lanzamiento del producto gratuito (B2C captación)
 Ya operable con Hito 0 hecho. `WEB_FUNNEL_FREE_ACTIVE=1` evita el bloqueante fiscal.

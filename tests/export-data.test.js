@@ -11,6 +11,7 @@ const baseCard = {
   nombre: 'Ana López',
   email: 'ana@example.com',
   whatsapp: '34612345678',
+  stripe_session_id: 'cs_test_ana',
   edit_token: VALID_TOKEN,
   edit_token_expires_at: FUTURE,
 };
@@ -83,7 +84,7 @@ describe('export-data handler', () => {
 
   it('devuelve 200 con payload sin edit_token cuando todo es correcto', async () => {
     const visits   = [{ visited_at: '2026-01-01T10:00:00Z' }];
-    const facturas = [{ numero: 'FAC-2026-0001', created_at: '2026-01-01T10:00:00Z' }];
+    const facturas = [{ numero_factura: 'FAC-2026-0001', fecha: '2026-01-01', total: 19 }];
     handler = makeHandler(buildDb({ visits, facturas }));
     const res = await handler(buildEvent());
     expect(res.statusCode).toBe(200);
@@ -95,6 +96,17 @@ describe('export-data handler', () => {
     expect(payload.visits).toEqual(visits);
     expect(payload.facturas).toEqual(facturas);
     expect(payload.exported_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('omite la consulta de facturas si la card no tiene stripe_session_id (free/promo)', async () => {
+    const db = buildDb({ card: { ...baseCard, stripe_session_id: null } });
+    handler = makeHandler(db);
+    const res = await handler(buildEvent());
+    expect(res.statusCode).toBe(200);
+    const payload = JSON.parse(res.body);
+    expect(payload.facturas).toEqual([]);
+    // La tabla facturas no debe consultarse para una card sin session id.
+    expect(db.from).not.toHaveBeenCalledWith('facturas');
   });
 
   it('devuelve 429 al superar el límite por IP (10 requests / 10 min)', async () => {

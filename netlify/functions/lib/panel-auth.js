@@ -14,6 +14,7 @@
 // en las llamadas a /api/org-panel.
 
 const jwt = require('jsonwebtoken');
+const { resolveJwtSecret } = require('./jwt-secret');
 
 const TOKEN_TTL = '7d';
 const FOUNDER_TOKEN_TTL = '1h';
@@ -30,9 +31,7 @@ const PURPOSE = 'org-panel';
 const PARENT_PURPOSE = 'parent-panel';
 
 function panelJwtSecret() {
-  return process.env.ORG_PANEL_JWT_SECRET
-    || process.env.AGENT_JWT_SECRET
-    || 'changeme';
+  return resolveJwtSecret('panel-auth (org)', 'ORG_PANEL_JWT_SECRET', 'AGENT_JWT_SECRET');
 }
 
 // Firma un JWT del panel.
@@ -91,10 +90,12 @@ function unauthorizedResponse() {
 // --- Parent panel (Cantera) ---------------------------------------
 
 function parentPanelJwtSecret() {
-  return process.env.PARENT_PANEL_JWT_SECRET
-    || process.env.ORG_PANEL_JWT_SECRET
-    || process.env.AGENT_JWT_SECRET
-    || 'changeme';
+  return resolveJwtSecret(
+    'panel-auth (parent)',
+    'PARENT_PANEL_JWT_SECRET',
+    'ORG_PANEL_JWT_SECRET',
+    'AGENT_JWT_SECRET'
+  );
 }
 
 // Firma un JWT del panel del padre. El email se normaliza (lower+trim)

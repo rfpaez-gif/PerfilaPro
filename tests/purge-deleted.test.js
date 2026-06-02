@@ -58,7 +58,10 @@ describe('purge-deleted', () => {
   });
 
   it('purge: borra visits → facturas → card en orden por cada candidate', async () => {
-    const db = buildDb({ candidates: [{ slug: 'foo' }, { slug: 'bar' }] });
+    const db = buildDb({ candidates: [
+      { slug: 'foo', stripe_session_id: 'cs_foo' },
+      { slug: 'bar', stripe_session_id: 'cs_bar' },
+    ] });
     const result = await purge(db);
     expect(result).toEqual({ purged: 2, errors: 0 });
 
@@ -66,19 +69,33 @@ describe('purge-deleted', () => {
     expect(db._deletes.facturas).toHaveBeenCalledTimes(2);
     expect(db._deletes.cards).toHaveBeenCalledTimes(2);
     expect(db._deletes.visits).toHaveBeenCalledWith('slug', 'foo');
+    // Las facturas se borran por stripe_session_id, no por slug.
+    expect(db._deletes.facturas).toHaveBeenCalledWith('stripe_session_id', 'cs_foo');
     expect(db._deletes.cards).toHaveBeenCalledWith('slug', 'bar');
+  });
+
+  it('purge: omite el borrado de facturas si la card no tiene stripe_session_id', async () => {
+    const db = buildDb({ candidates: [{ slug: 'free', stripe_session_id: null }] });
+    const result = await purge(db);
+    expect(result).toEqual({ purged: 1, errors: 0 });
+    expect(db._deletes.visits).toHaveBeenCalledWith('slug', 'free');
+    expect(db._deletes.facturas).not.toHaveBeenCalled();
+    expect(db._deletes.cards).toHaveBeenCalledWith('slug', 'free');
   });
 
   it('purge: si falla visits, no borra facturas ni card de ese slug y suma error', async () => {
     const db = buildDb({
-      candidates:    [{ slug: 'foo' }, { slug: 'bar' }],
+      candidates:    [
+        { slug: 'foo', stripe_session_id: 'cs_foo' },
+        { slug: 'bar', stripe_session_id: 'cs_bar' },
+      ],
       deleteErrors:  { visits: { foo: { message: 'fail' } } },
     });
     const result = await purge(db);
     expect(result.purged).toBe(1);  // solo bar
     expect(result.errors).toBe(1);  // foo falló
     // foo: solo visits llamado
-    expect(db._deletes.facturas).not.toHaveBeenCalledWith('slug', 'foo');
+    expect(db._deletes.facturas).not.toHaveBeenCalledWith('stripe_session_id', 'cs_foo');
     expect(db._deletes.cards).not.toHaveBeenCalledWith('slug', 'foo');
     // bar: cadena completa
     expect(db._deletes.cards).toHaveBeenCalledWith('slug', 'bar');

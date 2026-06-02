@@ -59,16 +59,23 @@ function makeHandler(db) {
       .select('visited_at')
       .eq('slug', slug);
 
-    const { data: facturas } = await db
-      .from('facturas')
-      .select('numero, created_at')
-      .eq('slug', slug);
+    // Las facturas se enlazan a la card por stripe_session_id (la tabla
+    // `facturas` no tiene columna `slug`). Solo las cards de pago tienen
+    // session id; las gratuitas/promo no generan factura.
+    let facturas = [];
+    if (card.stripe_session_id) {
+      const { data } = await db
+        .from('facturas')
+        .select('numero_factura, fecha, total')
+        .eq('stripe_session_id', card.stripe_session_id);
+      facturas = data || [];
+    }
 
     const payload = {
       exported_at: new Date().toISOString(),
       card:        cardExport,
       visits:      visits || [],
-      facturas:    facturas || [],
+      facturas:    facturas,
     };
 
     return {

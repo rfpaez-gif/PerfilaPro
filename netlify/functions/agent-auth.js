@@ -1,13 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { resolveJwtSecret } = require('./lib/jwt-secret');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
 
-const JWT_SECRET = process.env.AGENT_JWT_SECRET || 'changeme';
+const jwtSecret = () => resolveJwtSecret('agent-auth', 'AGENT_JWT_SECRET');
 const TOKEN_TTL = '7d';
 
 function makeHandler(db) {
@@ -60,7 +61,7 @@ function makeHandler(db) {
 
     const token = jwt.sign(
       { agentId: agent.id, agentCode: agent.code },
-      JWT_SECRET,
+      jwtSecret(),
       { expiresIn: TOKEN_TTL }
     );
 

@@ -4,6 +4,8 @@
 // Uso interno: protegido por ADMIN_PASSWORD. Devuelve la imagen como
 // data: URL para que el iPhone la pueda guardar con tap-largo.
 
+const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
+
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent';
 
 function jsonResponse(statusCode, body) {
@@ -22,6 +24,12 @@ function makeHandler(deps) {
     if (event.httpMethod !== 'POST') {
       return jsonResponse(405, { error: 'method_not_allowed' });
     }
+
+    // Rate-limit ANTES de la auth (auditoría · S4): frena tanto la fuerza
+    // bruta del ADMIN_PASSWORD (no había lockout) como la quema de dinero
+    // contra Gemini (cada generación cuesta ~$0.04). 20 req / 10 min / IP.
+    const rl = checkRateLimit(event, { bucket: 'lab-gemini', limit: 20, windowMs: 10 * 60 * 1000 });
+    if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
     let body;
     try { body = JSON.parse(event.body || '{}'); }

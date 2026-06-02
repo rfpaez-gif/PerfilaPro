@@ -30,6 +30,22 @@
 [context.deploy-preview]
   command = "npm test"
 
+# Headers de seguridad globales (auditoría de lanzamiento · S3).
+# Baseline aplicada a todas las rutas: anti-clickjacking, anti-MIME-sniffing,
+# control de referrer, HTTPS forzado y bloqueo de APIs del navegador no usadas.
+# NOTA: no se incluye Content-Security-Policy enforcing a propósito — una CSP
+# estricta rompería los scripts inline (card.js, editar.html), Stripe Checkout
+# y PostHog. Añadir CSP requiere un pase de afinado por integración y se trata
+# como tarea aparte (ver docs/launch-roadmap.md).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options           = "SAMEORIGIN"
+    X-Content-Type-Options    = "nosniff"
+    Referrer-Policy           = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy        = "geolocation=(), microphone=(), camera=(), payment=(self)"
+
 # perfilapro.cat: dominio puerta de entrada para la versión catalana.
 # Cualquier ruta entrante por el .cat se 301 a su equivalente bajo
 # perfilapro.es/ca/* — un único canonical SEO, sin contenido duplicado.
@@ -142,11 +158,6 @@
 [[redirects]]
   from   = "/api/stripe-webhook"
   to     = "/.netlify/functions/stripe-webhook"
-  status = 200
-
-[[redirects]]
-  from   = "/api/save-card"
-  to     = "/.netlify/functions/save-card"
   status = 200
 
 [[redirects]]
