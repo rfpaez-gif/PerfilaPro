@@ -565,7 +565,10 @@ SUPABASE_URL
 SUPABASE_SERVICE_KEY
 ADMIN_PASSWORD
 ADMIN_TOTP_SECRET     # optional — enables TOTP 2FA for admin panel
+ADMIN_JWT_SECRET      # signs admin session JWT (fallback: AGENT_JWT_SECRET)
+ADMIN_SESSION_TTL_MINUTES # optional — admin session TTL, default 60, min 5
 RESEND_API_KEY
+GEMINI_API_KEY        # Google AI Studio — used by lab-gemini + seed regeneration. Empty disables those tools.
 SITE_URL              # e.g. https://perfilapro.es
 AGENT_JWT_SECRET      # signs agent JWT tokens
 ORG_PANEL_JWT_SECRET  # signs B2B client panel JWT (fallback: AGENT_JWT_SECRET)

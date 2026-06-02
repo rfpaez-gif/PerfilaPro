@@ -70,11 +70,18 @@ Sin esto no se puede operar legal o comercialmente. Ordenados por dependencia/ur
 
 ## 2. QUICK WINS (alto impacto, bajo esfuerzo)
 
-| ID | Qué | Por qué importa | Archivos | Esf |
-|----|-----|-----------------|----------|-----|
-| Q1 | Declarar **PostHog** en la política de privacidad | El banner activa PostHog con el consentimiento de cookies pero la política lista Stripe/Supabase/Netlify/Resend y **omite PostHog**. Inconsistencia banner↔política. | `public/{es,ca}/privacidad.html:204-229` | S |
-| Q2 | Habilitar **RLS** en 3 tablas que la rompen | `org_invoices` (importes B2B+`agent_code`), `enrollment_campaigns`, `card_documents` no tienen `ENABLE ROW LEVEL SECURITY`, rompiendo el patrón de 024/033 ("RLS on en todo"). | `029:66`, `037:21,77` (contramigración con `ALTER TABLE ... ENABLE RLS`) | M |
-| Q3 | Sincronizar **`.env.example`** con el código | ~12 vars usadas pero ausentes: `ADMIN_JWT_SECRET`, `ADMIN_SESSION_TTL_MINUTES`, `PARENT_PANEL_JWT_SECRET`, `B2B_LEAD_INBOX`, `DEMO_FUNNEL_FREE_ACTIVE`, `WEB_FUNNEL_FREE_ACTIVE`, bloque Cantera completo. `GEMINI_API_KEY` ausente de la tabla de `CLAUDE.md`. | `.env.example`, `CLAUDE.md` | S |
+> **✅ Q1, Q2, Q3 RESUELTOS (2026-06-02).** Detalle al pie de la tabla.
+
+| ID | Qué | Por qué importa | Archivos | Esf | Estado |
+|----|-----|-----------------|----------|-----|--------|
+| Q1 | Declarar **PostHog** en la política de privacidad | El banner activa PostHog con el consentimiento de cookies pero la política lista Stripe/Supabase/Netlify/Resend y **omite PostHog**. Inconsistencia banner↔política. | `public/{es,ca}/privacidad.html:204-229` | S | ✅ |
+| Q2 | Habilitar **RLS** en 3 tablas que la rompen | `org_invoices` (importes B2B+`agent_code`), `enrollment_campaigns`, `card_documents` no tienen `ENABLE ROW LEVEL SECURITY`, rompiendo el patrón de 024/033 ("RLS on en todo"). | `029:66`, `037:21,77` | M | ✅ |
+| Q3 | Sincronizar **`.env.example`** con el código | ~12 vars usadas pero ausentes: `ADMIN_JWT_SECRET`, `ADMIN_SESSION_TTL_MINUTES`, `PARENT_PANEL_JWT_SECRET`, `B2B_LEAD_INBOX`, `DEMO_FUNNEL_FREE_ACTIVE`, `WEB_FUNNEL_FREE_ACTIVE`, bloque Cantera completo. `GEMINI_API_KEY` ausente de la tabla de `CLAUDE.md`. | `.env.example`, `CLAUDE.md` | S | ✅ |
+
+**Implementación (Q1-Q3):**
+- **Q1** — PostHog añadido a la lista de encargados del tratamiento y a la sección de cookies (con la condición de consentimiento explícito) en `privacidad.html` ES y CA; fecha actualizada a junio 2026.
+- **Q2** — migración `038_rls_missing_tables.sql`: `ENABLE ROW LEVEL SECURITY` + `REVOKE ALL FROM anon, authenticated` en las 3 tablas, con contramigración. `supabase/RLS.md` actualizado. **NO ejecutada en prod** (la corre el founder con el resto). Idempotente.
+- **Q3** — `.env.example` completado (bloque admin JWT, B2B_LEAD_INBOX, funnels, bloque Cantera entero); `GEMINI_API_KEY` + admin JWT añadidos a la tabla de `CLAUDE.md`.
 | Q4 | Corregir las **divergencias doc↔código** de `CLAUDE.md` | (a) `download-qr.js` no existe — reemplazado por `qr.js` público `/api/qr/:slug`; el email enlaza ahí (`stripe-webhook.js:99`). (b) `delete-account` es **soft-delete + purga 30d**, no hard-delete. (c) schema `facturas` mal documentado (causa de S2). (d) panel cliente ya hace offboard/resend/download (listados como founder-only). | `CLAUDE.md` | S |
 | Q5 | Documentar carriles ausentes de `CLAUDE.md` | Directorio + SEO/sitemaps + `/p/:slug`, `gbp-assistant`, `share-image`, `qr` por tier, `purge-deleted` (job GDPR crítico), y el **subsistema de inscripción de temporada** (migración 037, `enrollment-*`). Es la mayor laguna documental del repo. | `CLAUDE.md` | M |
 | Q6 | Tests para superficie crítica sin cobertura | `card.js` (render público server-side con `esc()` — superficie XSS, hoy 0 tests de su handler), `admin-agents` (comisiones), `admin-data`, `admin-invoices`, `invoice-utils` (IVA + numeración, hoy 0 tests). | `tests/` (nuevos) | M |
@@ -132,7 +139,7 @@ Cerrar la seguridad y el GDPR baratos. Nada aquí depende de Hacienda ni de Stri
 3. ✅ **S3** — añadir headers de seguridad globales en `netlify.toml`. *Hecho (CSP afinada pendiente).*
 4. ✅ **S4** — `lab-gemini` endurecido con rate-limit (residual localStorage anotado). *Hecho.*
 5. ✅ **S5** — borrar redirect muerto `/api/save-card`. *Hecho.*
-6. **Q1** (PostHog en privacidad), **Q2** (RLS 3 tablas), **Q3** (`.env.example`). *Pendientes (no son seguridad/GDPR).*
+6. ✅ **Q1** (PostHog en privacidad), ✅ **Q2** (RLS 3 tablas, migración 038), ✅ **Q3** (`.env.example` + tabla CLAUDE.md). *Hechos.*
 
 ### Hito 1 — Lanzamiento del producto gratuito (B2C captación)
 Ya operable con Hito 0 hecho. `WEB_FUNNEL_FREE_ACTIVE=1` evita el bloqueante fiscal.

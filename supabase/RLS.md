@@ -41,6 +41,15 @@ service_role):
 - `postal_codes`
 - `ocupaciones`
 - `admin_audit_log` (activada originalmente en migración 002)
+- `org_invoices` (activada en migración 038)
+- `enrollment_campaigns` (activada en migración 038)
+- `card_documents` (activada en migración 038)
+
+> Las tablas del carril Cantera (`card_admins`, `card_consents`,
+> `member_club_seasons`, `card_print_orders`, `parent_subscriptions`,
+> `match_stats`, `sports_categories`, `external_payments`,
+> `club_transfers`) arrancan ya con RLS + REVOKE en sus propias
+> migraciones (033/034/035).
 
 ## Por qué no hay policies
 
