@@ -139,6 +139,70 @@ describe('org-panel · Cantera enrollment (capa I3)', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('enrollment_open guarda el plan de pagos a medida en concepts_jsonb', async () => {
+    let inserted = null;
+    const db = makeDb(baseResolvers());
+    const origFrom = db.from;
+    db.from = vi.fn((t) => {
+      const chain = origFrom(t);
+      if (t === 'enrollment_campaigns') {
+        chain.maybeSingle = vi.fn(() => Promise.resolve({ data: null, error: null })); // sin existente
+        chain.insert = vi.fn((row) => { inserted = { ...row, id: 'camp-new', created_at: '2026-08-01T00:00:00Z' }; return chain; });
+        chain.single = vi.fn(() => Promise.resolve({ data: inserted, error: null }));
+      }
+      return chain;
+    });
+    const concepts = [
+      { concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' },
+      { concepto: '2º plazo', amount_cents: 10000, due_date: '2027-01-10' },
+    ];
+    const res = await makeHandler(db, null)(event('enrollment_open', { season: '2026-27', concepts }, token));
+    expect(res.statusCode).toBe(200);
+    expect(inserted.concepts_jsonb).toEqual({ plan: concepts });
+    const out = JSON.parse(res.body).campaign;
+    expect(out.concepts).toHaveLength(2);
+    expect(out.plan_total_cents).toBe(26000);
+  });
+
+  it('enrollment_open 400 con un concepto sin fecha', async () => {
+    const db = makeDb(baseResolvers());
+    const res = await makeHandler(db, null)(event('enrollment_open', {
+      concepts: [{ concepto: 'Material', amount_cents: 16000, due_date: '' }],
+    }, token));
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('enrollment_update_plan actualiza concepts_jsonb sin tocar el token', async () => {
+    let updatePatch = null;
+    const existing = { id: 'camp-1', organization_id: 'org-1', status: 'open', public_token: 'a'.repeat(32), season: '2026-27', created_at: '2026-08-01T00:00:00Z' };
+    const db = makeDb(baseResolvers());
+    const origFrom = db.from;
+    db.from = vi.fn((t) => {
+      const chain = origFrom(t);
+      if (t === 'enrollment_campaigns') {
+        chain.maybeSingle = vi.fn(() => Promise.resolve({ data: existing, error: null }));
+        chain.update = vi.fn((patch) => { updatePatch = patch; return chain; });
+        chain.single = vi.fn(() => Promise.resolve({ data: { ...existing, ...updatePatch }, error: null }));
+      }
+      return chain;
+    });
+    const concepts = [{ concepto: 'Ficha federativa', amount_cents: 18000, due_date: '2026-09-15' }];
+    const res = await makeHandler(db, null)(event('enrollment_update_plan', { concepts }, token));
+    expect(res.statusCode).toBe(200);
+    expect(updatePatch).toEqual({ concepts_jsonb: { plan: concepts } });
+    const out = JSON.parse(res.body).campaign;
+    expect(out.public_token).toBe('a'.repeat(32)); // token intacto
+    expect(out.concepts).toHaveLength(1);
+  });
+
+  it('enrollment_update_plan 404 si no hay campaña abierta', async () => {
+    const db = makeDb(baseResolvers({
+      enrollment_campaigns: () => ({ data: null, error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('enrollment_update_plan', { concepts: [] }, token));
+    expect(res.statusCode).toBe(404);
+  });
+
   it('enrollment_close cierra una campaña del propio club', async () => {
     const db = makeDb(baseResolvers({
       enrollment_campaigns: () => ({ data: { id: 'camp-1', organization_id: 'org-1', status: 'open' }, error: null }),

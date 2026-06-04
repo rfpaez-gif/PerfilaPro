@@ -69,4 +69,35 @@ describe('enrollment-page', () => {
     expect(res.body).not.toContain('<script>x</script>');
     expect(res.body).toContain('&lt;script&gt;');
   });
+
+  it('con plan a medida muestra los conceptos + total y solo pago al club', async () => {
+    const campaign = {
+      ...OPEN,
+      concepts_jsonb: { plan: [
+        { concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' },
+        { concepto: '2º plazo', amount_cents: 10000, due_date: '2027-01-10' },
+      ] },
+    };
+    const res = await makeHandler(makeDb({ campaign }))(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('Plan de pagos de la temporada');
+    expect(res.body).toContain('Inscripción');
+    expect(res.body).toContain('2º plazo');
+    expect(res.body).toContain('260,00'); // total 160+100
+    // Con plan a medida el cobro es manual: no se ofrece el radio "online".
+    expect(res.body).toContain('value="club"');
+    expect(res.body).not.toContain('value="online"');
+  });
+
+  it('escapa el nombre del concepto (XSS)', async () => {
+    const campaign = { ...OPEN, concepts_jsonb: { plan: [{ concepto: '<img src=x>', amount_cents: 100, due_date: '2026-09-01' }] } };
+    const res = await makeHandler(makeDb({ campaign }))(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).not.toContain('<img src=x>');
+    expect(res.body).toContain('&lt;img');
+  });
+
+  it('sin plan a medida mantiene matrícula/cuota y el pago online', async () => {
+    const res = await makeHandler(makeDb())(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('35,00'); // matrícula
+    expect(res.body).toContain('value="online"');
+  });
 });
