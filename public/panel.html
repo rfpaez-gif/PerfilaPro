@@ -706,6 +706,13 @@
         </div>
         <p class="pp-form__hint">Matrícula + cuotas mes a mes. ✅ pagado · 🟡 parcial · ⏳ pendiente. Une cuotas Stripe y pagos manuales.</p>
         <div style="overflow-x:auto"><table class="pp-table pp-billing"><thead id="billingHead"></thead><tbody id="billingTbody"></tbody></table></div>
+
+        <!-- Plan de pagos a medida · estado por concepto (cobro Stripe) -->
+        <div id="planChargesSection" style="display:none">
+          <div style="margin:1.75rem 0 .5rem"><h3 class="pp-spark__title" style="margin:0">Plan de pagos · estado por concepto</h3></div>
+          <p class="pp-form__hint">Conceptos cobrados por Stripe (SEPA/tarjeta). <strong>✅</strong> pagado · <strong>⏳</strong> programado · <strong>⌛</strong> en curso · <strong>⚠️</strong> fallido. <span id="planChargesSummary"></span></p>
+          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Conceptos</th><th>Cobrado / Total</th></tr></thead><tbody id="planChargesTbody"></tbody></table></div>
+        </div>
       </section>
     </div>
 
@@ -1532,8 +1539,9 @@
       });
       // Inscripciones: carga perezosa al abrir la pestaña.
       if (target === 'enroll') loadEnrollment();
-      // Cobros: la matriz de temporada se carga perezosamente al abrir.
-      if (target === 'payments') loadBillingMatrix();
+      // Cobros: la matriz de temporada + el estado por concepto del plan
+      // se cargan perezosamente al abrir.
+      if (target === 'payments') { loadBillingMatrix(); loadPlanCharges(); }
     });
   });
 
@@ -1980,6 +1988,31 @@
     } catch (e) {
       if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar la matriz: ' + e.message);
     }
+  }
+
+  // Plan de pagos a medida · estado por concepto (cobro Stripe).
+  var PLAN_CHARGE_BADGE = { paid: '✅', scheduled: '⏳', processing: '⌛', failed: '⚠️', canceled: '✖️', manual: '✋' };
+  async function loadPlanCharges() {
+    try {
+      const d = await api('plan_charges');
+      renderPlanCharges(d);
+    } catch (e) {
+      if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar el plan de pagos: ' + e.message);
+    }
+  }
+  function renderPlanCharges(d) {
+    const section = $('planChargesSection');
+    const players = (d && d.players) || [];
+    if (!players.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    const t = d.totals || {};
+    $('planChargesSummary').textContent = `· ${players.length} jugador${players.length === 1 ? '' : 'es'} · cobrado ${eurFromCents(t.paid_cents || 0)} · pendiente ${eurFromCents(t.due_cents || 0)}` + (t.failed ? ` · ${t.failed} fallido${t.failed === 1 ? '' : 's'}` : '');
+    $('planChargesTbody').innerHTML = players.map(p => {
+      const pills = p.charges.map(c =>
+        `<span title="${escapeHtml(c.status)} · vence ${escapeHtml(c.due_date)}" style="display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;border-radius:10px;background:#F3F4F6;font-size:12px">${PLAN_CHARGE_BADGE[c.status] || '•'} ${escapeHtml(c.concepto)} <strong>${eurFromCents(c.amount_cents)}</strong></span>`
+      ).join('');
+      return `<tr><td><strong>${escapeHtml(p.nombre)}</strong></td><td>${pills}</td><td style="white-space:nowrap">${eurFromCents(p.paid_cents)} / ${eurFromCents(p.total_cents)}</td></tr>`;
+    }).join('');
   }
 
   function renderBillingMatrix(d) {
