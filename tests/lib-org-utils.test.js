@@ -6,6 +6,8 @@ import {
   isValidTagline,
   isValidDescription,
   isSafeWebsite,
+  isValidOrgKind,
+  isValidSport,
   getOrgBySlug,
   listCardsByOrg,
 } from '../netlify/functions/lib/org-utils.js';
@@ -117,6 +119,42 @@ describe('isSafeWebsite', () => {
   it('rechaza URLs de más de 200 chars', () => {
     const long = 'https://example.com/' + 'a'.repeat(200);
     expect(isSafeWebsite(long)).toBe(false);
+  });
+});
+
+describe('isValidOrgKind', () => {
+  it('acepta business y sports_club', () => {
+    expect(isValidOrgKind('business')).toBe(true);
+    expect(isValidOrgKind('sports_club')).toBe(true);
+  });
+  it('trata null/undefined/"" como business legacy (válido)', () => {
+    expect(isValidOrgKind(null)).toBe(true);
+    expect(isValidOrgKind(undefined)).toBe(true);
+    expect(isValidOrgKind('')).toBe(true);
+  });
+  it('rechaza valores fuera del CHECK', () => {
+    expect(isValidOrgKind('ong')).toBe(false);
+    expect(isValidOrgKind('Sports_Club')).toBe(false);
+    expect(isValidOrgKind('club')).toBe(false);
+  });
+});
+
+describe('isValidSport', () => {
+  it('acepta tokens en minúsculas con guion bajo', () => {
+    expect(isValidSport('futbol')).toBe(true);
+    expect(isValidSport('futbol_sala')).toBe(true);
+    expect(isValidSport('baloncesto')).toBe(true);
+  });
+  it('trata null/undefined/"" como ausente (válido)', () => {
+    expect(isValidSport(null)).toBe(true);
+    expect(isValidSport(undefined)).toBe(true);
+    expect(isValidSport('')).toBe(true);
+  });
+  it('rechaza mayúsculas, espacios y caracteres raros', () => {
+    expect(isValidSport('Futbol')).toBe(false);
+    expect(isValidSport('futbol sala')).toBe(false);
+    expect(isValidSport('fútbol')).toBe(false);
+    expect(isValidSport('x')).toBe(false); // demasiado corto
   });
 });
 

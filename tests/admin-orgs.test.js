@@ -260,6 +260,50 @@ describe('admin-orgs handler', () => {
       expect(inserted.email).toBe('hola@iris.es');
     });
 
+    it('por defecto crea una org de negocio (kind=null, sport=null)', async () => {
+      await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris' } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBeNull();
+      expect(inserted.sport).toBeNull();
+    });
+
+    it('crea un club deportivo con kind=sports_club y sport normalizado', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'cd-flota', name: 'CD La Flota',
+        kind: 'sports_club', sport: 'Futbol',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBe('sports_club');
+      expect(inserted.sport).toBe('futbol'); // trim + lowercase
+    });
+
+    it('ignora el sport si la org no es club deportivo', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+        kind: 'business', sport: 'futbol',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBe('business');
+      expect(inserted.sport).toBeNull();
+    });
+
+    it('rechaza kind fuera del CHECK con 400', async () => {
+      const res = await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris', kind: 'ong',
+      } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('kind');
+    });
+
+    it('rechaza sport mal formado con 400', async () => {
+      const res = await handler(buildEvent({ body: {
+        action: 'create', slug: 'cd-flota', name: 'CD La Flota',
+        kind: 'sports_club', sport: 'Fútbol Sala',
+      } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('sport');
+    });
+
     it('rechaza email mal formado', async () => {
       const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', email: 'no-es-un-email' } }));
       expect(res.statusCode).toBe(400);
@@ -343,6 +387,47 @@ describe('admin-orgs handler', () => {
         body: { action: 'update', slug: 'aossa', hide_branding: 'yes' },
       }));
       expect(updateMock.mock.calls[0][0]).toEqual({ hide_branding: false });
+    });
+
+    it('convierte una org existente en club deportivo (kind + sport)', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', kind: 'sports_club', sport: 'Futbol' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'sports_club', sport: 'futbol' });
+    });
+
+    it('al volver a negocio limpia el sport defensivamente', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', kind: 'business', sport: 'futbol' },
+      }));
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'business', sport: null });
+    });
+
+    it('rechaza kind inválido en update con 400', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'iris', kind: 'club' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('kind');
+    });
+
+    it('rechaza sport inválido en update con 400', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', sport: 'Fútbol' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('sport');
     });
   });
 
@@ -850,6 +935,45 @@ describe('admin-orgs handler', () => {
       const call = mockEmailSend.mock.calls[0][0];
       expect(call.subject).toMatch(/Tu panel de PerfilaPro/);
       expect(call.html).toMatch(/Bienvenida/);
+    });
+
+    it('un club deportivo recibe copy deportivo (plantilla/inscripciones) + línea de reenvío', async () => {
+      withOrg({ id: 'uuid-flota', slug: 'cd-flota', name: 'CD La Flota', email: 'club@flota.es', kind: 'sports_club' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'cd-flota' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.subject).toMatch(/CD La Flota/);
+      expect(call.html).toMatch(/Plantilla/);
+      expect(call.html).toMatch(/Inscripciones/);
+      expect(call.html).toMatch(/cuotas/);
+      // La línea de reenvío para el contacto que no es el responsable.
+      expect(call.html).toMatch(/Reenvía este correo a la persona responsable/);
+      // NO debe llevar el vocabulario B2B de oficina.
+      expect(call.html).not.toMatch(/invitar profesionales en lote/);
+    });
+
+    it('club deportivo en catalán usa copy deportivo catalán', async () => {
+      withOrg({ id: 'uuid-flota', slug: 'cd-flota', name: 'CD La Flota', email: 'club@flota.es', kind: 'sports_club' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'cd-flota', idioma: 'ca' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.html).toMatch(/Plantilla/);
+      expect(call.html).toMatch(/Reenvia aquest correu/);
+    });
+
+    it('una org de negocio (kind null) mantiene el copy B2B y SIN línea de reenvío', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es', kind: null });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.html).toMatch(/invitar profesionales en lote/);
+      expect(call.html).not.toMatch(/persona responsable/);
     });
 
     it('devuelve 400 si la org no tiene email registrado', async () => {

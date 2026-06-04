@@ -11,6 +11,8 @@ const {
   isValidTagline,
   isValidDescription,
   isSafeWebsite,
+  isValidOrgKind,
+  isValidSport,
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
@@ -277,9 +279,54 @@ const PANEL_INVITE_STRINGS = {
   },
 };
 
-function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publicUrl, idioma = 'es' }) {
+// Variante para clubes deportivos (Cantera). Mismo formato que el B2B
+// pero con el vocabulario del banquillo (plantilla, inscripciones, cuotas,
+// carnet) en vez del de oficina (equipo, profesionales, estadísticas).
+// Incluye una línea de reenvío porque el contacto que recibe el enlace a
+// veces NO es quien gestiona el club (un padre, un entrenador, quien cogió
+// el flyer): el magic-link funciona igual para quien lo abra.
+const PANEL_INVITE_STRINGS_SPORTS = {
+  es: {
+    preheader: (orgName) => `El panel del club ${orgName} ya está listo`,
+    title: (orgName) => `Bienvenido, ${orgName}`,
+    subject: (orgName) => `El panel de ${orgName} en PerfilaPro ya está listo ⚽`,
+    intro: 'Hemos preparado el panel de gestión de vuestro club en PerfilaPro. Desde aquí lleváis la plantilla, las inscripciones de la temporada y las cuotas de las familias en un solo sitio, sin Excel ni perseguir pagos por WhatsApp.',
+    bullets: [
+      '<strong>Plantilla</strong> · da de alta jugadores y cuerpo técnico, organizados por categoría.',
+      '<strong>Inscripciones</strong> · abre la inscripción de la temporada y comparte un enlace o QR para que las familias se apunten solas.',
+      '<strong>Cobros</strong> · domicilia las cuotas y lleva el control de quién está al día, todo desde el panel.',
+      '<strong>Carnets</strong> · genera el carnet del jugador (PVC + chip NFC) con el escudo del club.',
+      '<strong>Branding</strong> · escudo, colores y la página pública del club.',
+    ],
+    forward: '¿No eres tú quien gestiona el club? Reenvía este correo a la persona responsable — el enlace de acceso funciona igual para quien lo abra.',
+    cta: 'Entrar al panel del club →',
+    validity: 'El enlace de acceso es válido <strong>7 días</strong>. Si caduca, basta con abrir <a href="{panelHomeUrl}" style="color:#00A865">{panelHomeUrl}</a> e introducir este mismo email para recibir uno nuevo.',
+    publicLine: 'La página pública del club estará en <a href="{publicUrl}" style="color:#00A865">{publicUrl}</a>.',
+    help: 'Si tenéis cualquier duda, responded a este email y os contestamos.',
+  },
+  ca: {
+    preheader: (orgName) => `El panell del club ${orgName} ja està a punt`,
+    title: (orgName) => `Benvingut, ${orgName}`,
+    subject: (orgName) => `El panell de ${orgName} a PerfilaPro ja està a punt ⚽`,
+    intro: 'Hem preparat el panell de gestió del vostre club a PerfilaPro. Des d\'aquí porteu la plantilla, les inscripcions de la temporada i les quotes de les famílies en un sol lloc, sense Excel ni perseguir pagaments per WhatsApp.',
+    bullets: [
+      '<strong>Plantilla</strong> · doneu d\'alta jugadors i cos tècnic, organitzats per categoria.',
+      '<strong>Inscripcions</strong> · obriu la inscripció de la temporada i compartiu un enllaç o QR perquè les famílies s\'apuntin soles.',
+      '<strong>Cobraments</strong> · domicilieu les quotes i porteu el control de qui està al dia, tot des del panell.',
+      '<strong>Carnets</strong> · genereu el carnet del jugador (PVC + xip NFC) amb l\'escut del club.',
+      '<strong>Branding</strong> · escut, colors i la pàgina pública del club.',
+    ],
+    forward: 'No ets tu qui gestiona el club? Reenvia aquest correu a la persona responsable — l\'enllaç d\'accés funciona igual per a qui l\'obri.',
+    cta: 'Entrar al panell del club →',
+    validity: 'L\'enllaç d\'accés és vàlid <strong>7 dies</strong>. Si caduca, només cal obrir <a href="{panelHomeUrl}" style="color:#00A865">{panelHomeUrl}</a> i introduir aquest mateix email per rebre\'n un de nou.',
+    publicLine: 'La pàgina pública del club serà a <a href="{publicUrl}" style="color:#00A865">{publicUrl}</a>.',
+    help: 'Si teniu qualsevol dubte, responeu a aquest email i us contestem.',
+  },
+};
+
+function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publicUrl, idioma = 'es', kind = null }) {
   const lang = idioma === 'ca' ? 'ca' : 'es';
-  const T = PANEL_INVITE_STRINGS[lang];
+  const T = (kind === 'sports_club' ? PANEL_INVITE_STRINGS_SPORTS : PANEL_INVITE_STRINGS)[lang];
 
   const bulletsHtml = T.bullets.map(b =>
     `<li style="margin:0 0 8px;font-size:14px;color:${COLORS.inkSoft};line-height:1.55">${b}</li>`
@@ -290,6 +337,12 @@ function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publi
 
   const publicLineHtml = T.publicLine
     .replace(/\{publicUrl\}/g, publicUrl);
+
+  // Línea de reenvío (solo la variante deportiva la trae): el contacto a
+  // veces no es el responsable del club, así que le invitamos a reenviar.
+  const forwardHtml = T.forward
+    ? `<p style="margin:0 0 22px;font-size:13px;color:${COLORS.inkSoft};line-height:1.6;background:#F4F7F5;border-radius:8px;padding:12px 14px">${T.forward}</p>`
+    : '';
 
   const bodyHtml = `
             <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.65">
@@ -305,6 +358,8 @@ function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publi
                 <a href="${panelUrl}" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">${T.cta}</a>
               </td></tr>
             </table>
+
+            ${forwardHtml}
 
             <p style="margin:0 0 14px;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">
               ${validityHtml}
@@ -350,7 +405,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, created_at')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -359,10 +414,21 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, hide_branding } = body;
+      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, hide_branding, kind, sport } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
+      }
+      // kind/sport: discriminador del carril (migración 033). Normalizamos
+      // '' → null (= business legacy) y solo guardamos sport cuando es club
+      // deportivo, para que una org de negocio nunca arrastre un deporte.
+      const normKind  = kind || null;
+      const normSport = normKind === 'sports_club' ? (sport ? String(sport).trim().toLowerCase() : null) : null;
+      if (!isValidOrgKind(normKind)) {
+        return jsonResponse(400, { error: "kind inválido (business | sports_club)" });
+      }
+      if (!isValidSport(normSport)) {
+        return jsonResponse(400, { error: 'sport inválido (token en minúsculas, p.ej. futbol)' });
       }
       if (!name || typeof name !== 'string' || name.trim().length < 2) {
         return jsonResponse(400, { error: 'name requerido (mín. 2 chars)' });
@@ -401,8 +467,10 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
           hide_branding: hide_branding === true,
+          kind:  normKind,
+          sport: normSport,
         })
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport')
         .single();
 
       if (error) {
@@ -415,10 +483,19 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding } = body;
+      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
+      }
+      // kind/sport: normalizamos antes de validar ('' → null, lowercase).
+      const normKind  = kind  === undefined ? undefined : (kind || null);
+      const normSport = sport === undefined ? undefined : (sport ? String(sport).trim().toLowerCase() : null);
+      if (normKind !== undefined && !isValidOrgKind(normKind)) {
+        return jsonResponse(400, { error: "kind inválido (business | sports_club)" });
+      }
+      if (normSport !== undefined && !isValidSport(normSport)) {
+        return jsonResponse(400, { error: 'sport inválido (token en minúsculas, p.ej. futbol)' });
       }
       if (tagline != null && !isValidTagline(tagline)) {
         return jsonResponse(400, { error: 'tagline máx. 140 chars' });
@@ -460,6 +537,12 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       // hide_branding: white-label flag. Boolean estricto — cualquier
       // valor distinto de true se persiste como false (no toggle accidental).
       if (hide_branding !== undefined) updates.hide_branding = hide_branding === true;
+      // kind/sport: cambiar el carril de una org existente.
+      if (normKind  !== undefined) updates.kind  = normKind;
+      if (normSport !== undefined) updates.sport = normSport;
+      // Defensivo: si la org deja de ser club, limpiamos el deporte para
+      // que no quede un sport huérfano en una org de negocio.
+      if (updates.kind !== undefined && updates.kind !== 'sports_club') updates.sport = null;
 
       if (!Object.keys(updates).length) {
         return jsonResponse(400, { error: 'nada para actualizar' });
@@ -520,7 +603,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
       const { data: org, error: orgErr } = await db
         .from('organizations')
-        .select('id, slug, name, email')
+        .select('id, slug, name, email, kind')
         .eq('slug', slug)
         .is('deleted_at', null)
         .maybeSingle();
@@ -548,6 +631,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         panelHomeUrl,
         publicUrl,
         idioma: lang,
+        kind: org.kind,
       });
 
       try {
