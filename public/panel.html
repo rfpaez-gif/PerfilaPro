@@ -579,6 +579,16 @@
         <div id="enrPlan" class="pp-form" style="margin:.5rem 0 1.25rem;padding:.9rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:10px">
           <label class="pp-form__label" style="margin-bottom:.15rem">Plan de pagos de la temporada</label>
           <p class="pp-form__hint" style="margin-top:0">Diseña los pagos como los cobra tu club: matrícula, ficha federativa, material, plazos… Cada concepto con su importe y su fecha. Las familias lo verán al inscribirse; el cobro de cada plazo lo registras tú en la pestaña <strong>Cobros</strong>.</p>
+          <div class="pp-form__row" style="margin:.25rem 0 .5rem">
+            <label class="pp-form__label" for="enrPlanType" style="margin-bottom:.15rem">Tipo de pago <small>plantilla rápida — importes los pones tú</small></label>
+            <select class="pp-input" id="enrPlanType">
+              <option value="">— elige una plantilla —</option>
+              <option value="unico">Pago único (campus / cuota anual)</option>
+              <option value="plazos">Cuotas / plazos (temporada)</option>
+              <option value="mensual">Matrícula + mensualidades</option>
+              <option value="blank">Empezar en blanco</option>
+            </select>
+          </div>
           <div id="enrPlanRows" style="margin:.5rem 0"></div>
           <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="enrPlanAddBtn">+ Añadir concepto</button>
           <div style="text-align:right;margin-top:.5rem;font-size:13px;color:#374151">Total temporada: <strong id="enrPlanTotal">0,00 €</strong></div>
@@ -1633,6 +1643,59 @@
     });
     $('enrPlanTotal').textContent = eurFromCents(total);
   }
+
+  // ── Plantillas rápidas (selector "Tipo de pago") ────────────
+  // Siembran conceptos + fechas (calculadas desde la temporada). Los
+  // importes los deja vacíos a propósito: el club los rellena y el backend
+  // obliga a ello, así nunca se guarda un 0€ por inercia de la plantilla.
+  function planSeasonStartYear() {
+    const m = String($('enrSeason').value || '').match(/^(\d{4})/);
+    if (m) return Number(m[1]);
+    const now = new Date();
+    return now.getMonth() + 1 >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  }
+  function planDate(y, month, day) {
+    return y + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+  function planTemplate(type) {
+    const y = planSeasonStartYear();
+    if (type === 'unico') {
+      return [{ concepto: 'Cuota temporada', due_date: planDate(y, 9, 1) }];
+    }
+    if (type === 'plazos') {
+      return [
+        { concepto: 'Inscripción',        due_date: planDate(y, 9, 1) },
+        { concepto: 'Ficha federativa',   due_date: planDate(y, 9, 1) },
+        { concepto: 'Material deportivo',  due_date: planDate(y, 10, 1) },
+        { concepto: '2º plazo',           due_date: planDate(y + 1, 1, 10) },
+      ];
+    }
+    if (type === 'mensual') {
+      const meses = [[9, y], [10, y], [11, y], [12, y], [1, y + 1], [2, y + 1], [3, y + 1], [4, y + 1], [5, y + 1]];
+      const nombre = { 9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre', 1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo' };
+      const rows = [{ concepto: 'Matrícula', due_date: planDate(y, 9, 1) }];
+      meses.forEach(([mo, yy]) => rows.push({ concepto: 'Mensualidad ' + nombre[mo], due_date: planDate(yy, mo, 1) }));
+      return rows;
+    }
+    return []; // blank → renderPlanRows siembra 2 filas vacías
+  }
+  function planHasData() {
+    return Array.from(document.querySelectorAll('#enrPlanRows .enr-plan-row')).some(r =>
+      r.querySelector('.enr-pl-concepto').value.trim() ||
+      r.querySelector('.enr-pl-amount').value ||
+      r.querySelector('.enr-pl-date').value
+    );
+  }
+  const _enrPlanType = $('enrPlanType');
+  if (_enrPlanType) _enrPlanType.addEventListener('change', () => {
+    const type = _enrPlanType.value;
+    if (!type) return;
+    if (planHasData() && !confirm('Esto reemplazará las filas actuales del plan. ¿Continuar?')) {
+      _enrPlanType.value = ''; return;
+    }
+    renderPlanRows(planTemplate(type));
+    _enrPlanType.value = ''; // la plantilla es solo el punto de partida
+  });
 
   function eurToCents(v) {
     if (v == null || v === '') return null;
