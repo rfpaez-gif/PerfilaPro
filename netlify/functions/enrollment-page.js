@@ -14,6 +14,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { isCanteraActive } = require('./lib/cantera-flag');
+const { readPlan, planTotalCents } = require('./lib/enrollment-campaign');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -28,6 +29,16 @@ function esc(s) {
 function eur(cents) {
   if (cents == null) return null;
   return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+}
+
+// Formatea una fecha AAAA-MM-DD a lenguaje natural (es/ca). Defensivo:
+// si el locale o la fecha fallan, devuelve la cadena original.
+function fmtDate(due, lang = 'es') {
+  try {
+    const d = new Date(due + 'T00:00:00');
+    if (isNaN(d.getTime())) return due;
+    return d.toLocaleDateString(lang === 'ca' ? 'ca-ES' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch { return due; }
 }
 
 function htmlResponse(statusCode, html) {
@@ -69,6 +80,11 @@ input:focus,select:focus{outline:none;border-color:var(--accent)}
 .pay{border:1px solid var(--line);border-radius:.6rem;padding:.6rem .7rem;margin:.4rem 0;display:flex;gap:.6rem;align-items:flex-start;cursor:pointer}
 .pay input{width:auto;margin-top:.2rem}
 .amounts{background:#F3FAF6;border-radius:.6rem;padding:.75rem;font-size:.9rem;margin:.5rem 0}
+.plan-title{font-weight:700;margin-bottom:.4rem}
+.plan-row{display:flex;justify-content:space-between;gap:.75rem;padding:.25rem 0}
+.plan-row small{color:var(--gris);font-weight:400;display:block}
+.plan-total{display:flex;justify-content:space-between;gap:.75rem;border-top:1px solid var(--line);margin-top:.4rem;padding-top:.4rem;font-weight:700}
+.plan-note{color:var(--gris);font-size:.8rem;margin-top:.5rem}
 .btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:100px;padding:.85rem;font-size:1rem;font-weight:700;cursor:pointer;margin-top:1rem}
 .btn:disabled{opacity:.6;cursor:default}
 .err{color:var(--err);font-size:.85rem;margin-top:.5rem;min-height:1.2em}
@@ -88,14 +104,42 @@ function closedPage(lang = 'es') {
 }
 
 function formPage({ token, org, campaign, lang = 'es' }) {
-  const matricula = eur(campaign.matricula_cents);
-  const fee = eur(campaign.monthly_fee_cents);
-  const inst = campaign.num_installments || 9;
-  const amountsLines = [];
-  if (matricula) amountsLines.push(`<div>Matrícula (pago único): <strong>${matricula}</strong></div>`);
-  if (fee) amountsLines.push(`<div>Cuota mensual: <strong>${fee}</strong> × ${inst} meses</div>`);
-  const amountsBlock = amountsLines.length
-    ? `<div class="amounts">${amountsLines.join('')}</div>` : '';
+  // Plan de pagos a medida (conceptos con fecha) tiene prioridad sobre el
+  // modelo matrícula+cuota cuando el club lo ha diseñado.
+  const plan = readPlan(campaign.concepts_jsonb);
+  const hasPlan = plan.length > 0;
+
+  let amountsBlock = '';
+  if (hasPlan) {
+    const rows = plan.map(c =>
+      `<div class="plan-row"><span>${esc(c.concepto)} <small>${esc(fmtDate(c.due_date, lang))}</small></span><strong>${eur(c.amount_cents)}</strong></div>`
+    ).join('');
+    const total = eur(planTotalCents(plan));
+    amountsBlock = `<div class="amounts">
+      <div class="plan-title">Plan de pagos de la temporada</div>
+      ${rows}
+      <div class="plan-total"><span>Total temporada</span><strong>${total}</strong></div>
+      <div class="plan-note">El club te indicará cómo abonar cada pago en su fecha (Bizum, efectivo o transferencia).</div>
+    </div>`;
+  } else {
+    const matricula = eur(campaign.matricula_cents);
+    const fee = eur(campaign.monthly_fee_cents);
+    const inst = campaign.num_installments || 9;
+    const amountsLines = [];
+    if (matricula) amountsLines.push(`<div>Matrícula (pago único): <strong>${matricula}</strong></div>`);
+    if (fee) amountsLines.push(`<div>Cuota mensual: <strong>${fee}</strong> × ${inst} meses</div>`);
+    amountsBlock = amountsLines.length ? `<div class="amounts">${amountsLines.join('')}</div>` : '';
+  }
+
+  // Con plan a medida el cobro es manual (al club): no ofrecemos checkout
+  // online porque el plan no se corresponde con matrícula+cuota de Stripe.
+  const payOptions = hasPlan
+    ? `<label class="pay"><input type="radio" name="payment_choice" value="club" checked>
+        <span><strong>Pago al club</strong> — el club te indicará cómo abonar cada concepto en su fecha.</span></label>`
+    : `<label class="pay"><input type="radio" name="payment_choice" value="online" checked>
+        <span><strong>Pagar online</strong> — domiciliación o tarjeta. Cómodo y automático.</span></label>
+       <label class="pay"><input type="radio" name="payment_choice" value="club">
+        <span><strong>Lo gestiono con el club</strong> — Bizum, efectivo o transferencia.</span></label>`;
 
   const inner = `
   <div class="card">
@@ -137,10 +181,7 @@ function formPage({ token, org, campaign, lang = 'es' }) {
 
     <div class="sect">Pago</div>
     ${amountsBlock}
-    <label class="pay"><input type="radio" name="payment_choice" value="online" checked>
-      <span><strong>Pagar online</strong> — domiciliación o tarjeta. Cómodo y automático.</span></label>
-    <label class="pay"><input type="radio" name="payment_choice" value="club">
-      <span><strong>Lo gestiono con el club</strong> — Bizum, efectivo o transferencia.</span></label>
+    ${payOptions}
 
     <button type="submit" class="btn" id="submitBtn">Inscribir →</button>
     <p class="err" id="enrErr"></p>
@@ -205,7 +246,7 @@ function makeHandler(db) {
 
     const { data: campaign } = await db
       .from('enrollment_campaigns')
-      .select('id, organization_id, season, status, matricula_cents, monthly_fee_cents, num_installments')
+      .select('id, organization_id, season, status, matricula_cents, monthly_fee_cents, num_installments, concepts_jsonb')
       .eq('public_token', token)
       .maybeSingle();
     if (!campaign || campaign.status !== 'open') return htmlResponse(200, closedPage(lang));

@@ -571,7 +571,21 @@
     <div class="pp-stabpanel" data-stabpanel="enroll" style="display:none">
       <section class="pp-section">
         <h2 class="pp-section__title">Inscripción de temporada</h2>
-        <p class="pp-section__sub">Abre las inscripciones y comparte un enlace + QR con las familias. Cada padre rellena la ficha de su hijo/a, da su consentimiento y paga matrícula + cuota desde el móvil — sin que tengas que teclear nada.</p>
+        <p class="pp-section__sub">Abre las inscripciones y comparte un enlace + QR con las familias. Cada padre rellena la ficha de su hijo/a, da su consentimiento y ve el plan de pagos — sin que tengas que teclear nada.</p>
+
+        <!-- Plan de pagos a medida (conceptos con fecha). Siempre visible: el
+             club lo diseña antes de abrir y lo puede editar después sin romper
+             el enlace ya repartido. -->
+        <div id="enrPlan" class="pp-form" style="margin:.5rem 0 1.25rem;padding:.9rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:10px">
+          <label class="pp-form__label" style="margin-bottom:.15rem">Plan de pagos de la temporada</label>
+          <p class="pp-form__hint" style="margin-top:0">Diseña los pagos como los cobra tu club: matrícula, ficha federativa, material, plazos… Cada concepto con su importe y su fecha. Las familias lo verán al inscribirse; el cobro de cada plazo lo registras tú en la pestaña <strong>Cobros</strong>.</p>
+          <div id="enrPlanRows" style="margin:.5rem 0"></div>
+          <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" id="enrPlanAddBtn">+ Añadir concepto</button>
+          <div style="text-align:right;margin-top:.5rem;font-size:13px;color:#374151">Total temporada: <strong id="enrPlanTotal">0,00 €</strong></div>
+          <div class="pp-form__actions" style="margin-top:.5rem">
+            <button type="button" class="pp-btn pp-btn--primary pp-btn--sm" id="enrPlanSaveBtn" style="display:none">Guardar plan de pagos</button>
+          </div>
+        </div>
 
         <!-- Estado: sin campaña abierta → formulario para abrir -->
         <div id="enrollEmpty" style="display:none">
@@ -580,6 +594,7 @@
               <label class="pp-form__label" for="enrSeason">Temporada</label>
               <input class="pp-input" id="enrSeason" type="text" placeholder="2026-27">
             </div>
+            <p class="pp-form__hint" style="margin:.25rem 0 0">Cuota mensual simple (opcional). <strong>Si has diseñado el plan de pagos de arriba, deja estos campos vacíos.</strong></p>
             <div class="pp-form__row">
               <label class="pp-form__label" for="enrMatricula">Matrícula <small>€ (pago único, opcional)</small></label>
               <input class="pp-input" id="enrMatricula" type="number" min="0" step="0.01" placeholder="35">
@@ -1553,6 +1568,9 @@
         const now = new Date(); const y = now.getMonth() + 1 >= 7 ? now.getFullYear() : now.getFullYear() - 1;
         $('enrSeason').value = `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
       }
+      // Sembramos filas en blanco una sola vez (no pisamos lo que edite el admin).
+      if (!$('enrPlanRows').children.length) renderPlanRows([]);
+      $('enrPlanSaveBtn').style.display = 'none';
       return;
     }
     const c = enrollCampaign;
@@ -1561,9 +1579,59 @@
     $('enrUrl').value = c.url || '';
     $('enrQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(c.url || '');
     const parts = [];
+    if (c.concepts && c.concepts.length) parts.push(c.concepts.length + ' conceptos · total ' + eurFromCents(c.plan_total_cents || 0));
     if (c.matricula_cents != null) parts.push('Matrícula: ' + eurFromCents(c.matricula_cents));
     if (c.monthly_fee_cents != null) parts.push('Cuota: ' + eurFromCents(c.monthly_fee_cents) + '/mes × ' + (c.num_installments || 9));
     $('enrAmounts').textContent = parts.join(' · ');
+    // Campaña abierta: editor de plan editable + botón de guardar visible.
+    renderPlanRows(c.concepts || []);
+    $('enrPlanSaveBtn').style.display = '';
+  }
+
+  // ── Editor del plan de pagos a medida ───────────────────────
+  function addPlanRow(data) {
+    data = data || {};
+    const div = document.createElement('div');
+    div.className = 'enr-plan-row';
+    div.style.cssText = 'display:grid;grid-template-columns:1fr 92px 150px 34px;gap:.4rem;margin-bottom:.4rem;align-items:center';
+    div.innerHTML =
+      '<input class="pp-input enr-pl-concepto" type="text" maxlength="80" placeholder="Inscripción, Ficha federativa, Material…">'
+      + '<input class="pp-input enr-pl-amount" type="number" min="0" step="0.01" placeholder="€">'
+      + '<input class="pp-input enr-pl-date" type="date">'
+      + '<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm enr-pl-del" title="Quitar concepto">✕</button>';
+    div.querySelector('.enr-pl-concepto').value = data.concepto || '';
+    if (data.amount_cents != null) div.querySelector('.enr-pl-amount').value = data.amount_cents / 100;
+    div.querySelector('.enr-pl-date').value = data.due_date || '';
+    div.querySelector('.enr-pl-del').addEventListener('click', () => { div.remove(); recalcPlanTotal(); });
+    div.querySelector('.enr-pl-amount').addEventListener('input', recalcPlanTotal);
+    $('enrPlanRows').appendChild(div);
+  }
+
+  function renderPlanRows(plan) {
+    const box = $('enrPlanRows'); box.innerHTML = '';
+    if (plan && plan.length) plan.forEach(addPlanRow);
+    else { addPlanRow({}); addPlanRow({}); }
+    recalcPlanTotal();
+  }
+
+  function collectPlan() {
+    const out = [];
+    document.querySelectorAll('#enrPlanRows .enr-plan-row').forEach(r => {
+      const concepto = r.querySelector('.enr-pl-concepto').value.trim();
+      const amtRaw = r.querySelector('.enr-pl-amount').value;
+      const due = r.querySelector('.enr-pl-date').value;
+      if (!concepto && !amtRaw && !due) return; // fila vacía → se ignora
+      out.push({ concepto, amount_cents: eurToCents(amtRaw), due_date: due });
+    });
+    return out;
+  }
+
+  function recalcPlanTotal() {
+    let total = 0;
+    document.querySelectorAll('#enrPlanRows .enr-pl-amount').forEach(i => {
+      const c = eurToCents(i.value); if (c != null) total += c;
+    });
+    $('enrPlanTotal').textContent = eurFromCents(total);
   }
 
   function eurToCents(v) {
@@ -1581,6 +1649,7 @@
       matricula_cents: eurToCents($('enrMatricula').value),
       monthly_fee_cents: eurToCents($('enrFee').value),
       num_installments: $('enrInstallments').value ? Number($('enrInstallments').value) : undefined,
+      concepts: collectPlan(),
     };
     const btn = _enrOpenBtn; btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Abriendo…';
     try {
@@ -1592,6 +1661,24 @@
       err.textContent = e.message;
     } finally {
       btn.disabled = false; btn.textContent = 'Abrir inscripciones →';
+    }
+  });
+
+  const _enrPlanAddBtn = $('enrPlanAddBtn');
+  if (_enrPlanAddBtn) _enrPlanAddBtn.addEventListener('click', () => addPlanRow({}));
+
+  const _enrPlanSaveBtn = $('enrPlanSaveBtn');
+  if (_enrPlanSaveBtn) _enrPlanSaveBtn.addEventListener('click', async () => {
+    const btn = _enrPlanSaveBtn; btn.disabled = true; const orig = btn.textContent; btn.innerHTML = '<span class="pp-spinner"></span> Guardando…';
+    try {
+      const r = await api('enrollment_update_plan', { concepts: collectPlan() });
+      enrollCampaign = r.campaign;
+      renderEnrollment();
+      sToast('ok', 'Plan de pagos guardado.');
+    } catch (e) {
+      sToast('err', e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
     }
   });
 

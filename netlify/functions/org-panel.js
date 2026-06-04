@@ -47,6 +47,9 @@ const {
   enrollmentUrl,
   normalizeCents,
   normalizeInstallments,
+  normalizePaymentPlan,
+  readPlan,
+  planTotalCents,
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
@@ -540,6 +543,7 @@ function makeHandler(db, emailClient) {
       if (action === 'enrollment_open')   return await enrollmentOpen(db, sportsOrg, body, siteUrl);
       if (action === 'enrollment_close')  return await enrollmentClose(db, sportsOrg, body);
       if (action === 'enrollment_assign') return await enrollmentAssign(db, sportsOrg, body);
+      if (action === 'enrollment_update_plan') return await enrollmentUpdatePlan(db, sportsOrg, body, siteUrl);
       if (action === 'billing_matrix')    return await billingMatrix(db, sportsOrg, body);
       if (action === 'enrollment_invite') return await enrollmentInvite(db, emailClient, sportsOrg, body, siteUrl);
     }
@@ -553,7 +557,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
-const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'billing_matrix', 'enrollment_invite']);
+const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'enrollment_update_plan', 'billing_matrix', 'enrollment_invite']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
 
@@ -570,6 +574,8 @@ function shapeCampaign(campaign, siteUrl, submitted = null) {
     matricula_cents: campaign.matricula_cents ?? null,
     monthly_fee_cents: campaign.monthly_fee_cents ?? null,
     num_installments: campaign.num_installments ?? DEFAULT_INSTALLMENTS,
+    concepts: readPlan(campaign.concepts_jsonb),
+    plan_total_cents: planTotalCents(readPlan(campaign.concepts_jsonb)),
     opens_at: campaign.opens_at || null,
     closes_at: campaign.closes_at || null,
     created_at: campaign.created_at || null,
@@ -616,6 +622,8 @@ async function enrollmentOpen(db, org, body, siteUrl) {
   if (fee.error) return jsonResponse(400, { error: fee.error });
   const inst = normalizeInstallments(body.num_installments);
   if (inst.error) return jsonResponse(400, { error: inst.error });
+  const plan = normalizePaymentPlan(body.concepts);
+  if (plan.error) return jsonResponse(400, { error: plan.error });
 
   // Ya hay una abierta para esa temporada → no duplicamos enlaces vivos.
   const { data: existing } = await db
@@ -640,6 +648,7 @@ async function enrollmentOpen(db, org, body, siteUrl) {
     matricula_cents: mat.value,
     monthly_fee_cents: monthlyFee,
     num_installments: inst.value != null ? inst.value : DEFAULT_INSTALLMENTS,
+    concepts_jsonb: { plan: plan.value },
   };
 
   const { data: created, error } = await db
@@ -650,6 +659,36 @@ async function enrollmentOpen(db, org, body, siteUrl) {
   if (error) return jsonResponse(500, { error: error.message });
 
   return jsonResponse(200, { ok: true, campaign: shapeCampaign(created, siteUrl, 0) });
+}
+
+// enrollment_update_plan: actualiza el plan de pagos a medida de la
+// campaña abierta del club SIN regenerar el token (los enlaces y QR ya
+// repartidos siguen vivos). Scoped al org del JWT.
+async function enrollmentUpdatePlan(db, org, body, siteUrl) {
+  const plan = normalizePaymentPlan(body.concepts);
+  if (plan.error) return jsonResponse(400, { error: plan.error });
+
+  const { data: campaign, error: cErr } = await db
+    .from('enrollment_campaigns')
+    .select('*')
+    .eq('organization_id', org.id)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (cErr) return jsonResponse(500, { error: cErr.message });
+  if (!campaign) return jsonResponse(404, { error: 'No hay una campaña de inscripción abierta' });
+
+  const { data: updated, error } = await db
+    .from('enrollment_campaigns')
+    .update({ concepts_jsonb: { plan: plan.value } })
+    .eq('id', campaign.id)
+    .eq('organization_id', org.id)
+    .select()
+    .single();
+  if (error) return jsonResponse(500, { error: error.message });
+
+  return jsonResponse(200, { ok: true, campaign: shapeCampaign(updated, siteUrl) });
 }
 
 // enrollment_close: cierra una campaña (deja de aceptar inscripciones).
