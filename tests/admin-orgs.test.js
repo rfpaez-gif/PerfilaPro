@@ -937,6 +937,45 @@ describe('admin-orgs handler', () => {
       expect(call.html).toMatch(/Bienvenida/);
     });
 
+    it('un club deportivo recibe copy deportivo (plantilla/inscripciones) + línea de reenvío', async () => {
+      withOrg({ id: 'uuid-flota', slug: 'cd-flota', name: 'CD La Flota', email: 'club@flota.es', kind: 'sports_club' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'cd-flota' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.subject).toMatch(/CD La Flota/);
+      expect(call.html).toMatch(/Plantilla/);
+      expect(call.html).toMatch(/Inscripciones/);
+      expect(call.html).toMatch(/cuotas/);
+      // La línea de reenvío para el contacto que no es el responsable.
+      expect(call.html).toMatch(/Reenvía este correo a la persona responsable/);
+      // NO debe llevar el vocabulario B2B de oficina.
+      expect(call.html).not.toMatch(/invitar profesionales en lote/);
+    });
+
+    it('club deportivo en catalán usa copy deportivo catalán', async () => {
+      withOrg({ id: 'uuid-flota', slug: 'cd-flota', name: 'CD La Flota', email: 'club@flota.es', kind: 'sports_club' });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'cd-flota', idioma: 'ca' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.html).toMatch(/Plantilla/);
+      expect(call.html).toMatch(/Reenvia aquest correu/);
+    });
+
+    it('una org de negocio (kind null) mantiene el copy B2B y SIN línea de reenvío', async () => {
+      withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: 'cliente@iris.es', kind: null });
+
+      await inviteHandler(buildEvent({
+        body: { action: 'send_panel_invite', slug: 'iris-energia' },
+      }));
+      const call = mockEmailSend.mock.calls[0][0];
+      expect(call.html).toMatch(/invitar profesionales en lote/);
+      expect(call.html).not.toMatch(/persona responsable/);
+    });
+
     it('devuelve 400 si la org no tiene email registrado', async () => {
       withOrg({ id: 'uuid-iris', slug: 'iris-energia', name: 'Iris Energía', email: null });
 
