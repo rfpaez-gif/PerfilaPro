@@ -166,7 +166,26 @@ async function handlePlanCheckoutCompleted({ db, stripe, session, account }) {
   return { ok: true, card_slug: cardSlug, paid_now: paidNow };
 }
 
+// payment_intent.{succeeded,payment_failed} (kind=cantera-plan) → cierra el
+// estado de un cargo programado cobrado por el cron (o de una liquidación
+// SEPA asíncrona). Sólo actúa sobre PIs con charge_id en metadata; el PI
+// combinado del checkout (sin charge_id) lo gestiona el checkout.completed.
+async function handlePlanPaymentIntent({ db, paymentIntent, failed = false }) {
+  const m = paymentIntent.metadata || {};
+  if (m.kind !== PLAN_KIND) return { ok: false, reason: 'not_plan' };
+  if (!m.charge_id) return { ok: false, reason: 'no_charge_id' };
+  const patch = failed
+    ? { status: 'failed', last_error: (paymentIntent.last_payment_error && paymentIntent.last_payment_error.message) || 'payment_failed' }
+    : { status: 'paid', paid_at: new Date().toISOString(), stripe_payment_intent_id: paymentIntent.id };
+  const { error } = await db.from('enrollment_charges').update(patch).eq('id', m.charge_id);
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, charge_id: m.charge_id, failed };
+}
+
 // Discriminadores que usa stripe-webhook.js para enrutar.
+function isPlanPaymentIntent(pi) {
+  return !!(pi && pi.metadata && pi.metadata.kind === PLAN_KIND && pi.metadata.charge_id);
+}
 function isParentFeeSubscription(subscription) {
   return !!(subscription && subscription.metadata && subscription.metadata.kind === PARENT_FEE_KIND);
 }
@@ -184,6 +203,8 @@ module.exports = {
   handleParentSubscription,
   handlePrintCheckoutCompleted,
   handlePlanCheckoutCompleted,
+  handlePlanPaymentIntent,
   isParentFeeSubscription,
   isParentFeeInvoice,
+  isPlanPaymentIntent,
 };

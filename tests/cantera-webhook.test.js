@@ -151,6 +151,38 @@ describe('handlePlanCheckoutCompleted', () => {
   });
 });
 
+describe('handlePlanPaymentIntent', () => {
+  function db() { const ups = []; return { ups, from: () => ({ update: (p) => { ups.push(p); return { eq: (_c, id) => { ups[ups.length - 1]._id = id; return Promise.resolve({ error: null }); } }; } }) }; }
+
+  it('succeeded con charge_id → marca el cargo paid', async () => {
+    const d = db();
+    const pi = { id: 'pi_9', metadata: { kind: 'cantera-plan', charge_id: 'c1' } };
+    const r = await cw.handlePlanPaymentIntent({ db: d, paymentIntent: pi, failed: false });
+    expect(r.ok).toBe(true);
+    expect(d.ups[0]).toMatchObject({ status: 'paid', stripe_payment_intent_id: 'pi_9', _id: 'c1' });
+  });
+
+  it('payment_failed → marca failed con last_error', async () => {
+    const d = db();
+    const pi = { id: 'pi_9', metadata: { kind: 'cantera-plan', charge_id: 'c1' }, last_payment_error: { message: 'insufficient_funds' } };
+    const r = await cw.handlePlanPaymentIntent({ db: d, paymentIntent: pi, failed: true });
+    expect(r.ok).toBe(true);
+    expect(d.ups[0]).toMatchObject({ status: 'failed', last_error: 'insufficient_funds' });
+  });
+
+  it('ignora el PI combinado del checkout (sin charge_id)', async () => {
+    const r = await cw.handlePlanPaymentIntent({ db: db(), paymentIntent: { metadata: { kind: 'cantera-plan' } } });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('no_charge_id');
+  });
+
+  it('isPlanPaymentIntent discrimina por kind + charge_id', () => {
+    expect(cw.isPlanPaymentIntent({ metadata: { kind: 'cantera-plan', charge_id: 'c1' } })).toBe(true);
+    expect(cw.isPlanPaymentIntent({ metadata: { kind: 'cantera-plan' } })).toBe(false);
+    expect(cw.isPlanPaymentIntent({ metadata: { kind: 'other', charge_id: 'c1' } })).toBe(false);
+  });
+});
+
 describe('discriminadores', () => {
   it('isParentFeeSubscription / isParentFeeInvoice', () => {
     expect(cw.isParentFeeSubscription({ metadata: { kind: 'cantera-parent-fee' } })).toBe(true);
