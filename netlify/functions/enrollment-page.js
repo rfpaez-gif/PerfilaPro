@@ -131,15 +131,23 @@ function formPage({ token, org, campaign, lang = 'es' }) {
     amountsBlock = amountsLines.length ? `<div class="amounts">${amountsLines.join('')}</div>` : '';
   }
 
-  // Con plan a medida el cobro es manual (al club): no ofrecemos checkout
-  // online porque el plan no se corresponde con matrícula+cuota de Stripe.
-  const payOptions = hasPlan
-    ? `<label class="pay"><input type="radio" name="payment_choice" value="club" checked>
-        <span><strong>Pago al club</strong> — el club te indicará cómo abonar cada concepto en su fecha.</span></label>`
-    : `<label class="pay"><input type="radio" name="payment_choice" value="online" checked>
-        <span><strong>Pagar online</strong> — domiciliación o tarjeta. Cómodo y automático.</span></label>
-       <label class="pay"><input type="radio" name="payment_choice" value="club">
+  // Pago online (SEPA/tarjeta) solo si el club tiene Stripe Connect activo.
+  // Con plan a medida y club conectado, cobramos el plan por Stripe (lo que
+  // vence ya + mandato para los plazos). Sin Connect, el plan se cobra al
+  // club (manual). El modelo matrícula+cuota mantiene su comportamiento.
+  const canPayOnline = !!org.stripe_connect_charges_enabled;
+  const onlineOpt = `<label class="pay"><input type="radio" name="payment_choice" value="online" checked>
+        <span><strong>Pagar online</strong> — domiciliación SEPA o tarjeta. Cómodo y automático.</span></label>`;
+  const clubOptAlt = `<label class="pay"><input type="radio" name="payment_choice" value="club">
         <span><strong>Lo gestiono con el club</strong> — Bizum, efectivo o transferencia.</span></label>`;
+  const clubOptOnly = `<label class="pay"><input type="radio" name="payment_choice" value="club" checked>
+        <span><strong>Pago al club</strong> — el club te indicará cómo abonar cada concepto en su fecha.</span></label>`;
+  let payOptions;
+  if (hasPlan) {
+    payOptions = canPayOnline ? (onlineOpt + clubOptAlt) : clubOptOnly;
+  } else {
+    payOptions = onlineOpt + clubOptAlt;
+  }
 
   const inner = `
   <div class="card">
@@ -253,7 +261,7 @@ function makeHandler(db) {
 
     const { data: org } = await db
       .from('organizations')
-      .select('id, name, kind, deleted_at')
+      .select('id, name, kind, deleted_at, stripe_connect_charges_enabled')
       .eq('id', campaign.organization_id)
       .maybeSingle();
     if (!org || org.deleted_at || org.kind !== 'sports_club') return htmlResponse(200, closedPage(lang));

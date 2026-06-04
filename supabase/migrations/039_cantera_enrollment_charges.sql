@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS enrollment_charges (
   application_fee_cents   integer,
   stripe_payment_intent_id text,
   stripe_customer_id      text,
+  stripe_payment_method_id text,
   paid_at                 timestamptz,
   attempts                integer NOT NULL DEFAULT 0,
   last_error              text,

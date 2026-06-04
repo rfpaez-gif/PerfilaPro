@@ -382,6 +382,15 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         if (!result.ok) console.log('cantera print checkout skipped:', result.reason);
         return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
       }
+      // Plan de pagos a medida: guarda el mandato + marca pagado lo que vence
+      // ya. Direct charge → el evento llega con event.account (cuenta del club).
+      if (session.metadata && session.metadata.kind === cantera.PLAN_KIND) {
+        const result = await cantera.handlePlanCheckoutCompleted({
+          db, stripe: stripeClient, session, account: stripeEvent.account,
+        });
+        if (!result.ok) console.log('cantera plan checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
 
       // Desvío B2B: si la session lleva metadata.kind === 'org-subscription',
       // delega al lib y no entra al carril autónomo. Devuelve 200 igualmente

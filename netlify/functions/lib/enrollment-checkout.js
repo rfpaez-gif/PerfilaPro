@@ -21,6 +21,76 @@
 // stripe.checkout.sessions.create(params, { stripeAccount }).
 
 const PARENT_FEE_KIND = 'cantera-parent-fee';
+// Plan de pagos a medida (conceptos con fecha) cobrado por Stripe Connect.
+const PLAN_KIND = 'cantera-plan';
+
+// Construye la Checkout Session del PLAN de pagos a medida. A diferencia de
+// la inscripción por suscripción, aquí:
+//   - lo que vence ya (dueNowConcepts) se cobra en modo `payment`, con
+//     setup_future_usage='off_session' para guardar el mandato SEPA/tarjeta
+//     que el cron usará para los plazos futuros;
+//   - si no vence nada al firmar, modo `setup` (solo guarda el mandato).
+// Direct charge en la cuenta conectada del club, con application_fee_amount
+// (céntimos) sobre el total que se cobra ahora.
+//
+// Entradas (ya resueltas por el endpoint):
+//   org              — { id, name, stripe_connect_account_id }
+//   card             — { slug, nombre }
+//   parentEmail      — email del tutor
+//   dueNowConcepts   — conceptos que se cobran al firmar (puede ser [])
+//   dueNowFeeCents   — application_fee (céntimos) sobre el total de arriba
+//   campaignId       — enrollment_campaigns.id (o null)
+//   siteUrl          — base success/cancel
+function buildPlanCheckoutSessionParams({
+  org, card, parentEmail,
+  dueNowConcepts = [], dueNowFeeCents = 0,
+  campaignId = null, siteUrl = 'https://perfilapro.es',
+}) {
+  const metadata = {
+    kind: PLAN_KIND,
+    card_slug: card.slug,
+    org_id: org.id,
+    parent_email: parentEmail,
+  };
+  if (campaignId) metadata.enrollment_campaign_id = campaignId;
+
+  const dueNow = (dueNowConcepts || []).filter(c => Number(c.amount_cents) > 0);
+  const dueNowTotal = dueNow.reduce((s, c) => s + Number(c.amount_cents), 0);
+
+  const base = {
+    payment_method_types: ['card', 'sepa_debit'],
+    customer_email: parentEmail,
+    metadata,
+    success_url: `${siteUrl}/panel.html?enroll=done`,
+    cancel_url: `${siteUrl}/panel.html?enroll=cancel`,
+  };
+
+  let params;
+  if (dueNowTotal > 0) {
+    // Cobra lo que vence ya + guarda el método para los plazos futuros.
+    const piData = { setup_future_usage: 'off_session', metadata };
+    if (dueNowFeeCents > 0) piData.application_fee_amount = dueNowFeeCents;
+    params = {
+      ...base,
+      mode: 'payment',
+      customer_creation: 'always',
+      line_items: dueNow.map(c => ({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: `${c.concepto} · ${org.name}` },
+          unit_amount: Number(c.amount_cents),
+        },
+        quantity: 1,
+      })),
+      payment_intent_data: piData,
+    };
+  } else {
+    // Nada vence al firmar → solo guardar el mandato (sin cobro).
+    params = { ...base, mode: 'setup', setup_intent_data: { metadata } };
+  }
+
+  return { params, options: { stripeAccount: org.stripe_connect_account_id } };
+}
 
 // Construye los parámetros de la Checkout Session. Entradas (ya
 // resueltas/validadas por el endpoint):
@@ -92,5 +162,7 @@ function buildEnrollmentSessionParams({
 
 module.exports = {
   PARENT_FEE_KIND,
+  PLAN_KIND,
   buildEnrollmentSessionParams,
+  buildPlanCheckoutSessionParams,
 };

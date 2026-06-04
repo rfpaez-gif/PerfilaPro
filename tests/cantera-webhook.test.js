@@ -96,6 +96,61 @@ describe('handlePrintCheckoutCompleted', () => {
   });
 });
 
+describe('handlePlanCheckoutCompleted', () => {
+  // db que captura los patches y devuelve los cargos 'scheduled'.
+  function planDb(scheduled) {
+    const calls = { updates: [], paidIds: null };
+    const updateChain = (patch) => {
+      calls.updates.push(patch);
+      const node = {
+        eq: () => node,
+        in: (_col, ids) => { calls.paidIds = ids; return Promise.resolve({ error: null }); },
+        then: (res) => Promise.resolve({ error: null }).then(res),
+      };
+      return node;
+    };
+    const selectChain = () => {
+      const node = { eq: () => node, then: (res) => Promise.resolve({ data: scheduled, error: null }).then(res) };
+      return node;
+    };
+    return { calls, from: () => ({ update: updateChain, select: selectChain }) };
+  }
+  const stripe = { paymentIntents: { retrieve: vi.fn().mockResolvedValue({ payment_method: 'pm_x' }) }, setupIntents: { retrieve: vi.fn() } };
+
+  it('guarda customer+mandato en todos y marca pagado lo que vence ya', async () => {
+    const scheduled = [
+      { id: 'c1', due_date: '2020-01-01' }, // ya vencido → due now
+      { id: 'c2', due_date: '2099-01-01' }, // futuro → queda scheduled
+    ];
+    const db = planDb(scheduled);
+    const session = { mode: 'payment', customer: 'cus_1', payment_intent: 'pi_1', metadata: { kind: 'cantera-plan', card_slug: 'p-1' } };
+    const r = await cw.handlePlanCheckoutCompleted({ db, stripe, session, account: 'acct_1' });
+    expect(r.ok).toBe(true);
+    expect(r.card_slug).toBe('p-1');
+    expect(r.paid_now).toBe(1);
+    expect(db.calls.updates[0]).toMatchObject({ stripe_customer_id: 'cus_1', stripe_payment_method_id: 'pm_x' });
+    expect(db.calls.paidIds).toEqual(['c1']);
+    expect(stripe.paymentIntents.retrieve).toHaveBeenCalledWith('pi_1', { stripeAccount: 'acct_1' });
+  });
+
+  it('modo setup: guarda el mandato y no marca nada pagado', async () => {
+    const db = planDb([{ id: 'c1', due_date: '2099-01-01' }]);
+    const stripeSetup = { paymentIntents: { retrieve: vi.fn() }, setupIntents: { retrieve: vi.fn().mockResolvedValue({ payment_method: 'pm_s' }) } };
+    const session = { mode: 'setup', customer: 'cus_2', setup_intent: 'si_1', metadata: { kind: 'cantera-plan', card_slug: 'p-2' } };
+    const r = await cw.handlePlanCheckoutCompleted({ db, stripe: stripeSetup, session, account: 'acct_1' });
+    expect(r.ok).toBe(true);
+    expect(r.paid_now).toBe(0);
+    expect(db.calls.paidIds).toBeNull();
+    expect(stripeSetup.setupIntents.retrieve).toHaveBeenCalled();
+  });
+
+  it('ignora sesiones de otro kind', async () => {
+    const r = await cw.handlePlanCheckoutCompleted({ db: planDb([]), stripe, session: { metadata: { kind: 'other' } } });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('not_plan');
+  });
+});
+
 describe('discriminadores', () => {
   it('isParentFeeSubscription / isParentFeeInvoice', () => {
     expect(cw.isParentFeeSubscription({ metadata: { kind: 'cantera-parent-fee' } })).toBe(true);

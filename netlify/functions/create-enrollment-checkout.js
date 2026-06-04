@@ -21,7 +21,9 @@ const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { parentAuthFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
 const { isPlayer } = require('./lib/card-kind');
-const { buildEnrollmentSessionParams } = require('./lib/enrollment-checkout');
+const { buildEnrollmentSessionParams, buildPlanCheckoutSessionParams } = require('./lib/enrollment-checkout');
+const { readPlan } = require('./lib/enrollment-campaign');
+const { splitPlanByDue, sumCents, applicationFeeCents, buildChargeRows } = require('./lib/enrollment-charges');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const defaultStripe = process.env.STRIPE_SECRET_KEY ? stripeLib(process.env.STRIPE_SECRET_KEY) : null;
@@ -30,6 +32,40 @@ const PARENT_ROLES = ['tutor_legal', 'tutor_secundario', 'player_self'];
 
 function jsonResponse(statusCode, payload) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+}
+
+// Carril PLAN: materializa los cargos del plan e inicia el Checkout que
+// cobra lo que vence ya + guarda el mandato. Idempotente por jugador: si ya
+// hay cargos no cancelados, no duplica.
+async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, campaignId, feeBps, siteUrl }) {
+  // Guard idempotencia: un plan activo por jugador.
+  const { data: existing } = await db
+    .from('enrollment_charges').select('id')
+    .eq('card_slug', card.slug).neq('status', 'canceled').limit(1).maybeSingle();
+  if (existing) return jsonResponse(409, { error: 'Ya hay un plan de pagos activo para este jugador' });
+
+  const asOf = new Date().toISOString().slice(0, 10);
+  const { dueNow } = splitPlanByDue(plan, asOf);
+  const dueNowTotal = sumCents(dueNow);
+  const dueNowFeeCents = applicationFeeCents(dueNowTotal, feeBps);
+
+  // Materializa los cargos (todos 'scheduled'; el webhook marcará pagados
+  // los que vencen ya y guardará el mandato en todos para el cron).
+  const rows = buildChargeRows({ plan, cardSlug: card.slug, orgId: org.id, campaignId, feeBps });
+  const { error: insErr } = await db.from('enrollment_charges').insert(rows);
+  if (insErr) return jsonResponse(500, { error: insErr.message });
+
+  const { params, options } = buildPlanCheckoutSessionParams({
+    org, card, parentEmail, dueNowConcepts: dueNow, dueNowFeeCents, campaignId, siteUrl,
+  });
+
+  try {
+    const checkout = await stripe.checkout.sessions.create(params, options);
+    return jsonResponse(200, { ok: true, url: checkout.url, plan: true });
+  } catch (err) {
+    console.error('create-enrollment-checkout: Stripe error (plan):', err.message);
+    return jsonResponse(502, { error: 'No se pudo iniciar el pago' });
+  }
 }
 
 function makeHandler(stripe, db) {
@@ -77,28 +113,27 @@ function makeHandler(stripe, db) {
       return jsonResponse(409, { error: 'El club aún no acepta pagos online' });
     }
 
-    // Una sola cuota activa por jugador.
-    const { data: existing } = await db
-      .from('parent_subscriptions').select('id')
-      .eq('card_slug', cardSlug).is('canceled_at', null).limit(1).maybeSingle();
-    if (existing) return jsonResponse(409, { error: 'Ya hay una cuota activa para este jugador' });
+    const feeBps = parseInt(process.env.STRIPE_PLATFORM_FEE_BPS, 10) || 0;
+    const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
     // Campaña (opcional): si viene campaign_id, sus importes mandan sobre
     // la cuota base del club. Debe pertenecer al mismo club y estar abierta.
     let campaignId = null;
     let monthlyFeeCents = org.cantera_monthly_fee_cents;
     let matriculaCents = 0;
+    let plan = [];
     const reqCampaignId = (body.campaign_id || '').trim();
     if (reqCampaignId) {
       const { data: campaign, error: cErr } = await db
         .from('enrollment_campaigns')
-        .select('id, organization_id, status, matricula_cents, monthly_fee_cents')
+        .select('id, organization_id, status, matricula_cents, monthly_fee_cents, concepts_jsonb')
         .eq('id', reqCampaignId).maybeSingle();
       if (cErr) return jsonResponse(500, { error: cErr.message });
       if (!campaign || campaign.organization_id !== org.id || campaign.status !== 'open') {
         return jsonResponse(409, { error: 'Campaña de inscripción no disponible' });
       }
       campaignId = campaign.id;
+      plan = readPlan(campaign.concepts_jsonb);
       if (Number.isInteger(campaign.monthly_fee_cents) && campaign.monthly_fee_cents > 0) {
         monthlyFeeCents = campaign.monthly_fee_cents;
       }
@@ -107,12 +142,25 @@ function makeHandler(stripe, db) {
       }
     }
 
+    // ── Carril PLAN a medida ────────────────────────────────────────────
+    // Si la campaña tiene conceptos, cobramos el plan (lo que vence ya +
+    // mandato para los plazos futuros) en vez de la suscripción mensual.
+    if (plan.length > 0) {
+      return await handlePlanCheckout({
+        db, stripe, org, card, parentEmail: session.email, plan, campaignId, feeBps, siteUrl,
+      });
+    }
+
+    // ── Carril suscripción mensual (modelo original) ────────────────────
+    // Una sola cuota activa por jugador.
+    const { data: existing } = await db
+      .from('parent_subscriptions').select('id')
+      .eq('card_slug', cardSlug).is('canceled_at', null).limit(1).maybeSingle();
+    if (existing) return jsonResponse(409, { error: 'Ya hay una cuota activa para este jugador' });
+
     if (!monthlyFeeCents || monthlyFeeCents <= 0) {
       return jsonResponse(409, { error: 'El club no ha configurado la cuota mensual' });
     }
-
-    const feeBps = parseInt(process.env.STRIPE_PLATFORM_FEE_BPS, 10) || 0;
-    const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
     const { params, options } = buildEnrollmentSessionParams({
       org, card, parentEmail: session.email,
