@@ -12,8 +12,11 @@
 // la config, firmados con STRIPE_CONNECT_WEBHOOK_SECRET. La verificación
 // dual vive en stripe-webhook.js; aquí solo está la lógica de negocio.
 
+const { isDueNow } = require('./enrollment-charges');
+
 const PARENT_FEE_KIND = 'cantera-parent-fee';
 const PRINT_KIND = 'cantera-print';
+const PLAN_KIND = 'cantera-plan';
 
 function feeBps() { return parseInt(process.env.STRIPE_PLATFORM_FEE_BPS, 10) || 0; }
 function tsFromUnix(s) { return s ? new Date(s * 1000).toISOString() : null; }
@@ -107,7 +110,82 @@ async function handlePrintCheckoutCompleted({ db, session }) {
   return { ok: true };
 }
 
+// checkout.session.completed (kind=cantera-plan) → cierra el alta del plan
+// a medida: guarda el mandato (customer + payment_method) en los cargos del
+// jugador para que el cron cobre los plazos futuros, y marca pagados los
+// conceptos que vencían ya (cobrados en este checkout). Necesita stripe +
+// account (cuenta conectada del club) para resolver el payment_method.
+async function handlePlanCheckoutCompleted({ db, stripe, session, account }) {
+  const m = session.metadata || {};
+  if (m.kind !== PLAN_KIND) return { ok: false, reason: 'not_plan' };
+  const cardSlug = m.card_slug;
+  if (!cardSlug) return { ok: false, reason: 'no_card_slug' };
+
+  const customerId = session.customer || null;
+
+  // Resolver el método guardado (mandato SEPA/tarjeta) para cobros futuros.
+  let paymentMethodId = null;
+  try {
+    const opts = account ? { stripeAccount: account } : {};
+    if (session.mode === 'setup' && session.setup_intent && stripe) {
+      const si = await stripe.setupIntents.retrieve(session.setup_intent, opts);
+      paymentMethodId = si && si.payment_method ? String(si.payment_method) : null;
+    } else if (session.payment_intent && stripe) {
+      const pi = await stripe.paymentIntents.retrieve(session.payment_intent, opts);
+      paymentMethodId = pi && pi.payment_method ? String(pi.payment_method) : null;
+    }
+  } catch (e) {
+    // Sin método resuelto guardamos al menos el customer; el cron lo
+    // reintentará o el admin reenvía. No bloqueamos el webhook.
+    console.log('cantera plan: no se pudo resolver payment_method:', e.message);
+  }
+
+  // Guarda customer + mandato en TODOS los cargos pendientes del jugador.
+  const patch = { stripe_customer_id: customerId };
+  if (paymentMethodId) patch.stripe_payment_method_id = paymentMethodId;
+  const { error: upErr } = await db.from('enrollment_charges')
+    .update(patch).eq('card_slug', cardSlug).eq('status', 'scheduled');
+  if (upErr) return { ok: false, reason: upErr.message };
+
+  // Marca pagados los conceptos que vencían ya (cobro combinado en este
+  // checkout). Se identifican por fecha, mismo criterio que el endpoint.
+  let paidNow = 0;
+  if (session.mode === 'payment') {
+    const asOf = new Date().toISOString().slice(0, 10);
+    const { data: charges } = await db.from('enrollment_charges')
+      .select('id, due_date').eq('card_slug', cardSlug).eq('status', 'scheduled');
+    const dueNowIds = (charges || []).filter(c => isDueNow(c.due_date, asOf)).map(c => c.id);
+    if (dueNowIds.length) {
+      const { error: paidErr } = await db.from('enrollment_charges')
+        .update({ status: 'paid', paid_at: new Date().toISOString() }).in('id', dueNowIds);
+      if (paidErr) return { ok: false, reason: paidErr.message };
+      paidNow = dueNowIds.length;
+    }
+  }
+
+  return { ok: true, card_slug: cardSlug, paid_now: paidNow };
+}
+
+// payment_intent.{succeeded,payment_failed} (kind=cantera-plan) → cierra el
+// estado de un cargo programado cobrado por el cron (o de una liquidación
+// SEPA asíncrona). Sólo actúa sobre PIs con charge_id en metadata; el PI
+// combinado del checkout (sin charge_id) lo gestiona el checkout.completed.
+async function handlePlanPaymentIntent({ db, paymentIntent, failed = false }) {
+  const m = paymentIntent.metadata || {};
+  if (m.kind !== PLAN_KIND) return { ok: false, reason: 'not_plan' };
+  if (!m.charge_id) return { ok: false, reason: 'no_charge_id' };
+  const patch = failed
+    ? { status: 'failed', last_error: (paymentIntent.last_payment_error && paymentIntent.last_payment_error.message) || 'payment_failed' }
+    : { status: 'paid', paid_at: new Date().toISOString(), stripe_payment_intent_id: paymentIntent.id };
+  const { error } = await db.from('enrollment_charges').update(patch).eq('id', m.charge_id);
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true, charge_id: m.charge_id, failed };
+}
+
 // Discriminadores que usa stripe-webhook.js para enrutar.
+function isPlanPaymentIntent(pi) {
+  return !!(pi && pi.metadata && pi.metadata.kind === PLAN_KIND && pi.metadata.charge_id);
+}
 function isParentFeeSubscription(subscription) {
   return !!(subscription && subscription.metadata && subscription.metadata.kind === PARENT_FEE_KIND);
 }
@@ -119,10 +197,14 @@ function isParentFeeInvoice(invoice) {
 module.exports = {
   PARENT_FEE_KIND,
   PRINT_KIND,
+  PLAN_KIND,
   handleAccountUpdated,
   handleParentCheckoutCompleted,
   handleParentSubscription,
   handlePrintCheckoutCompleted,
+  handlePlanCheckoutCompleted,
+  handlePlanPaymentIntent,
   isParentFeeSubscription,
   isParentFeeInvoice,
+  isPlanPaymentIntent,
 };

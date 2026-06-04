@@ -100,4 +100,21 @@ describe('enrollment-page', () => {
     expect(res.body).toContain('35,00'); // matrícula
     expect(res.body).toContain('value="online"');
   });
+
+  it('plan a medida + club con Stripe conectado → ofrece pago online (SEPA/tarjeta)', async () => {
+    const campaign = { ...OPEN, concepts_jsonb: { plan: [{ concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' }] } };
+    const org = { ...ORG, stripe_connect_charges_enabled: true };
+    const res = await makeHandler(makeDb({ campaign, org }))(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('Plan de pagos de la temporada');
+    expect(res.body).toContain('value="online"');   // online disponible
+    expect(res.body).toContain('value="club"');      // + alternativa manual
+    expect(res.body).toContain('SEPA');
+  });
+
+  it('plan a medida SIN Stripe conectado → solo pago al club (manual)', async () => {
+    const campaign = { ...OPEN, concepts_jsonb: { plan: [{ concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' }] } };
+    const res = await makeHandler(makeDb({ campaign }))(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('value="club"');
+    expect(res.body).not.toContain('value="online"');
+  });
 });

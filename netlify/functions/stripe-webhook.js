@@ -340,6 +340,17 @@ function makeHandler(stripeClient, db, emailClient = resend) {
     if (stripeEvent.type === 'invoice.paid' && cantera.isParentFeeInvoice(stripeEvent.data.object)) {
       return { statusCode: 200, body: JSON.stringify({ received: true, ok: true, cantera: 'parent_invoice' }) };
     }
+    // Cargo programado del plan a medida (cobro off-session del cron o
+    // liquidación SEPA asíncrona): cierra el estado del cargo.
+    if ((stripeEvent.type === 'payment_intent.succeeded' ||
+         stripeEvent.type === 'payment_intent.payment_failed') &&
+        cantera.isPlanPaymentIntent(stripeEvent.data.object)) {
+      const result = await cantera.handlePlanPaymentIntent({
+        db, paymentIntent: stripeEvent.data.object, failed: stripeEvent.type.endsWith('payment_failed'),
+      });
+      if (!result.ok) console.log('cantera plan PI skipped:', result.reason);
+      return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+    }
 
     // ── B2B Stripe Subscription (Bloque B) ──────────────────────────────────
     // Los eventos de subscription se procesan ANTES del autónomo para
@@ -380,6 +391,15 @@ function makeHandler(stripeClient, db, emailClient = resend) {
       if (session.metadata && session.metadata.kind === cantera.PRINT_KIND) {
         const result = await cantera.handlePrintCheckoutCompleted({ db, session });
         if (!result.ok) console.log('cantera print checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
+      // Plan de pagos a medida: guarda el mandato + marca pagado lo que vence
+      // ya. Direct charge → el evento llega con event.account (cuenta del club).
+      if (session.metadata && session.metadata.kind === cantera.PLAN_KIND) {
+        const result = await cantera.handlePlanCheckoutCompleted({
+          db, stripe: stripeClient, session, account: stripeEvent.account,
+        });
+        if (!result.ok) console.log('cantera plan checkout skipped:', result.reason);
         return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
       }
 

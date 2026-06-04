@@ -51,3 +51,45 @@ describe('buildEnrollmentSessionParams', () => {
     expect(buildEnrollmentSessionParams(BASE).params.metadata.enrollment_campaign_id).toBeUndefined();
   });
 });
+
+import { PLAN_KIND, buildPlanCheckoutSessionParams } from '../netlify/functions/lib/enrollment-checkout.js';
+
+describe('buildPlanCheckoutSessionParams', () => {
+  const DUE_NOW = [
+    { concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' },
+    { concepto: 'Ficha federativa', amount_cents: 18000, due_date: '2026-09-01' },
+  ];
+
+  it('con conceptos que vencen ya: modo payment + setup_future_usage + application_fee', () => {
+    const { params, options } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'madre@e.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, campaignId: 'camp-1', siteUrl: 'https://pp.es',
+    });
+    expect(params.mode).toBe('payment');
+    expect(params.payment_method_types).toEqual(['card', 'sepa_debit']);
+    expect(params.line_items).toHaveLength(2);
+    expect(params.line_items[0].price_data.unit_amount).toBe(16000);
+    expect(params.payment_intent_data.setup_future_usage).toBe('off_session');
+    expect(params.payment_intent_data.application_fee_amount).toBe(1020);
+    expect(params.metadata.kind).toBe(PLAN_KIND);
+    expect(params.metadata.card_slug).toBe('p-abc');
+    expect(params.metadata.enrollment_campaign_id).toBe('camp-1');
+    expect(options.stripeAccount).toBe('acct_1');
+  });
+
+  it('sin conceptos que vencen ya: modo setup (solo guarda el mandato)', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'madre@e.es', dueNowConcepts: [], siteUrl: 'https://pp.es',
+    });
+    expect(params.mode).toBe('setup');
+    expect(params.line_items).toBeUndefined();
+    expect(params.setup_intent_data.metadata.kind).toBe(PLAN_KIND);
+  });
+
+  it('omite application_fee_amount si la comisión es 0', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es', dueNowConcepts: DUE_NOW, dueNowFeeCents: 0, siteUrl: 'https://pp.es',
+    });
+    expect(params.payment_intent_data.application_fee_amount).toBeUndefined();
+  });
+});

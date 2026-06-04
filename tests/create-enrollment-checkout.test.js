@@ -111,4 +111,51 @@ describe('create-enrollment-checkout', () => {
     const db = makeDb({ campaign: { id: 'camp-1', organization_id: 'OTRO', status: 'open', matricula_cents: 3500, monthly_fee_cents: 2800 } });
     expect((await makeHandler(makeStripe(), db)(ev({ auth: parentBearer(), body: { card_slug: 'p-1', campaign_id: 'camp-1' } }))).statusCode).toBe(409);
   });
+
+  // ── Carril PLAN a medida ──
+  function planDb({ existingCharge = null, captured = {} } = {}) {
+    const campaign = {
+      id: 'camp-1', organization_id: 'club-1', status: 'open',
+      matricula_cents: null, monthly_fee_cents: null,
+      concepts_jsonb: { plan: [
+        { concepto: 'Inscripción', amount_cents: 16000, due_date: '2020-09-01' }, // ya vencido → due now
+        { concepto: '2º plazo', amount_cents: 10000, due_date: '2099-01-10' },     // futuro
+      ] },
+    };
+    const card = { slug: 'p-1', card_kind: 'player', nombre: 'Leo', organization_id: 'club-1', deleted_at: null };
+    const org = { id: 'club-1', name: 'EF Universal', stripe_connect_account_id: 'acct_1', stripe_connect_charges_enabled: true, cantera_monthly_fee_cents: null, deleted_at: null };
+    return {
+      from: vi.fn((t) => {
+        if (t === 'cards') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: card, error: null }) }) }) };
+        if (t === 'card_admins') return { select: () => ({ eq: () => ({ eq: () => ({ is: () => ({ in: () => ({ limit: () => ({ maybeSingle: resolve({ data: { id: 'a-1' }, error: null }) }) }) }) }) }) }) };
+        if (t === 'organizations') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: org, error: null }) }) }) };
+        if (t === 'enrollment_campaigns') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: campaign, error: null }) }) }) };
+        if (t === 'enrollment_charges') return {
+          select: () => ({ eq: () => ({ neq: () => ({ limit: () => ({ maybeSingle: resolve({ data: existingCharge, error: null }) }) }) }) }),
+          insert: (rows) => { captured.rows = rows; return Promise.resolve({ error: null }); },
+        };
+        return {};
+      }),
+    };
+  }
+
+  it('campaña con plan a medida → inserta cargos scheduled + checkout payment con comisión', async () => {
+    const captured = {};
+    const stripe = makeStripe();
+    const res = await makeHandler(stripe, planDb({ captured }))(ev({ auth: parentBearer(), body: { card_slug: 'p-1', campaign_id: 'camp-1' } }));
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).plan).toBe(true);
+    expect(captured.rows).toHaveLength(2);
+    expect(captured.rows.every(r => r.status === 'scheduled')).toBe(true);
+    const [params] = stripe.create.mock.calls[0];
+    expect(params.mode).toBe('payment');
+    expect(params.line_items).toHaveLength(1);          // solo el due-now
+    expect(params.line_items[0].price_data.unit_amount).toBe(16000);
+    expect(params.payment_intent_data.application_fee_amount).toBe(480); // 3% de 160€
+  });
+
+  it('carril plan idempotente: 409 si el jugador ya tiene cargos', async () => {
+    const res = await makeHandler(makeStripe(), planDb({ existingCharge: { id: 'ch-1' } }))(ev({ auth: parentBearer(), body: { card_slug: 'p-1', campaign_id: 'camp-1' } }));
+    expect(res.statusCode).toBe(409);
+  });
 });

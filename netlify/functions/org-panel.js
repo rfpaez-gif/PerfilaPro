@@ -545,6 +545,7 @@ function makeHandler(db, emailClient) {
       if (action === 'enrollment_assign') return await enrollmentAssign(db, sportsOrg, body);
       if (action === 'enrollment_update_plan') return await enrollmentUpdatePlan(db, sportsOrg, body, siteUrl);
       if (action === 'billing_matrix')    return await billingMatrix(db, sportsOrg, body);
+      if (action === 'plan_charges')      return await planCharges(db, sportsOrg);
       if (action === 'enrollment_invite') return await enrollmentInvite(db, emailClient, sportsOrg, body, siteUrl);
     }
 
@@ -557,7 +558,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
-const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'enrollment_update_plan', 'billing_matrix', 'enrollment_invite']);
+const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'enrollment_update_plan', 'billing_matrix', 'plan_charges', 'enrollment_invite']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
 
@@ -902,6 +903,47 @@ async function billingMatrix(db, org, body) {
     has_matricula: matriculaCents > 0,
     players: rows,
   });
+}
+
+// plan_charges: estado por concepto del plan de pagos a medida cobrado por
+// Stripe. Agrupa los enrollment_charges del club por jugador con el nombre
+// resuelto, para la sección "Plan de pagos · estado por concepto" de Cobros.
+async function planCharges(db, org) {
+  const { data: charges, error } = await db
+    .from('enrollment_charges')
+    .select('id, card_slug, concepto, amount_cents, due_date, status, paid_at')
+    .eq('organization_id', org.id)
+    .order('card_slug', { ascending: true })
+    .order('due_date', { ascending: true });
+  if (error) return jsonResponse(500, { error: error.message });
+  const list = charges || [];
+  if (!list.length) {
+    return jsonResponse(200, { ok: true, players: [], totals: { players: 0, paid_cents: 0, due_cents: 0, failed: 0 } });
+  }
+
+  const slugs = [...new Set(list.map(r => r.card_slug))];
+  const { data: cards } = await db.from('cards').select('slug, nombre').in('slug', slugs);
+  const nameBySlug = {};
+  (cards || []).forEach(c => { nameBySlug[c.slug] = c.nombre; });
+
+  const byCard = new Map();
+  for (const r of list) {
+    if (!byCard.has(r.card_slug)) {
+      byCard.set(r.card_slug, { slug: r.card_slug, nombre: nameBySlug[r.card_slug] || r.card_slug, charges: [], total_cents: 0, paid_cents: 0 });
+    }
+    const p = byCard.get(r.card_slug);
+    p.charges.push({ id: r.id, concepto: r.concepto, amount_cents: r.amount_cents, due_date: r.due_date, status: r.status, paid_at: r.paid_at });
+    p.total_cents += r.amount_cents || 0;
+    if (r.status === 'paid') p.paid_cents += r.amount_cents || 0;
+  }
+
+  const totals = {
+    players: byCard.size,
+    paid_cents: list.filter(r => r.status === 'paid').reduce((s, r) => s + (r.amount_cents || 0), 0),
+    due_cents: list.filter(r => r.status !== 'paid' && r.status !== 'canceled').reduce((s, r) => s + (r.amount_cents || 0), 0),
+    failed: list.filter(r => r.status === 'failed').length,
+  };
+  return jsonResponse(200, { ok: true, players: [...byCard.values()], totals });
 }
 
 function formatPeriod(now = new Date()) {

@@ -322,4 +322,33 @@ describe('org-panel · Cantera enrollment (capa I3)', () => {
     expect(out.amounts.monthly_fee_cents).toBe(3000); // cuota del club (SPORTS_ORG)
     expect(out.players[0].pending_count).toBe(9);
   });
+
+  it('plan_charges agrupa los cargos del plan por jugador con totales', async () => {
+    const charges = [
+      { id: 'c1', card_slug: 'p-1', concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01', status: 'paid', paid_at: '2026-09-01' },
+      { id: 'c2', card_slug: 'p-1', concepto: '2º plazo', amount_cents: 10000, due_date: '2027-01-10', status: 'scheduled', paid_at: null },
+      { id: 'c3', card_slug: 'p-2', concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01', status: 'failed', paid_at: null },
+    ];
+    const db = makeDb(baseResolvers({
+      enrollment_charges: () => ({ data: charges, error: null }),
+      cards: () => ({ data: [{ slug: 'p-1', nombre: 'Leo' }, { slug: 'p-2', nombre: 'Ana' }], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('plan_charges', {}, token));
+    expect(res.statusCode).toBe(200);
+    const out = JSON.parse(res.body);
+    expect(out.players).toHaveLength(2);
+    const leo = out.players.find(p => p.slug === 'p-1');
+    expect(leo.nombre).toBe('Leo');
+    expect(leo.charges).toHaveLength(2);
+    expect(leo.paid_cents).toBe(16000);
+    expect(leo.total_cents).toBe(26000);
+    expect(out.totals).toMatchObject({ players: 2, paid_cents: 16000, due_cents: 26000, failed: 1 });
+  });
+
+  it('plan_charges sin cargos → players vacío', async () => {
+    const db = makeDb(baseResolvers({ enrollment_charges: () => ({ data: [], error: null }) }));
+    const res = await makeHandler(db, null)(event('plan_charges', {}, token));
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).players).toEqual([]);
+  });
 });
