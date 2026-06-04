@@ -257,6 +257,30 @@
             <p class="pp-form__hint">URL pública: <span id="slugUrlPreview" style="font-family:var(--font-mono);color:var(--color-tinta)">https://perfilapro.es/e/…</span></p>
           </div>
 
+          <div class="pp-form__row" style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+            <div>
+              <label class="pp-form__label" for="kindInput">Tipo de organización</label>
+              <select class="pp-input" id="kindInput" onchange="onKindChange()">
+                <option value="business">Negocio / servicios (B2B)</option>
+                <option value="sports_club">Club deportivo (Cantera)</option>
+              </select>
+            </div>
+            <div id="sportField" style="display:none">
+              <label class="pp-form__label" for="sportInput">Deporte</label>
+              <select class="pp-input" id="sportInput">
+                <option value="futbol">Fútbol</option>
+                <option value="futbol_sala">Fútbol sala</option>
+                <option value="baloncesto">Baloncesto</option>
+                <option value="balonmano">Balonmano</option>
+                <option value="voleibol">Voleibol</option>
+                <option value="rugby">Rugby</option>
+                <option value="hockey">Hockey</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+          </div>
+          <p class="pp-form__hint" id="kindHint">Negocio = panel B2B (equipo + branding). Club deportivo activa el Studio Cantera (plantilla, inscripciones, carnets, cuotas) en el panel del cliente.</p>
+
           <div class="pp-form__row">
             <label class="pp-form__label" for="taglineInput">Tagline <small>opcional · máx 140 · 1 línea en /e/:slug</small></label>
             <input type="text" class="pp-input" id="taglineInput" placeholder="Cartera de agentes Allianz España" maxlength="140">
@@ -608,9 +632,17 @@ function resetForm() {
   $('colorInput').value = '#003781';
   $('colorHexInput').value = '#003781';
   $('hideBrandingInput').checked = false;
+  $('kindInput').value = 'business';
+  $('sportInput').value = 'futbol';
+  onKindChange();
   setLogoPreview(null);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
+}
+
+// Muestra el selector de deporte solo cuando la org es un club deportivo.
+function onKindChange() {
+  $('sportField').style.display = $('kindInput').value === 'sports_club' ? '' : 'none';
 }
 
 function loadForm(org) {
@@ -635,6 +667,9 @@ function loadForm(org) {
   $('colorInput').value = org.color_primary || '#003781';
   $('colorHexInput').value = (org.color_primary || '#003781').toUpperCase();
   $('hideBrandingInput').checked = org.hide_branding === true;
+  $('kindInput').value = org.kind === 'sports_club' ? 'sports_club' : 'business';
+  $('sportInput').value = org.sport || 'futbol';
+  onKindChange();
   setLogoPreview(org.logo_url);
   $('logoStatus').style.display = 'none';
   updateSlugPreview();
@@ -750,6 +785,8 @@ async function saveOrg() {
   const address     = $('addressInput').value.trim();
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
   const hideBranding = $('hideBrandingInput').checked === true;
+  const kind = $('kindInput').value;
+  const sport = kind === 'sports_club' ? ($('sportInput').value || null) : null;
 
   if (!name) return toast('Falta el nombre', 'err');
   if (!slug) return toast('Falta el slug', 'err');
@@ -764,6 +801,8 @@ async function saveOrg() {
     phone:   phone   || null,
     address: address || null,
     hide_branding: hideBranding,
+    kind,
+    sport,
   };
 
   $('saveBtn').disabled = true;
@@ -822,7 +861,7 @@ function renderOrgsTable() {
       <td><div style="display:flex;align-items:center;gap:.65rem">
         ${logoCell}
         <div>
-          <div class="pp-orgs-table__name">${safeName}</div>
+          <div class="pp-orgs-table__name">${safeName}${o.kind === 'sports_club' ? ` <span title="Club deportivo · ${escapeAttr(o.sport || 'deporte')}" style="font-size:10px;font-weight:600;background:#E8F5E9;color:#1B5E20;padding:1px 6px;border-radius:8px;vertical-align:middle">⚽ Club</span>` : ''}</div>
           <div class="pp-orgs-table__slug">${cardCount} card${cardCount === 1 ? '' : 's'} asignada${cardCount === 1 ? '' : 's'}</div>
         </div>
       </div></td>

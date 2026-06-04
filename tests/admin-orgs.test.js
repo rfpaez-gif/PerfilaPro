@@ -260,6 +260,50 @@ describe('admin-orgs handler', () => {
       expect(inserted.email).toBe('hola@iris.es');
     });
 
+    it('por defecto crea una org de negocio (kind=null, sport=null)', async () => {
+      await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris' } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBeNull();
+      expect(inserted.sport).toBeNull();
+    });
+
+    it('crea un club deportivo con kind=sports_club y sport normalizado', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'cd-flota', name: 'CD La Flota',
+        kind: 'sports_club', sport: 'Futbol',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBe('sports_club');
+      expect(inserted.sport).toBe('futbol'); // trim + lowercase
+    });
+
+    it('ignora el sport si la org no es club deportivo', async () => {
+      await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris',
+        kind: 'business', sport: 'futbol',
+      } }));
+      const inserted = mockInsert.mock.calls[0][0];
+      expect(inserted.kind).toBe('business');
+      expect(inserted.sport).toBeNull();
+    });
+
+    it('rechaza kind fuera del CHECK con 400', async () => {
+      const res = await handler(buildEvent({ body: {
+        action: 'create', slug: 'iris', name: 'Iris', kind: 'ong',
+      } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('kind');
+    });
+
+    it('rechaza sport mal formado con 400', async () => {
+      const res = await handler(buildEvent({ body: {
+        action: 'create', slug: 'cd-flota', name: 'CD La Flota',
+        kind: 'sports_club', sport: 'Fútbol Sala',
+      } }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('sport');
+    });
+
     it('rechaza email mal formado', async () => {
       const res = await handler(buildEvent({ body: { action: 'create', slug: 'iris', name: 'Iris', email: 'no-es-un-email' } }));
       expect(res.statusCode).toBe(400);
@@ -343,6 +387,47 @@ describe('admin-orgs handler', () => {
         body: { action: 'update', slug: 'aossa', hide_branding: 'yes' },
       }));
       expect(updateMock.mock.calls[0][0]).toEqual({ hide_branding: false });
+    });
+
+    it('convierte una org existente en club deportivo (kind + sport)', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', kind: 'sports_club', sport: 'Futbol' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'sports_club', sport: 'futbol' });
+    });
+
+    it('al volver a negocio limpia el sport defensivamente', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', kind: 'business', sport: 'futbol' },
+      }));
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'business', sport: null });
+    });
+
+    it('rechaza kind inválido en update con 400', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'iris', kind: 'club' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('kind');
+    });
+
+    it('rechaza sport inválido en update con 400', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cd-flota', sport: 'Fútbol' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toContain('sport');
     });
   });
 

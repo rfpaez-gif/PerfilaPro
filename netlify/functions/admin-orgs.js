@@ -11,6 +11,8 @@ const {
   isValidTagline,
   isValidDescription,
   isSafeWebsite,
+  isValidOrgKind,
+  isValidSport,
 } = require('./lib/org-utils');
 const { buildLeadEmail } = require('./lead-b2b');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
@@ -350,7 +352,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     if (action === 'list') {
       const { data, error } = await db
         .from('organizations')
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, created_at')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport, created_at')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       if (error) return jsonResponse(500, { error: error.message });
@@ -359,10 +361,21 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── create: alta de una nueva organización ──
     if (action === 'create') {
-      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, hide_branding } = body;
+      const { slug, name, tagline, description, website, logo_url, color_primary, nif, email, address, phone, hide_branding, kind, sport } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido (2-40 chars, [a-z0-9-], sin guiones en los extremos)' });
+      }
+      // kind/sport: discriminador del carril (migración 033). Normalizamos
+      // '' → null (= business legacy) y solo guardamos sport cuando es club
+      // deportivo, para que una org de negocio nunca arrastre un deporte.
+      const normKind  = kind || null;
+      const normSport = normKind === 'sports_club' ? (sport ? String(sport).trim().toLowerCase() : null) : null;
+      if (!isValidOrgKind(normKind)) {
+        return jsonResponse(400, { error: "kind inválido (business | sports_club)" });
+      }
+      if (!isValidSport(normSport)) {
+        return jsonResponse(400, { error: 'sport inválido (token en minúsculas, p.ej. futbol)' });
       }
       if (!name || typeof name !== 'string' || name.trim().length < 2) {
         return jsonResponse(400, { error: 'name requerido (mín. 2 chars)' });
@@ -401,8 +414,10 @@ function makeHandler(db, emailClient = defaultEmailClient) {
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
           hide_branding: hide_branding === true,
+          kind:  normKind,
+          sport: normSport,
         })
-        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding')
+        .select('id, slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport')
         .single();
 
       if (error) {
@@ -415,10 +430,19 @@ function makeHandler(db, emailClient = defaultEmailClient) {
 
     // ── update: edita branding de una org existente ──
     if (action === 'update') {
-      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding } = body;
+      const { slug, name, tagline, description, website, email, logo_url, color_primary, address, phone, hide_branding, kind, sport } = body;
 
       if (!isValidOrgSlug(slug)) {
         return jsonResponse(400, { error: 'slug inválido' });
+      }
+      // kind/sport: normalizamos antes de validar ('' → null, lowercase).
+      const normKind  = kind  === undefined ? undefined : (kind || null);
+      const normSport = sport === undefined ? undefined : (sport ? String(sport).trim().toLowerCase() : null);
+      if (normKind !== undefined && !isValidOrgKind(normKind)) {
+        return jsonResponse(400, { error: "kind inválido (business | sports_club)" });
+      }
+      if (normSport !== undefined && !isValidSport(normSport)) {
+        return jsonResponse(400, { error: 'sport inválido (token en minúsculas, p.ej. futbol)' });
       }
       if (tagline != null && !isValidTagline(tagline)) {
         return jsonResponse(400, { error: 'tagline máx. 140 chars' });
@@ -460,6 +484,12 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       // hide_branding: white-label flag. Boolean estricto — cualquier
       // valor distinto de true se persiste como false (no toggle accidental).
       if (hide_branding !== undefined) updates.hide_branding = hide_branding === true;
+      // kind/sport: cambiar el carril de una org existente.
+      if (normKind  !== undefined) updates.kind  = normKind;
+      if (normSport !== undefined) updates.sport = normSport;
+      // Defensivo: si la org deja de ser club, limpiamos el deporte para
+      // que no quede un sport huérfano en una org de negocio.
+      if (updates.kind !== undefined && updates.kind !== 'sports_club') updates.sport = null;
 
       if (!Object.keys(updates).length) {
         return jsonResponse(400, { error: 'nada para actualizar' });

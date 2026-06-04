@@ -10,6 +10,24 @@ const ALLOWED_LOGO_HOSTS = [
 const ORG_SLUG_RE = /^[a-z0-9][a-z0-9-]{0,38}[a-z0-9]$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
+// Discriminador de carril (migración 033). NULL = business legacy.
+// El CHECK de BD permite NULL | 'business' | 'sports_club'.
+const ORG_KINDS = ['business', 'sports_club'];
+// Deporte: sin CHECK en BD (el catálogo vivo es sports_categories).
+// Token corto en minúsculas (futbol, baloncesto, futbol_sala…).
+const SPORT_RE = /^[a-z][a-z0-9_]{1,29}$/;
+
+function isValidOrgKind(kind) {
+  // null/undefined/'' se tratan como "business legacy" → válidos.
+  if (kind === null || kind === undefined || kind === '') return true;
+  return ORG_KINDS.includes(kind);
+}
+
+function isValidSport(sport) {
+  if (sport === null || sport === undefined || sport === '') return true;
+  return typeof sport === 'string' && SPORT_RE.test(sport);
+}
+
 function isValidHex(color) {
   return typeof color === 'string' && HEX_RE.test(color);
 }
@@ -83,6 +101,9 @@ async function listCardsByOrg(db, orgId) {
 
 module.exports = {
   ALLOWED_LOGO_HOSTS,
+  ORG_KINDS,
+  isValidOrgKind,
+  isValidSport,
   isValidHex,
   isSafeLogoUrl,
   isValidOrgSlug,
