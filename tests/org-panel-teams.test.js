@@ -35,6 +35,8 @@ const SPORTS_ORG = {
 const CAT_ALEVIN = '11111111-1111-4111-8111-111111111111';
 const CAT_INFANTIL = '22222222-2222-4222-8222-222222222222';
 const TEAM_A = '33333333-3333-4333-8333-333333333333';
+const COMP_CADETE = '44444444-4444-4444-8444-444444444444';
+const COMP = { id: COMP_CADETE, sport: 'futbol', name: 'Primera Cadete', category_id: CAT_ALEVIN };
 
 const CATALOG = [
   { id: CAT_ALEVIN, sport: 'futbol', code: 'alevin', display_name_es: 'Alevín', display_name_ca: 'Aleví', min_birth_year_offset: -11, max_birth_year_offset: -10, sort_order: 30 },
@@ -82,7 +84,7 @@ describe('org-panel · equipos del club (migración 040)', () => {
 
   it('teams_list devuelve equipos con categoría y conteo de jugadores', async () => {
     const db = makeDb(base({
-      club_teams: () => ({ data: [{ id: TEAM_A, name: 'Cadete A', category_id: CAT_ALEVIN, color: '#112233', sort_order: 0 }], error: null }),
+      club_teams: () => ({ data: [{ id: TEAM_A, name: 'Primera Cadete', category_id: CAT_ALEVIN, competition_id: COMP_CADETE, label: null, color: '#112233', sort_order: 0 }], error: null }),
       member_club_seasons: () => ({ data: [
         { team_id: TEAM_A, role: 'jugador' },
         { team_id: TEAM_A, role: 'jugador' },
@@ -93,43 +95,47 @@ describe('org-panel · equipos del club (migración 040)', () => {
     expect(res.statusCode).toBe(200);
     const teams = JSON.parse(res.body).teams;
     expect(teams).toHaveLength(1);
-    expect(teams[0]).toMatchObject({ id: TEAM_A, name: 'Cadete A', category_name: 'Alevín', player_count: 2 });
+    expect(teams[0]).toMatchObject({ id: TEAM_A, name: 'Primera Cadete', category_name: 'Alevín', player_count: 2 });
   });
 
-  it('team_create crea el equipo', async () => {
+  it('team_create crea el equipo desde la competición (nombre derivado)', async () => {
     const db = makeDb(base({
-      club_teams: () => ({ data: { id: TEAM_A, name: 'Cadete A', category_id: CAT_ALEVIN, color: null, sort_order: 0 }, error: null }),
+      sports_competitions: () => ({ data: COMP, error: null }),
+      club_teams: () => ({ data: { id: TEAM_A, name: 'Primera Cadete', category_id: CAT_ALEVIN, competition_id: COMP_CADETE, label: null, color: null, sort_order: 230 }, error: null }),
     }));
-    const res = await makeHandler(db, null)(event('team_create', { name: 'Cadete A', category_id: CAT_ALEVIN }, token));
+    const res = await makeHandler(db, null)(event('team_create', { competition_id: COMP_CADETE }, token));
     expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body).team.name).toBe('Cadete A');
+    expect(JSON.parse(res.body).team.name).toBe('Primera Cadete');
   });
 
-  it('team_create 400 sin nombre', async () => {
-    const res = await makeHandler(makeDb(base()), null)(event('team_create', { name: '', category_id: CAT_ALEVIN }, token));
+  it('team_create 400 sin competición', async () => {
+    const res = await makeHandler(makeDb(base()), null)(event('team_create', { label: 'A' }, token));
     expect(res.statusCode).toBe(400);
   });
 
-  it('team_create 400 si la categoría no es del club', async () => {
-    const res = await makeHandler(makeDb(base()), null)(event('team_create', { name: 'X', category_id: '99999999-9999-4999-8999-999999999999' }, token));
+  it('team_create 400 si la competición no existe', async () => {
+    const db = makeDb(base({ sports_competitions: () => ({ data: null, error: null }) }));
+    const res = await makeHandler(db, null)(event('team_create', { competition_id: '99999999-9999-4999-8999-999999999999' }, token));
     expect(res.statusCode).toBe(400);
   });
 
-  it('team_create 409 si el nombre ya existe (unique)', async () => {
+  it('team_create 409 si ya hay equipo en esa competición (unique)', async () => {
     const db = makeDb(base({
+      sports_competitions: () => ({ data: COMP, error: null }),
       club_teams: () => ({ data: null, error: { message: 'duplicate key value violates unique constraint' } }),
     }));
-    const res = await makeHandler(db, null)(event('team_create', { name: 'Cadete A', category_id: CAT_ALEVIN }, token));
+    const res = await makeHandler(db, null)(event('team_create', { competition_id: COMP_CADETE }, token));
     expect(res.statusCode).toBe(409);
   });
 
-  it('team_update renombra', async () => {
+  it('team_update cambia competición/etiqueta (nombre recalculado)', async () => {
     const db = makeDb(base({
-      club_teams: () => ({ data: [{ id: TEAM_A, name: 'Cadete B', category_id: CAT_ALEVIN, color: null, sort_order: 0 }], error: null }),
+      sports_competitions: () => ({ data: COMP, error: null }),
+      club_teams: () => ({ data: [{ id: TEAM_A, name: 'Primera Cadete B', category_id: CAT_ALEVIN, competition_id: COMP_CADETE, label: 'B', color: null, sort_order: 230 }], error: null }),
     }));
-    const res = await makeHandler(db, null)(event('team_update', { team_id: TEAM_A, name: 'Cadete B' }, token));
+    const res = await makeHandler(db, null)(event('team_update', { team_id: TEAM_A, competition_id: COMP_CADETE, label: 'B' }, token));
     expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body).team.name).toBe('Cadete B');
+    expect(JSON.parse(res.body).team.name).toBe('Primera Cadete B');
   });
 
   it('team_delete soft-borra y desasigna jugadores', async () => {

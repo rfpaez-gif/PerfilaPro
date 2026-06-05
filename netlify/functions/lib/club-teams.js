@@ -8,6 +8,7 @@
 const { isValidHex } = require('./org-utils');
 
 const TEAM_NAME_MAX = 60;
+const TEAM_LABEL_MAX = 8;
 // uuid v4-ish; vale para validar team_id/category_id que llegan del front.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -35,10 +36,22 @@ function isValidTeamId(id) {
   return typeof id === 'string' && UUID_RE.test(id.trim());
 }
 
+// Sufijo opcional A/B para dos equipos en la misma competición. ≤8 chars,
+// sin tags. null/'' → null. { value, error }.
+function normalizeTeamLabel(input) {
+  if (input == null || input === '') return { value: null, error: null };
+  const label = stripTags(input);
+  if (!label) return { value: null, error: null };
+  if (label.length > TEAM_LABEL_MAX) return { value: null, error: `La etiqueta no puede superar ${TEAM_LABEL_MAX} caracteres` };
+  return { value: label, error: null };
+}
+
 module.exports = {
   TEAM_NAME_MAX,
+  TEAM_LABEL_MAX,
   UUID_RE,
   normalizeTeamName,
   normalizeTeamColor,
+  normalizeTeamLabel,
   isValidTeamId,
 };
