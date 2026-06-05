@@ -52,6 +52,7 @@ const {
   planTotalCents,
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
+const { normalizeTeamName, normalizeTeamColor, isValidTeamId, UUID_RE } = require('./lib/club-teams');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 
@@ -529,6 +530,20 @@ function makeHandler(db, emailClient) {
       if (action === 'get_transfers')  return await getTransfers(db, sportsOrg);
     }
 
+    // ── CANTERA · equipos gestionados del club (migración 040) ──
+    // El coordinador define los equipos reales (team_*); la plantilla los
+    // usa para asignar y filtrar. Mismo gate (flag + sports_club).
+    if (TEAM_ACTIONS.has(action)) {
+      if (!isCanteraActive()) return canteraDisabledResponse();
+      const loaded = await loadSportsOrg(db, org.id);
+      if (loaded.error) return loaded.error;
+      const sportsOrg = loaded.org;
+      if (action === 'teams_list')   return await teamsList(db, sportsOrg);
+      if (action === 'team_create')  return await teamCreate(db, sportsOrg, body);
+      if (action === 'team_update')  return await teamUpdate(db, sportsOrg, body);
+      if (action === 'team_delete')  return await teamDelete(db, sportsOrg, body);
+    }
+
     // ── CANTERA · campaña de inscripción de temporada (capa I3) ──
     // enrollment_open / enrollment_close / enrollment_get. El club abre
     // una campaña y reparte el enlace público /inscripcion/:token + QR.
@@ -558,6 +573,7 @@ function makeHandler(db, emailClient) {
 // ============================================================
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
+const TEAM_ACTIONS = new Set(['teams_list', 'team_create', 'team_update', 'team_delete']);
 const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'enrollment_update_plan', 'billing_matrix', 'plan_charges', 'enrollment_invite']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;
@@ -788,11 +804,25 @@ async function enrollmentAssign(db, org, body) {
   const rows = assignments.map(buildAssignmentPatch);
   const duplicates = findDuplicateDorsals(rows);
 
+  // Equipos gestionados del club: validan que un team_id pertenece a ESTE
+  // club y denormalizan team_name (espejo que leen billing_matrix/CSV).
+  const teamNameById = new Map((await loadClubTeams(db, org.id)).map((t) => [t.id, t.name]));
+
   const ok = [];
   const failed = [];
   for (let i = 0; i < rows.length; i++) {
     const { slug, patch, error } = rows[i];
     if (error) { failed.push({ index: i, card_slug: slug, error }); continue; }
+    if ('team_id' in patch) {
+      if (patch.team_id === null) {
+        patch.team_name = null; // desasignar limpia el espejo
+      } else if (teamNameById.has(patch.team_id)) {
+        patch.team_name = teamNameById.get(patch.team_id);
+      } else {
+        failed.push({ index: i, card_slug: slug, error: 'el equipo no pertenece al club' });
+        continue;
+      }
+    }
     const { data: updated, error: updErr } = await db
       .from('member_club_seasons')
       .update(patch)
@@ -1043,11 +1073,16 @@ function isPaid(payment) {
 async function getRoster(db, org) {
   const { data: seasons } = await db
     .from('member_club_seasons')
-    .select('card_slug, role, dorsal, position, category_id, team_name, season, previous_club_name')
+    .select('card_slug, role, dorsal, position, category_id, team_id, team_name, season, previous_club_name')
     .eq('organization_id', org.id)
     .is('left_at', null);
   const memberships = seasons || [];
   const slugs = [...new Set(memberships.map((m) => m.card_slug))];
+
+  // Equipos gestionados del club (migración 040). Resuelven el nombre del
+  // equipo de cada jugador y alimentan los desplegables/filtros del front.
+  const teams = await loadClubTeams(db, org.id);
+  const teamById = new Map(teams.map((t) => [t.id, t]));
 
   const cardBySlug = new Map();
   if (slugs.length) {
@@ -1084,7 +1119,8 @@ async function getRoster(db, org) {
       role: m.role,
       dorsal: m.dorsal ?? null,
       position: m.position || null,
-      team_name: m.team_name || null,
+      team_id: m.team_id || null,
+      team_name: (m.team_id && teamById.get(m.team_id)) ? teamById.get(m.team_id).name : (m.team_name || null),
       category_id: m.category_id || null,
       season: m.season || null,
       previous_club_name: m.previous_club_name || null,
@@ -1113,11 +1149,31 @@ async function getRoster(db, org) {
 
   const paying = players.filter((p) => isPaid(p.payment)).length;
 
+  // Equipos del club para los selects/filtros del front, con su categoría
+  // legible y cuántos jugadores tiene asignados.
+  const teamCounts = new Map();
+  for (const p of players) { if (p.team_id) teamCounts.set(p.team_id, (teamCounts.get(p.team_id) || 0) + 1); }
+  const teamsOut = teams.map((t) => ({
+    id: t.id,
+    name: t.name,
+    category_id: t.category_id,
+    category_name: (catById.get(t.category_id) || {}).display_name || null,
+    color: t.color || null,
+    sort_order: t.sort_order ?? 0,
+    player_count: teamCounts.get(t.id) || 0,
+  }));
+
+  // Catálogo completo de categorías del deporte (no sólo las con jugadores)
+  // para que el gestor de equipos pueda crear en cualquier categoría.
+  const sportCategories = catalog.map((c) => ({ id: c.id, name: c.display_name_es, order: c.sort_order ?? 0 }));
+
   return jsonResponse(200, {
     ok: true,
     org: sanitizeSportsOrg(org),
     season: formatSeason(currentSeasonStartYear()),
     categories,
+    teams: teamsOut,
+    sport_categories: sportCategories,
     staff: staff.sort((a, b) => (a.role || '').localeCompare(b.role || '')),
     totals: {
       players: players.length,
@@ -1126,6 +1182,163 @@ async function getRoster(db, org) {
       unpaid: players.length - paying,
     },
   });
+}
+
+// ============================================================
+// CANTERA · equipos gestionados del club (migración 040)
+// ============================================================
+
+// Equipos vivos del club, ordenados. [] si la tabla aún no existe (040 sin
+// aplicar) — el resto del Studio sigue funcionando (try/catch defensivo).
+async function loadClubTeams(db, orgId) {
+  try {
+    const { data, error } = await db
+      .from('club_teams')
+      .select('id, name, category_id, color, sort_order')
+      .eq('organization_id', orgId)
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true });
+    if (error) return [];
+    return data || [];
+  } catch { return []; }
+}
+
+// ¿La categoría pertenece al deporte del club? (catálogo sports_categories).
+async function categoryBelongsToOrg(db, org, categoryId) {
+  if (!org.sport) return false;
+  const catalog = await listSportsCategories(db, org.sport);
+  return catalog.some((c) => c.id === categoryId);
+}
+
+// teams_list: equipos del club + nº de jugadores activos + nombre de categoría.
+async function teamsList(db, org) {
+  const teams = await loadClubTeams(db, org.id);
+  const counts = new Map();
+  if (teams.length) {
+    const { data: seasons } = await db
+      .from('member_club_seasons')
+      .select('team_id, role')
+      .eq('organization_id', org.id)
+      .is('left_at', null);
+    for (const m of seasons || []) {
+      if (m.role !== 'jugador' || !m.team_id) continue;
+      counts.set(m.team_id, (counts.get(m.team_id) || 0) + 1);
+    }
+  }
+  const catalog = org.sport ? await listSportsCategories(db, org.sport) : [];
+  const catName = new Map(catalog.map((c) => [c.id, c.display_name_es]));
+  return jsonResponse(200, {
+    ok: true,
+    teams: teams.map((t) => ({
+      id: t.id,
+      name: t.name,
+      category_id: t.category_id,
+      category_name: catName.get(t.category_id) || null,
+      color: t.color || null,
+      sort_order: t.sort_order ?? 0,
+      player_count: counts.get(t.id) || 0,
+    })),
+  });
+}
+
+// team_create: nombre + categoría (obligatoria, del deporte del club) + color.
+async function teamCreate(db, org, body) {
+  const nameRes = normalizeTeamName(body.name);
+  if (nameRes.error) return jsonResponse(400, { error: nameRes.error });
+  const colorRes = normalizeTeamColor(body.color);
+  if (colorRes.error) return jsonResponse(400, { error: colorRes.error });
+  const categoryId = String(body.category_id || '').trim();
+  if (!UUID_RE.test(categoryId)) return jsonResponse(400, { error: 'category_id requerido' });
+  if (!(await categoryBelongsToOrg(db, org, categoryId))) {
+    return jsonResponse(400, { error: 'La categoría no pertenece al club' });
+  }
+
+  const { data, error } = await db
+    .from('club_teams')
+    .insert({
+      organization_id: org.id,
+      name: nameRes.value,
+      category_id: categoryId,
+      color: colorRes.value,
+      sort_order: Number.isInteger(body.sort_order) ? body.sort_order : 0,
+    })
+    .select('id, name, category_id, color, sort_order')
+    .single();
+  if (error) {
+    if (/duplicate key|unique/i.test(error.message || '')) {
+      return jsonResponse(409, { error: 'Ya existe un equipo con ese nombre' });
+    }
+    return jsonResponse(500, { error: error.message });
+  }
+  return jsonResponse(200, { ok: true, team: data });
+}
+
+// team_update: renombra / recategoriza / recolorea un equipo del club.
+async function teamUpdate(db, org, body) {
+  const teamId = String(body.team_id || '').trim();
+  if (!isValidTeamId(teamId)) return jsonResponse(400, { error: 'team_id inválido' });
+
+  const patch = {};
+  if ('name' in body) {
+    const nameRes = normalizeTeamName(body.name);
+    if (nameRes.error) return jsonResponse(400, { error: nameRes.error });
+    patch.name = nameRes.value;
+  }
+  if ('color' in body) {
+    const colorRes = normalizeTeamColor(body.color);
+    if (colorRes.error) return jsonResponse(400, { error: colorRes.error });
+    patch.color = colorRes.value;
+  }
+  if ('category_id' in body) {
+    const categoryId = String(body.category_id || '').trim();
+    if (!UUID_RE.test(categoryId)) return jsonResponse(400, { error: 'category_id inválido' });
+    if (!(await categoryBelongsToOrg(db, org, categoryId))) {
+      return jsonResponse(400, { error: 'La categoría no pertenece al club' });
+    }
+    patch.category_id = categoryId;
+  }
+  if ('sort_order' in body && Number.isInteger(body.sort_order)) patch.sort_order = body.sort_order;
+  if (Object.keys(patch).length === 0) return jsonResponse(400, { error: 'Nada que actualizar' });
+
+  const { data, error } = await db
+    .from('club_teams')
+    .update(patch)
+    .eq('id', teamId)
+    .eq('organization_id', org.id)
+    .is('deleted_at', null)
+    .select('id, name, category_id, color, sort_order');
+  if (error) {
+    if (/duplicate key|unique/i.test(error.message || '')) {
+      return jsonResponse(409, { error: 'Ya existe un equipo con ese nombre' });
+    }
+    return jsonResponse(500, { error: error.message });
+  }
+  if (!data || !data.length) return jsonResponse(404, { error: 'Equipo no encontrado' });
+  return jsonResponse(200, { ok: true, team: data[0] });
+}
+
+// team_delete: soft-delete del equipo + desasigna a sus jugadores
+// (team_id + team_name = null) para que ninguna ficha apunte a un equipo muerto.
+async function teamDelete(db, org, body) {
+  const teamId = String(body.team_id || '').trim();
+  if (!isValidTeamId(teamId)) return jsonResponse(400, { error: 'team_id inválido' });
+
+  await db
+    .from('member_club_seasons')
+    .update({ team_id: null, team_name: null })
+    .eq('organization_id', org.id)
+    .eq('team_id', teamId);
+
+  const { data, error } = await db
+    .from('club_teams')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', teamId)
+    .eq('organization_id', org.id)
+    .is('deleted_at', null)
+    .select('id');
+  if (error) return jsonResponse(500, { error: error.message });
+  if (!data || !data.length) return jsonResponse(404, { error: 'Equipo no encontrado' });
+  return jsonResponse(200, { ok: true });
 }
 
 // get_club_stats: KPIs agregados (miembros, visitas, cobros, fichajes).

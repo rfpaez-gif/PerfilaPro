@@ -543,11 +543,37 @@
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
           <div>
             <h2 class="pp-section__title">Plantilla <span id="rosterSeason" style="font-weight:400;color:#6B7280;font-size:.7em"></span></h2>
-            <p class="pp-section__sub" style="margin-bottom:0">Jugadores agrupados por categoría con dorsal y estado de cuota. El cuerpo técnico aparece al final.</p>
+            <p class="pp-section__sub" style="margin-bottom:0">Jugadores agrupados por categoría o equipo, con dorsal y estado de cuota. El cuerpo técnico aparece al final.</p>
           </div>
           <button type="button" class="pp-btn pp-btn--primary" id="openRegisterBtn">+ Dar de alta</button>
         </div>
         <div class="pp-roster__totals" id="rosterTotals"></div>
+
+        <!-- Gestión de equipos del club (migración 040). El coordinador define
+             los equipos reales (uno por categoría) y la plantilla los asigna. -->
+        <details id="teamsManager" style="margin:0 0 1rem;border:1px solid #E5E7EB;border-radius:10px;padding:.5rem .85rem;background:#F8FAF9">
+          <summary style="cursor:pointer;font-weight:600;font-size:14px">⚙ Gestionar equipos <span id="teamsCount" style="color:#6B7280;font-weight:400"></span></summary>
+          <p class="pp-form__hint" style="margin:.5rem 0">Cada equipo compite en una categoría. Asigna jugadores a equipos desde la columna <strong>Equipo</strong> de abajo. Borrar un equipo deja a sus jugadores sin equipo (no borra fichas).</p>
+          <div id="teamsManagerBody"></div>
+        </details>
+
+        <!-- Barra de filtros + agrupación (todo client-side sobre el roster). -->
+        <div id="rosterFilters" style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:0 0 1rem">
+          <input class="pp-input pp-input--mini" id="rosterSearch" type="search" placeholder="Buscar jugador…" style="max-width:14rem">
+          <select class="pp-input pp-input--mini" id="rosterFilterTeam" style="max-width:12rem"></select>
+          <select class="pp-input pp-input--mini" id="rosterFilterCat" style="max-width:11rem"></select>
+          <select class="pp-input pp-input--mini" id="rosterFilterPay" style="max-width:10rem">
+            <option value="">Cuota: todas</option>
+            <option value="paid">Al día</option>
+            <option value="unpaid">Pendientes</option>
+          </select>
+          <span style="margin-left:auto;font-size:13px;color:#6B7280">Agrupar:</span>
+          <select class="pp-input pp-input--mini" id="rosterGroupBy" style="max-width:10rem">
+            <option value="category">Por categoría</option>
+            <option value="team">Por equipo</option>
+          </select>
+        </div>
+
         <div id="rosterGroups"><p class="pp-table__empty">Cargando plantilla…</p></div>
         <div id="rosterStaff" style="margin-top:1.5rem"></div>
       </section>
@@ -1566,6 +1592,18 @@
     });
   });
 
+  // Filtros de la plantilla (los elementos son estáticos: se cablean una vez).
+  // El buscador y los selects sólo muestran/ocultan filas; agrupar re-renderiza.
+  ['rosterSearch', 'rosterFilterTeam', 'rosterFilterCat', 'rosterFilterPay'].forEach(id => {
+    const el = $(id);
+    if (el) { el.addEventListener('input', applyRosterFilters); el.addEventListener('change', applyRosterFilters); }
+  });
+  const _rosterGroupBy = $('rosterGroupBy');
+  if (_rosterGroupBy) _rosterGroupBy.addEventListener('change', () => {
+    rosterGroupBy = _rosterGroupBy.value;
+    if (rosterData) renderRosterTable(rosterData);
+  });
+
   async function loadSportsStudio() {
     try {
       const [roster, stats] = await Promise.all([
@@ -1856,6 +1894,13 @@
   }
 
   // ── Plantilla ────────────────────────────────────────────
+  // Equipos gestionados del club + catálogo de categorías + modo de agrupación.
+  let clubTeams = [];
+  let sportCategories = [];
+  let rosterGroupBy = 'category';
+
+  const isPaidPayment = (p) => !!(p && (p.status === 'active' || p.status === 'paid'));
+
   function renderRoster(data) {
     $('rosterSeason').textContent = data.season ? '· ' + data.season : '';
     const t = data.totals || {};
@@ -1865,24 +1910,11 @@
       `<span class="pp-chip pp-chip--ok">${t.paying || 0} al día</span>` +
       `<span class="pp-chip pp-chip--warn">${t.unpaid || 0} pendientes</span>`;
 
-    const groups = data.categories || [];
-    if (!groups.length) {
-      $('rosterGroups').innerHTML = `<p class="pp-table__empty">Aún no hay jugadores. Pulsa “+ Dar de alta” para fichar al primero.</p>`;
-    } else {
-      $('rosterGroups').innerHTML = groups.map(cat => {
-        const rows = cat.members.map(m => `<tr data-slug="${escapeHtml(m.slug)}">
-          <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
-          <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
-          <td><input class="pp-input pp-input--mini" type="text" data-field="team_name" value="${escapeHtml(m.team_name || '')}" placeholder="Equipo"></td>
-          <td>${payBadge(m.payment)}</td>
-          <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}</td>
-        </tr>`).join('');
-        return `<div class="pp-cat">
-          <h3 class="pp-cat__head">${escapeHtml(cat.display_name || 'Sin categoría')} <span class="pp-cat__count">${cat.members.length} jugador${cat.members.length === 1 ? '' : 'es'}</span></h3>
-          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Dorsal</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-        </div>`;
-      }).join('') + `<div class="pp-form__actions" style="margin-top:1rem"><button type="button" class="pp-btn pp-btn--primary" id="rosterSaveBtn">Guardar encuadre →</button><span id="rosterSaveMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span></div>`;
-    }
+    clubTeams = data.teams || [];
+    sportCategories = data.sport_categories || [];
+    renderTeamsManager();
+    renderRosterFilters(data);
+    renderRosterTable(data);
 
     const staff = data.staff || [];
     $('rosterStaff').innerHTML = staff.length
@@ -1891,14 +1923,171 @@
            staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td></tr>`).join('')
          }</tbody></table></div>`
       : '';
+  }
 
-    // Snapshot de valores originales para detectar cambios en el encuadre.
+  // ── Gestión de equipos (CRUD, migración 040) ─────────────
+  function teamCatOptions(selId) {
+    return sportCategories.map(c => `<option value="${escapeHtml(c.id)}" ${c.id === selId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  function renderTeamsManager() {
+    $('teamsCount').textContent = clubTeams.length ? `(${clubTeams.length})` : '';
+    const rowGrid = 'display:grid;grid-template-columns:1fr 9rem 5rem auto;gap:.4rem;align-items:center;margin-bottom:.4rem';
+    const rows = clubTeams.map(tm => `
+      <div class="pp-team-row" data-team-id="${escapeHtml(tm.id)}" style="${rowGrid}">
+        <input class="pp-input pp-input--mini" data-tf="name" value="${escapeHtml(tm.name)}" maxlength="60" style="max-width:none">
+        <select class="pp-input pp-input--mini" data-tf="category_id" style="max-width:none">${teamCatOptions(tm.category_id)}</select>
+        <input class="pp-input pp-input--mini" data-tf="color" type="text" value="${escapeHtml(tm.color || '')}" placeholder="#color" style="max-width:none">
+        <span style="display:flex;gap:.35rem;align-items:center;white-space:nowrap">
+          <small style="color:#6B7280" title="jugadores asignados">${tm.player_count || 0}👤</small>
+          <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-team-save>Guardar</button>
+          <button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" data-team-del style="color:#B0392A" title="Borrar equipo">✕</button>
+        </span>
+      </div>`).join('');
+    const addForm = `
+      <div style="${rowGrid};margin-top:.6rem;padding-top:.6rem;border-top:1px solid #E5E7EB">
+        <input class="pp-input pp-input--mini" id="newTeamName" placeholder="Nombre del equipo" maxlength="60" style="max-width:none">
+        <select class="pp-input pp-input--mini" id="newTeamCat" style="max-width:none"><option value="">— categoría —</option>${teamCatOptions(null)}</select>
+        <input class="pp-input pp-input--mini" id="newTeamColor" type="text" placeholder="#color" style="max-width:none">
+        <button type="button" class="pp-btn pp-btn--primary pp-btn--sm" id="newTeamBtn">+ Crear</button>
+      </div>
+      <p class="pp-form__hint" id="teamsMsg" style="margin:.4rem 0 0;color:#B0392A"></p>`;
+    $('teamsManagerBody').innerHTML = (rows || '<p class="pp-form__hint" style="margin:.25rem 0">Aún no hay equipos. Crea el primero abajo.</p>') + addForm;
+    $('newTeamBtn').addEventListener('click', createTeam);
+    $('teamsManagerBody').querySelectorAll('[data-team-save]').forEach(b => b.addEventListener('click', () => updateTeam(b.closest('.pp-team-row'))));
+    $('teamsManagerBody').querySelectorAll('[data-team-del]').forEach(b => b.addEventListener('click', () => deleteTeam(b.closest('.pp-team-row'))));
+  }
+
+  async function createTeam() {
+    const msg = $('teamsMsg'); msg.textContent = '';
+    const name = $('newTeamName').value.trim();
+    const category_id = $('newTeamCat').value;
+    const color = $('newTeamColor').value.trim();
+    if (!name) { msg.textContent = 'Pon un nombre.'; return; }
+    if (!category_id) { msg.textContent = 'Elige una categoría.'; return; }
+    try {
+      await api('team_create', { name, category_id, color: color || null });
+      sToast('ok', 'Equipo creado.');
+      await loadSportsStudioReload();
+    } catch (e) { msg.textContent = e.message; }
+  }
+
+  async function updateTeam(row) {
+    if (!row) return;
+    const team_id = row.dataset.teamId;
+    const name = row.querySelector('[data-tf="name"]').value.trim();
+    const category_id = row.querySelector('[data-tf="category_id"]').value;
+    const color = row.querySelector('[data-tf="color"]').value.trim();
+    if (!name) { sToast('err', 'El equipo necesita un nombre.'); return; }
+    const payload = { team_id, name, color: color || null };
+    if (category_id) payload.category_id = category_id; // vacío → no la tocamos
+    try {
+      await api('team_update', payload);
+      sToast('ok', 'Equipo actualizado.');
+      await loadSportsStudioReload();
+    } catch (e) { sToast('err', e.message); }
+  }
+
+  async function deleteTeam(row) {
+    if (!row) return;
+    const team_id = row.dataset.teamId;
+    const name = row.querySelector('[data-tf="name"]').value.trim();
+    if (!confirm(`¿Borrar el equipo "${name}"? Sus jugadores quedarán sin equipo (las fichas no se borran).`)) return;
+    try {
+      await api('team_delete', { team_id });
+      sToast('ok', 'Equipo borrado.');
+      await loadSportsStudioReload();
+    } catch (e) { sToast('err', e.message); }
+  }
+
+  // ── Filtros + agrupación de la plantilla ─────────────────
+  function renderRosterFilters(data) {
+    $('rosterFilterTeam').innerHTML = `<option value="">Equipo: todos</option><option value="__none__">Sin equipo</option>` +
+      clubTeams.map(tm => `<option value="${escapeHtml(tm.id)}">${escapeHtml(tm.name)}</option>`).join('');
+    $('rosterFilterCat').innerHTML = `<option value="">Categoría: todas</option>` +
+      (data.categories || []).filter(c => c.category_id).map(c => `<option value="${escapeHtml(c.category_id)}">${escapeHtml(c.display_name)}</option>`).join('');
+  }
+
+  // Opciones del select de equipo de una fila: equipos de la categoría del
+  // jugador (un equipo = una categoría) + "Sin equipo". Incluye siempre el
+  // equipo ya asignado aunque su categoría no coincida (caso heredado).
+  function teamSelectOptions(catId, currentTeamId) {
+    let list = clubTeams.filter(tm => !catId || tm.category_id === catId);
+    if (currentTeamId && !list.some(tm => tm.id === currentTeamId)) {
+      const cur = clubTeams.find(tm => tm.id === currentTeamId);
+      if (cur) list = [cur, ...list];
+    }
+    return `<option value="">— Sin equipo —</option>` +
+      list.map(tm => `<option value="${escapeHtml(tm.id)}" ${tm.id === currentTeamId ? 'selected' : ''}>${escapeHtml(tm.name)}</option>`).join('');
+  }
+
+  function rosterRowHtml(m) {
+    const catId = m.category_id || null;
+    return `<tr data-slug="${escapeHtml(m.slug)}" data-name="${escapeHtml((m.nombre || '').toLowerCase())}" data-team="${escapeHtml(m.team_id || '')}" data-cat="${escapeHtml(catId || '')}" data-pay="${isPaidPayment(m.payment) ? 'paid' : 'unpaid'}">
+      <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
+      <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
+      <td><select class="pp-input pp-input--mini" data-field="team_id" style="max-width:11rem">${teamSelectOptions(catId, m.team_id)}</select></td>
+      <td>${payBadge(m.payment)}</td>
+      <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}</td>
+    </tr>`;
+  }
+
+  function renderRosterTable(data) {
+    const players = [];
+    (data.categories || []).forEach(cat => cat.members.forEach(m => players.push({ ...m, category_id: m.category_id || cat.category_id })));
+    if (!players.length) {
+      $('rosterGroups').innerHTML = `<p class="pp-table__empty">Aún no hay jugadores. Pulsa “+ Dar de alta” para fichar al primero.</p>`;
+      rosterOriginals = {};
+      return;
+    }
+
+    let groups;
+    if (rosterGroupBy === 'team') {
+      const byTeam = new Map();
+      players.forEach(p => { const k = p.team_id || '__none__'; if (!byTeam.has(k)) byTeam.set(k, []); byTeam.get(k).push(p); });
+      groups = [...byTeam.entries()].map(([id, members]) => {
+        const tm = clubTeams.find(x => x.id === id);
+        return { key: id, label: tm ? tm.name : 'Sin equipo', sub: tm && tm.category_name ? tm.category_name : '', members };
+      }).sort((a, b) => (a.key === '__none__' ? 1 : 0) - (b.key === '__none__' ? 1 : 0) || a.label.localeCompare(b.label));
+    } else {
+      groups = (data.categories || []).map(cat => ({ key: cat.category_id || '__none__', label: cat.display_name || 'Sin categoría', sub: '', members: cat.members.map(m => ({ ...m, category_id: m.category_id || cat.category_id })) }));
+    }
+
+    $('rosterGroups').innerHTML = groups.map(g => `
+      <div class="pp-cat" data-group="${escapeHtml(String(g.key))}">
+        <h3 class="pp-cat__head">${escapeHtml(g.label)}${g.sub ? ` <span class="pp-cat__count">${escapeHtml(g.sub)}</span>` : ''} <span class="pp-cat__count">${g.members.length} jugador${g.members.length === 1 ? '' : 'es'}</span></h3>
+        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Dorsal</th><th>Equipo</th><th>Cuota</th><th></th></tr></thead><tbody>${g.members.map(rosterRowHtml).join('')}</tbody></table></div>
+      </div>`).join('') +
+      `<div class="pp-form__actions" style="margin-top:1rem"><button type="button" class="pp-btn pp-btn--primary" id="rosterSaveBtn">Guardar encuadre →</button><span id="rosterSaveMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span></div>`;
+
+    // Snapshot de valores originales para detectar cambios (dorsal + equipo).
     rosterOriginals = {};
-    (data.categories || []).forEach(cat => cat.members.forEach(m => {
-      rosterOriginals[m.slug] = { dorsal: m.dorsal != null ? String(m.dorsal) : '', team_name: m.team_name || '' };
-    }));
+    players.forEach(m => { rosterOriginals[m.slug] = { dorsal: m.dorsal != null ? String(m.dorsal) : '', team_id: m.team_id || '' }; });
     const saveBtn = $('rosterSaveBtn');
     if (saveBtn) saveBtn.addEventListener('click', saveRosterAssignments);
+
+    applyRosterFilters();
+  }
+
+  // Filtros: muestran/ocultan filas sin re-render (preservan ediciones en curso).
+  function applyRosterFilters() {
+    const q = ($('rosterSearch').value || '').trim().toLowerCase();
+    const team = $('rosterFilterTeam').value;
+    const cat = $('rosterFilterCat').value;
+    const pay = $('rosterFilterPay').value;
+    document.querySelectorAll('#rosterGroups .pp-cat').forEach(group => {
+      let visible = 0;
+      group.querySelectorAll('tr[data-slug]').forEach(tr => {
+        let show = true;
+        if (q && !tr.dataset.name.includes(q)) show = false;
+        if (team) { if (team === '__none__') { if (tr.dataset.team) show = false; } else if (tr.dataset.team !== team) show = false; }
+        if (cat && tr.dataset.cat !== cat) show = false;
+        if (pay && tr.dataset.pay !== pay) show = false;
+        tr.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      group.style.display = visible ? '' : 'none';
+    });
   }
 
   // ── Encuadre en lote (capa I5) ───────────────────────────
@@ -1909,15 +2098,15 @@
     const assignments = [];
     document.querySelectorAll('#rosterGroups tr[data-slug]').forEach(tr => {
       const slug = tr.dataset.slug;
-      const orig = rosterOriginals[slug] || { dorsal: '', team_name: '' };
+      const orig = rosterOriginals[slug] || { dorsal: '', team_id: '' };
       const dorsalEl = tr.querySelector('[data-field="dorsal"]');
-      const teamEl = tr.querySelector('[data-field="team_name"]');
+      const teamEl = tr.querySelector('[data-field="team_id"]');
       const dorsalVal = dorsalEl ? dorsalEl.value.trim() : '';
-      const teamVal = teamEl ? teamEl.value.trim() : '';
+      const teamVal = teamEl ? teamEl.value : '';
       const row = { card_slug: slug };
       let changed = false;
       if (dorsalVal !== orig.dorsal) { row.dorsal = dorsalVal === '' ? null : Number(dorsalVal); changed = true; }
-      if (teamVal !== orig.team_name) { row.team_name = teamVal === '' ? null : teamVal; changed = true; }
+      if (teamVal !== orig.team_id) { row.team_id = teamVal === '' ? null : teamVal; changed = true; }
       if (changed) assignments.push(row);
     });
     if (!assignments.length) { msg.textContent = 'No hay cambios que guardar.'; return; }

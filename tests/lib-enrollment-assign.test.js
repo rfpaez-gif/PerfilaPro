@@ -38,6 +38,20 @@ describe('buildAssignmentPatch', () => {
   it('sin ningún campo → error nada para actualizar', () => {
     expect(buildAssignmentPatch({ card_slug: 'p-aaaaaaaa' }).error).toMatch(/nada/);
   });
+
+  it('team_id uuid válido → patch.team_id', () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    expect(buildAssignmentPatch({ card_slug: 'p-aaaaaaaa', team_id: id }).patch).toEqual({ team_id: id });
+  });
+
+  it('team_id null/empty → desasigna (team_id null)', () => {
+    expect(buildAssignmentPatch({ card_slug: 'p-aaaaaaaa', team_id: null }).patch).toEqual({ team_id: null });
+    expect(buildAssignmentPatch({ card_slug: 'p-aaaaaaaa', team_id: '' }).patch).toEqual({ team_id: null });
+  });
+
+  it('team_id mal formado → error', () => {
+    expect(buildAssignmentPatch({ card_slug: 'p-aaaaaaaa', team_id: 'no-uuid' }).error).toBeTruthy();
+  });
 });
 
 describe('findDuplicateDorsals', () => {
