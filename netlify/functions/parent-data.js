@@ -26,6 +26,7 @@ const { parentAuthFromEvent, unauthorizedResponse } = require('./lib/panel-auth'
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
 const { listSportsCategories, currentSeasonStartYear, formatSeason } = require('./lib/sports-categories');
 const { listPaymentsByCard } = require('./lib/external-payments');
+const { readPlan } = require('./lib/enrollment-campaign');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -166,6 +167,70 @@ function makeHandler(db) {
     const pendingBySlug = new Map();
     for (const t of transfers || []) pendingBySlug.set(t.card_slug, t);
 
+    // 6b. Plan de pagos a medida (enrollment_charges) + campaña abierta con
+    //     plan. Define qué modelo de cobro tiene cada hijo: si hay cargos
+    //     materializados o el club tiene una campaña con conceptos, es plan
+    //     (no cuota mensual). Try/catch defensivo: la migración 039 puede no
+    //     estar aplicada en algún entorno.
+    const chargesBySlug = new Map();
+    try {
+      const { data: charges } = await db
+        .from('enrollment_charges')
+        .select('card_slug, concepto, amount_cents, due_date, status, paid_at')
+        .in('card_slug', slugs)
+        .order('due_date', { ascending: true });
+      for (const ch of charges || []) {
+        if (ch.status === 'canceled') continue;
+        if (!chargesBySlug.has(ch.card_slug)) chargesBySlug.set(ch.card_slug, []);
+        chargesBySlug.get(ch.card_slug).push(ch);
+      }
+    } catch { /* tabla puede no existir */ }
+
+    const planByOrg = new Map();
+    if (orgIds.length) {
+      try {
+        const { data: camps } = await db
+          .from('enrollment_campaigns')
+          .select('id, organization_id, status, concepts_jsonb')
+          .in('organization_id', orgIds)
+          .eq('status', 'open');
+        for (const camp of camps || []) {
+          const plan = readPlan(camp.concepts_jsonb);
+          if (plan.length) planByOrg.set(camp.organization_id, { id: camp.id, plan });
+        }
+      } catch { /* tabla puede no existir */ }
+    }
+
+    // Compone el bloque de plan de un hijo (o null si va por cuota mensual).
+    const planBlockFor = (cardSlug, clubLive) => {
+      const charges = chargesBySlug.get(cardSlug) || [];
+      if (charges.length) {
+        const total = charges.reduce((s, c) => s + (c.amount_cents || 0), 0);
+        const paid = charges.filter((c) => c.status === 'paid').reduce((s, c) => s + (c.amount_cents || 0), 0);
+        return {
+          has_charges: true,
+          payable: false, // mandato ya guardado; el cron cobra los plazos futuros
+          campaign_id: null,
+          concepts: charges.map((c) => ({ concepto: c.concepto, amount_cents: c.amount_cents, due_date: c.due_date, status: c.status })),
+          total_cents: total,
+          paid_cents: paid,
+        };
+      }
+      const camp = clubLive ? planByOrg.get(clubLive.id) : null;
+      if (camp) {
+        const total = camp.plan.reduce((s, c) => s + (Number(c.amount_cents) || 0), 0);
+        return {
+          has_charges: false,
+          payable: true, // aún sin pagar: el tutor puede iniciar el checkout
+          campaign_id: camp.id,
+          concepts: camp.plan.map((c) => ({ concepto: c.concepto, amount_cents: Number(c.amount_cents) || 0, due_date: c.due_date, status: 'scheduled' })),
+          total_cents: total,
+          paid_cents: 0,
+        };
+      }
+      return null;
+    };
+
     const period = formatPeriod();
     const orgName = (id) => { const o = orgById.get(id); return o && !o.deleted_at ? o.name : null; };
     const categoryName = (org, categoryId) => {
@@ -247,6 +312,7 @@ function makeHandler(db) {
           previous_club_name: active.previous_club_name || null,
         } : null,
         payment: paymentStatus(subsBySlug.get(card.slug), manualPayments, period),
+        plan: planBlockFor(card.slug, clubLive),
         history,
         pending_transfer: pendingTransfer,
       });

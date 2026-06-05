@@ -7,14 +7,17 @@
 // o causa baja (baja_voluntaria, fin_temporada, etc). Atómico vía RPC
 // `cantera_close_membership`.
 //
-// Auth dual:
-//   - JWT org-panel del club  → solo puede cerrar a SU propio jugador.
-//   - JWT parent-panel del tutor → solo si es tutor_legal de la card.
+// Auth: SOLO JWT org-panel del club (el club, o el founder impersonando al
+// club, ambos llegan con purpose='org-panel'). El club solo puede cerrar a
+// SU propio jugador. El tutor NO puede dar de baja: la baja la tramita el
+// club ante la federación, así que el padre no la inicia desde su panel
+// (sí conserva sus derechos LOPD —exportar/borrar datos del menor— por la
+// vía del edit-token, que es independiente de la membresía).
 // Gateado por isCanteraActive().
 
 const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
-const { authFromEvent, parentAuthFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
+const { authFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -34,8 +37,7 @@ function makeHandler(db) {
     if (rl.limited) return rateLimitResponse(rl.retryAfter);
 
     const orgSession = authFromEvent(event);
-    const parentSession = orgSession ? null : parentAuthFromEvent(event);
-    if (!orgSession && !parentSession) return unauthorizedResponse();
+    if (!orgSession) return unauthorizedResponse();
 
     let body;
     try { body = JSON.parse(event.body || '{}'); } catch { return jsonResponse(400, { error: 'JSON inválido' }); }
@@ -54,22 +56,9 @@ function makeHandler(db) {
     if (msErr) return jsonResponse(500, { error: msErr.message });
     if (!active) return jsonResponse(409, { error: 'El jugador no tiene membresía activa' });
 
-    let actorEmail;
-    if (orgSession) {
-      // El club solo puede cerrar a su propio jugador.
-      if (active.organization_id !== orgSession.orgId) return unauthorizedResponse();
-      actorEmail = `org:${orgSession.orgSlug}`;
-    } else {
-      // El tutor debe ser tutor_legal activo de la card.
-      const { data: admin, error: aErr } = await db
-        .from('card_admins').select('id')
-        .eq('card_slug', cardSlug).eq('email', parentSession.email)
-        .eq('role', 'tutor_legal').is('revoked_at', null)
-        .limit(1).maybeSingle();
-      if (aErr) return jsonResponse(500, { error: aErr.message });
-      if (!admin) return jsonResponse(403, { error: 'Solo el tutor legal puede dar de baja la ficha' });
-      actorEmail = parentSession.email;
-    }
+    // El club solo puede cerrar a su propio jugador.
+    if (active.organization_id !== orgSession.orgId) return unauthorizedResponse();
+    const actorEmail = `org:${orgSession.orgSlug}`;
 
     const { error } = await db.rpc('cantera_close_membership', {
       p_card_slug: cardSlug,

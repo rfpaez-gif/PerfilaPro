@@ -207,6 +207,11 @@
       .pp-content { padding: 1rem; }
       .pp-section { padding: 1rem; }
       .pp-wizard__step-label { font-size: 10px; }
+      /* La barra de pestañas (hasta 6 en el Studio del club) reflota a
+         varias filas en móvil en vez de desbordar horizontalmente sin
+         affordance — así Carnets/Cobros/Branding nunca quedan ocultas. */
+      .pp-tabs { flex-wrap: wrap; gap: 0; padding: 0 .5rem; }
+      .pp-tab { flex: 1 0 auto; padding: .7rem .7rem; font-size: 13px; text-align: center; }
     }
   </style>
 </head>
@@ -573,9 +578,21 @@
         <h2 class="pp-section__title">Inscripción de temporada</h2>
         <p class="pp-section__sub">Abre las inscripciones y comparte un enlace + QR con las familias. Cada padre rellena la ficha de su hijo/a, da su consentimiento y ve el plan de pagos — sin que tengas que teclear nada.</p>
 
-        <!-- Plan de pagos a medida (conceptos con fecha). Siempre visible: el
-             club lo diseña antes de abrir y lo puede editar después sin romper
-             el enlace ya repartido. -->
+        <!-- Modelo de cobro: el club elige UNO. Plan a medida (conceptos con
+             fecha, cobrable por Stripe) o cuota mensual simple. El selector
+             muestra solo los campos del modelo elegido para no mezclar ambos.
+             Al abrir la campaña queda fijado y el selector se bloquea. -->
+        <div class="pp-form__row" style="margin:0 0 1rem">
+          <label class="pp-form__label" for="enrModel">Modelo de cobro</label>
+          <select class="pp-input" id="enrModel">
+            <option value="plan">Plan de pagos a medida (conceptos con fecha)</option>
+            <option value="mensual">Cuota mensual simple (matrícula + mensualidades)</option>
+          </select>
+        </div>
+
+        <!-- Plan de pagos a medida (conceptos con fecha). El club lo diseña
+             antes de abrir y lo puede editar después sin romper el enlace ya
+             repartido. Visible solo con el modelo "plan". -->
         <div id="enrPlan" class="pp-form" style="margin:.5rem 0 1.25rem;padding:.9rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:10px">
           <label class="pp-form__label" style="margin-bottom:.15rem">Plan de pagos de la temporada</label>
           <p class="pp-form__hint" style="margin-top:0">Diseña los pagos como los cobra tu club: matrícula, ficha federativa, material, plazos… Cada concepto con su importe y su fecha. Las familias lo verán al inscribirse; el cobro de cada plazo lo registras tú en la pestaña <strong>Cobros</strong>.</p>
@@ -604,18 +621,22 @@
               <label class="pp-form__label" for="enrSeason">Temporada</label>
               <input class="pp-input" id="enrSeason" type="text" placeholder="2026-27">
             </div>
-            <p class="pp-form__hint" style="margin:.25rem 0 0">Cuota mensual simple (opcional). <strong>Si has diseñado el plan de pagos de arriba, deja estos campos vacíos.</strong></p>
-            <div class="pp-form__row">
-              <label class="pp-form__label" for="enrMatricula">Matrícula <small>€ (pago único, opcional)</small></label>
-              <input class="pp-input" id="enrMatricula" type="number" min="0" step="0.01" placeholder="35">
-            </div>
-            <div class="pp-form__row">
-              <label class="pp-form__label" for="enrFee">Cuota mensual <small>€ (si vacío, usa la del club)</small></label>
-              <input class="pp-input" id="enrFee" type="number" min="0" step="0.01" placeholder="30">
-            </div>
-            <div class="pp-form__row">
-              <label class="pp-form__label" for="enrInstallments">Mensualidades</label>
-              <input class="pp-input" id="enrInstallments" type="number" min="1" max="24" value="9">
+            <!-- Campos del modelo "cuota mensual simple". Ocultos con el
+                 modelo "plan a medida" (lo controla applyEnrollModel). -->
+            <div id="enrMonthlyFields">
+              <p class="pp-form__hint" style="margin:.25rem 0 0">Cuota mensual simple (opcional).</p>
+              <div class="pp-form__row">
+                <label class="pp-form__label" for="enrMatricula">Matrícula <small>€ (pago único, opcional)</small></label>
+                <input class="pp-input" id="enrMatricula" type="number" min="0" step="0.01" placeholder="35">
+              </div>
+              <div class="pp-form__row">
+                <label class="pp-form__label" for="enrFee">Cuota mensual <small>€ (si vacío, usa la del club)</small></label>
+                <input class="pp-input" id="enrFee" type="number" min="0" step="0.01" placeholder="30">
+              </div>
+              <div class="pp-form__row">
+                <label class="pp-form__label" for="enrInstallments">Mensualidades</label>
+                <input class="pp-input" id="enrInstallments" type="number" min="1" max="24" value="9">
+              </div>
             </div>
             <div class="pp-form__actions" style="margin-top:1rem">
               <button type="button" class="pp-btn pp-btn--primary" id="enrOpenBtn">Abrir inscripciones →</button>
@@ -1566,6 +1587,18 @@
   // ── Inscripciones (capa I3) ──────────────────────────────
   let enrollCampaign = null;
 
+  // Muestra solo los campos del modelo de cobro elegido (plan a medida vs
+  // cuota mensual simple). Con la campaña abierta el modelo queda fijado por
+  // los datos de la campaña y el selector se bloquea (locked).
+  function applyEnrollModel(model, locked) {
+    const isPlan = model === 'plan';
+    const planEl = $('enrPlan'); if (planEl) planEl.style.display = isPlan ? '' : 'none';
+    const monthlyEl = $('enrMonthlyFields'); if (monthlyEl) monthlyEl.style.display = isPlan ? 'none' : '';
+    const sel = $('enrModel'); if (sel) sel.disabled = !!locked;
+  }
+  const _enrModel = $('enrModel');
+  if (_enrModel) _enrModel.addEventListener('change', () => applyEnrollModel(_enrModel.value, false));
+
   async function loadEnrollment() {
     try {
       const r = await api('enrollment_get');
@@ -1589,9 +1622,16 @@
       // Sembramos filas en blanco una sola vez (no pisamos lo que edite el admin).
       if (!$('enrPlanRows').children.length) renderPlanRows([]);
       $('enrPlanSaveBtn').style.display = 'none';
+      applyEnrollModel($('enrModel').value || 'plan', false);
       return;
     }
     const c = enrollCampaign;
+    // El modelo de cobro lo fija la campaña abierta: con conceptos → plan;
+    // sin ellos → cuota mensual simple. El selector se bloquea para no
+    // mezclar modelos sobre una campaña ya repartida.
+    const model = (c.concepts && c.concepts.length) ? 'plan' : 'mensual';
+    $('enrModel').value = model;
+    applyEnrollModel(model, true);
     $('enrOpenSeason').textContent = c.season || '';
     $('enrCount').textContent = (c.submitted_count != null ? c.submitted_count : 0) + ' inscripciones';
     $('enrUrl').value = c.url || '';
@@ -1601,9 +1641,9 @@
     if (c.matricula_cents != null) parts.push('Matrícula: ' + eurFromCents(c.matricula_cents));
     if (c.monthly_fee_cents != null) parts.push('Cuota: ' + eurFromCents(c.monthly_fee_cents) + '/mes × ' + (c.num_installments || 9));
     $('enrAmounts').textContent = parts.join(' · ');
-    // Campaña abierta: editor de plan editable + botón de guardar visible.
+    // Campaña abierta de modelo plan: editor editable + botón de guardar.
     renderPlanRows(c.concepts || []);
-    $('enrPlanSaveBtn').style.display = '';
+    $('enrPlanSaveBtn').style.display = model === 'plan' ? '' : 'none';
   }
 
   // ── Editor del plan de pagos a medida ───────────────────────
@@ -1715,13 +1755,20 @@
   const _enrOpenBtn = $('enrOpenBtn');
   if (_enrOpenBtn) _enrOpenBtn.addEventListener('click', async () => {
     const err = $('enrError'); err.textContent = '';
-    const body = {
-      season: $('enrSeason').value.trim() || undefined,
-      matricula_cents: eurToCents($('enrMatricula').value),
-      monthly_fee_cents: eurToCents($('enrFee').value),
-      num_installments: $('enrInstallments').value ? Number($('enrInstallments').value) : undefined,
-      concepts: collectPlan(),
-    };
+    const model = $('enrModel').value || 'plan';
+    const body = { season: $('enrSeason').value.trim() || undefined };
+    if (model === 'plan') {
+      // Modelo plan a medida: solo conceptos, sin cuota mensual.
+      const concepts = collectPlan();
+      if (!concepts.length) { err.textContent = 'Añade al menos un concepto al plan de pagos.'; return; }
+      body.concepts = concepts;
+    } else {
+      // Modelo cuota mensual simple: sin plan de conceptos.
+      body.matricula_cents = eurToCents($('enrMatricula').value);
+      body.monthly_fee_cents = eurToCents($('enrFee').value);
+      body.num_installments = $('enrInstallments').value ? Number($('enrInstallments').value) : undefined;
+      body.concepts = [];
+    }
     const btn = _enrOpenBtn; btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Abriendo…';
     try {
       const r = await api('enrollment_open', body);
@@ -2296,6 +2343,9 @@
     return 'Pendiente de pago';
   };
 
+  // Badge por estado de cada concepto del plan de pagos (espejo del club).
+  const PARENT_PLAN_BADGE = { paid: '✅', scheduled: '⏳', processing: '⌛', failed: '⚠️', canceled: '✖️', manual: '✋' };
+
   async function loadParentDashboard() {
     $('topbarOrgName').textContent = 'Panel del tutor';
     applyParentChrome();
@@ -2343,6 +2393,27 @@
       const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
       const canPayStripe = c.club && c.payment && c.payment.status !== 'active';
 
+      // Modelo de cobro del hijo: plan de pagos a medida vs cuota mensual.
+      // Si hay plan, ocultamos los campos de cuota mensual y mostramos el
+      // desglose por concepto con su estado.
+      const plan = c.plan && (c.plan.concepts || []).length ? c.plan : null;
+      const monthlyFieldsHtml = plan ? '' : `
+          <div class="pp-child__field"><strong>Cuota mensual</strong>${fee || '—'}</div>
+          <div class="pp-child__field"><strong>Estado del pago</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>`;
+      const planHtml = plan ? `
+        <div class="pp-child__plan" style="margin-top:.75rem;padding:.85rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:10px">
+          <strong style="display:block;margin-bottom:.4rem;font-size:14px">Plan de pagos de la temporada</strong>
+          <div>${plan.concepts.map(pc =>
+            `<span title="${escapeHtml(pc.status)}${pc.due_date ? ' · vence ' + escapeHtml(pc.due_date) : ''}" style="display:inline-block;margin:2px 6px 2px 0;padding:3px 9px;border-radius:10px;background:#fff;border:1px solid #E5E7EB;font-size:12px">${PARENT_PLAN_BADGE[pc.status] || '•'} ${escapeHtml(pc.concepto)} <strong>${eurFromCents(pc.amount_cents)}</strong></span>`
+          ).join('')}</div>
+          <p style="margin:.5rem 0 0;font-size:13px;color:#374151">${plan.has_charges
+            ? 'Cobrado <strong>' + eurFromCents(plan.paid_cents) + '</strong> de ' + eurFromCents(plan.total_cents) + ' · los plazos pendientes se cobran automáticamente en su fecha.'
+            : 'Total temporada: <strong>' + eurFromCents(plan.total_cents) + '</strong>. Lo que vence ahora se cobra al pagar; el resto en su fecha.'}</p>
+        </div>` : '';
+      const payBtnHtml = plan
+        ? (plan.payable ? `<button type="button" class="pp-btn pp-btn--primary" data-payplan="${i}">Pagar el plan de la temporada</button>` : '')
+        : (canPayStripe ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : '');
+
       return `<section class="pp-child">
         <div class="pp-child__head">
           ${avatar}
@@ -2356,16 +2427,14 @@
           <div class="pp-child__field"><strong>Dorsal</strong>${m && m.dorsal != null ? m.dorsal : '—'}</div>
           <div class="pp-child__field"><strong>Equipo</strong>${escapeHtml((m && m.team_name) || '—')}</div>
           <div class="pp-child__field"><strong>Posición</strong>${escapeHtml((m && m.position) || '—')}</div>
-          <div class="pp-child__field"><strong>Temporada</strong>${escapeHtml((m && m.season) || '—')}</div>
-          <div class="pp-child__field"><strong>Cuota mensual</strong>${fee || '—'}</div>
-          <div class="pp-child__field"><strong>Estado del pago</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>
+          <div class="pp-child__field"><strong>Temporada</strong>${escapeHtml((m && m.season) || '—')}</div>${monthlyFieldsHtml}
           <div class="pp-child__field"><strong>Ficha pública</strong>${c.public_card ? 'Sí · visible en /c/' + escapeHtml(c.slug) : 'No (oculta hasta tu consentimiento)'}</div>
           <div class="pp-child__field"><strong>Estadísticas</strong>${statsHtml}</div>
         </div>
+        ${planHtml}
         <div class="pp-child__actions">
           ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">Ver ficha ↗</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">Hacer pública la ficha</button>` : '')}
-          ${canPayStripe ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : ''}
-          ${isLegal && c.club ? `<button type="button" class="pp-btn pp-btn--ghost" data-baja="${i}" style="color:#B0392A">Dar de baja del club</button>` : ''}
+          ${payBtnHtml}
         </div>
         ${hist}
       </section>`;
@@ -2374,7 +2443,7 @@
     // Wire de acciones (event delegation simple por data-attr).
     $('parentChildren').querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => openApproveTransfer(parentChildren[+b.dataset.approve])));
     $('parentChildren').querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => startParentCheckout(parentChildren[+b.dataset.pay], b)));
-    $('parentChildren').querySelectorAll('[data-baja]').forEach(b => b.addEventListener('click', () => openCancelMembership(parentChildren[+b.dataset.baja])));
+    $('parentChildren').querySelectorAll('[data-payplan]').forEach(b => b.addEventListener('click', () => startPlanCheckout(parentChildren[+b.dataset.payplan], b)));
     $('parentChildren').querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => openConsent(parentChildren[+b.dataset.consent])));
   }
 
@@ -2396,6 +2465,25 @@
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
     try {
       const json = await apiRaw('/api/create-enrollment-checkout', { card_slug: child.slug });
+      if (!json.url) throw new Error('No se pudo iniciar el pago');
+      window.location.href = json.url;
+    } catch (e) {
+      pToast('err', e.message);
+      if (btn && original) { btn.disabled = false; btn.textContent = original; }
+    }
+  }
+
+  // Plan de pagos a medida → create-enrollment-checkout con campaign_id.
+  // Cobra lo que vence ya y guarda el mandato; los plazos futuros los cobra
+  // el cron en su fecha. Solo disponible mientras el plan no esté iniciado
+  // (child.plan.payable); una vez materializados los cargos no hay botón.
+  async function startPlanCheckout(child, btn) {
+    const plan = child.plan;
+    if (!plan || !plan.campaign_id) { pToast('err', 'No hay un plan de pagos disponible.'); return; }
+    const original = btn ? btn.textContent : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
+    try {
+      const json = await apiRaw('/api/create-enrollment-checkout', { card_slug: child.slug, campaign_id: plan.campaign_id });
       if (!json.url) throw new Error('No se pudo iniciar el pago');
       window.location.href = json.url;
     } catch (e) {
@@ -2464,37 +2552,6 @@
       } catch (e) {
         err.textContent = e.message;
         btn.disabled = false; btn.textContent = 'Dar consentimiento →';
-      }
-    });
-  }
-
-  // Baja del club → cancel-membership.
-  function openCancelMembership(child) {
-    openPModal('Dar de baja del club', `
-      <p class="pp-section__sub">Vas a cerrar la membresía de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> en <strong>${escapeHtml((child.club && child.club.name) || 'el club')}</strong>. La ficha y su histórico se conservan; queda sin club activo.</p>
-      <div class="pp-form">
-        <div class="pp-form__row"><label class="pp-form__label" for="cmReason">Motivo</label>
-          <select class="pp-input" id="cmReason">
-            <option value="baja_voluntaria">Baja voluntaria</option>
-            <option value="fin_temporada">Fin de temporada</option>
-            <option value="fichaje">Se va a otro club (fuera de PerfilaPro)</option>
-            <option value="baja">Otra baja</option>
-          </select></div>
-        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="cmSubmit" style="background:#B0392A;border-color:#B0392A">Confirmar baja →</button></div>
-        <p class="pp-form__hint" id="cmError" style="color:#B0392A"></p>
-      </div>
-    `);
-    $('cmSubmit').addEventListener('click', async () => {
-      const err = $('cmError'); err.textContent = '';
-      const btn = $('cmSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Procesando…';
-      try {
-        await apiRaw('/api/cancel-membership', { card_slug: child.slug, exit_reason: $('cmReason').value });
-        pToast('ok', 'Membresía cerrada.');
-        closePModal();
-        await loadParentDashboard();
-      } catch (e) {
-        err.textContent = e.message;
-        btn.disabled = false; btn.textContent = 'Confirmar baja →';
       }
     });
   }
