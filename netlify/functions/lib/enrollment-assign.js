@@ -11,6 +11,8 @@
 
 const SLUG_RE = /^p-[0-9a-f]{8}$/;
 
+const { isValidTeamId } = require('./club-teams');
+
 function stripTags(str) {
   return String(str == null ? '' : str).replace(/<[^>]*>/g, '').trim();
 }
@@ -44,6 +46,19 @@ function buildAssignmentPatch(input) {
     }
   }
 
+  // team_id: equipo gestionado (migración 040). uuid para asignar, null/''
+  // para desasignar. La pertenencia del id al club la verifica org-panel
+  // (enrollmentAssign) contra los equipos del club antes de aplicar.
+  if ('team_id' in i) {
+    if (i.team_id === null || i.team_id === '') {
+      patch.team_id = null;
+    } else if (isValidTeamId(i.team_id)) {
+      patch.team_id = String(i.team_id).trim();
+    } else {
+      return { slug, patch: null, error: 'team_id inválido' };
+    }
+  }
+
   if ('team_name' in i) {
     patch.team_name = i.team_name ? stripTags(i.team_name).substring(0, 80) : null;
   }
@@ -68,7 +83,9 @@ function findDuplicateDorsals(rows) {
   const dups = [];
   for (const r of rows) {
     if (!r || r.patch == null || r.patch.dorsal == null) continue;
-    const key = `${r.patch.team_name || ''}#${r.patch.dorsal}`;
+    // Dorsal único por equipo: preferimos el id de equipo gestionado; si
+    // no lo hay, caemos al nombre libre (flujo legacy).
+    const key = `${r.patch.team_id || r.patch.team_name || ''}#${r.patch.dorsal}`;
     if (seen.has(key)) dups.push({ team_name: r.patch.team_name || null, dorsal: r.patch.dorsal, slugs: [seen.get(key), r.slug] });
     else seen.set(key, r.slug);
   }
