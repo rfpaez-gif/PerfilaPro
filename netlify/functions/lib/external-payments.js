@@ -59,6 +59,11 @@ function buildPaymentRow(input) {
   if (i.period) row.period = i.period;
   if (i.receiptNumber) row.receipt_number = String(i.receiptNumber).trim();
   if (typeof i.notes === 'string' && i.notes.trim()) row.notes = i.notes.trim();
+  // Concepto del plan de pagos que cubre el cobro (modelo a medida). Texto
+  // libre (espejo del nombre del concepto), sin tags, máx 80. Opcional.
+  if (typeof i.concepto === 'string' && i.concepto.trim()) {
+    row.concepto = i.concepto.replace(/<[^>]*>/g, '').trim().slice(0, 80);
+  }
   if (i.paidAt) row.paid_at = i.paidAt; // ISO string; default now() en BD si se omite
 
   return { row, error: null };
@@ -84,7 +89,7 @@ async function listPaymentsByClub(db, organizationId, { limit = 200 } = {}) {
   if (!organizationId) return { payments: [], error: null };
   const { data, error } = await db
     .from('external_payments')
-    .select('id, card_slug, organization_id, period, amount_cents, currency, method, recorded_by, paid_at, receipt_number, notes')
+    .select('id, card_slug, organization_id, period, amount_cents, currency, method, recorded_by, paid_at, receipt_number, notes, concepto')
     .eq('organization_id', organizationId)
     .order('paid_at', { ascending: false })
     .limit(limit);
@@ -96,7 +101,7 @@ async function listPaymentsByCard(db, cardSlug, { limit = 200 } = {}) {
   if (!cardSlug) return { payments: [], error: null };
   const { data, error } = await db
     .from('external_payments')
-    .select('id, card_slug, organization_id, period, amount_cents, currency, method, recorded_by, paid_at, receipt_number, notes')
+    .select('id, card_slug, organization_id, period, amount_cents, currency, method, recorded_by, paid_at, receipt_number, notes, concepto')
     .eq('card_slug', cardSlug)
     .order('paid_at', { ascending: false })
     .limit(limit);

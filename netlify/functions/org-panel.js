@@ -858,13 +858,20 @@ async function billingMatrix(db, org, body) {
   const reqSeason = body.season && String(body.season).trim();
   {
     const q = db.from('enrollment_campaigns')
-      .select('id, season, status, matricula_cents, monthly_fee_cents, num_installments')
+      .select('id, season, status, matricula_cents, monthly_fee_cents, num_installments, concepts_jsonb')
       .eq('organization_id', org.id);
     const { data } = reqSeason
       ? await q.eq('season', reqSeason).order('created_at', { ascending: false }).limit(1).maybeSingle()
       : await q.eq('status', 'open').order('created_at', { ascending: false }).limit(1).maybeSingle();
     campaign = data || null;
   }
+
+  // El modelo de cobro del club lo fija la campaña: si tiene un plan de
+  // pagos a medida (conceptos con fecha), la matriz se pinta POR CONCEPTO;
+  // si no, por mes (matrícula + N mensualidades). Cada club ve la rejilla
+  // que de verdad usa.
+  const plan = campaign ? readPlan(campaign.concepts_jsonb) : [];
+  if (plan.length) return await billingMatrixPlan(db, org, campaign, plan);
 
   const season = (campaign && campaign.season) || reqSeason || formatSeason(currentSeasonStartYear());
   const matriculaCents = campaign ? (campaign.matricula_cents ?? 0) : 0;
@@ -927,6 +934,7 @@ async function billingMatrix(db, org, body) {
 
   return jsonResponse(200, {
     ok: true,
+    model: 'monthly',
     season,
     periods: seasonInstallmentPeriods(season, { count: numInstallments }),
     amounts: { matricula_cents: matriculaCents, monthly_fee_cents: monthlyFeeCents, num_installments: numInstallments },
@@ -934,6 +942,98 @@ async function billingMatrix(db, org, body) {
     players: rows,
   });
 }
+
+// billing_matrix · variante PLAN A MEDIDA: la matriz tiene una columna por
+// CONCEPTO del plan (Inscripción, Ficha, Material, 2º plazo…) en vez de por
+// mes. El estado de cada concepto concilia dos fuentes, casadas por nombre
+// de concepto: enrollment_charges (Stripe SEPA/tarjeta) y external_payments
+// con concepto (cobros manuales Bizum/efectivo apuntados a ese concepto).
+async function billingMatrixPlan(db, org, campaign, plan) {
+  const season = campaign.season || formatSeason(currentSeasonStartYear());
+
+  // Jugadores activos del club.
+  const { data: seasons } = await db
+    .from('member_club_seasons')
+    .select('card_slug, role, team_name, category_id')
+    .eq('organization_id', org.id)
+    .is('left_at', null);
+  const playerSeasons = (seasons || []).filter((m) => m.role === 'jugador');
+  const slugs = [...new Set(playerSeasons.map((m) => m.card_slug))];
+
+  const cardBySlug = new Map();
+  if (slugs.length) {
+    const { data: cards } = await db.from('cards').select('slug, nombre').in('slug', slugs);
+    for (const c of cards || []) cardBySlug.set(c.slug, c);
+  }
+
+  // Cargos Stripe del plan (estado por concepto), indexados por slug+concepto.
+  const chargeByKey = new Map();
+  try {
+    const { data: charges } = await db
+      .from('enrollment_charges')
+      .select('card_slug, concepto, status')
+      .eq('organization_id', org.id);
+    for (const c of charges || []) {
+      const key = c.card_slug + ' ' + c.concepto;
+      const prev = chargeByKey.get(key);
+      // Preferimos 'paid'; si no, conservamos el más informativo.
+      if (!prev || c.status === 'paid' || (prev.status !== 'paid' && CHARGE_RANK[c.status] > CHARGE_RANK[prev.status])) {
+        chargeByKey.set(key, c);
+      }
+    }
+  } catch { /* 039 sin aplicar → sin cargos Stripe, solo manual */ }
+
+  // Cobros manuales con concepto → set de (slug+concepto) pagados a mano.
+  const { payments } = await listPaymentsByClub(db, org.id);
+  const manualPaidKeys = new Set();
+  for (const p of payments || []) {
+    if (p.concepto) manualPaidKeys.add(p.card_slug + ' ' + p.concepto);
+  }
+
+  const concepts = plan.map((c) => ({ concepto: c.concepto, amount_cents: c.amount_cents, due_date: c.due_date }));
+  const planTotal = planTotalCents(plan);
+
+  const rows = playerSeasons.map((m) => {
+    let paidCents = 0;
+    const cells = plan.map((c) => {
+      const key = m.card_slug + ' ' + c.concepto;
+      const charge = chargeByKey.get(key);
+      const manualPaid = manualPaidKeys.has(key);
+      let status = 'pending';
+      let source = null;
+      if (manualPaid || (charge && charge.status === 'paid')) {
+        status = 'paid';
+        source = manualPaid ? 'manual' : 'stripe';
+      } else if (charge) {
+        status = charge.status; // scheduled / processing / failed / canceled / manual
+        source = 'stripe';
+      }
+      if (status === 'paid') paidCents += c.amount_cents || 0;
+      return { concepto: c.concepto, amount_cents: c.amount_cents, status, source };
+    });
+    return {
+      slug: m.card_slug,
+      nombre: (cardBySlug.get(m.card_slug) || {}).nombre || null,
+      team_name: m.team_name || null,
+      category_id: m.category_id || null,
+      concepts: cells,
+      paid_cents: paidCents,
+      total_cents: planTotal,
+    };
+  }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+
+  return jsonResponse(200, {
+    ok: true,
+    model: 'plan',
+    season,
+    concepts,
+    plan_total_cents: planTotal,
+    players: rows,
+  });
+}
+
+// Orden de "informatividad" de un estado de cargo cuando no hay 'paid'.
+const CHARGE_RANK = { failed: 4, processing: 3, scheduled: 2, manual: 1, canceled: 0 };
 
 // plan_charges: estado por concepto del plan de pagos a medida cobrado por
 // Stripe. Agrupa los enrollment_charges del club por jugador con el nombre

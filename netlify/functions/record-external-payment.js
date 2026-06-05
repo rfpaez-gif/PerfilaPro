@@ -73,6 +73,7 @@ function makeHandler(db) {
         amountCents: body.amount_cents,
         method: body.method,
         period: body.period,
+        concepto: body.concepto,
         currency: body.currency,
         receiptNumber: body.receipt_number,
         notes: body.notes,
