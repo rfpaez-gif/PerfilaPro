@@ -1894,9 +1894,9 @@
   }
 
   // ── Plantilla ────────────────────────────────────────────
-  // Equipos gestionados del club + catálogo de categorías + modo de agrupación.
+  // Equipos del club + catálogo de competiciones + modo de agrupación.
   let clubTeams = [];
-  let sportCategories = [];
+  let clubCompetitions = [];
   let rosterGroupBy = 'category';
 
   const isPaidPayment = (p) => !!(p && (p.status === 'active' || p.status === 'paid'));
@@ -1911,7 +1911,7 @@
       `<span class="pp-chip pp-chip--warn">${t.unpaid || 0} pendientes</span>`;
 
     clubTeams = data.teams || [];
-    sportCategories = data.sport_categories || [];
+    clubCompetitions = data.competitions || [];
     renderTeamsManager();
     renderRosterFilters(data);
     renderRosterTable(data);
@@ -1925,18 +1925,33 @@
       : '';
   }
 
-  // ── Gestión de equipos (CRUD, migración 040) ─────────────
-  function teamCatOptions(selId) {
-    return sportCategories.map(c => `<option value="${escapeHtml(c.id)}" ${c.id === selId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+  // ── Gestión de equipos (CRUD, migraciones 040 + 041) ─────
+  // El equipo se define por la competición en la que el club está encuadrado
+  // (desplegable agrupado como el cuadro federativo). El nombre y la categoría
+  // se derivan de la competición; un sufijo A/B distingue dos equipos en la misma.
+  function competitionOptions(selId) {
+    const order = [];
+    const byGroup = new Map();
+    clubCompetitions.forEach(c => {
+      if (!byGroup.has(c.category_group)) { byGroup.set(c.category_group, []); order.push(c.category_group); }
+      byGroup.get(c.category_group).push(c);
+    });
+    return order.map(g => `<optgroup label="${escapeHtml(g)}">` +
+      byGroup.get(g).map(c => `<option value="${escapeHtml(c.id)}" ${c.id === selId ? 'selected' : ''}>${escapeHtml(c.name)}${c.format ? ' (' + escapeHtml(c.format) + ')' : ''}</option>`).join('') +
+      `</optgroup>`).join('');
   }
 
   function renderTeamsManager() {
     $('teamsCount').textContent = clubTeams.length ? `(${clubTeams.length})` : '';
-    const rowGrid = 'display:grid;grid-template-columns:1fr 9rem 5rem auto;gap:.4rem;align-items:center;margin-bottom:.4rem';
+    if (!clubCompetitions.length) {
+      $('teamsManagerBody').innerHTML = `<p class="pp-form__hint" style="margin:.25rem 0">El catálogo de competiciones aún no está disponible. Si acabas de actualizar, recarga en un momento.</p>`;
+      return;
+    }
+    const rowGrid = 'display:grid;grid-template-columns:1fr 3.5rem 4.5rem auto;gap:.4rem;align-items:center;margin-bottom:.4rem';
     const rows = clubTeams.map(tm => `
       <div class="pp-team-row" data-team-id="${escapeHtml(tm.id)}" style="${rowGrid}">
-        <input class="pp-input pp-input--mini" data-tf="name" value="${escapeHtml(tm.name)}" maxlength="60" style="max-width:none">
-        <select class="pp-input pp-input--mini" data-tf="category_id" style="max-width:none">${teamCatOptions(tm.category_id)}</select>
+        <select class="pp-input pp-input--mini" data-tf="competition_id" style="max-width:none">${competitionOptions(tm.competition_id)}</select>
+        <input class="pp-input pp-input--mini" data-tf="label" value="${escapeHtml(tm.label || '')}" maxlength="8" placeholder="A/B" title="Sufijo para distinguir equipos en la misma competición" style="max-width:none">
         <input class="pp-input pp-input--mini" data-tf="color" type="text" value="${escapeHtml(tm.color || '')}" placeholder="#color" style="max-width:none">
         <span style="display:flex;gap:.35rem;align-items:center;white-space:nowrap">
           <small style="color:#6B7280" title="jugadores asignados">${tm.player_count || 0}👤</small>
@@ -1946,13 +1961,13 @@
       </div>`).join('');
     const addForm = `
       <div style="${rowGrid};margin-top:.6rem;padding-top:.6rem;border-top:1px solid #E5E7EB">
-        <input class="pp-input pp-input--mini" id="newTeamName" placeholder="Nombre del equipo" maxlength="60" style="max-width:none">
-        <select class="pp-input pp-input--mini" id="newTeamCat" style="max-width:none"><option value="">— categoría —</option>${teamCatOptions(null)}</select>
+        <select class="pp-input pp-input--mini" id="newTeamComp" style="max-width:none"><option value="">— elige competición —</option>${competitionOptions(null)}</select>
+        <input class="pp-input pp-input--mini" id="newTeamLabel" maxlength="8" placeholder="A/B" title="Sufijo opcional" style="max-width:none">
         <input class="pp-input pp-input--mini" id="newTeamColor" type="text" placeholder="#color" style="max-width:none">
         <button type="button" class="pp-btn pp-btn--primary pp-btn--sm" id="newTeamBtn">+ Crear</button>
       </div>
       <p class="pp-form__hint" id="teamsMsg" style="margin:.4rem 0 0;color:#B0392A"></p>`;
-    $('teamsManagerBody').innerHTML = (rows || '<p class="pp-form__hint" style="margin:.25rem 0">Aún no hay equipos. Crea el primero abajo.</p>') + addForm;
+    $('teamsManagerBody').innerHTML = (rows || '<p class="pp-form__hint" style="margin:.25rem 0">Aún no hay equipos. Elige una competición abajo para crear el primero.</p>') + addForm;
     $('newTeamBtn').addEventListener('click', createTeam);
     $('teamsManagerBody').querySelectorAll('[data-team-save]').forEach(b => b.addEventListener('click', () => updateTeam(b.closest('.pp-team-row'))));
     $('teamsManagerBody').querySelectorAll('[data-team-del]').forEach(b => b.addEventListener('click', () => deleteTeam(b.closest('.pp-team-row'))));
@@ -1960,13 +1975,12 @@
 
   async function createTeam() {
     const msg = $('teamsMsg'); msg.textContent = '';
-    const name = $('newTeamName').value.trim();
-    const category_id = $('newTeamCat').value;
+    const competition_id = $('newTeamComp').value;
+    const label = $('newTeamLabel').value.trim();
     const color = $('newTeamColor').value.trim();
-    if (!name) { msg.textContent = 'Pon un nombre.'; return; }
-    if (!category_id) { msg.textContent = 'Elige una categoría.'; return; }
+    if (!competition_id) { msg.textContent = 'Elige una competición.'; return; }
     try {
-      await api('team_create', { name, category_id, color: color || null });
+      await api('team_create', { competition_id, label: label || null, color: color || null });
       sToast('ok', 'Equipo creado.');
       await loadSportsStudioReload();
     } catch (e) { msg.textContent = e.message; }
@@ -1975,14 +1989,12 @@
   async function updateTeam(row) {
     if (!row) return;
     const team_id = row.dataset.teamId;
-    const name = row.querySelector('[data-tf="name"]').value.trim();
-    const category_id = row.querySelector('[data-tf="category_id"]').value;
+    const competition_id = row.querySelector('[data-tf="competition_id"]').value;
+    const label = row.querySelector('[data-tf="label"]').value.trim();
     const color = row.querySelector('[data-tf="color"]').value.trim();
-    if (!name) { sToast('err', 'El equipo necesita un nombre.'); return; }
-    const payload = { team_id, name, color: color || null };
-    if (category_id) payload.category_id = category_id; // vacío → no la tocamos
+    if (!competition_id) { sToast('err', 'El equipo necesita una competición.'); return; }
     try {
-      await api('team_update', payload);
+      await api('team_update', { team_id, competition_id, label: label || null, color: color || null });
       sToast('ok', 'Equipo actualizado.');
       await loadSportsStudioReload();
     } catch (e) { sToast('err', e.message); }
@@ -2012,7 +2024,10 @@
   // jugador (un equipo = una categoría) + "Sin equipo". Incluye siempre el
   // equipo ya asignado aunque su categoría no coincida (caso heredado).
   function teamSelectOptions(catId, currentTeamId) {
-    let list = clubTeams.filter(tm => !catId || tm.category_id === catId);
+    // Un equipo aparece para un jugador si comparten categoría, si el equipo
+    // no tiene categoría fija (competición que cruza edades) o si el jugador
+    // no tiene categoría resuelta.
+    let list = clubTeams.filter(tm => !tm.category_id || !catId || tm.category_id === catId);
     if (currentTeamId && !list.some(tm => tm.id === currentTeamId)) {
       const cur = clubTeams.find(tm => tm.id === currentTeamId);
       if (cur) list = [cur, ...list];

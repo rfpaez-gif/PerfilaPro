@@ -52,7 +52,7 @@ const {
   planTotalCents,
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
-const { normalizeTeamName, normalizeTeamColor, isValidTeamId, UUID_RE } = require('./lib/club-teams');
+const { normalizeTeamColor, normalizeTeamLabel, isValidTeamId } = require('./lib/club-teams');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 
@@ -1158,14 +1158,26 @@ async function getRoster(db, org) {
     name: t.name,
     category_id: t.category_id,
     category_name: (catById.get(t.category_id) || {}).display_name || null,
+    competition_id: t.competition_id || null,
+    label: t.label || null,
     color: t.color || null,
     sort_order: t.sort_order ?? 0,
     player_count: teamCounts.get(t.id) || 0,
   }));
 
-  // Catálogo completo de categorías del deporte (no sólo las con jugadores)
-  // para que el gestor de equipos pueda crear en cualquier categoría.
+  // Catálogo completo de categorías del deporte (no sólo las con jugadores).
   const sportCategories = catalog.map((c) => ({ id: c.id, name: c.display_name_es, order: c.sort_order ?? 0 }));
+
+  // Catálogo de competiciones (Murcia) para el desplegable de alta de equipo.
+  const competitions = (await loadCompetitions(db, org.sport)).map((c) => ({
+    id: c.id,
+    gender: c.gender,
+    category_group: c.category_group,
+    category_id: c.category_id || null,
+    name: c.name,
+    format: c.format || null,
+    sort_order: c.sort_order ?? 0,
+  }));
 
   return jsonResponse(200, {
     ok: true,
@@ -1174,6 +1186,7 @@ async function getRoster(db, org) {
     categories,
     teams: teamsOut,
     sport_categories: sportCategories,
+    competitions,
     staff: staff.sort((a, b) => (a.role || '').localeCompare(b.role || '')),
     totals: {
       players: players.length,
@@ -1194,7 +1207,7 @@ async function loadClubTeams(db, orgId) {
   try {
     const { data, error } = await db
       .from('club_teams')
-      .select('id, name, category_id, color, sort_order')
+      .select('id, name, category_id, competition_id, label, color, sort_order')
       .eq('organization_id', orgId)
       .is('deleted_at', null)
       .order('sort_order', { ascending: true });
@@ -1203,11 +1216,35 @@ async function loadClubTeams(db, orgId) {
   } catch { return []; }
 }
 
-// ¿La categoría pertenece al deporte del club? (catálogo sports_categories).
-async function categoryBelongsToOrg(db, org, categoryId) {
-  if (!org.sport) return false;
-  const catalog = await listSportsCategories(db, org.sport);
-  return catalog.some((c) => c.id === categoryId);
+// Catálogo de competiciones del deporte (todas las regiones sembradas; hoy
+// solo Murcia). [] defensivo si la 041 no está aplicada.
+async function loadCompetitions(db, sport) {
+  try {
+    const { data, error } = await db
+      .from('sports_competitions')
+      .select('id, sport, gender, category_group, category_id, name, format, sort_order')
+      .eq('sport', sport || 'futbol')
+      .order('sort_order', { ascending: true });
+    if (error) return [];
+    return data || [];
+  } catch { return []; }
+}
+
+// Resuelve una competición por id (para derivar nombre + categoría del equipo).
+async function loadCompetition(db, competitionId) {
+  try {
+    const { data } = await db
+      .from('sports_competitions')
+      .select('id, sport, name, category_id')
+      .eq('id', competitionId)
+      .maybeSingle();
+    return data || null;
+  } catch { return null; }
+}
+
+// Nombre del equipo = nombre de la competición + sufijo A/B opcional.
+function teamDisplayName(competitionName, label) {
+  return label ? `${competitionName} ${label}` : competitionName;
 }
 
 // teams_list: equipos del club + nº de jugadores activos + nombre de categoría.
@@ -1234,6 +1271,8 @@ async function teamsList(db, org) {
       name: t.name,
       category_id: t.category_id,
       category_name: catName.get(t.category_id) || null,
+      competition_id: t.competition_id || null,
+      label: t.label || null,
       color: t.color || null,
       sort_order: t.sort_order ?? 0,
       player_count: counts.get(t.id) || 0,
@@ -1241,64 +1280,88 @@ async function teamsList(db, org) {
   });
 }
 
-// team_create: nombre + categoría (obligatoria, del deporte del club) + color.
+// team_create: el equipo se define por la competición elegida (+ sufijo A/B
+// opcional + color). El nombre y la categoría se derivan de la competición.
 async function teamCreate(db, org, body) {
-  const nameRes = normalizeTeamName(body.name);
-  if (nameRes.error) return jsonResponse(400, { error: nameRes.error });
+  const competitionId = String(body.competition_id || '').trim();
+  if (!isValidTeamId(competitionId)) return jsonResponse(400, { error: 'Elige una competición' });
+  const comp = await loadCompetition(db, competitionId);
+  if (!comp || comp.sport !== org.sport) return jsonResponse(400, { error: 'Competición no válida' });
+
+  const labelRes = normalizeTeamLabel(body.label);
+  if (labelRes.error) return jsonResponse(400, { error: labelRes.error });
   const colorRes = normalizeTeamColor(body.color);
   if (colorRes.error) return jsonResponse(400, { error: colorRes.error });
-  const categoryId = String(body.category_id || '').trim();
-  if (!UUID_RE.test(categoryId)) return jsonResponse(400, { error: 'category_id requerido' });
-  if (!(await categoryBelongsToOrg(db, org, categoryId))) {
-    return jsonResponse(400, { error: 'La categoría no pertenece al club' });
-  }
 
   const { data, error } = await db
     .from('club_teams')
     .insert({
       organization_id: org.id,
-      name: nameRes.value,
-      category_id: categoryId,
+      name: teamDisplayName(comp.name, labelRes.value),
+      competition_id: comp.id,
+      category_id: comp.category_id || null,
+      label: labelRes.value,
       color: colorRes.value,
-      sort_order: Number.isInteger(body.sort_order) ? body.sort_order : 0,
+      sort_order: Number.isInteger(body.sort_order) ? body.sort_order : (comp.sort_order ?? 0),
     })
-    .select('id, name, category_id, color, sort_order')
+    .select('id, name, category_id, competition_id, label, color, sort_order')
     .single();
   if (error) {
     if (/duplicate key|unique/i.test(error.message || '')) {
-      return jsonResponse(409, { error: 'Ya existe un equipo con ese nombre' });
+      return jsonResponse(409, { error: 'Ya tienes un equipo en esa competición. Usa una etiqueta (A/B) para distinguirlos.' });
     }
     return jsonResponse(500, { error: error.message });
   }
   return jsonResponse(200, { ok: true, team: data });
 }
 
-// team_update: renombra / recategoriza / recolorea un equipo del club.
+// team_update: cambia la competición / etiqueta / color de un equipo. El
+// nombre y la categoría se recalculan desde la competición resultante.
 async function teamUpdate(db, org, body) {
   const teamId = String(body.team_id || '').trim();
   if (!isValidTeamId(teamId)) return jsonResponse(400, { error: 'team_id inválido' });
 
-  const patch = {};
-  if ('name' in body) {
-    const nameRes = normalizeTeamName(body.name);
-    if (nameRes.error) return jsonResponse(400, { error: nameRes.error });
-    patch.name = nameRes.value;
+  // Estado actual del equipo (para mezclar con los campos que cambian).
+  const { data: current, error: curErr } = await db
+    .from('club_teams')
+    .select('id, competition_id, label, color')
+    .eq('id', teamId)
+    .eq('organization_id', org.id)
+    .is('deleted_at', null)
+    .maybeSingle();
+  if (curErr) return jsonResponse(500, { error: curErr.message });
+  if (!current) return jsonResponse(404, { error: 'Equipo no encontrado' });
+
+  // Competición final (la nueva si viene, si no la actual).
+  let competitionId = current.competition_id;
+  if ('competition_id' in body) {
+    competitionId = String(body.competition_id || '').trim();
+    if (!isValidTeamId(competitionId)) return jsonResponse(400, { error: 'Competición no válida' });
   }
+  const comp = await loadCompetition(db, competitionId);
+  if (!comp || comp.sport !== org.sport) return jsonResponse(400, { error: 'Competición no válida' });
+
+  let label = current.label || null;
+  if ('label' in body) {
+    const labelRes = normalizeTeamLabel(body.label);
+    if (labelRes.error) return jsonResponse(400, { error: labelRes.error });
+    label = labelRes.value;
+  }
+  let color = current.color || null;
   if ('color' in body) {
     const colorRes = normalizeTeamColor(body.color);
     if (colorRes.error) return jsonResponse(400, { error: colorRes.error });
-    patch.color = colorRes.value;
+    color = colorRes.value;
   }
-  if ('category_id' in body) {
-    const categoryId = String(body.category_id || '').trim();
-    if (!UUID_RE.test(categoryId)) return jsonResponse(400, { error: 'category_id inválido' });
-    if (!(await categoryBelongsToOrg(db, org, categoryId))) {
-      return jsonResponse(400, { error: 'La categoría no pertenece al club' });
-    }
-    patch.category_id = categoryId;
-  }
-  if ('sort_order' in body && Number.isInteger(body.sort_order)) patch.sort_order = body.sort_order;
-  if (Object.keys(patch).length === 0) return jsonResponse(400, { error: 'Nada que actualizar' });
+
+  const patch = {
+    competition_id: comp.id,
+    category_id: comp.category_id || null,
+    name: teamDisplayName(comp.name, label),
+    label,
+    color,
+  };
+  if (Number.isInteger(body.sort_order)) patch.sort_order = body.sort_order;
 
   const { data, error } = await db
     .from('club_teams')
@@ -1306,10 +1369,10 @@ async function teamUpdate(db, org, body) {
     .eq('id', teamId)
     .eq('organization_id', org.id)
     .is('deleted_at', null)
-    .select('id, name, category_id, color, sort_order');
+    .select('id, name, category_id, competition_id, label, color, sort_order');
   if (error) {
     if (/duplicate key|unique/i.test(error.message || '')) {
-      return jsonResponse(409, { error: 'Ya existe un equipo con ese nombre' });
+      return jsonResponse(409, { error: 'Ya tienes un equipo en esa competición. Usa una etiqueta (A/B) para distinguirlos.' });
     }
     return jsonResponse(500, { error: error.message });
   }

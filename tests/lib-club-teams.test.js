@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTeamName, normalizeTeamColor, isValidTeamId, TEAM_NAME_MAX } from '../netlify/functions/lib/club-teams.js';
+import { normalizeTeamName, normalizeTeamColor, normalizeTeamLabel, isValidTeamId, TEAM_NAME_MAX, TEAM_LABEL_MAX } from '../netlify/functions/lib/club-teams.js';
 
 describe('club-teams · normalizeTeamName', () => {
   it('vacío → error', () => {
@@ -25,6 +25,19 @@ describe('club-teams · normalizeTeamColor', () => {
     expect(normalizeTeamColor('#00C277').value).toBe('#00C277');
     expect(normalizeTeamColor('rojo').error).toBeTruthy();
     expect(normalizeTeamColor('#FFF').error).toBeTruthy();
+  });
+});
+
+describe('club-teams · normalizeTeamLabel', () => {
+  it('vacío → null sin error', () => {
+    expect(normalizeTeamLabel('')).toEqual({ value: null, error: null });
+    expect(normalizeTeamLabel(null)).toEqual({ value: null, error: null });
+    expect(normalizeTeamLabel('  ')).toEqual({ value: null, error: null });
+  });
+  it('recorta tags y respeta el máximo', () => {
+    expect(normalizeTeamLabel(' <i>A</i> ').value).toBe('A');
+    expect(normalizeTeamLabel('x'.repeat(TEAM_LABEL_MAX)).error).toBeNull();
+    expect(normalizeTeamLabel('x'.repeat(TEAM_LABEL_MAX + 1)).error).toBeTruthy();
   });
 });
 
