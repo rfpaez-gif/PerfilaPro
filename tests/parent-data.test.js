@@ -155,4 +155,38 @@ describe('parent-data · panel del padre (capa 6c)', () => {
     const res = await makeHandler(makeDb(baseResolvers()))(event({ action: 'borrar' }, token));
     expect(res.statusCode).toBe(400);
   });
+
+  it('sin plan ni campaña: child.plan es null (modelo cuota mensual)', async () => {
+    const res = await makeHandler(makeDb(baseResolvers()))(event({ action: 'get_children' }, token));
+    expect(JSON.parse(res.body).children[0].plan).toBeNull();
+  });
+
+  it('plan materializado (enrollment_charges): has_charges, no pagable, paid_cents', async () => {
+    const db = makeDb(baseResolvers({
+      enrollment_charges: () => ({ data: [
+        { card_slug: 'p-1', concepto: 'Inscripción', amount_cents: 16000, due_date: '2025-09-01', status: 'paid', paid_at: '2025-09-02T00:00:00Z' },
+        { card_slug: 'p-1', concepto: '2º plazo', amount_cents: 10000, due_date: '2026-01-10', status: 'scheduled', paid_at: null },
+        { card_slug: 'p-1', concepto: 'Cancelado', amount_cents: 5000, due_date: '2026-02-01', status: 'canceled', paid_at: null },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db)(event({ action: 'get_children' }, token));
+    const plan = JSON.parse(res.body).children[0].plan;
+    expect(plan).toMatchObject({ has_charges: true, payable: false, campaign_id: null });
+    expect(plan.concepts).toHaveLength(2); // el cancelado se excluye
+    expect(plan.total_cents).toBe(26000);
+    expect(plan.paid_cents).toBe(16000);
+  });
+
+  it('campaña abierta con plan y sin cargos: pagable con campaign_id', async () => {
+    const db = makeDb(baseResolvers({
+      enrollment_campaigns: () => ({ data: [
+        { id: 'camp-1', organization_id: 'club-1', status: 'open', concepts_jsonb: { plan: [{ concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' }] } },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db)(event({ action: 'get_children' }, token));
+    const plan = JSON.parse(res.body).children[0].plan;
+    expect(plan).toMatchObject({ has_charges: false, payable: true, campaign_id: 'camp-1' });
+    expect(plan.concepts).toHaveLength(1);
+    expect(plan.total_cents).toBe(16000);
+  });
 });

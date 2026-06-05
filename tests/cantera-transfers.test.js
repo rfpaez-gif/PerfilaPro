@@ -208,16 +208,10 @@ describe('cancel-membership', () => {
     expect(db.rpc).toHaveBeenCalledWith('cantera_close_membership', expect.objectContaining({ p_card_slug: 'p-1', p_exit_reason: 'fichaje' }));
   });
 
-  it('tutor: 403 si no es tutor_legal', async () => {
-    const db = cancelDb({ admin: null });
-    const res = await makeCancel(db)(ev({ auth: parentBearer(), body: { card_slug: 'p-1' } }));
-    expect(res.statusCode).toBe(403);
-  });
-
-  it('tutor: 200 cierra como tutor_legal', async () => {
+  it('tutor: 401 — el padre ya no puede dar de baja (lo tramita el club)', async () => {
     const db = cancelDb();
     const res = await makeCancel(db)(ev({ auth: parentBearer(), body: { card_slug: 'p-1' } }));
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(401);
   });
 
   it('400 con exit_reason inválido', async () => {
