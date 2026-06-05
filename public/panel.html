@@ -751,7 +751,7 @@
           <h3 class="pp-spark__title" style="margin:0">Matriz de la temporada <span id="billingSeason" style="font-weight:400;color:#6B7280;font-size:.8em"></span></h3>
           <button type="button" class="pp-btn pp-btn--ghost" id="billingExportBtn">Exportar CSV</button>
         </div>
-        <p class="pp-form__hint">Matrícula + cuotas mes a mes. ✅ pagado · 🟡 parcial · ⏳ pendiente. Une cuotas Stripe y pagos manuales.</p>
+        <p class="pp-form__hint" id="billingHint">Matrícula + cuotas mes a mes. ✅ pagado · 🟡 parcial · ⏳ pendiente. Une cuotas Stripe y pagos manuales.</p>
         <div style="overflow-x:auto"><table class="pp-table pp-billing"><thead id="billingHead"></thead><tbody id="billingTbody"></tbody></table></div>
 
         <!-- Plan de pagos a medida · estado por concepto (cobro Stripe) -->
@@ -2266,8 +2266,14 @@
     }).join('');
   }
 
+  // Celda de la matriz por concepto (modelo plan a medida).
+  const BILL_PLAN_CELL = { paid: '✅', manual: '✅', pending: '⏳', scheduled: '⏳', processing: '⌛', failed: '⚠️', canceled: '✖️' };
+
   function renderBillingMatrix(d) {
     $('billingSeason').textContent = d.season ? '· ' + d.season : '';
+    if (d.model === 'plan') return renderBillingMatrixPlan(d);
+
+    $('billingHint').textContent = 'Matrícula + cuotas mes a mes. ✅ pagado · 🟡 parcial · ⏳ pendiente. Une cuotas Stripe y pagos manuales.';
     const cols = d.periods || [];
     const head = '<tr><th>Jugador</th>' + (d.has_matricula ? '<th>Matríc.</th>' : '') +
       cols.map(p => `<th>${monthLabel(p)}</th>`).join('') + '</tr>';
@@ -2284,7 +2290,44 @@
     }).join('');
   }
 
+  // Matriz jugador × CONCEPTO del plan de pagos a medida del club.
+  function renderBillingMatrixPlan(d) {
+    $('billingHint').innerHTML = 'Plan de pagos del club, concepto a concepto. <strong>✅</strong> pagado · <strong>⌛</strong> en curso · <strong>⚠️</strong> fallido · <strong>⏳</strong> pendiente. Une cargos Stripe y pagos manuales (apunta el concepto al registrar el cobro).';
+    const cols = d.concepts || [];
+    const head = '<tr><th>Jugador</th>' +
+      cols.map(c => `<th title="${escapeHtml(c.concepto)} · vence ${escapeHtml(c.due_date || '')}">${escapeHtml(c.concepto)}<br><small style="font-weight:400;color:#6B7280">${eurFromCents(c.amount_cents)}</small></th>`).join('') +
+      '<th>Cobrado / Total</th></tr>';
+    $('billingHead').innerHTML = head;
+    if (!d.players || !d.players.length) {
+      $('billingTbody').innerHTML = `<tr><td colspan="${cols.length + 2}" class="pp-table__empty">Sin jugadores todavía.</td></tr>`;
+      return;
+    }
+    $('billingTbody').innerHTML = d.players.map(pl => {
+      const byConcept = {}; (pl.concepts || []).forEach(x => { byConcept[x.concepto] = x; });
+      const cells = cols.map(c => {
+        const x = byConcept[c.concepto];
+        const st = x ? x.status : 'pending';
+        const src = x && x.source ? (x.source === 'stripe' ? 'Stripe' : 'Manual') : '';
+        return `<td title="${escapeHtml(st)}${src ? ' · ' + src : ''}">${BILL_PLAN_CELL[st] || '⏳'}</td>`;
+      }).join('');
+      return `<tr><td><strong>${escapeHtml(pl.nombre || pl.slug)}</strong></td>${cells}<td style="white-space:nowrap">${eurFromCents(pl.paid_cents)} / ${eurFromCents(pl.total_cents)}</td></tr>`;
+    }).join('');
+  }
+
   function billingToCsv(d) {
+    if (d.model === 'plan') {
+      const cols = d.concepts || [];
+      const header = ['Jugador', 'Equipo'].concat(cols.map(c => c.concepto)).concat(['Cobrado_cents', 'Total_cents']);
+      const lines = [header.join(';')];
+      (d.players || []).forEach(pl => {
+        const byConcept = {}; (pl.concepts || []).forEach(x => { byConcept[x.concepto] = x; });
+        const row = [csvCell(pl.nombre || pl.slug), csvCell(pl.team_name || '')];
+        cols.forEach(c => row.push(byConcept[c.concepto] ? byConcept[c.concepto].status : 'pending'));
+        row.push(pl.paid_cents, pl.total_cents);
+        lines.push(row.join(';'));
+      });
+      return lines.join('\n');
+    }
     const cols = d.periods || [];
     const header = ['Jugador', 'Equipo'].concat(d.has_matricula ? ['Matricula'] : []).concat(cols.map(monthLabel));
     const lines = [header.join(';')];
@@ -2411,6 +2454,17 @@
     (rosterData?.categories || []).forEach(cat => cat.members.forEach(m => players.push(m)));
     const opts = players.map(m => `<option value="${escapeHtml(m.slug)}">${escapeHtml(m.nombre || m.slug)}</option>`).join('');
     const period = new Date().toISOString().slice(0, 7);
+    // Si el club cobra por plan a medida, el pago manual se apunta a un
+    // concepto (Inscripción, Material…) para que case con la matriz. Si no,
+    // se apunta a un mes (modelo de mensualidades).
+    const isPlan = billingData && billingData.model === 'plan';
+    const conceptOpts = (isPlan ? (billingData.concepts || []) : [])
+      .map(c => `<option value="${escapeHtml(c.concepto)}">${escapeHtml(c.concepto)} · ${eurFromCents(c.amount_cents)}</option>`).join('');
+    const targetRow = isPlan
+      ? `<div class="pp-form__row"><label class="pp-form__label" for="rpConcepto">Concepto</label>
+          <select class="pp-input" id="rpConcepto">${conceptOpts || '<option value="">— sin conceptos en el plan —</option>'}</select></div>`
+      : `<div class="pp-form__row"><label class="pp-form__label" for="rpPeriod">Mes <small>YYYY-MM</small></label>
+          <input class="pp-input" id="rpPeriod" type="month" value="${period}"></div>`;
     openModal('Apuntar pago manual', `
       <p class="pp-section__sub">Registra un cobro recibido fuera de Stripe (Bizum, efectivo, transferencia). No mueve dinero — solo deja constancia de quién pagó.</p>
       <div class="pp-form">
@@ -2420,10 +2474,9 @@
           <input class="pp-input" id="rpAmount" type="number" min="0" step="0.01" placeholder="30.00"></div>
         <div class="pp-form__row"><label class="pp-form__label" for="rpMethod">Método</label>
           <select class="pp-input" id="rpMethod"><option value="bizum">Bizum</option><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
-        <div class="pp-form__row"><label class="pp-form__label" for="rpPeriod">Mes <small>YYYY-MM</small></label>
-          <input class="pp-input" id="rpPeriod" type="month" value="${period}"></div>
+        ${targetRow}
         <div class="pp-form__row"><label class="pp-form__label" for="rpNotes">Notas <small>opcional</small></label>
-          <input class="pp-input" id="rpNotes" type="text" placeholder="Cuota marzo"></div>
+          <input class="pp-input" id="rpNotes" type="text" placeholder="${isPlan ? 'Pagado en mano' : 'Cuota marzo'}"></div>
         <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="rpSubmit">Registrar pago →</button></div>
         <p class="pp-form__hint" id="rpError" style="color:#B0392A"></p>
       </div>
@@ -2442,7 +2495,8 @@
       card_slug,
       amount_cents: Math.round(amount * 100),
       method: $('rpMethod').value,
-      period: $('rpPeriod').value || undefined,
+      period: $('rpPeriod') ? ($('rpPeriod').value || undefined) : undefined,
+      concepto: $('rpConcepto') ? ($('rpConcepto').value || undefined) : undefined,
       notes: $('rpNotes').value.trim() || undefined,
     };
     const btn = $('rpSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Registrando…';
@@ -2451,6 +2505,7 @@
       sToast('ok', 'Pago registrado.');
       closeModal();
       await loadSportsStudio();
+      loadBillingMatrix(); loadPlanCharges();
     } catch (e) {
       err.textContent = e.message;
       btn.disabled = false; btn.textContent = 'Registrar pago →';

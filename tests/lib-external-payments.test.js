@@ -54,6 +54,13 @@ describe('buildPaymentRow · validación', () => {
     expect(row).not.toHaveProperty('period');
     expect(row).not.toHaveProperty('notes');
     expect(row).not.toHaveProperty('receipt_number');
+    expect(row).not.toHaveProperty('concepto');
+  });
+
+  it('concepto del plan: sin tags, recortado a 80 y omitido si vacío', () => {
+    expect(buildPaymentRow({ ...VALID, concepto: '  <b>Inscripción</b>  ' }).row.concepto).toBe('Inscripción');
+    expect(buildPaymentRow({ ...VALID, concepto: 'x'.repeat(120) }).row.concepto).toHaveLength(80);
+    expect(buildPaymentRow({ ...VALID, concepto: '   ' }).row).not.toHaveProperty('concepto');
   });
 
   it('rechaza cada campo requerido ausente / inválido', () => {

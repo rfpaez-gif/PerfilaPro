@@ -308,6 +308,52 @@ describe('org-panel · Cantera enrollment (capa I3)', () => {
     expect(betoSep.source).toBe('manual');
   });
 
+  it('billing_matrix model=plan: columnas por concepto, concilia Stripe + manual', async () => {
+    const plan = [
+      { concepto: 'Inscripción', amount_cents: 16000, due_date: '2026-09-01' },
+      { concepto: 'Material', amount_cents: 6000, due_date: '2026-09-15' },
+      { concepto: '2º plazo', amount_cents: 10000, due_date: '2027-01-10' },
+    ];
+    const db = makeDb(baseResolvers({
+      enrollment_campaigns: () => ({ data: { id: 'camp-1', season: '2026-27', status: 'open', concepts_jsonb: { plan } }, error: null }),
+      member_club_seasons: () => ({ data: [
+        { card_slug: 'p-aaaaaaaa', role: 'jugador', team_name: 'Alevín A', category_id: 'cat-ale' },
+        { card_slug: 'p-bbbbbbbb', role: 'jugador', team_name: 'Alevín A', category_id: 'cat-ale' },
+      ], error: null }),
+      cards: () => ({ data: [{ slug: 'p-aaaaaaaa', nombre: 'Ana' }, { slug: 'p-bbbbbbbb', nombre: 'Beto' }], error: null }),
+      // Ana: Inscripción pagada por Stripe.
+      enrollment_charges: () => ({ data: [
+        { card_slug: 'p-aaaaaaaa', concepto: 'Inscripción', status: 'paid' },
+        { card_slug: 'p-bbbbbbbb', concepto: 'Inscripción', status: 'failed' },
+      ], error: null }),
+      // Beto: Material pagado a mano (concepto apuntado).
+      external_payments: () => ({ data: [
+        { card_slug: 'p-bbbbbbbb', concepto: 'Material', amount_cents: 6000, method: 'bizum' },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('billing_matrix', {}, token));
+    expect(res.statusCode).toBe(200);
+    const out = JSON.parse(res.body);
+    expect(out.model).toBe('plan');
+    expect(out.season).toBe('2026-27');
+    expect(out.concepts.map(c => c.concepto)).toEqual(['Inscripción', 'Material', '2º plazo']);
+    expect(out.plan_total_cents).toBe(32000);
+
+    const ana = out.players.find(p => p.slug === 'p-aaaaaaaa');
+    const anaInsc = ana.concepts.find(c => c.concepto === 'Inscripción');
+    expect(anaInsc.status).toBe('paid');
+    expect(anaInsc.source).toBe('stripe');
+    expect(ana.paid_cents).toBe(16000);
+    expect(ana.total_cents).toBe(32000);
+
+    const beto = out.players.find(p => p.slug === 'p-bbbbbbbb');
+    expect(beto.concepts.find(c => c.concepto === 'Inscripción').status).toBe('failed');
+    const betoMat = beto.concepts.find(c => c.concepto === 'Material');
+    expect(betoMat.status).toBe('paid');
+    expect(betoMat.source).toBe('manual');
+    expect(beto.paid_cents).toBe(6000);
+  });
+
   it('billing_matrix sin campaña usa la cuota del club y matrícula 0', async () => {
     const db = makeDb(baseResolvers({
       enrollment_campaigns: () => ({ data: null, error: null }),
