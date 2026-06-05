@@ -1516,8 +1516,14 @@ async function assignLead(selectEl) {
   const leadId = selectEl.dataset.leadId;
   const orgSlug = selectEl.value || null;
   try {
-    await callAdmin({ action: 'leads_assign', lead_id: leadId, org_slug: orgSlug });
-    toast(orgSlug ? `Lead asociado a ${orgSlug}` : 'Lead desvinculado', 'ok');
+    const res = await callAdmin({ action: 'leads_assign', lead_id: leadId, org_slug: orgSlug });
+    const carried = res && res.agent_code_carried;
+    toast(
+      orgSlug
+        ? (carried ? `Lead asociado a ${orgSlug} · atribución ${carried} → la org` : `Lead asociado a ${orgSlug}`)
+        : 'Lead desvinculado',
+      'ok',
+    );
     await loadLeads();
   } catch (err) {
     toast('Error: ' + err.message, 'err');

@@ -36,6 +36,8 @@ const defaultEmailClient = process.env.RESEND_API_KEY ? new Resend(process.env.R
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Mismo formato que valida lead-b2b/create-org-checkout al persistir el código.
+const AGENT_CODE_RE = /^[A-Za-z0-9_-]{2,40}$/;
 
 function jsonResponse(statusCode, payload) {
   return {
@@ -1292,15 +1294,17 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       }
 
       let organization_id = null;
+      let org = null;
       if (org_slug) {
-        const { data: org } = await db
+        const { data } = await db
           .from('organizations')
-          .select('id')
+          .select('id, agent_code')
           .eq('slug', org_slug)
           .is('deleted_at', null)
           .maybeSingle();
-        if (!org) return jsonResponse(404, { error: 'organization no encontrada' });
-        organization_id = org.id;
+        if (!data) return jsonResponse(404, { error: 'organization no encontrada' });
+        org = data;
+        organization_id = data.id;
       }
 
       const { error } = await db
@@ -1308,7 +1312,33 @@ function makeHandler(db, emailClient = defaultEmailClient) {
         .update({ organization_id })
         .eq('id', lead_id);
       if (error) return jsonResponse(500, { error: error.message });
-      return jsonResponse(200, { ok: true, lead_id, organization_id });
+
+      // Carry-over de atribución comercial (Phase 2 · Bloque D): al asociar un
+      // lead que trae agent_code a una org que aún no tiene atribución, copiamos
+      // el código a organizations.agent_code para cerrar la cadena de comisión
+      // recurrente (b2b_leads.agent_code → organizations.agent_code →
+      // org_invoices.agent_code → agent-data.org_commission), sin que el founder
+      // tenga que teclearlo a mano. NO pisamos una atribución ya existente (p.ej.
+      // la que fijó ?via= en el checkout Stripe). Best-effort: si falla, la
+      // asociación del lead ya quedó hecha.
+      let agent_code_carried = null;
+      if (organization_id && org && !org.agent_code) {
+        const { data: lead } = await db
+          .from('b2b_leads')
+          .select('agent_code')
+          .eq('id', lead_id)
+          .maybeSingle();
+        const code = lead && lead.agent_code;
+        if (code && AGENT_CODE_RE.test(String(code))) {
+          const { error: upErr } = await db
+            .from('organizations')
+            .update({ agent_code: code })
+            .eq('id', organization_id);
+          if (!upErr) agent_code_carried = code;
+        }
+      }
+
+      return jsonResponse(200, { ok: true, lead_id, organization_id, agent_code_carried });
     }
 
     // ── leads_resend: enviar el magic-link al lead ──
