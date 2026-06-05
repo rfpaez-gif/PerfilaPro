@@ -189,6 +189,70 @@ describe('org-panel · Cantera reads (layer 6a)', () => {
     expect(body.connect).toMatchObject({ account_id: 'acct_1', charges_enabled: true });
   });
 
+  it('get_club_stats switches payment KPIs to the plan model when the club bills by concept', async () => {
+    // Plan a medida: 2 conceptos (Inscripción 100€ + Material 50€ = 150€).
+    const plan = [
+      { concepto: 'Inscripción', amount_cents: 10000, due_date: '2026-09-01' },
+      { concepto: 'Material', amount_cents: 5000, due_date: '2026-09-15' },
+    ];
+    const resolvers = {
+      ...ROSTER_RESOLVERS,
+      enrollment_campaigns: () => ({ data: { id: 'camp-1', season: '2026-27', status: 'open', concepts_jsonb: { plan } }, error: null }),
+      // Ana y Beto pagaron la Inscripción por Stripe.
+      enrollment_charges: () => ({ data: [
+        { card_slug: 'p-1', concepto: 'Inscripción', status: 'paid' },
+        { card_slug: 'p-2', concepto: 'Inscripción', status: 'paid' },
+      ], error: null }),
+      // Ana además pagó el Material a mano (concepto apuntado).
+      external_payments: () => ({ data: [
+        { card_slug: 'p-1', concepto: 'Material', amount_cents: 5000, method: 'bizum' },
+      ], error: null }),
+    };
+    const handler = makeHandler(makeDb(resolvers), null);
+    const res = await handler(event('get_club_stats', {}, token));
+    expect(res.statusCode).toBe(200);
+    const p = JSON.parse(res.body).payments;
+
+    expect(p.model).toBe('plan');
+    expect(p.season).toBe('2026-27');
+    expect(p.plan_total_cents).toBe(15000);
+    // Ana completó el plan; Beto y Carla no.
+    expect(p.paying).toBe(1);
+    expect(p.unpaid).toBe(2);
+    // Recaudado: Ana 150€ + Beto 100€ + Carla 0 = 250€ de 450€ esperados.
+    expect(p.collected_cents).toBe(25000);
+    expect(p.expected_cents).toBe(45000);
+    expect(p.coverage_pct).toBe(56); // round(250/450*100)
+    expect(p.concepts_paid).toBe(3); // Ana 2 + Beto 1
+    expect(p.concepts_total).toBe(6); // 3 jugadores × 2 conceptos
+    // No filtra campos del modelo mensual en el payload de plan.
+    expect(p.mrr_cents).toBeUndefined();
+
+    // Progreso por jugador para la tabla "Estado por jugador".
+    const ana = p.players.find((x) => x.slug === 'p-1');
+    expect(ana).toMatchObject({ status: 'paid', concepts_paid: 2, concepts_total: 2, paid_cents: 15000, total_cents: 15000 });
+    const beto = p.players.find((x) => x.slug === 'p-2');
+    expect(beto).toMatchObject({ status: 'partial', concepts_paid: 1, paid_cents: 10000 });
+    const carla = p.players.find((x) => x.slug === 'p-3');
+    expect(carla).toMatchObject({ status: 'pending', concepts_paid: 0, paid_cents: 0 });
+  });
+
+  it('get_club_stats keeps the monthly payment model when there is no plan campaign', async () => {
+    // Campaña abierta SIN plan (cuota mensual) → KPIs mensuales intactos.
+    const resolvers = {
+      ...ROSTER_RESOLVERS,
+      enrollment_campaigns: () => ({ data: { id: 'camp-1', season: '2026-27', status: 'open', monthly_fee_cents: 3000, num_installments: 9, concepts_jsonb: null }, error: null }),
+    };
+    const handler = makeHandler(makeDb(resolvers), null);
+    const res = await handler(event('get_club_stats', {}, token));
+    expect(res.statusCode).toBe(200);
+    const p = JSON.parse(res.body).payments;
+    expect(p.model).toBe('monthly');
+    expect(p.mrr_cents).toBe(3000);
+    expect(p.period).toBe('2026-03');
+    expect(p.players).toBeUndefined();
+  });
+
   it('get_transfers returns incoming + outgoing trays with resolved names', async () => {
     const resolvers = {
       organizations: () => ({ data: SPORTS_ORG, error: null }),
