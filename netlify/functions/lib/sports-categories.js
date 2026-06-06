@@ -15,10 +15,11 @@
 
 const SEASON_RE = /^(\d{4})(?:[-/]\d{2,4})?$/;
 
-// La temporada española arranca en verano. Cutoff en julio (mes 7):
-// de julio a diciembre la temporada es año-año+1; de enero a junio
-// pertenece a la temporada que arrancó el verano anterior.
-const SEASON_CUTOFF_MONTH = 7;
+// La temporada española arranca en verano. Cutoff en junio (mes 6): desde
+// el 1 de junio el club ya trabaja la temporada nueva (captación, campus de
+// verano, configuración), así que de junio a diciembre la temporada es
+// año-año+1; de enero a mayo pertenece a la que arrancó el verano anterior.
+const SEASON_CUTOFF_MONTH = 6;
 
 // Parsea 'YYYY', 'YYYY-YY', 'YYYY-YYYY' o 'YYYY/YY' → año de inicio
 // (entero). null si no encaja.
@@ -29,7 +30,7 @@ function parseSeasonStartYear(season) {
 }
 
 // Año de inicio de la temporada vigente para una fecha dada (default
-// ahora). Julio→Diciembre 2025 y Enero→Junio 2026 devuelven ambos 2025.
+// ahora). Junio→Diciembre 2026 y Enero→Mayo 2027 devuelven ambos 2026.
 function currentSeasonStartYear(date = new Date()) {
   const y = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1; // 1-12
