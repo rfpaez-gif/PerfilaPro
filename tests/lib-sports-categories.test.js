@@ -31,16 +31,17 @@ describe('parseSeasonStartYear', () => {
   });
 });
 
-describe('currentSeasonStartYear · cutoff julio', () => {
+describe('currentSeasonStartYear · cutoff junio', () => {
   it('agosto 2025 → 2025', () => {
     expect(currentSeasonStartYear(new Date('2025-08-15T00:00:00Z'))).toBe(2025);
   });
   it('marzo 2026 → 2025 (misma temporada)', () => {
     expect(currentSeasonStartYear(new Date('2026-03-01T00:00:00Z'))).toBe(2025);
   });
-  it('julio es el corte (inclusive)', () => {
-    expect(currentSeasonStartYear(new Date('2025-07-01T00:00:00Z'))).toBe(2025);
-    expect(currentSeasonStartYear(new Date('2025-06-30T00:00:00Z'))).toBe(2024);
+  it('junio es el corte (inclusive): el club ya trabaja la temporada nueva', () => {
+    expect(currentSeasonStartYear(new Date('2026-06-01T00:00:00Z'))).toBe(2026);
+    expect(currentSeasonStartYear(new Date('2026-06-06T00:00:00Z'))).toBe(2026);
+    expect(currentSeasonStartYear(new Date('2026-05-31T00:00:00Z'))).toBe(2025);
   });
 });
 
