@@ -2,11 +2,26 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-06 (Cobros consciente del modelo de plan + carry-over de atribución comercial Phase 2 · Bloque D, mergeados a `main` vía PR #166; TODAS las migraciones del carril —033 a 042— ejecutadas y verificadas en prod, solo faltan env vars para encender).
+Última actualización: 2026-06-06 (tarde · gestión de plantilla del club: baja de jugador/staff, invitar familias desde el Studio founder, consistencia de la baja entre pestañas + teardown de cobro — PRs #173–#176 mergeados a `main`. Suite 1585/1585. Sin migraciones nuevas).
 
 ---
 
-## 0 · Lo último mergeado (sesión 2026-06-06)
+## 0 · Lo último mergeado (sesión 2026-06-06 · tarde)
+
+Trabajo **desde `main`**, rama `claude/demo-cantera-player-delete-KWZbZ`. Cuatro PRs sobre la **gestión de plantilla del club** (encima de la sesión de mañana, §0-bis abajo):
+
+1. **#173 · Baja de jugador/staff desde el panel del club** — botón "Baja" en cada fila de la Plantilla (`panel.html`) → `cancel-membership` (auth org-panel, scoped al propio club). Jugador vía RPC `cantera_close_membership`; **cuerpo técnico** vía cierre app-side (la RPC es player-only: filtra `role='jugador'`). El miembro sale del roster; la ficha NO se borra (pertenece a la persona).
+2. **#174 · Invitar familias por email desde el Studio del founder** — el botón "Invitar" de `admin-orgs` ahora es **consciente del `kind`**: `sports_club` → modal "Invitar familias" → acción nueva `cantera_enrollment_invite` (reusa `lib/enrollment-invite`, manda el enlace de la campaña ABIERTA; 409 si no hay campaña; auditada). `business` → invite B2B de operarios de siempre.
+3. **#175 · Consistencia de la baja entre pestañas + teardown de cobro** — (a) `enrollment_get` contaba inscripciones sin filtrar `left_at` (un jugador quitado seguía sumando) → fix: filtra `left_at IS NULL` + `role='jugador'`. (b) nuevo **`lib/cantera-billing-teardown.js`** (`teardownPlayerBilling`): la baja del club cancela `enrollment_charges` `scheduled` + `parent_subscriptions` activas (Stripe `subscriptions.cancel` en la cuenta Connect, best-effort honesto: si Stripe falla no marca `canceled` y cuenta `sub_errors`). Invocado **SOLO en la baja** (cancel-membership jugador + founder `cantera_close_membership`), nunca en cambio de equipo ni traspaso. `cancel-membership` y `admin-orgs` reciben el cliente Stripe inyectable. UX: botón "Quitar"→**"Baja"**, modal "Dar de baja del club" que avisa del corte de cobro y recuerda que para mover de equipo se usa el desplegable Equipo.
+4. **#176 · Feedback del invite de familias** — el invite desglosa el motivo de cada fallo (duplicadas / email mal escrito / fallo de envío) en vez de "N con error" opaco; conserva la lista si hubo fallos. (No era bug de lógica: `validateInviteList` deduplica por email a propósito.)
+
+**Las TRES operaciones de plantilla (clave · no mezclar)**: (1) **cambiar de equipo** = desplegable Equipo + `enrollment_assign` → NO cierra membresía, NO toca cobro; (2) **baja del club** = botón "Baja" / founder `cantera_close_membership` → cierra membresía Y desconecta cobro; (3) **traspaso a otro club** = `cantera_execute_transfer` → sigue activo en otro club, no se desconecta cobro aquí. Roster, KPIs, Cobros e inscripciones filtran todos `left_at IS NULL`.
+
+Suite **1585/1585** (95 ficheros). **Sin migraciones nuevas**. Nuevos archivos: `lib/cantera-billing-teardown.js` + `tests/lib-cantera-billing-teardown.test.js`. `CLAUDE.md` actualizado (secciones "Tres operaciones distintas sobre la plantilla" + "Teardown de cobro en la baja" + invite consciente del `kind`).
+
+---
+
+## 0-bis · Lo último mergeado (sesión 2026-06-06 · mañana)
 
 Trabajo **desde `main`**. Dos features sueltos sobre Cantera/B2B (PR #166, merge `7caf83a`), encima de #164 (equipos por competición · migraciones 040/041) y #165 (matriz de Cobros por modelo · migración 042):
 
