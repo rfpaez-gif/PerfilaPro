@@ -614,13 +614,19 @@ async function enrollmentGet(db, org, siteUrl) {
   if (error) return jsonResponse(500, { error: error.message });
   if (!campaign) return jsonResponse(200, { ok: true, campaign: null });
 
-  // Nº de membresías del club abiertas desde que arrancó la campaña — una
-  // medida honesta de "inscripciones recibidas" sin tabla extra.
+  // Nº de jugadores ACTIVOS dados de alta desde que arrancó la campaña — una
+  // medida honesta de "inscripciones vigentes" sin tabla extra. Filtra
+  // left_at IS NULL: si el club quita a un jugador de la plantilla (membresía
+  // cerrada), la fila histórica persiste pero ya no cuenta como inscripción.
+  // role='jugador' excluye al cuerpo técnico (se da de alta aparte, no via
+  // campaña).
   let submitted = null;
   const { data: rows } = await db
     .from('member_club_seasons')
     .select('id', { count: 'exact' })
     .eq('organization_id', org.id)
+    .eq('role', 'jugador')
+    .is('left_at', null)
     .gte('joined_at', campaign.created_at);
   if (Array.isArray(rows)) submitted = rows.length;
 
