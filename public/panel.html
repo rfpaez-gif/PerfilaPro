@@ -1864,8 +1864,22 @@
     const btn = _enrInviteBtn; btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…'; msg.textContent = '';
     try {
       const r = await api('enrollment_invite', { invites });
-      msg.textContent = r.summary || 'Invitaciones enviadas.';
-      if (r.results && r.results.ok && r.results.ok.length) $('enrInviteList').value = '';
+      const failed = (r.results && r.results.failed) || [];
+      let text = r.summary || 'Invitaciones enviadas.';
+      if (failed.length) {
+        // Desglosa el porqué de los fallos en vez de un "N con error" opaco.
+        const LABEL = {
+          'duplicado en la lista': 'duplicadas (mismo email repetido)',
+          'email inválido': 'con email mal escrito',
+          'email no enviado': 'no enviadas (fallo de envío)',
+        };
+        const byReason = {};
+        failed.forEach(f => { const k = LABEL[f.error] || f.error || 'error'; byReason[k] = (byReason[k] || 0) + 1; });
+        text += ' — ' + Object.entries(byReason).map(([k, n]) => `${n} ${k}`).join(' · ');
+      }
+      msg.textContent = text;
+      // Limpia la lista solo si fue todo bien; si hubo fallos, la deja para revisar.
+      if (r.results && r.results.ok && r.results.ok.length && !failed.length) $('enrInviteList').value = '';
     } catch (e) {
       msg.textContent = e.message;
     } finally {
