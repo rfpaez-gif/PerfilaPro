@@ -168,7 +168,7 @@
   <div class="pp-modal-backdrop" id="inviteModal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
     <div class="pp-modal" style="max-width:560px">
       <h3 class="pp-modal__title" id="inviteModalTitle">Invitar a <span id="inviteOrgName" style="font-style:italic">—</span></h3>
-      <p class="pp-modal__sub">Crea una o varias cards B2B pre-asignadas a la organización. Cada miembro recibe un magic-link con branding de la org y completa solo su foto + WhatsApp (los demás datos los fijas tú).</p>
+      <p class="pp-modal__sub" id="inviteModalSub">Crea una o varias cards B2B pre-asignadas a la organización. Cada miembro recibe un magic-link con branding de la org y completa solo su foto + WhatsApp (los demás datos los fijas tú).</p>
 
       <div id="inviteModeTeam">
         <p style="font-size:11px;color:var(--color-gris-500);margin:0 0 .85rem;line-height:1.5">
@@ -204,6 +204,19 @@
           <textarea class="pp-input" id="teamList" rows="6" placeholder="olga@special-trainer.es, Olga Cardona, Entrenadora&#10;juan@special-trainer.es, Juan García, Recepcionista&#10;maria@special-trainer.es, María López, Fisioterapeuta" style="font-family:var(--font-mono,Menlo,monospace);font-size:12px;resize:vertical"></textarea>
         </div>
         <p id="teamCounter" style="font-size:11px;color:var(--color-gris-500);margin:.25rem 0 0">0 operarios</p>
+      </div>
+
+      <!-- Variante club deportivo (Cantera): invitar familias al enlace de
+           inscripción de la temporada. NO crea cards (el padre rellena la
+           ficha del menor). Requiere campaña abierta en el panel del club. -->
+      <div id="inviteModeFamilies" style="display:none">
+        <p style="font-size:11px;color:var(--color-gris-500);margin:0 0 .85rem;line-height:1.5">
+          <strong style="color:var(--color-tinta)">Invitar familias</strong> · una línea por familia con formato <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">email</code> o <code style="background:#F1F3F5;padding:0 4px;border-radius:3px">nombre, email</code>. Cada familia recibe el <strong>enlace de inscripción de la temporada</strong> para rellenar la ficha de su hijo/a — no se crea ninguna ficha hasta que el padre la completa (LOPD-limpio). Requiere tener <strong>las inscripciones abiertas</strong> en el panel del club.
+        </p>
+        <div class="pp-form__row">
+          <textarea class="pp-input" id="familyList" rows="7" placeholder="madre@email.com&#10;Ana, padre@email.com&#10;familia@email.com" style="font-family:var(--font-mono,Menlo,monospace);font-size:12px;resize:vertical"></textarea>
+        </div>
+        <p id="familyCounter" style="font-size:11px;color:var(--color-gris-500);margin:.25rem 0 0">0 familias</p>
       </div>
 
       <div class="pp-modal__actions">
@@ -872,7 +885,7 @@ function renderOrgsTable() {
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="window.open('/e/${safeSlug}','_blank')">Abrir</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openPanelAsFounder('${safeSlug}', this)" title="Abrir el panel de esta organización como si fueras el cliente. Sesión de 1 hora.">🔑 Panel</button>
         <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="sendPanelInvite('${safeSlug}','${safeName}', this)" title="Enviar el acceso al panel al email registrado de la org. Magic-link válido 7 días.">✉️ Acceso</button>
-        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openInviteModal('${safeSlug}','${safeName}')">Invitar</button>
+        <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="openInviteModal('${safeSlug}','${safeName}','${o.kind === 'sports_club' ? 'sports_club' : 'business'}')">Invitar</button>
         <button class="pp-btn pp-btn--danger pp-btn--sm" onclick="deleteOrg('${safeSlug}','${safeName}')">Eliminar</button>
       </div></td>
     </tr>`;
@@ -1548,18 +1561,37 @@ async function resendLead(leadId, name, currentOrgSlug) {
    Invitar a una org · datos comunes + lista de miembros (1..100)
    ─────────────────────────────────────────────────────────── */
 let inviteOrgSlug = null;
+let inviteOrgKind = 'business';
 
-function openInviteModal(slug, name) {
+const INVITE_SUB_B2B = 'Crea una o varias cards B2B pre-asignadas a la organización. Cada miembro recibe un magic-link con branding de la org y completa solo su foto + WhatsApp (los demás datos los fijas tú).';
+const INVITE_SUB_CLUB = 'Manda a las familias el enlace de inscripción de la temporada por email (la misma vía que el QR, pero directa a su buzón). El padre rellena la ficha de su hijo/a; no se crea ninguna ficha hasta entonces.';
+
+function openInviteModal(slug, name, kind) {
   inviteOrgSlug = slug;
+  inviteOrgKind = kind === 'sports_club' ? 'sports_club' : 'business';
   $('inviteOrgName').textContent = name || slug;
+  // Reset de ambos carriles.
   $('tplCp').value = '';
   $('tplZona').value = '';
   $('tplServicios').value = '';
   $('tplDescripcion').value = '';
   $('teamList').value = '';
   $('teamCounter').textContent = '0 operarios';
+  $('familyList').value = '';
+  $('familyCounter').textContent = '0 familias';
+
+  const isClub = inviteOrgKind === 'sports_club';
+  $('inviteModeTeam').style.display = isClub ? 'none' : '';
+  $('inviteModeFamilies').style.display = isClub ? '' : 'none';
+  $('inviteModalSub').textContent = isClub ? INVITE_SUB_CLUB : INVITE_SUB_B2B;
+
   $('inviteModal').classList.add('is-open');
-  setTimeout(() => $('teamList').focus(), 50);
+  setTimeout(() => $(isClub ? 'familyList' : 'teamList').focus(), 50);
+}
+
+function updateFamilyCounter() {
+  const n = parseTeamList($('familyList').value).length;
+  $('familyCounter').textContent = `${n} familia${n === 1 ? '' : 's'}`;
 }
 
 function closeInviteModal() {
@@ -1658,6 +1690,7 @@ function handleCsvFile(file) {
 
 async function sendInvite() {
   if (!inviteOrgSlug) return;
+  if (inviteOrgKind === 'sports_club') return sendFamilyInvite();
   const btn = $('inviteSendBtn');
   const orig = btn.textContent;
   btn.disabled = true;
@@ -1710,10 +1743,53 @@ async function sendInvite() {
   }
 }
 
+// Club deportivo: manda el enlace de inscripción de la campaña ABIERTA a cada
+// familia (action cantera_enrollment_invite). No crea cards. Si no hay campaña
+// abierta, el backend devuelve 409 y el aviso se enseña en el toast.
+async function sendFamilyInvite() {
+  const btn = $('inviteSendBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+
+  try {
+    const fams = parseTeamList($('familyList').value);
+    if (!fams.length) throw new Error('Añade al menos un email');
+    if (fams.length > 200) throw new Error('Máximo 200 por lote');
+
+    const malformed = fams.filter(t => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email));
+    if (malformed.length) {
+      throw new Error(`${malformed.length} email${malformed.length === 1 ? '' : 's'} mal formado${malformed.length === 1 ? '' : 's'} (revisa la lista)`);
+    }
+
+    const invites = fams.map(f => ({ email: f.email, nombre: f.nombre || undefined }));
+    const json = await callAdmin({ action: 'cantera_enrollment_invite', slug: inviteOrgSlug, invites });
+    const okN = json.results?.ok?.length || 0;
+    const failN = json.results?.failed?.length || 0;
+    if (failN === 0) {
+      toast(`✅ ${okN} invitación${okN === 1 ? '' : 'es'} enviadas a las familias`, 'ok');
+    } else {
+      const detail = json.results.failed.map(f => `${f.email}: ${f.error}`).join('\n');
+      toast(`${okN} OK · ${failN} con error`, 'err');
+      console.warn('Invitaciones fallidas:\n' + detail);
+      alert(`Resumen: ${okN} OK, ${failN} con error.\n\nFallos:\n${detail}`);
+    }
+
+    closeInviteModal();
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
 // Bind del contador en vivo, del file picker CSV y del Escape
 document.addEventListener('DOMContentLoaded', () => {
   const list = $('teamList');
   if (list) list.addEventListener('input', updateTeamCounter);
+  const fam = $('familyList');
+  if (fam) fam.addEventListener('input', updateFamilyCounter);
   const csv = $('teamCsvInput');
   if (csv) csv.addEventListener('change', e => {
     handleCsvFile(e.target.files && e.target.files[0]);
@@ -1723,6 +1799,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // El DOMContentLoaded ya pasó si el script está al final del body — bind directo
 const _tl = $('teamList');
 if (_tl) _tl.addEventListener('input', updateTeamCounter);
+const _fam = $('familyList');
+if (_fam) _fam.addEventListener('input', updateFamilyCounter);
 const _csv = $('teamCsvInput');
 if (_csv) _csv.addEventListener('change', e => {
   handleCsvFile(e.target.files && e.target.files[0]);
