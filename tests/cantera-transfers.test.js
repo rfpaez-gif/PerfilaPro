@@ -178,9 +178,11 @@ describe('accept-transfer', () => {
 
 // ─────────────────────── cancel-membership ───────────────────────
 
-function cancelDb({ active = { id: 'ms-1', role: 'jugador', organization_id: 'orgA' }, admin = { id: 'a1' }, rpc = { data: { ok: true }, error: null }, msUpdateErr = null } = {}) {
+function cancelDb({ active = { id: 'ms-1', role: 'jugador', organization_id: 'orgA' }, admin = { id: 'a1' }, rpc = { data: { ok: true }, error: null }, msUpdateErr = null, charges = [], subs = [], connectAccount = 'acct_club' } = {}) {
   const msUpdateEq = vi.fn(resolve({ error: msUpdateErr }));
   const cardsUpdateEq = vi.fn(resolve({ error: null }));
+  const chargesSelect = vi.fn(resolve({ data: charges, error: null }));
+  const subsUpdateEq = vi.fn(resolve({ error: null }));
   const db = {
     from: vi.fn((t) => {
       if (t === 'member_club_seasons') return {
@@ -189,14 +191,25 @@ function cancelDb({ active = { id: 'ms-1', role: 'jugador', organization_id: 'or
       };
       if (t === 'cards') return { update: () => ({ eq: cardsUpdateEq }) };
       if (t === 'card_admins') return { select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ is: () => ({ limit: () => ({ maybeSingle: resolve({ data: admin, error: null }) }) }) }) }) }) }) };
+      // Teardown de cobro (solo baja de jugador):
+      if (t === 'organizations') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: { stripe_connect_account_id: connectAccount }, error: null }) }) }) };
+      if (t === 'enrollment_charges') return { update: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ select: chargesSelect }) }) }) }) };
+      if (t === 'parent_subscriptions') return {
+        select: () => ({ eq: () => ({ eq: () => ({ in: resolve({ data: subs, error: null }) }) }) }),
+        update: () => ({ eq: subsUpdateEq }),
+      };
       return {};
     }),
     rpc: vi.fn(resolve(rpc)),
   };
   db._msUpdateEq = msUpdateEq;
   db._cardsUpdateEq = cardsUpdateEq;
+  db._chargesSelect = chargesSelect;
+  db._subsUpdateEq = subsUpdateEq;
   return db;
 }
+
+const mockStripeCancel = () => ({ subscriptions: { cancel: vi.fn(() => Promise.resolve({ status: 'canceled' })) } });
 
 describe('cancel-membership', () => {
   it('401 sin ninguna sesión', async () => {
@@ -255,6 +268,30 @@ describe('cancel-membership', () => {
     const db = cancelDb({ active: { id: 'ms-s', role: 'fisio', organization_id: 'orgB' }, msUpdateErr: { message: 'boom' } });
     const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 's-1' } }));
     expect(res.statusCode).toBe(500);
+  });
+
+  it('baja de jugador → desconecta el cobro (cancela cargos + cuota Stripe)', async () => {
+    const db = cancelDb({
+      active: { id: 'ms', role: 'jugador', organization_id: 'orgB' },
+      charges: [{ id: 'c1' }, { id: 'c2' }],
+      subs: [{ id: 's1', stripe_subscription_id: 'sub_1', status: 'active' }],
+    });
+    const stripe = mockStripeCancel();
+    const res = await makeCancel(db, stripe)(ev({ auth: orgBearer('orgB'), body: { card_slug: 'p-1', exit_reason: 'baja_voluntaria' } }));
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.billing).toEqual({ charges_canceled: 2, subs_canceled: 1, sub_errors: 0 });
+    expect(stripe.subscriptions.cancel).toHaveBeenCalledWith('sub_1', { stripeAccount: 'acct_club' });
+    expect(db._subsUpdateEq).toHaveBeenCalledWith('id', 's1');
+  });
+
+  it('baja de staff → NO toca el cobro (sin teardown)', async () => {
+    const db = cancelDb({ active: { id: 'ms-s', role: 'entrenador', organization_id: 'orgB' }, subs: [{ id: 's1', stripe_subscription_id: 'sub_1', status: 'active' }] });
+    const stripe = mockStripeCancel();
+    const res = await makeCancel(db, stripe)(ev({ auth: orgBearer('orgB'), body: { card_slug: 's-1' } }));
+    expect(res.statusCode).toBe(200);
+    expect(stripe.subscriptions.cancel).not.toHaveBeenCalled();
+    expect(db._subsUpdateEq).not.toHaveBeenCalled();
   });
 });
 

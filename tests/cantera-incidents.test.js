@@ -216,4 +216,29 @@ describe('admin-orgs · acciones cantera_ (wiring)', () => {
     const res = await makeHandler({ from: () => ({}) })({ httpMethod: 'POST', headers: {}, body: JSON.stringify({ action: 'cantera_set_visibility', card_slug: 'p-1' }) });
     expect(res.statusCode).toBe(401);
   });
+
+  it('cantera_close_membership (baja) cierra y desconecta el cobro del jugador', async () => {
+    process.env.CANTERA_VERTICAL_ACTIVE = '1';
+    const subsUpdateEq = vi.fn(resolve({ error: null }));
+    const db = {
+      from: (t) => {
+        if (t === 'admin_audit_log') return { insert: () => Promise.resolve({ error: null }) };
+        if (t === 'member_club_seasons') return { select: () => ({ eq: () => ({ eq: () => ({ is: () => ({ maybeSingle: resolve({ data: { organization_id: 'orgZ' }, error: null }) }) }) }) }) };
+        if (t === 'organizations') return { select: () => ({ eq: () => ({ maybeSingle: resolve({ data: { stripe_connect_account_id: 'acct_z' }, error: null }) }) }) };
+        if (t === 'enrollment_charges') return { update: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ select: resolve({ data: [{ id: 'c1' }], error: null }) }) }) }) }) };
+        if (t === 'parent_subscriptions') return {
+          select: () => ({ eq: () => ({ eq: () => ({ in: resolve({ data: [{ id: 's1', stripe_subscription_id: 'sub_z', status: 'active' }], error: null }) }) }) }),
+          update: () => ({ eq: subsUpdateEq }),
+        };
+        return {};
+      },
+      rpc: resolve({ data: { ok: true }, error: null }),
+    };
+    const stripe = { subscriptions: { cancel: vi.fn(() => Promise.resolve({ status: 'canceled' })) } };
+    const res = await makeHandler(db, null, stripe)(adminEvent({ action: 'cantera_close_membership', card_slug: 'p-1', exit_reason: 'baja_voluntaria' }));
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).billing).toEqual({ charges_canceled: 1, subs_canceled: 1, sub_errors: 0 });
+    expect(stripe.subscriptions.cancel).toHaveBeenCalledWith('sub_z', { stripeAccount: 'acct_z' });
+    delete process.env.CANTERA_VERTICAL_ACTIVE;
+  });
 });
