@@ -2,7 +2,7 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-06 (Cobros consciente del modelo de plan + carry-over de atribución comercial Phase 2 · Bloque D, mergeados a `main` vía PR #166).
+Última actualización: 2026-06-06 (Cobros consciente del modelo de plan + carry-over de atribución comercial Phase 2 · Bloque D, mergeados a `main` vía PR #166; migraciones 040/041/042 ejecutadas y verificadas en prod).
 
 ---
 
@@ -15,7 +15,7 @@ Trabajo **desde `main`**. Dos features sueltos sobre Cantera/B2B (PR #166, merge
 
 Suite **1566/1566**. Sin migraciones nuevas.
 
-> **⚠️ Migraciones pendientes de ejecutar en Supabase, EN ORDEN: 040 → 041 → 042** (idempotentes). Sin ellas el panel del club falla (catálogo de competiciones vacío / guardado de pago manual por concepto). Siguen además pendientes 033/034/035/036/039 del encendido del carril.
+> **✅ Migraciones 040 → 041 → 042 EJECUTADAS y verificadas en prod** (2026-06-06: `sports_competitions` sembrada con 42 filas — 28 masc / 14 fem / 6 sin categoría; `club_teams`, `member_club_seasons.team_id`, `external_payments.concepto` presentes). Como 040/041/042 dependen de `sports_categories`/`organizations`/`member_club_seasons` (033) y `external_payments` (034), su éxito **implica que 033 y 034 también están en prod**. **Aún por confirmar antes de fiarse de esas piezas**: 035 (`club_transfers` + RPCs de handoff), 036 (`cantera_monthly_fee_cents`), 039 (`enrollment_charges`, cobro del plan por Stripe). El código del plan-model lleva try/catch defensivo sobre `enrollment_charges`, así que los KPIs/matriz de Cobros funcionan sin 039 (solo carril manual; sin cargos Stripe).
 
 **Candidatos al próximo hilo** (no bloqueantes): los que queden en §7 (deuda consciente) — W3C Verifiable Credentials sobre `card_consents`, `org_admins` con roles dentro del club, integración federativa, etc.
 
@@ -23,7 +23,7 @@ Suite **1566/1566**. Sin migraciones nuevas.
 
 ## 1 · Qué está aterrizado
 
-> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 6 COMPLETAS y mergeadas a `main`**. Trabajar **desde `main`** (todo el backend + UI Cantera vive ahí). Migraciones SQL 033/034/035/036/039/040/041/042 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril/abrir inscripciones, en orden, + env vars). Suite **1566/1566**. Ver §0 para lo último y §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
+> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 6 COMPLETAS y mergeadas a `main`**. Trabajar **desde `main`** (todo el backend + UI Cantera vive ahí). Estado migraciones en prod (2026-06-06): **033/034/040/041/042 EJECUTADAS** (las tres últimas verificadas; 033/034 implícitas por dependencia FK). **035/036/039 por confirmar** + env vars del carril. Suite **1566/1566**. Ver §0 para lo último y §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
 
 **Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
 
