@@ -730,12 +730,12 @@
     <div class="pp-stabpanel" data-stabpanel="payments" style="display:none">
       <section class="pp-section">
         <h2 class="pp-section__title">Cobros del club</h2>
-        <p class="pp-section__sub">Quién ha pagado la cuota este mes — cuotas por Stripe y pagos manuales (Bizum, efectivo) en una sola vista.</p>
+        <p class="pp-section__sub" id="paymentsSub">Quién ha pagado la cuota este mes — cuotas por Stripe y pagos manuales (Bizum, efectivo) en una sola vista.</p>
         <div class="pp-kpis">
-          <div class="pp-kpi"><p class="pp-kpi__label">Al día</p><p class="pp-kpi__value" id="payKpiPaid">—</p></div>
-          <div class="pp-kpi"><p class="pp-kpi__label">Pendientes</p><p class="pp-kpi__value" id="payKpiUnpaid">—</p></div>
-          <div class="pp-kpi"><p class="pp-kpi__label">MRR estimado</p><p class="pp-kpi__value" id="payKpiMrr">—</p></div>
-          <div class="pp-kpi"><p class="pp-kpi__label">Cobertura</p><p class="pp-kpi__value" id="payKpiCoverage">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label" id="payKpiPaidLabel">Al día</p><p class="pp-kpi__value" id="payKpiPaid">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label" id="payKpiUnpaidLabel">Pendientes</p><p class="pp-kpi__value" id="payKpiUnpaid">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label" id="payKpiMrrLabel">MRR estimado</p><p class="pp-kpi__value" id="payKpiMrr">—</p></div>
+          <div class="pp-kpi"><p class="pp-kpi__label" id="payKpiCoverageLabel">Cobertura</p><p class="pp-kpi__value" id="payKpiCoverage">—</p></div>
         </div>
 
         <div id="connectBanner" class="pp-connect-banner" style="display:none"></div>
@@ -744,7 +744,7 @@
           <h3 class="pp-spark__title" style="margin:0">Estado por jugador</h3>
           <button type="button" class="pp-btn pp-btn--ghost" id="openRecordPaymentBtn">+ Apuntar pago manual</button>
         </div>
-        <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Jugador</th><th>Categoría</th><th>Estado</th><th>Vía</th></tr></thead><tbody id="paymentsTbody"></tbody></table></div>
+        <div style="overflow-x:auto"><table class="pp-table"><thead id="paymentsThead"><tr><th>Jugador</th><th>Categoría</th><th>Estado</th><th>Vía</th></tr></thead><tbody id="paymentsTbody"></tbody></table></div>
 
         <!-- Centro de cobros: matriz jugador × temporada (capa I6) -->
         <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.75rem 0 .5rem">
@@ -2157,10 +2157,14 @@
     $('sKpi30d').textContent      = v.last30 ?? '—';
     $('sKpiCoverage').textContent = (p.coverage_pct != null ? p.coverage_pct + '%' : '—');
     renderSportsSparkline(v.by_day || []);
-    $('sStatsCobros').innerHTML =
-      `<span class="pp-chip pp-chip--ok">${p.stripe_active || 0} por Stripe</span>` +
-      `<span class="pp-chip">${p.manual_this_period || 0} manuales este mes</span>` +
-      `<span class="pp-chip">MRR estimado ${eurFromCents(p.mrr_cents)}</span>`;
+    // Chips de cobros consistentes con el modelo del club.
+    $('sStatsCobros').innerHTML = p.model === 'plan'
+      ? `<span class="pp-chip pp-chip--ok">${p.paying || 0} con el plan completo</span>` +
+        `<span class="pp-chip">${p.concepts_paid || 0}/${p.concepts_total || 0} conceptos pagados</span>` +
+        `<span class="pp-chip">Recaudado ${eurFromCents(p.collected_cents)} de ${eurFromCents(p.expected_cents)}</span>`
+      : `<span class="pp-chip pp-chip--ok">${p.stripe_active || 0} por Stripe</span>` +
+        `<span class="pp-chip">${p.manual_this_period || 0} manuales este mes</span>` +
+        `<span class="pp-chip">MRR estimado ${eurFromCents(p.mrr_cents)}</span>`;
   }
 
   function renderSportsSparkline(byDay) {
@@ -2182,11 +2186,27 @@
   }
 
   // ── Cobros ───────────────────────────────────────────────
+  const setTxt = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+
   function renderPayments(roster, stats) {
     const p = stats.payments || {};
+    const isPlan = p.model === 'plan';
+
+    // Etiquetas + valores de los KPIs según el modelo de cobro del club.
+    // Modelo plan: jugadores con el plan completo / pendiente, € recaudado y
+    // cobertura del plan (€ cobrados ÷ € esperados). Modelo mensual: cuota al
+    // día / pendiente, MRR estimado y cobertura del mes.
+    setTxt('payKpiPaidLabel',     isPlan ? 'Plan completo'      : 'Al día');
+    setTxt('payKpiUnpaidLabel',   isPlan ? 'Plan pendiente'     : 'Pendientes');
+    setTxt('payKpiMrrLabel',      isPlan ? 'Recaudado'          : 'MRR estimado');
+    setTxt('payKpiCoverageLabel', isPlan ? 'Cobertura del plan' : 'Cobertura');
+    setTxt('paymentsSub', isPlan
+      ? 'Cómo va el plan de pagos de la temporada — conceptos cobrados por Stripe y pagos manuales (Bizum, efectivo) en una sola vista.'
+      : 'Quién ha pagado la cuota este mes — cuotas por Stripe y pagos manuales (Bizum, efectivo) en una sola vista.');
+
     $('payKpiPaid').textContent     = p.paying ?? '—';
     $('payKpiUnpaid').textContent   = p.unpaid ?? '—';
-    $('payKpiMrr').textContent      = eurFromCents(p.mrr_cents);
+    $('payKpiMrr').textContent      = isPlan ? eurFromCents(p.collected_cents) : eurFromCents(p.mrr_cents);
     $('payKpiCoverage').textContent = (p.coverage_pct != null ? p.coverage_pct + '%' : '—');
 
     // Banner de Stripe Connect según los flags del club.
@@ -2204,11 +2224,36 @@
       if (b) b.addEventListener('click', startConnectOnboard);
     }
 
-    // Lista de jugadores con estado de pago (de la plantilla).
+    // Estado por jugador: en modelo plan refleja el progreso del plan
+    // (conceptos pagados + cobrado/total); en mensual, el pago de la cuota.
+    if (isPlan) renderPaymentsPlanTable(roster, p);
+    else renderPaymentsMonthlyTable(roster);
+  }
+
+  // Tabla "Estado por jugador" · modelo mensual (cuota Stripe / manual del mes).
+  function renderPaymentsMonthlyTable(roster) {
+    $('paymentsThead').innerHTML = '<tr><th>Jugador</th><th>Categoría</th><th>Estado</th><th>Vía</th></tr>';
     const players = [];
     (roster.categories || []).forEach(cat => cat.members.forEach(m => players.push({ ...m, _cat: cat.display_name })));
     $('paymentsTbody').innerHTML = players.length
       ? players.map(m => `<tr><td><strong>${escapeHtml(m.nombre || m.slug)}</strong></td><td>${escapeHtml(m._cat || '—')}</td><td>${payBadge(m.payment)}</td><td>${m.payment && m.payment.source ? escapeHtml(m.payment.source === 'stripe' ? 'Stripe' : (m.payment.method || 'Manual')) : '—'}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="pp-table__empty">Sin jugadores todavía.</td></tr>`;
+  }
+
+  // Tabla "Estado por jugador" · modelo plan a medida (progreso del plan).
+  const PLAN_ROW_BADGE = { paid: '✅', partial: '🟡', pending: '⏳' };
+  function renderPaymentsPlanTable(roster, p) {
+    // Nombre legible de categoría desde el roster (el KPI sólo trae el id).
+    const catName = {};
+    (roster.categories || []).forEach(c => { if (c.category_id) catName[c.category_id] = c.display_name; });
+    $('paymentsThead').innerHTML = '<tr><th>Jugador</th><th>Categoría</th><th>Plan</th><th>Cobrado / Total</th></tr>';
+    const players = p.players || [];
+    $('paymentsTbody').innerHTML = players.length
+      ? players.map(m => {
+          const cat = m.category_id ? (catName[m.category_id] || '—') : '—';
+          const badge = `${PLAN_ROW_BADGE[m.status] || '⏳'} ${m.concepts_paid}/${m.concepts_total} conceptos`;
+          return `<tr><td><strong>${escapeHtml(m.nombre || m.slug)}</strong></td><td>${escapeHtml(cat)}</td><td>${badge}</td><td style="white-space:nowrap">${eurFromCents(m.paid_cents)} / ${eurFromCents(m.total_cents)}</td></tr>`;
+        }).join('')
       : `<tr><td colspan="4" class="pp-table__empty">Sin jugadores todavía.</td></tr>`;
   }
 

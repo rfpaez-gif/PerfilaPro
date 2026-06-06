@@ -850,21 +850,26 @@ async function enrollmentAssign(db, org, body) {
 // jugador × periodo (matrícula + N mensualidades) conciliando Stripe
 // (parent_subscriptions) + manual (external_payments) vía
 // lib/season-billing.reconcilePlayerBilling. Una sola foto de "quién pagó".
+// Carga la campaña que fija el modelo de cobro del club: la de la temporada
+// pedida si viene `reqSeason`, si no la abierta. Devuelve la fila o null.
+// Compartida por billingMatrix y getClubStats (los KPIs de Cobros también
+// ramifican por modelo plan/mensual).
+async function loadBillingCampaign(db, orgId, reqSeason) {
+  const q = db.from('enrollment_campaigns')
+    .select('id, season, status, matricula_cents, monthly_fee_cents, num_installments, concepts_jsonb')
+    .eq('organization_id', orgId);
+  const { data } = reqSeason
+    ? await q.eq('season', reqSeason).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    : await q.eq('status', 'open').order('created_at', { ascending: false }).limit(1).maybeSingle();
+  return data || null;
+}
+
 async function billingMatrix(db, org, body) {
   // Temporada: la de la campaña abierta si la hay, si no la del body o la
   // vigente. Los importes salen de la campaña; sin campaña, de la cuota del
   // club (la matrícula queda 0 — no se cobró por inscripción).
-  let campaign = null;
   const reqSeason = body.season && String(body.season).trim();
-  {
-    const q = db.from('enrollment_campaigns')
-      .select('id, season, status, matricula_cents, monthly_fee_cents, num_installments, concepts_jsonb')
-      .eq('organization_id', org.id);
-    const { data } = reqSeason
-      ? await q.eq('season', reqSeason).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      : await q.eq('status', 'open').order('created_at', { ascending: false }).limit(1).maybeSingle();
-    campaign = data || null;
-  }
+  const campaign = await loadBillingCampaign(db, org.id, reqSeason);
 
   // El modelo de cobro del club lo fija la campaña: si tiene un plan de
   // pagos a medida (conceptos con fecha), la matriz se pinta POR CONCEPTO;
@@ -949,6 +954,22 @@ async function billingMatrix(db, org, body) {
 // de concepto: enrollment_charges (Stripe SEPA/tarjeta) y external_payments
 // con concepto (cobros manuales Bizum/efectivo apuntados a ese concepto).
 async function billingMatrixPlan(db, org, campaign, plan) {
+  const { season, concepts, planTotal, players } = await computePlanBilling(db, org, campaign, plan);
+  return jsonResponse(200, {
+    ok: true,
+    model: 'plan',
+    season,
+    concepts,
+    plan_total_cents: planTotal,
+    players,
+  });
+}
+
+// Núcleo del modelo plan a medida: reconcilia, por jugador y concepto,
+// enrollment_charges (Stripe) + external_payments con concepto (manual) y
+// devuelve { season, concepts, planTotal, players[] }. Lo usan billingMatrixPlan
+// (matriz de la pestaña Cobros) y getClubStats (KPIs de Cobros en modelo plan).
+async function computePlanBilling(db, org, campaign, plan) {
   const season = campaign.season || formatSeason(currentSeasonStartYear());
 
   // Jugadores activos del club.
@@ -1022,14 +1043,54 @@ async function billingMatrixPlan(db, org, campaign, plan) {
     };
   }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
 
-  return jsonResponse(200, {
-    ok: true,
-    model: 'plan',
-    season,
-    concepts,
-    plan_total_cents: planTotal,
-    players: rows,
+  return { season, concepts, planTotal, players: rows };
+}
+
+// Deriva los KPIs de la pestaña Cobros (modelo plan) desde el resultado de
+// computePlanBilling: jugadores con el plan completo, cobertura del plan
+// (€ cobrados / € esperados) y progreso por jugador para la tabla "Estado por
+// jugador". Espejo de los KPIs mensuales (paying/unpaid/coverage/mrr) pero con
+// la semántica del plan a medida.
+function planPaymentsKpis(pb) {
+  let collected = 0;
+  let fullyPaid = 0;
+  let conceptsPaid = 0;
+  let conceptsTotal = 0;
+  const players = (pb.players || []).map((pl) => {
+    const total = (pl.concepts || []).length;
+    const paidCells = (pl.concepts || []).filter((c) => c.status === 'paid').length;
+    collected += pl.paid_cents || 0;
+    conceptsTotal += total;
+    conceptsPaid += paidCells;
+    const full = total > 0 && paidCells === total;
+    if (full) fullyPaid += 1;
+    return {
+      slug: pl.slug,
+      nombre: pl.nombre,
+      category_id: pl.category_id || null,
+      team_name: pl.team_name || null,
+      paid_cents: pl.paid_cents || 0,
+      total_cents: pl.total_cents || 0,
+      concepts_paid: paidCells,
+      concepts_total: total,
+      status: full ? 'paid' : (paidCells > 0 ? 'partial' : 'pending'),
+    };
   });
+  const count = (pb.players || []).length;
+  const expected = (pb.planTotal || 0) * count;
+  return {
+    model: 'plan',
+    season: pb.season,
+    paying: fullyPaid,
+    unpaid: count - fullyPaid,
+    coverage_pct: expected > 0 ? Math.round((collected / expected) * 100) : 0,
+    collected_cents: collected,
+    expected_cents: expected,
+    plan_total_cents: pb.planTotal || 0,
+    concepts_paid: conceptsPaid,
+    concepts_total: conceptsTotal,
+    players,
+  };
 }
 
 // Orden de "informatividad" de un estado de cargo cuando no hay 'paid'.
@@ -1524,24 +1585,43 @@ async function getClubStats(db, org) {
     console.warn('org-panel get_club_stats: computeOrgStats falló:', err.message);
   }
 
-  const period = formatPeriod();
-  const idx = await buildPaymentIndex(db, org.id, period);
-  let stripeActive = 0;
-  let manualThisPeriod = 0;
-  let mrrCents = 0;
-  let paying = 0;
-  for (const slug of playerSlugs) {
-    const pay = paymentFor(slug, idx);
-    if (pay.status === 'active') {
-      stripeActive += 1;
-      paying += 1;
-      mrrCents += pay.amount_cents || org.cantera_monthly_fee_cents || 0;
-    } else if (pay.status === 'paid') {
-      manualThisPeriod += 1;
-      paying += 1;
+  // Modelo de cobro del club: si la campaña (abierta) lleva un plan a medida,
+  // los KPIs de Cobros se calculan POR PLAN (jugadores con el plan completo +
+  // cobertura del plan = € cobrados / € esperados); si no, por mes (cuota/MRR).
+  const campaign = await loadBillingCampaign(db, org.id, null);
+  const plan = campaign ? readPlan(campaign.concepts_jsonb) : [];
+  let payments;
+  if (plan.length) {
+    payments = planPaymentsKpis(await computePlanBilling(db, org, campaign, plan));
+  } else {
+    const period = formatPeriod();
+    const idx = await buildPaymentIndex(db, org.id, period);
+    let stripeActive = 0;
+    let manualThisPeriod = 0;
+    let mrrCents = 0;
+    let paying = 0;
+    for (const slug of playerSlugs) {
+      const pay = paymentFor(slug, idx);
+      if (pay.status === 'active') {
+        stripeActive += 1;
+        paying += 1;
+        mrrCents += pay.amount_cents || org.cantera_monthly_fee_cents || 0;
+      } else if (pay.status === 'paid') {
+        manualThisPeriod += 1;
+        paying += 1;
+      }
     }
+    payments = {
+      model: 'monthly',
+      paying,
+      unpaid: playerSlugs.length - paying,
+      coverage_pct: playerSlugs.length ? Math.round((paying / playerSlugs.length) * 100) : 0,
+      stripe_active: stripeActive,
+      manual_this_period: manualThisPeriod,
+      mrr_cents: mrrCents,
+      period,
+    };
   }
-  const coverage = playerSlugs.length ? Math.round((paying / playerSlugs.length) * 100) : 0;
 
   const { data: tin } = await db
     .from('club_transfers').select('id').eq('to_org_id', org.id).eq('status', 'pending');
@@ -1559,15 +1639,7 @@ async function getClubStats(db, org) {
       last30: (stats.totals && stats.totals.visits_30d) || 0,
       by_day: stats.by_day || [],
     },
-    payments: {
-      paying,
-      unpaid: playerSlugs.length - paying,
-      coverage_pct: coverage,
-      stripe_active: stripeActive,
-      manual_this_period: manualThisPeriod,
-      mrr_cents: mrrCents,
-      period,
-    },
+    payments,
     transfers: { pending_in: (tin || []).length, pending_out: (tout || []).length },
     connect: {
       account_id: org.stripe_connect_account_id || null,

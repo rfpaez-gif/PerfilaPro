@@ -1305,12 +1305,14 @@ describe('admin-orgs handler', () => {
       const orgLookup = {
         eq: vi.fn().mockReturnThis(),
         is: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1' }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', agent_code: null }, error: null }),
       };
       const leadUpdate = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      // El lead no trae agent_code → no hay carry-over de atribución.
+      const leadSelect = { eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { agent_code: null }, error: null }) };
       mockFrom.mockImplementation((table) => {
         if (table === 'organizations') return { select: vi.fn(() => orgLookup) };
-        if (table === 'b2b_leads')     return { update: vi.fn(() => leadUpdate) };
+        if (table === 'b2b_leads')     return { update: vi.fn(() => leadUpdate), select: vi.fn(() => leadSelect) };
         return {};
       });
 
@@ -1318,7 +1320,59 @@ describe('admin-orgs handler', () => {
         body: { action: 'leads_assign', lead_id: '11111111-1111-1111-1111-111111111111', org_slug: 'allianz' },
       }));
       expect(res.statusCode).toBe(200);
-      expect(JSON.parse(res.body).organization_id).toBe('org1');
+      const json = JSON.parse(res.body);
+      expect(json.organization_id).toBe('org1');
+      expect(json.agent_code_carried).toBeNull();
+    });
+
+    it('leads_assign carry-over: copia el agent_code del lead a una org sin atribución (Phase 2 · Bloque D)', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', agent_code: null }, error: null }),
+      };
+      const leadUpdate = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      const leadSelect = { eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { agent_code: 'agent-MARTA01' }, error: null }) };
+      const orgUpdateEq = vi.fn().mockResolvedValue({ error: null });
+      const orgUpdate = { eq: orgUpdateEq };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup), update: vi.fn(() => orgUpdate) };
+        if (table === 'b2b_leads')     return { update: vi.fn(() => leadUpdate), select: vi.fn(() => leadSelect) };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_assign', lead_id: '11111111-1111-1111-1111-111111111111', org_slug: 'allianz' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).agent_code_carried).toBe('agent-MARTA01');
+      // La org recibió el UPDATE de agent_code.
+      expect(orgUpdateEq).toHaveBeenCalledWith('id', 'org1');
+    });
+
+    it('leads_assign carry-over NO pisa una org que ya tiene agent_code', async () => {
+      const orgLookup = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'org1', agent_code: 'agent-OTRO' }, error: null }),
+      };
+      const leadUpdate = { eq: vi.fn().mockResolvedValue({ error: null }) };
+      const orgUpdate = vi.fn();
+      const leadSelect = vi.fn();
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgLookup), update: orgUpdate };
+        if (table === 'b2b_leads')     return { update: vi.fn(() => leadUpdate), select: leadSelect };
+        return {};
+      });
+
+      const res = await leadsHandler(buildEvent({
+        body: { action: 'leads_assign', lead_id: '11111111-1111-1111-1111-111111111111', org_slug: 'allianz' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body).agent_code_carried).toBeNull();
+      // Ni se consultó el lead ni se actualizó la org (atribución preservada).
+      expect(leadSelect).not.toHaveBeenCalled();
+      expect(orgUpdate).not.toHaveBeenCalled();
     });
 
     it('leads_assign con org_slug=null desvincula sin pasar por organizations', async () => {
