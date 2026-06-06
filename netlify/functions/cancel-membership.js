@@ -2,14 +2,24 @@
 
 // POST /api/cancel-membership { card_slug, exit_reason? }   ·   Cantera 3b
 //
-// Cierra la membresía de jugador activa y deja la card sin club activo.
-// Casos: el jugador se va a un club off-platform (exit_reason='fichaje')
-// o causa baja (baja_voluntaria, fin_temporada, etc). Atómico vía RPC
-// `cantera_close_membership`.
+// Cierra la membresía activa de un miembro del club (jugador o cuerpo
+// técnico) y lo saca de la plantilla del club. Casos: el jugador se va a un
+// club off-platform (exit_reason='fichaje'), causa baja (baja_voluntaria,
+// fin_temporada, etc) o un staff deja el club.
+//
+//   - Jugador (role='jugador'): cierre atómico vía RPC
+//     `cantera_close_membership` (snapshot inmutable + cancela traspasos
+//     pendientes + deja la card sin club activo). La regla federativa de
+//     unicidad vive ahí.
+//   - Cuerpo técnico (role != 'jugador'): la RPC es player-only, así que el
+//     cierre se hace app-side (UPDATE de la fila + card.organization_id=NULL).
+//     No hay traspasos de staff ni unicidad federativa que proteger, así que
+//     no necesita la transacción de la RPC; el cierre de la membresía (que es
+//     lo que saca al staff de getRoster) es un único UPDATE.
 //
 // Auth: SOLO JWT org-panel del club (el club, o el founder impersonando al
 // club, ambos llegan con purpose='org-panel'). El club solo puede cerrar a
-// SU propio jugador. El tutor NO puede dar de baja: la baja la tramita el
+// SU propio miembro. El tutor NO puede dar de baja: la baja la tramita el
 // club ante la federación, así que el padre no la inicia desde su panel
 // (sí conserva sus derechos LOPD —exportar/borrar datos del menor— por la
 // vía del edit-token, que es independiente de la membresía).
@@ -48,30 +58,57 @@ function makeHandler(db) {
     const exitReason = body.exit_reason || 'baja_voluntaria';
     if (!EXIT_REASONS.includes(exitReason)) return jsonResponse(400, { error: 'exit_reason inválido' });
 
-    // Membresía activa (también nos da el club dueño para el check org-panel).
+    // Membresía activa del miembro EN ESTE club (jugador o staff). Filtrar
+    // por organization_id acota la búsqueda a la plantilla del club; el check
+    // explícito de abajo es la salvaguarda real (no nos fiamos solo del filtro).
     const { data: active, error: msErr } = await db
-      .from('member_club_seasons').select('id, organization_id')
-      .eq('card_slug', cardSlug).eq('role', 'jugador').is('left_at', null)
+      .from('member_club_seasons')
+      .select('id, role, organization_id, dorsal, position, category_id, team_name, stats_jsonb, season')
+      .eq('card_slug', cardSlug).eq('organization_id', orgSession.orgId).is('left_at', null)
       .maybeSingle();
     if (msErr) return jsonResponse(500, { error: msErr.message });
-    if (!active) return jsonResponse(409, { error: 'El jugador no tiene membresía activa' });
+    if (!active) return jsonResponse(409, { error: 'El miembro no tiene membresía activa en tu club' });
 
-    // El club solo puede cerrar a su propio jugador.
+    // El club solo puede cerrar a su propio miembro.
     if (active.organization_id !== orgSession.orgId) return unauthorizedResponse();
     const actorEmail = `org:${orgSession.orgSlug}`;
 
-    const { error } = await db.rpc('cantera_close_membership', {
-      p_card_slug: cardSlug,
-      p_exit_reason: exitReason,
-      p_actor_email: actorEmail,
-    });
-    if (error) {
-      if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'El jugador no tiene membresía activa' });
-      console.error('cancel-membership: RPC error:', error.message);
-      return jsonResponse(500, { error: 'No se pudo cerrar la membresía' });
+    // Jugador → cierre atómico vía RPC (federativo). Staff → cierre app-side.
+    if (active.role === 'jugador') {
+      const { error } = await db.rpc('cantera_close_membership', {
+        p_card_slug: cardSlug,
+        p_exit_reason: exitReason,
+        p_actor_email: actorEmail,
+      });
+      if (error) {
+        if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'El jugador no tiene membresía activa' });
+        console.error('cancel-membership: RPC error:', error.message);
+        return jsonResponse(500, { error: 'No se pudo cerrar la membresía' });
+      }
+      return jsonResponse(200, { ok: true, role: active.role });
     }
 
-    return jsonResponse(200, { ok: true });
+    // Cuerpo técnico: cerramos la fila con su snapshot (mismo shape que la RPC)
+    // y dejamos la card sin club activo. Cerrar la membresía es lo que saca al
+    // staff de la plantilla (getRoster filtra por left_at IS NULL).
+    const closedSnapshot = {
+      dorsal: active.dorsal, position: active.position,
+      category_id: active.category_id, team_name: active.team_name,
+      stats: active.stats_jsonb, organization_id: active.organization_id,
+      season: active.season,
+    };
+    const { error: closeErr } = await db
+      .from('member_club_seasons')
+      .update({ left_at: new Date().toISOString(), exit_reason: exitReason, closed_snapshot_jsonb: closedSnapshot })
+      .eq('id', active.id);
+    if (closeErr) {
+      console.error('cancel-membership: staff close error:', closeErr.message);
+      return jsonResponse(500, { error: 'No se pudo cerrar la membresía' });
+    }
+    // Best-effort: el roster ya no lo muestra aunque este UPDATE falle.
+    await db.from('cards').update({ organization_id: null }).eq('slug', cardSlug);
+
+    return jsonResponse(200, { ok: true, role: active.role });
   };
 }
 

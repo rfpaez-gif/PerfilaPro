@@ -178,15 +178,24 @@ describe('accept-transfer', () => {
 
 // ─────────────────────── cancel-membership ───────────────────────
 
-function cancelDb({ active = { id: 'ms-1', organization_id: 'orgA' }, admin = { id: 'a1' }, rpc = { data: { ok: true }, error: null } } = {}) {
-  return {
+function cancelDb({ active = { id: 'ms-1', role: 'jugador', organization_id: 'orgA' }, admin = { id: 'a1' }, rpc = { data: { ok: true }, error: null }, msUpdateErr = null } = {}) {
+  const msUpdateEq = vi.fn(resolve({ error: msUpdateErr }));
+  const cardsUpdateEq = vi.fn(resolve({ error: null }));
+  const db = {
     from: vi.fn((t) => {
-      if (t === 'member_club_seasons') return { select: () => ({ eq: () => ({ eq: () => ({ is: () => ({ maybeSingle: resolve({ data: active, error: null }) }) }) }) }) };
+      if (t === 'member_club_seasons') return {
+        select: () => ({ eq: () => ({ eq: () => ({ is: () => ({ maybeSingle: resolve({ data: active, error: null }) }) }) }) }),
+        update: () => ({ eq: msUpdateEq }),
+      };
+      if (t === 'cards') return { update: () => ({ eq: cardsUpdateEq }) };
       if (t === 'card_admins') return { select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ is: () => ({ limit: () => ({ maybeSingle: resolve({ data: admin, error: null }) }) }) }) }) }) }) };
       return {};
     }),
     rpc: vi.fn(resolve(rpc)),
   };
+  db._msUpdateEq = msUpdateEq;
+  db._cardsUpdateEq = cardsUpdateEq;
+  return db;
 }
 
 describe('cancel-membership', () => {
@@ -202,7 +211,7 @@ describe('cancel-membership', () => {
   });
 
   it('club: 200 cierra a su propio jugador vía RPC', async () => {
-    const db = cancelDb({ active: { id: 'ms', organization_id: 'orgB' } });
+    const db = cancelDb({ active: { id: 'ms', role: 'jugador', organization_id: 'orgB' } });
     const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 'p-1', exit_reason: 'fichaje' } }));
     expect(res.statusCode).toBe(200);
     expect(db.rpc).toHaveBeenCalledWith('cantera_close_membership', expect.objectContaining({ p_card_slug: 'p-1', p_exit_reason: 'fichaje' }));
@@ -223,6 +232,29 @@ describe('cancel-membership', () => {
     const db = cancelDb({ active: null });
     const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 'p-1' } }));
     expect(res.statusCode).toBe(409);
+  });
+
+  it('staff: 200 cierra al cuerpo técnico app-side (sin RPC)', async () => {
+    const db = cancelDb({ active: { id: 'ms-s', role: 'entrenador', organization_id: 'orgB', season: '2025-26' } });
+    const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 's-1', exit_reason: 'cese_actividad' } }));
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body).role).toBe('entrenador');
+    // No pasa por la RPC (player-only); cierra la fila + limpia la card.
+    expect(db.rpc).not.toHaveBeenCalled();
+    expect(db._msUpdateEq).toHaveBeenCalledWith('id', 'ms-s');
+    expect(db._cardsUpdateEq).toHaveBeenCalledWith('slug', 's-1');
+  });
+
+  it('staff: 401 si intenta cerrar a un staff de otro club', async () => {
+    const db = cancelDb({ active: { id: 'ms-s', role: 'delegado', organization_id: 'orgA' } });
+    const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 's-1' } }));
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('staff: 500 si el cierre de la fila falla', async () => {
+    const db = cancelDb({ active: { id: 'ms-s', role: 'fisio', organization_id: 'orgB' }, msUpdateErr: { message: 'boom' } });
+    const res = await makeCancel(db)(ev({ auth: orgBearer('orgB'), body: { card_slug: 's-1' } }));
+    expect(res.statusCode).toBe(500);
   });
 });
 
