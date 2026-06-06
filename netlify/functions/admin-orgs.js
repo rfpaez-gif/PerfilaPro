@@ -26,6 +26,9 @@ const { inviteTeamMembers } = require('./lib/team-invite');
 const { signPanelSession } = require('./lib/panel-auth');
 const { offboardCard, restoreCard, COURTESY_DAYS } = require('./lib/card-offboard');
 const cantera = require('./lib/cantera-incidents');
+const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
+const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
+const { enrollmentUrl } = require('./lib/enrollment-campaign');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -1521,6 +1524,65 @@ function makeHandler(db, emailClient = defaultEmailClient) {
     // PII+borrado LOPD. Auth founder (password+TOTP) ya validada arriba.
     if (action && action.startsWith('cantera_')) {
       const ip = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+
+      // Invitar familias por email (founder) — espejo de org-panel
+      // enrollment_invite pero disparado desde el Studio del founder y scoped
+      // a la org por slug. Manda el enlace de la campaña ABIERTA a cada email;
+      // NO crea cards (el padre rellena la ficha del menor al inscribirse).
+      // Es la alternativa correcta al invite B2B de "operarios" para clubes.
+      if (action === 'cantera_enrollment_invite') {
+        if (!isCanteraActive()) return canteraDisabledResponse();
+        if (!emailClient) return jsonResponse(500, { error: 'Resend no configurado' });
+
+        const slug = (body.slug || '').trim();
+        if (!slug) return jsonResponse(400, { error: 'slug requerido' });
+
+        const { data: org, error: orgErr } = await db
+          .from('organizations')
+          .select('id, name, kind')
+          .eq('slug', slug)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (orgErr) return jsonResponse(500, { error: orgErr.message });
+        if (!org) return jsonResponse(404, { error: 'Organización no encontrada' });
+        if (org.kind !== 'sports_club') return jsonResponse(400, { error: 'Solo aplica a clubes deportivos' });
+
+        const { rows, errors } = validateInviteList(body.invites);
+        if (rows.length === 0) return jsonResponse(400, { error: 'No hay emails válidos en la lista', failed: errors });
+        if (rows.length > 200) return jsonResponse(400, { error: 'máximo 200 invitaciones por lote' });
+
+        // El email lleva el enlace de la campaña ABIERTA del club.
+        const { data: campaign, error: cErr } = await db
+          .from('enrollment_campaigns')
+          .select('public_token, season, status')
+          .eq('organization_id', org.id)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cErr) return jsonResponse(500, { error: cErr.message });
+        if (!campaign) return jsonResponse(409, { error: 'Abre las inscripciones del club antes de invitar a las familias' });
+
+        const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+        const enrollUrl = enrollmentUrl(siteUrl, campaign.public_token);
+        const ok = [];
+        const failed = errors.slice(); // arrastra los inválidos de la validación
+        for (const r of rows) {
+          try {
+            const { subject, html } = buildEnrollInviteEmail({ clubName: org.name, nombre: r.nombre, enrollUrl, idioma: 'es' });
+            await emailClient.emails.send({ from: 'PerfilaPro <hola@perfilapro.es>', to: r.email, subject, html });
+            ok.push(r.email);
+          } catch (err) {
+            failed.push({ email: r.email, error: 'email no enviado' });
+          }
+        }
+        auditIncident(db, ip, 'cantera_enrollment_invite', slug, `${ok.length} ok`);
+        return jsonResponse(200, {
+          ok: true,
+          results: { ok, failed },
+          summary: `${ok.length} invitaciones enviadas${failed.length ? `, ${failed.length} con error` : ''}`,
+        });
+      }
 
       // Familia 1+2+3 (read): vista completa de un jugador.
       if (action === 'cantera_player_overview') {

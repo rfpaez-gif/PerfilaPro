@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { makeHandler } from '../netlify/functions/admin-orgs.js';
 
 // --- Mocks ---
@@ -2426,6 +2426,103 @@ describe('admin-orgs handler', () => {
       const json = JSON.parse(res.body);
       expect(json.results.failed).toHaveLength(1);
       expect(cardsUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── cantera_enrollment_invite (founder → familias por email) ──
+  describe('cantera_enrollment_invite', () => {
+    const mockEmailSend = vi.fn();
+    const mockEmail = { emails: { send: mockEmailSend } };
+    const inviteHandler = makeHandler(mockDb, mockEmail);
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      process.env.ADMIN_PASSWORD = 'admin123';
+      process.env.CANTERA_VERTICAL_ACTIVE = '1';
+      mockEmailSend.mockResolvedValue({ id: 'msg' });
+    });
+    afterEach(() => { delete process.env.CANTERA_VERTICAL_ACTIVE; });
+
+    function mockClubAndCampaign({
+      org = { id: 'club1', name: 'Escuela FC', kind: 'sports_club' },
+      campaign = { public_token: 'tok-123', season: '2025-26', status: 'open' },
+    } = {}) {
+      const orgChain = {
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: org, error: null }),
+      };
+      const campChain = {
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: campaign, error: null }),
+      };
+      mockFrom.mockImplementation((table) => {
+        if (table === 'organizations') return { select: vi.fn(() => orgChain) };
+        if (table === 'enrollment_campaigns') return { select: vi.fn(() => campChain) };
+        if (table === 'admin_audit_log') return { insert: vi.fn(() => Promise.resolve({ error: null })) };
+        return {};
+      });
+      return { orgChain, campChain };
+    }
+
+    it('manda el enlace de inscripción a cada familia de la lista', async () => {
+      mockClubAndCampaign();
+      const res = await inviteHandler(buildEvent({
+        body: {
+          action: 'cantera_enrollment_invite', slug: 'escuela-fc',
+          invites: [{ email: 'madre@x.es', nombre: 'Ana' }, { email: 'padre@y.es' }],
+        },
+      }));
+      expect(res.statusCode).toBe(200);
+      const json = JSON.parse(res.body);
+      expect(json.results.ok).toHaveLength(2);
+      expect(json.results.failed).toHaveLength(0);
+      expect(mockEmailSend).toHaveBeenCalledTimes(2);
+    });
+
+    it('409 si el club no tiene inscripciones abiertas', async () => {
+      mockClubAndCampaign({ campaign: null });
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'cantera_enrollment_invite', slug: 'escuela-fc', invites: [{ email: 'madre@x.es' }] },
+      }));
+      expect(res.statusCode).toBe(409);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('400 si la org no es un club deportivo', async () => {
+      mockClubAndCampaign({ org: { id: 'b1', name: 'Bufete', kind: 'business' } });
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'cantera_enrollment_invite', slug: 'bufete', invites: [{ email: 'x@y.es' }] },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(mockEmailSend).not.toHaveBeenCalled();
+    });
+
+    it('404 si la org no existe', async () => {
+      mockClubAndCampaign({ org: null });
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'cantera_enrollment_invite', slug: 'nope', invites: [{ email: 'x@y.es' }] },
+      }));
+      expect(res.statusCode).toBe(404);
+    });
+
+    it('400 si la lista no trae emails válidos', async () => {
+      mockClubAndCampaign();
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'cantera_enrollment_invite', slug: 'escuela-fc', invites: [{ email: 'no-es-email' }] },
+      }));
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('410 si el carril Cantera está apagado', async () => {
+      delete process.env.CANTERA_VERTICAL_ACTIVE;
+      mockClubAndCampaign();
+      const res = await inviteHandler(buildEvent({
+        body: { action: 'cantera_enrollment_invite', slug: 'escuela-fc', invites: [{ email: 'x@y.es' }] },
+      }));
+      expect(res.statusCode).toBe(410);
     });
   });
 });
