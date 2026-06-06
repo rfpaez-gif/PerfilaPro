@@ -25,6 +25,12 @@ Suite **1566/1566**. Sin migraciones nuevas.
 
 **Candidatos al próximo hilo** (no bloqueantes): los que queden en §7 (deuda consciente) — W3C Verifiable Credentials sobre `card_consents`, `org_admins` con roles dentro del club, integración federativa, etc.
 
+### Pendiente identificado: roll-over de temporada (no automatizado)
+
+**Decisión cerrada (2026-06-06)**: la "temporada vigente" del Studio cambia el **1 de junio** (cutoff junio, no julio) en `lib/sports-categories.js → SEASON_CUTOFF_MONTH`. Razón de dominio: la competición federada de fútbol base en el target **acaba a finales de mayo**; en junio no hay competición en marcha, el club ya está en captación/configuración/campus de verano de la temporada nueva. Esto fija la cabecera de la Plantilla, las stats del club y la categoría que se asigna a las **altas nuevas** (un alta de junio se encuadra ya en la temporada que viene).
+
+**Lo que NO hace (deuda consciente)**: el cambio de cutoff rueda la temporada *calculada*, pero **no reescribe las membresías existentes**. Un jugador ya fichado conserva su `member_club_seasons.season` (p.ej. `2025-26`) y su `category_id` de registro hasta que alguien abra/renueve su membresía de la temporada nueva. Hoy NO existe un flujo de "roll-over de temporada" que: (1) cierre las membresías de la temporada saliente, (2) abra las de la entrante para los que renuevan, (3) recalcule la categoría de cada jugador con el nuevo `seasonStartYear` (suben de categoría), (4) decida qué hacer con los que no renuevan. En fase 1 (1 club, pocos jugadores) se gestiona a mano vía altas/Inscripciones; cuando haya volumen real, este roll-over (batch o asistido desde el Studio) es el candidato natural. Relacionado: la campaña de Inscripciones ya declara `season` explícita, así que el roll-over podría colgar de "abrir Inscripciones de la temporada N+1".
+
 ---
 
 ## 1 · Qué está aterrizado

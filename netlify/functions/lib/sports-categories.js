@@ -15,10 +15,12 @@
 
 const SEASON_RE = /^(\d{4})(?:[-/]\d{2,4})?$/;
 
-// La temporada española arranca en verano. Cutoff en junio (mes 6): desde
-// el 1 de junio el club ya trabaja la temporada nueva (captación, campus de
-// verano, configuración), así que de junio a diciembre la temporada es
-// año-año+1; de enero a mayo pertenece a la que arrancó el verano anterior.
+// La temporada española de fútbol base arranca en verano y la competición
+// federada acaba a finales de mayo: en junio NO hay competición en marcha en
+// el target (cantera), el club ya está en captación/configuración/campus de
+// verano de la temporada nueva. Por eso el cutoff es junio (mes 6): de junio
+// a diciembre la temporada es año-año+1; de enero a mayo pertenece a la que
+// arrancó el verano anterior (la que justo termina en mayo).
 const SEASON_CUTOFF_MONTH = 6;
 
 // Parsea 'YYYY', 'YYYY-YY', 'YYYY-YYYY' o 'YYYY/YY' → año de inicio
