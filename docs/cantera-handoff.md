@@ -2,13 +2,28 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-05-29 (capas 0–5 completas y mergeadas a `main`; migración de hilo antes de la capa 6 · UI).
+Última actualización: 2026-06-06 (Cobros consciente del modelo de plan + carry-over de atribución comercial Phase 2 · Bloque D, mergeados a `main` vía PR #166).
+
+---
+
+## 0 · Lo último mergeado (sesión 2026-06-06)
+
+Trabajo **desde `main`**. Dos features sueltos sobre Cantera/B2B (PR #166, merge `7caf83a`), encima de #164 (equipos por competición · migraciones 040/041) y #165 (matriz de Cobros por modelo · migración 042):
+
+1. **KPIs de Cobros conscientes del modelo de plan** — `get_club_stats` (en `org-panel.js`) ahora carga la campaña abierta y, si lleva plan a medida, devuelve `payments.model='plan'` (jugadores con plan completo, `collected_cents`/`expected_cents`, cobertura del plan, `concepts_paid/total`, `players[]` con progreso). Reusa `computePlanBilling` (extraído de `billingMatrixPlan`). `panel.html` reetiqueta los KPIs (Plan completo / Plan pendiente / Recaudado / Cobertura del plan) y pinta la tabla "Estado por jugador" plan-aware; chips de Estadísticas también. Clubes mensuales intactos (`model='monthly'`).
+2. **Carry-over de atribución comercial (Phase 2 · Bloque D)** — `admin-orgs.js` acción `leads_assign`: al asociar un lead con `agent_code` a una org **sin atribución**, copia el código a `organizations.agent_code` (no pisa atribución existente; best-effort). Cierra `b2b_leads.agent_code → organizations.agent_code → org_invoices → agent-data`. Toast del Studio confirma (`agent_code_carried`).
+
+Suite **1566/1566**. Sin migraciones nuevas.
+
+> **⚠️ Migraciones pendientes de ejecutar en Supabase, EN ORDEN: 040 → 041 → 042** (idempotentes). Sin ellas el panel del club falla (catálogo de competiciones vacío / guardado de pago manual por concepto). Siguen además pendientes 033/034/035/036/039 del encendido del carril.
+
+**Candidatos al próximo hilo** (no bloqueantes): los que queden en §7 (deuda consciente) — W3C Verifiable Credentials sobre `card_consents`, `org_admins` con roles dentro del club, integración federativa, etc.
 
 ---
 
 ## 1 · Qué está aterrizado
 
-> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 5 COMPLETAS y mergeadas a `main`** (PRs #141–#153). Trabajar **desde `main`** (todo el backend Cantera vive ahí). Migraciones SQL 033/034/035/036 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril, en orden, + env vars). **Capa 6 · UI COMPLETA** en branch `claude/cantera-layer-6-ui-qn3py`: **6a ✅** (lecturas del Studio en `org-panel.js`) + **6b ✅** (UI del Studio del club en `panel.html`) + **6c ✅** (vista del padre: `parent-data.js` + `panel.html` ramificado por `purpose`). Suite **1328/1328**. **Con esto el carril Cantera está completo de capa 0 a 6** — solo queda que el founder ejecute las migraciones 033-036 en prod + las env vars al encender el carril. Ver §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
+> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 6 COMPLETAS y mergeadas a `main`**. Trabajar **desde `main`** (todo el backend + UI Cantera vive ahí). Migraciones SQL 033/034/035/036/039/040/041/042 escritas pero **NO ejecutadas en prod** (las corre el founder al encender el carril/abrir inscripciones, en orden, + env vars). Suite **1566/1566**. Ver §0 para lo último y §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
 
 **Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
 
