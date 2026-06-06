@@ -26,11 +26,14 @@
 // Gateado por isCanteraActive().
 
 const { createClient } = require('@supabase/supabase-js');
+const stripeLib = require('stripe');
 const { checkRateLimit, rateLimitResponse } = require('./lib/rate-limit');
 const { authFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
+const { teardownPlayerBilling } = require('./lib/cantera-billing-teardown');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const defaultStripe = process.env.STRIPE_SECRET_KEY ? stripeLib(process.env.STRIPE_SECRET_KEY) : null;
 
 const EXIT_REASONS = ['fichaje', 'baja', 'fin_temporada', 'expulsion', 'baja_voluntaria', 'cese_actividad'];
 
@@ -38,7 +41,7 @@ function jsonResponse(statusCode, payload) {
   return { statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
 }
 
-function makeHandler(db) {
+function makeHandler(db, stripe = defaultStripe) {
   return async (event) => {
     if (!isCanteraActive()) return canteraDisabledResponse();
     if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
@@ -85,7 +88,22 @@ function makeHandler(db) {
         console.error('cancel-membership: RPC error:', error.message);
         return jsonResponse(500, { error: 'No se pudo cerrar la membresía' });
       }
-      return jsonResponse(200, { ok: true, role: active.role });
+
+      // Baja del club → desconectar el cobro de ESTE club: cancela los plazos
+      // futuros del plan + la cuota mensual Stripe. Best-effort: si falla, la
+      // baja ya está hecha. Solo en la baja (no en cambio de equipo/traspaso).
+      let billing = null;
+      try {
+        const { data: org } = await db.from('organizations')
+          .select('stripe_connect_account_id').eq('id', orgSession.orgId).maybeSingle();
+        billing = await teardownPlayerBilling(db, stripe, {
+          cardSlug, orgId: orgSession.orgId,
+          connectAccountId: org && org.stripe_connect_account_id,
+        });
+      } catch (e) {
+        console.error('cancel-membership: billing teardown error:', e.message);
+      }
+      return jsonResponse(200, { ok: true, role: active.role, billing });
     }
 
     // Cuerpo técnico: cerramos la fila con su snapshot (mismo shape que la RPC)
@@ -112,6 +130,6 @@ function makeHandler(db) {
   };
 }
 
-exports.handler = makeHandler(defaultDb);
+exports.handler = makeHandler(defaultDb, defaultStripe);
 exports.makeHandler = makeHandler;
 exports.EXIT_REASONS = EXIT_REASONS;

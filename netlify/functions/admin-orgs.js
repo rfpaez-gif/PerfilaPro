@@ -29,11 +29,15 @@ const cantera = require('./lib/cantera-incidents');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 const { enrollmentUrl } = require('./lib/enrollment-campaign');
+const { teardownPlayerBilling } = require('./lib/cantera-billing-teardown');
+const stripeLib = require('stripe');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
+
+const defaultStripe = process.env.STRIPE_SECRET_KEY ? stripeLib(process.env.STRIPE_SECRET_KEY) : null;
 
 const defaultEmailClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -388,7 +392,7 @@ function buildPanelInviteEmail({ orgName, orgSlug, panelUrl, panelHomeUrl, publi
   return { subject: T.subject(orgName), html };
 }
 
-function makeHandler(db, emailClient = defaultEmailClient) {
+function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStripe) {
   return async (event) => {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };
@@ -1606,13 +1610,40 @@ function makeHandler(db, emailClient = defaultEmailClient) {
       // Familia 1: cerrar membresía activa (baja).
       if (action === 'cantera_close_membership') {
         if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+
+        // El club del jugador antes de cerrar (la RPC pone cards.org=NULL), para
+        // poder desconectar su cobro en ESE club tras la baja.
+        let playerOrgId = null;
+        let connectAccountId = null;
+        if (isCanteraActive()) {
+          const { data: active } = await db.from('member_club_seasons')
+            .select('organization_id').eq('card_slug', body.card_slug)
+            .eq('role', 'jugador').is('left_at', null).maybeSingle();
+          playerOrgId = active && active.organization_id;
+          if (playerOrgId) {
+            const { data: org } = await db.from('organizations')
+              .select('stripe_connect_account_id').eq('id', playerOrgId).maybeSingle();
+            connectAccountId = org && org.stripe_connect_account_id;
+          }
+        }
+
         const { error } = await cantera.closeMembership(db, body.card_slug, body.exit_reason || 'baja');
         if (error) {
           if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'Sin membresía activa' });
           return jsonResponse(400, { error: error.message });
         }
+
+        // Baja del club → desconectar el cobro (plazos del plan + cuota Stripe).
+        let billing = null;
+        if (playerOrgId) {
+          try {
+            billing = await teardownPlayerBilling(db, stripe, { cardSlug: body.card_slug, orgId: playerOrgId, connectAccountId });
+          } catch (e) {
+            console.error('admin-orgs cantera_close_membership: billing teardown error:', e.message);
+          }
+        }
         auditIncident(db, ip, 'cantera_close_membership', body.card_slug, body.exit_reason);
-        return jsonResponse(200, { ok: true });
+        return jsonResponse(200, { ok: true, billing });
       }
 
       // Familia 1: reasignar de club (transfer atómico founder).
@@ -1678,7 +1709,7 @@ function makeHandler(db, emailClient = defaultEmailClient) {
   };
 }
 
-exports.handler = makeHandler(supabase);
+exports.handler = makeHandler(supabase, defaultEmailClient, defaultStripe);
 exports.makeHandler = makeHandler;
 exports.buildInviteEmail = buildInviteEmail;
 exports.buildOffboardEmail = buildOffboardEmail;

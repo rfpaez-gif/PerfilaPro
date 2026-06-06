@@ -1920,7 +1920,7 @@
     $('rosterStaff').innerHTML = staff.length
       ? `<h3 class="pp-cat__head">Cuerpo técnico <span class="pp-cat__count">${staff.length}</span></h3>
          <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Equipo</th><th></th></tr></thead><tbody>${
-           staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td><td style="white-space:nowrap"><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" style="color:#B0392A" onclick="window.__removeFromRoster('${escapeHtml(s.slug)}', this)" title="Quitar del club">Quitar</button></td></tr>`).join('')
+           staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td><td style="white-space:nowrap"><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" style="color:#B0392A" onclick="window.__removeFromRoster('${escapeHtml(s.slug)}', this)" title="Dar de baja del club">Baja</button></td></tr>`).join('')
          }</tbody></table></div>`
       : '';
   }
@@ -2043,7 +2043,7 @@
       <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
       <td><select class="pp-input pp-input--mini" data-field="team_id" style="max-width:11rem">${teamSelectOptions(catId, m.team_id)}</select></td>
       <td>${payBadge(m.payment)}</td>
-      <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" style="color:#B0392A;margin-left:.5rem" onclick="window.__removeFromRoster('${escapeHtml(m.slug)}', this)" title="Quitar de la plantilla">Quitar</button></td>
+      <td style="white-space:nowrap">${m.public_card ? `<a class="pp-table__link" href="/c/${escapeHtml(m.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : '<small style="color:#6B7280">No pública</small>'}<button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" style="color:#B0392A;margin-left:.5rem" onclick="window.__removeFromRoster('${escapeHtml(m.slug)}', this)" title="Dar de baja del club (cancela cuotas y cargos pendientes)">Baja</button></td>
     </tr>`;
   }
 
@@ -2149,24 +2149,29 @@
     } catch (e) { /* el mensaje de guardado ya se mostró */ }
   }
 
-  // ── Quitar un miembro de la plantilla (jugador o staff) ──
-  // El club saca a un jugador o a un miembro del cuerpo técnico de SU
-  // plantilla (se dio de alta y no pagó, se fue a otro club, fin de
-  // temporada…). Cierra la membresía activa vía /api/cancel-membership (auth
-  // org-panel, scoped al propio club): el miembro desaparece de la
+  // ── Dar de baja del club (jugador o staff) ──
+  // BAJA = deja el club por completo (cierra la membresía activa vía
+  // /api/cancel-membership, auth org-panel scoped al propio club) Y desconecta
+  // su cobro: cancela los plazos futuros del plan + la cuota mensual Stripe.
+  // OJO: esto NO es "cambiar de equipo" — para eso está el desplegable Equipo
+  // de cada fila (no cierra membresía ni toca el cobro). El miembro sale de la
   // categoría/equipo y queda un histórico documentado con el motivo. La ficha
   // NO se borra — pertenece a la persona y continúa con ella si ficha por otro
-  // club. Expuesta global para el onclick inline (la SPA es vanilla JS sin
-  // event delegation, mismo patrón que el resto de filas).
+  // club. Expuesta global para el onclick inline (SPA vanilla JS sin event
+  // delegation, mismo patrón que el resto de filas).
   window.__removeFromRoster = function(slug, btn) {
     const tr = btn && btn.closest('tr');
     const strong = tr && tr.querySelector('strong');
     const nombre = strong ? strong.textContent : 'esta persona';
-    openModal('Quitar de la plantilla', `
-      <p style="margin:0 0 1rem;color:#374151;font-size:14px;line-height:1.5">
-        Vas a quitar a <strong>${escapeHtml(nombre)}</strong> de la plantilla. Sale de su categoría
-        y equipo, y queda registrada la baja con su motivo (histórico de la temporada).
-        <strong>La ficha no se borra</strong>: pertenece a la persona y continúa con ella si ficha por otro club.
+    openModal('Dar de baja del club', `
+      <p style="margin:0 0 .75rem;color:#374151;font-size:14px;line-height:1.5">
+        Vas a dar de baja a <strong>${escapeHtml(nombre)}</strong> del club. Sale de su categoría y
+        equipo, queda registrada la baja con su motivo (histórico de la temporada) y
+        <strong>se cancelan sus cuotas y cargos pendientes</strong>. La ficha no se borra:
+        pertenece a la persona y continúa con ella si ficha por otro club.
+      </p>
+      <p style="margin:0 0 1rem;padding:.6rem .75rem;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;color:#92400E;font-size:12.5px;line-height:1.5">
+        ¿Solo quieres moverlo a otro equipo del club? No uses la baja — usa el desplegable <strong>Equipo</strong> de su fila y pulsa “Guardar encuadre”. Así sigue activo y su cobro no se interrumpe.
       </p>
       <div class="pp-form__row"><label class="pp-form__label" for="rmReason">Motivo de la baja</label>
         <select class="pp-input" id="rmReason">
@@ -2179,7 +2184,7 @@
         </select></div>
       <div class="pp-form__actions">
         <button type="button" class="pp-btn pp-btn--ghost" data-modal-close>Cancelar</button>
-        <button type="button" class="pp-btn pp-btn--primary" id="rmConfirm" style="background:#B0392A;border-color:#B0392A">Quitar de la plantilla</button>
+        <button type="button" class="pp-btn pp-btn--primary" id="rmConfirm" style="background:#B0392A;border-color:#B0392A">Dar de baja del club</button>
       </div>
       <p class="pp-form__hint" id="rmError" style="color:#B0392A"></p>
     `);
@@ -2189,15 +2194,19 @@
     $('rmConfirm').addEventListener('click', async () => {
       const reason = $('rmReason').value;
       const cbtn = $('rmConfirm'); const err = $('rmError'); err.textContent = '';
-      cbtn.disabled = true; cbtn.innerHTML = '<span class="pp-spinner"></span> Quitando…';
+      cbtn.disabled = true; cbtn.innerHTML = '<span class="pp-spinner"></span> Procesando…';
       try {
-        await apiRaw('/api/cancel-membership', { card_slug: slug, exit_reason: reason });
+        const r = await apiRaw('/api/cancel-membership', { card_slug: slug, exit_reason: reason });
         closeModal();
-        sToast('ok', `${nombre} se ha quitado de la plantilla.`);
+        const b = r && r.billing;
+        const extra = b && (b.charges_canceled || b.subs_canceled)
+          ? ` Cobro cancelado: ${b.charges_canceled || 0} cargo(s)${b.subs_canceled ? ` + ${b.subs_canceled} cuota(s)` : ''}.`
+          : '';
+        sToast('ok', `${nombre} ha sido dado/a de baja del club.${extra}`);
         await loadSportsStudio();
       } catch (e) {
         err.textContent = e.message;
-        cbtn.disabled = false; cbtn.textContent = 'Quitar de la plantilla';
+        cbtn.disabled = false; cbtn.textContent = 'Dar de baja del club';
       }
     });
   };
