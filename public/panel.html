@@ -1919,8 +1919,8 @@
     const staff = data.staff || [];
     $('rosterStaff').innerHTML = staff.length
       ? `<h3 class="pp-cat__head">Cuerpo técnico <span class="pp-cat__count">${staff.length}</span></h3>
-         <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Equipo</th></tr></thead><tbody>${
-           staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td></tr>`).join('')
+         <div style="overflow-x:auto"><table class="pp-table"><thead><tr><th>Nombre</th><th>Rol</th><th>Equipo</th><th></th></tr></thead><tbody>${
+           staff.map(s => `<tr><td><strong>${escapeHtml(s.nombre || '—')}</strong></td><td>${escapeHtml(POS_LABEL[s.role] || s.role)}</td><td>${escapeHtml(s.team_name || '—')}</td><td style="white-space:nowrap"><button type="button" class="pp-btn pp-btn--ghost pp-btn--sm" style="color:#B0392A" onclick="window.__removeFromRoster('${escapeHtml(s.slug)}', this)" title="Quitar del club">Quitar</button></td></tr>`).join('')
          }</tbody></table></div>`
       : '';
   }
@@ -2149,23 +2149,24 @@
     } catch (e) { /* el mensaje de guardado ya se mostró */ }
   }
 
-  // ── Quitar un jugador de la plantilla ────────────────────
-  // El club saca a un jugador de SU plantilla (se dio de alta y no pagó, se
-  // fue a otro club, fin de temporada…). Cierra la membresía activa vía
-  // /api/cancel-membership (auth org-panel, scoped al propio club): el jugador
-  // desaparece de la categoría/equipo y queda un histórico documentado con el
-  // motivo. La ficha NO se borra — pertenece al jugador y viaja con él si
-  // ficha por otro club. Expuesta global para el onclick inline (la SPA es
-  // vanilla JS sin event delegation, mismo patrón que el resto de filas).
+  // ── Quitar un miembro de la plantilla (jugador o staff) ──
+  // El club saca a un jugador o a un miembro del cuerpo técnico de SU
+  // plantilla (se dio de alta y no pagó, se fue a otro club, fin de
+  // temporada…). Cierra la membresía activa vía /api/cancel-membership (auth
+  // org-panel, scoped al propio club): el miembro desaparece de la
+  // categoría/equipo y queda un histórico documentado con el motivo. La ficha
+  // NO se borra — pertenece a la persona y continúa con ella si ficha por otro
+  // club. Expuesta global para el onclick inline (la SPA es vanilla JS sin
+  // event delegation, mismo patrón que el resto de filas).
   window.__removeFromRoster = function(slug, btn) {
     const tr = btn && btn.closest('tr');
     const strong = tr && tr.querySelector('strong');
-    const nombre = strong ? strong.textContent : 'este jugador';
+    const nombre = strong ? strong.textContent : 'esta persona';
     openModal('Quitar de la plantilla', `
       <p style="margin:0 0 1rem;color:#374151;font-size:14px;line-height:1.5">
         Vas a quitar a <strong>${escapeHtml(nombre)}</strong> de la plantilla. Sale de su categoría
         y equipo, y queda registrada la baja con su motivo (histórico de la temporada).
-        <strong>La ficha del jugador no se borra</strong>: viaja con él si ficha por otro club.
+        <strong>La ficha no se borra</strong>: pertenece a la persona y continúa con ella si ficha por otro club.
       </p>
       <div class="pp-form__row"><label class="pp-form__label" for="rmReason">Motivo de la baja</label>
         <select class="pp-input" id="rmReason">
