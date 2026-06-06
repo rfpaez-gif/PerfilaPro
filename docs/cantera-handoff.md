@@ -15,7 +15,13 @@ Trabajo **desde `main`**. Dos features sueltos sobre Cantera/B2B (PR #166, merge
 
 Suite **1566/1566**. Sin migraciones nuevas.
 
-> **✅ TODAS las migraciones del carril EJECUTADAS y verificadas en prod (2026-06-06)**: 033/034/035/036/039/040/041/042. Verificación directa de 035 (`club_transfers` + RPCs `cantera_execute_transfer`/`cantera_close_membership` + `card_consents` acepta `granted_by_role='founder'`), 036 (`organizations.cantera_monthly_fee_cents` + CHECK), 039 (`enrollment_charges` + índices del cron/idempotencia), 040/041/042 (`club_teams`, `sports_competitions` con 42 filas seed, `member_club_seasons.team_id`, `external_payments.concepto`); 033/034 implícitas por dependencia FK. **El esquema del carril Cantera está 100% en prod** — para encenderlo solo queda fijar las **env vars** (`CANTERA_VERTICAL_ACTIVE=1`, `CANTERA_PII_KEY`, los `STRIPE_*` Connect/precios, `PARENT_PANEL_JWT_SECRET`, etc. — ver sección "Env vars Cantera" de CLAUDE.md). Sin migración pendiente.
+> **✅ CARRIL CANTERA COMPLETO EN PROD (2026-06-06)** — esquema + env vars verificados, listo para operar.
+>
+> **Migraciones (033–042) TODAS ejecutadas y verificadas**: 033/034 (implícitas por FK), 035 (`club_transfers` + RPCs `cantera_execute_transfer`/`cantera_close_membership` + `card_consents` rol `founder`), 036 (`organizations.cantera_monthly_fee_cents` + CHECK), 039 (`enrollment_charges` + índices cron/idempotencia), 040/041/042 (`club_teams`, `sports_competitions` 42 filas seed, `member_club_seasons.team_id`, `external_payments.concepto`).
+>
+> **Env vars en prod (Netlify) verificadas**: `CANTERA_VERTICAL_ACTIVE`, `CANTERA_PII_KEY`, `STRIPE_CONNECT_WEBHOOK_SECRET`, `STRIPE_PLATFORM_FEE_BPS`, `STRIPE_PRICE_PLAYER_SETUP_FEE`, `STRIPE_PRICE_PLAYER_RENEWAL`, `PRINT_PROVIDER`, `ORG_PANEL_JWT_SECRET`. `PARENT_PANEL_JWT_SECRET` **no está pero es opcional** (fallback a `ORG_PANEL_JWT_SECRET`, presente). `STRIPE_CONNECT_CLIENT_ID` no hace falta (onboarding por Account Links, no OAuth).
+>
+> **Único matiz a confirmar**: que `CANTERA_VERTICAL_ACTIVE` valga exactamente `1` (presencia ≠ valor). Con `1` el vertical está vivo; cualquier otro valor → endpoints 410. Nada de código ni migración pendiente.
 
 **Candidatos al próximo hilo** (no bloqueantes): los que queden en §7 (deuda consciente) — W3C Verifiable Credentials sobre `card_consents`, `org_admins` con roles dentro del club, integración federativa, etc.
 
@@ -23,7 +29,7 @@ Suite **1566/1566**. Sin migraciones nuevas.
 
 ## 1 · Qué está aterrizado
 
-> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 6 COMPLETAS y mergeadas a `main`**. Trabajar **desde `main`** (todo el backend + UI Cantera vive ahí). Estado migraciones en prod (2026-06-06): **033/034/035/036/039/040/041/042 TODAS EJECUTADAS y verificadas**. Esquema del carril 100% en prod; solo faltan las **env vars** para encenderlo. Suite **1566/1566**. Ver §0 para lo último y §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
+> **🧭 MIGRACIÓN DE HILO (estado a esta fecha)**: capas **0 → 6 COMPLETAS y mergeadas a `main`**. Trabajar **desde `main`** (todo el backend + UI Cantera vive ahí). Estado migraciones en prod (2026-06-06): **033/034/035/036/039/040/041/042 TODAS EJECUTADAS y verificadas**. Esquema + env vars en prod (verificado en Netlify). Listo para operar (confirmar CANTERA_VERTICAL_ACTIVE=1). Suite **1566/1566**. Ver §0 para lo último y §7 para lo que queda fuera de scope (deuda consciente). El resto de esta sección es historial por capa.
 
 **Branch**: **capa 5 COMPLETA** (carnet físico). Vive en `claude/cantera-capa5-carnet`.
 
