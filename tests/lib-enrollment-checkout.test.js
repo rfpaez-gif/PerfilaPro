@@ -92,4 +92,34 @@ describe('buildPlanCheckoutSessionParams', () => {
     });
     expect(params.payment_intent_data.application_fee_amount).toBeUndefined();
   });
+
+  it('carnet embebido: suma carnetFeeCents al application_fee + metadata', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, carnetFeeCents: 1200, siteUrl: 'https://pp.es',
+    });
+    // 1020 comisión + 1200 carnet (cabe de sobra en 34000) = 2220
+    expect(params.payment_intent_data.application_fee_amount).toBe(2220);
+    expect(params.metadata.carnet_fee_cents).toBe('1200');
+  });
+
+  it('carnet embebido: capa el skim para no exceder el total cobrado', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es',
+      dueNowConcepts: [{ concepto: 'Matrícula', amount_cents: 1500, due_date: '2026-09-01' }],
+      dueNowFeeCents: 500, carnetFeeCents: 1200, siteUrl: 'https://pp.es',
+    });
+    // 500 comisión + min(1200, 1500-500=1000) = 500 + 1000 = 1500 (todo el cargo)
+    expect(params.payment_intent_data.application_fee_amount).toBe(1500);
+    expect(params.metadata.carnet_fee_cents).toBe('1000');
+  });
+
+  it('carnet embebido: en modo setup (nada vence ya) NO se skimea', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es',
+      dueNowConcepts: [], carnetFeeCents: 1200, siteUrl: 'https://pp.es',
+    });
+    expect(params.mode).toBe('setup');
+    expect(params.metadata.carnet_fee_cents).toBeUndefined();
+  });
 });

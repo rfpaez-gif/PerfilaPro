@@ -144,6 +144,30 @@ describe('handlePlanCheckoutCompleted', () => {
     expect(stripeSetup.setupIntents.retrieve).toHaveBeenCalled();
   });
 
+  it('carnet embebido: crea card_print_orders paid e idempotente por session', async () => {
+    const orders = [];
+    let existing = null;
+    const db = {
+      from: (t) => {
+        if (t === 'card_print_orders') return {
+          select: () => ({ eq: () => ({ limit: () => ({ maybeSingle: () => Promise.resolve({ data: existing, error: null }) }) }) }),
+          insert: (row) => { orders.push(row); return Promise.resolve({ error: null }); },
+        };
+        const node = { eq: () => node, in: () => Promise.resolve({ error: null }), then: (res) => Promise.resolve({ data: [], error: null }).then(res) };
+        return { update: () => node, select: () => node };
+      },
+    };
+    const session = { mode: 'payment', id: 'cs_123', customer: 'cus_1', payment_intent: 'pi_1', metadata: { kind: 'cantera-plan', card_slug: 'p-9', org_id: 'club-1', carnet_fee_cents: '1200' } };
+    const r = await cw.handlePlanCheckoutCompleted({ db, stripe, session, account: 'acct_1' });
+    expect(r.carnet_order).toBe(true);
+    expect(orders[0]).toMatchObject({ card_slug: 'p-9', kind: 'setup', status: 'paid', amount_cents: 1200, stripe_payment_intent_id: 'cs_123' });
+    // Replay: pedido ya existe → no duplica.
+    existing = { id: 'o1' }; orders.length = 0;
+    const r2 = await cw.handlePlanCheckoutCompleted({ db, stripe, session, account: 'acct_1' });
+    expect(r2.carnet_order).toBe(false);
+    expect(orders).toHaveLength(0);
+  });
+
   it('ignora sesiones de otro kind', async () => {
     const r = await cw.handlePlanCheckoutCompleted({ db: planDb([]), stripe, session: { metadata: { kind: 'other' } } });
     expect(r.ok).toBe(false);
