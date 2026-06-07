@@ -57,14 +57,16 @@ El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval 
 - ✅ **Carnet a 2 caras** (`printable-card-utils` · `renderPlayerCardFront`/`renderPlayerCardBack` + `sponsorBuffer`/`carnet_sponsor_url`) — commit `b95937c`.
 - ✅ **Foto en la inscripción** (`lib/player-photo.js` + `enrollment-submit` + campo en `enrollment-page`, gated por `consent_image`, best-effort) — commiteado.
 - ✅ **Carnet embebido en el primer pago** (`lib/enrollment-checkout` skim `application_fee` capado + `CANTERA_CARNET_FEE_CENTS` en `create-enrollment-checkout` + auto-`card_print_orders` idempotente en `lib/cantera-webhook`) — commit `2e56b28`.
-- Suite **1601/1601**. Sin migraciones nuevas todavía (el sponsor pide una).
+- ✅ **Storage del patrocinador** (migración **043** `organizations.carnet_sponsor_url` + `upload-carnet-sponsor-panel.js`, auth org-panel scoped, solo sports_club + ruta).
+- ✅ **Regla "carnet listo"** backend (`lib/carnet-ready.js` + `getRoster` devuelve `carnet_ready`/`carnet_missing` por jugador).
+- Suite **1612/1612**. **Migración 043 pendiente de ejecutar en prod.**
 
 ### Pendiente (próximos chunks)
-1. **Regla "carnet listo"** (foto + equipo + dorsal): chip en el roster (`org-panel get_roster`) + filtro del lote de impresión (`print-order-export`/booklet) + aviso en el panel del padre ("falta la foto del carnet").
-2. **Sponsor cara B · storage**: migración `organizations.carnet_sponsor_url` + acción `org-panel`/endpoint para subir el patrocinador (reusar patrón `upload-org-logo-panel`) + UI en el Studio. *(El render YA lo soporta vía `sponsorBuffer`/`club.carnet_sponsor_url`.)*
+1. **UI "carnet listo"**: chip en el roster de `panel.html` (consume `carnet_ready`/`carnet_missing`, ya en el backend) + filtro del lote de impresión (`print-order-export`/booklet) por `carnet_ready` + aviso en el panel del padre ("falta la foto del carnet").
+2. **UI del patrocinador en el Studio**: control de subida que llama a `upload-carnet-sponsor-panel` (backend ya listo) en la pestaña Carnets/Branding.
 3. **Re-subida de foto desde el panel del padre** (follow-up): endpoint scoped al JWT del tutor + control en `renderParentChildren`.
 4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
-5. **Env prod**: `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
+5. **Env prod**: ejecutar **migración 043** + `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
 
 ---
 
