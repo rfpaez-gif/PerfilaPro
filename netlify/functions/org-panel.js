@@ -53,6 +53,7 @@ const {
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
 const { normalizeTeamColor, normalizeTeamLabel, isValidTeamId } = require('./lib/club-teams');
+const { carnetReadiness } = require('./lib/carnet-ready');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 
@@ -1293,6 +1294,13 @@ async function getRoster(db, org) {
       previous_club_name: m.previous_club_name || null,
       payment: paymentFor(m.card_slug, idx),
     };
+    // Regla "carnet listo": foto + equipo + dorsal (solo jugadores).
+    const cr = carnetReadiness({
+      role: m.role, foto_url: card.foto_url,
+      team_id: m.team_id, team_name: entry.team_name, dorsal: m.dorsal,
+    });
+    entry.carnet_ready = cr.ready;
+    entry.carnet_missing = cr.missing;
     if (m.role === 'jugador') players.push(entry); else staff.push(entry);
   }
 

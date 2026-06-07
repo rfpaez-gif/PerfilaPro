@@ -163,7 +163,29 @@ async function handlePlanCheckoutCompleted({ db, stripe, session, account }) {
     }
   }
 
-  return { ok: true, card_slug: cardSlug, paid_now: paidNow };
+  // Carnet embebido: su importe se skimeó vía application_fee en este primer
+  // pago (metadata.carnet_fee_cents). Materializa el pedido de impresión
+  // (status 'paid', ya cobrado). Idempotente por session.id (replay → skip).
+  // Best-effort: si falla, no rompe el webhook (el founder lo ve en el roster).
+  let carnetOrder = false;
+  if (session.mode === 'payment' && m.carnet_fee_cents) {
+    const { data: existingOrder } = await db.from('card_print_orders')
+      .select('id').eq('stripe_payment_intent_id', session.id).limit(1).maybeSingle();
+    if (!existingOrder) {
+      const { error: orderErr } = await db.from('card_print_orders').insert({
+        card_slug: cardSlug,
+        organization_id: m.org_id || null,
+        status: 'paid',
+        kind: 'setup',
+        amount_cents: parseInt(m.carnet_fee_cents, 10) || null,
+        stripe_payment_intent_id: session.id,
+      });
+      if (orderErr) console.log('cantera plan: print order no creado:', orderErr.message);
+      else carnetOrder = true;
+    }
+  }
+
+  return { ok: true, card_slug: cardSlug, paid_now: paidNow, carnet_order: carnetOrder };
 }
 
 // payment_intent.{succeeded,payment_failed} (kind=cantera-plan) → cierra el

@@ -37,7 +37,7 @@ function jsonResponse(statusCode, payload) {
 // Carril PLAN: materializa los cargos del plan e inicia el Checkout que
 // cobra lo que vence ya + guarda el mandato. Idempotente por jugador: si ya
 // hay cargos no cancelados, no duplica.
-async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, campaignId, feeBps, siteUrl }) {
+async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, campaignId, feeBps, carnetFeeCents, siteUrl }) {
   // Guard idempotencia: un plan activo por jugador.
   const { data: existing } = await db
     .from('enrollment_charges').select('id')
@@ -56,7 +56,7 @@ async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, ca
   if (insErr) return jsonResponse(500, { error: insErr.message });
 
   const { params, options } = buildPlanCheckoutSessionParams({
-    org, card, parentEmail, dueNowConcepts: dueNow, dueNowFeeCents, campaignId, siteUrl,
+    org, card, parentEmail, dueNowConcepts: dueNow, dueNowFeeCents, carnetFeeCents, campaignId, siteUrl,
   });
 
   try {
@@ -114,6 +114,9 @@ function makeHandler(stripe, db) {
     }
 
     const feeBps = parseInt(process.env.STRIPE_PLATFORM_FEE_BPS, 10) || 0;
+    // Carnet embebido en el primer pago (sección ★ del handoff). Importe fijo
+    // de plataforma; 0 lo desactiva (carnet por el fallback al club).
+    const carnetFeeCents = parseInt(process.env.CANTERA_CARNET_FEE_CENTS, 10) || 0;
     const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
 
     // Campaña (opcional): si viene campaign_id, sus importes mandan sobre
@@ -147,7 +150,7 @@ function makeHandler(stripe, db) {
     // mandato para los plazos futuros) en vez de la suscripción mensual.
     if (plan.length > 0) {
       return await handlePlanCheckout({
-        db, stripe, org, card, parentEmail: session.email, plan, campaignId, feeBps, siteUrl,
+        db, stripe, org, card, parentEmail: session.email, plan, campaignId, feeBps, carnetFeeCents, siteUrl,
       });
     }
 

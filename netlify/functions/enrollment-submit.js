@@ -25,6 +25,7 @@ const { validateEnrollment } = require('./lib/enrollment');
 const { createPlayerCard } = require('./lib/player-create');
 const { recordConsent, buildConsentEvidence, clientIp, userAgentOf } = require('./lib/consent');
 const { signParentSession } = require('./lib/panel-auth');
+const { uploadPlayerPhoto } = require('./lib/player-photo');
 const { capture: captureEvent } = require('./lib/posthog-server');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -170,6 +171,26 @@ function makeHandler(db, emailClient) {
         ip, userAgent: ua, evidence,
       });
       if (consErr) console.error('enrollment-submit: consent', c.type, 'falló:', consErr.message);
+    }
+
+    // ── Foto del jugador (best-effort, solo con derechos de imagen) ──
+    // Se sube en el mismo acto que el consentimiento de imagen. Si falla, la
+    // card queda sin foto y el padre la re-sube desde el panel (follow-up);
+    // el carnet usa el placeholder mientras tanto. No bloquea la inscripción.
+    if (data.consent_image && body.photo_base64) {
+      try {
+        const up = await uploadPlayerPhoto(db, slug, {
+          base64: body.photo_base64, contentType: body.photo_content_type,
+        });
+        if (up.url) {
+          const { error: fotoErr } = await db.from('cards').update({ foto_url: up.url }).eq('slug', slug);
+          if (fotoErr) console.error('enrollment-submit: foto_url update falló:', fotoErr.message);
+        } else {
+          console.error('enrollment-submit: foto no subida:', up.error);
+        }
+      } catch (err) {
+        console.error('enrollment-submit: foto excepción:', err.message);
+      }
     }
 
     // ── Sesión parent-panel + email (best-effort) ──

@@ -2,7 +2,71 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-06 (tarde · gestión de plantilla del club: baja de jugador/staff, invitar familias desde el Studio founder, consistencia de la baja entre pestañas + teardown de cobro — PRs #173–#176 mergeados a `main`. Suite 1585/1585. Sin migraciones nuevas).
+Última actualización: 2026-06-07 (★ **modelo de monetización CERRADO** — ver sección ★ inmediatamente debajo. Revierte el default "Connect Standard" → **Express** y refina Q3. Decisión estratégica, todavía sin tocar código).
+
+---
+
+## ★ Modelo de monetización (CERRADO · 2026-06-07)
+
+> Esta sección **manda** sobre cualquier línea anterior del documento que diga lo contrario. En concreto **supersede**: (a) el default de §2 "Stripe model: Connect **Standard** … Express NO" → ahora es **Express**; (b) el enfoque de §4·Q3 (Stripe como mero "upgrade voluntario") → ahora Stripe/Bizum es el carril de cobro de referencia, dentro de un modelo de **tres capas de ingreso**. Las decisiones-marco **D1/D2/D3 NO se tocan**.
+
+### La regla de hierro (de aquí se deduce todo)
+Para que el dinero entre **limpio a nombre del club** (sin que PerfilaPro sea entidad de pago), ese club **tiene que estar verificado (KYC/AML)**. No hay atajo legal. Lo único elegible es **quién hace el trámite y cuánto duele** — no si existe. Las dos formas de "evitar" el KYC son peores:
+- **Cuenta central de Perfila que recauda y reparte** → te convierte en **Entidad de Pago sin licencia** (PSD2). No es fricción, es cierre + multa. **Descartado.**
+- **Club usa su Bizum y Perfila factura aparte** → la comisión deja de ser automática. **No es la base** (sí vale como fallback manual, ver capa 3).
+
+### Stack de cobro elegido
+**Bizum + Stripe Connect _Express_ (onboarding progresivo y asistido) + entrega del link por WhatsApp (`wa.me` semi-manual en MVP).**
+- **Express** (no Standard): Stripe **hospeda el onboarding y la verificación**; el club no "se da de alta en Stripe", rellena un formulario corto Perfila→Stripe. Onboarding **incremental** (`currently_due`, no `eventually_due`): empieza a cobrar en minutos con CIF + IBAN + DNI del presidente y completa el resto según sube volumen.
+- **Comisión automática**: `application_fee` sobre cada cobro direct-charge. Cero liquidación, cero facturar el %, el dinero a nombre del club (resuelve el §3 fiscal y la comisión a la vez).
+- **Bizum encaja por una razón clave**: es pago *push* autenticado → **sin contracargos**. Eso neutraliza el único "pero" real de Express (la plataforma asume más responsabilidad operativa de saldos negativos/disputas): con Bizum esa responsabilidad es ~0 en la práctica.
+- **Convivencia de medios**: en el mismo checkout se activan `bizum` **y** `card`/SEPA. Regla de colocación: **Bizum por defecto en puntual + plan por conceptos** (Bizum NO es recurrente, no guarda mandato); **tarjeta-guardada/SEPA para la cuota mensual recurrente**. No es elegir uno; es poner cada uno donde brilla.
+
+### Tres capas de ingreso (de la más segura a la más variable)
+La comisión sobre la cuota **tiene una fuga estructural**: el club puede usar todo el SaaS (plantilla, carnets, panel del padre, stats) y seguir cobrando por su Bizum de siempre → comisión = 0. Por eso **no se apuesta todo a la comisión**:
+
+1. **Suelo SaaS fijo — garantiza "pasar por caja".** Cuota fija por **jugador activo y temporada** (o por club/mes), pequeña pero inevitable, anclada al **uso real** (nº de fichas activas), no al flujo de dinero. Se factura **aunque** el club cobre las cuotas por fuera. Es la red de seguridad contra el free-ride. Mecanismo: reutilizable sobre el carril B2B existente (`create-org-checkout` / tiers de organización) o un checkout de "cuota de temporada" dedicado. *(Importe concreto = decisión de founder, ver §6.)*
+2. **Carnet físico PVC+NFC — el momento tangible de pasar por caja.** Los 12€ setup / 6€ renovación ya diseñados (capa 4c/5), cobro directo a PerfilaPro. Es el gancho visible y el cobro que captura el salto de "miro el demo" a "lo quiero para mis chavales".
+3. **Comisión 1,5% sobre cuotas — upside, no cimiento.** El Bizum/Connect Express de arriba. Crece cuando el club confía el flujo de cuotas a la plataforma. Para que lo elija, la herramienta de cobro debe ser **mejor que su Bizum manual**: links automáticos, matriz "quién pagó", recordatorios, conciliación (ya medio construido en la pestaña Cobros).
+
+### El gancho que arrastra las cuotas al carril (palanca de dominio)
+**En los clubes la regla ya existe y es dura: "el niño que no paga la cuota, no juega".** Eso convierte la **matriz de "quién pagó"** en una herramienta **operativa crítica**, no un nice-to-have: el club *necesita* el estado de pago autoritativo en un sitio para decidir quién entra en el campo. Ese dolor es lo que tira de las cuotas hacia el carril Perfila (capa 3) — y conecta con el carnet NFC (capa 2): el carnet/estado refleja "al día / no al día". Diseñar Cobros y carnet **alrededor de esa regla** es la mejor baza de conversión.
+
+### Momentos de facturación (claros, en orden)
+1. **Demo** — gratis. El club explora el Studio. No se cobra nada.
+2. **Activación ("pasar por caja")** — el club compromete: se dispara con el **pedido de carnets** (capa 2) **y/o** la **cuota fija por jugador/temporada** (capa 1). Es la puerta demo → uso real. *(Aquí es donde NO puede haber fuga: sin este paso no hay temporada operativa.)*
+3. **Operación de temporada** — recurrente: las **cuotas fluyen** por Bizum/tarjeta vía Connect Express → **1,5%** automático (capa 3), con la matriz de Cobros enforced por la regla "no paga→no juega". El suelo (capa 1) ya está facturado.
+4. **Renovación (temporada N+1)** — **renovación de carnet** 6€ (capa 2) + **suelo por jugador** de nuevo (capa 1). Se ancla al roll-over de temporada (ver §0-bis · pendiente roll-over).
+
+### Veredicto
+Bizum sobre **Connect Express** (conviviendo con tarjeta/SEPA), **sí**. Pero la facturación **no se fía solo a la comisión**: el **suelo por jugador/temporada + el carnet** aseguran el "pasar por caja"; la comisión es la guinda. Las tres capas juntas = el negocio.
+
+### Carnet del jugador — decisiones cerradas (2026-06-07)
+
+El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval iguala la comisión anual de 1,5% sobre ~600€ y NO tiene fuga). Decisiones:
+
+- **12€/chaval/temporada, DENTRO del pack de material** (chándal, equipación…). Cobro fijo casi garantizado: el padre lo paga sin venta extra. **Credencial oficial OBLIGATORIA** (no opcional) — el QR/estado se apoya en la regla de dominio *"el que no paga la cuota, no juega"*, que convierte la matriz de Cobros en herramienta operativa crítica.
+- **PVC color a 2 caras + QR, SIN NFC en el MVP** (el QR ya hace de credencial; coste ~2,6€). El NFC puede volver con el banco.
+- **Cara A** = identidad (color+escudo+club · foto · dorsal · nombre · categoría·equipo —la competición ya va en `team_name`, mig 040/041— · **temporada** · QR). Los datos legales del club NO van en el plástico (viven tras el QR). **Cara B** = imagen de **patrocinador del club** (lo vende/gestiona el club, se queda el dinero; PerfilaPro solo imprime) + franja de validez; sin patrocinador → escudo centrado. El área de cara B es además el **hueco reservado para el patrocinador de RED de PerfilaPro (CaixaBank, Fase 2)**.
+- **Foto** capturada **en la inscripción**, en el mismo acto que el consentimiento de imagen (`consent_image`).
+- **Cobro embebido en el primer pago**: PerfilaPro skimea los 12€ del primer pago del plan vía `application_fee` (invisible/no-toggle para el club). Fallback `create-setup-fee-checkout` al club para clubes manuales/Bizum.
+- **CaixaBank = Fase 2**, como **patrocinio del carnet** (plástico subvencionado + co-brand), NO como cuentas bancarias a menores (choca con la arquitectura LOPD + KYC + es venta B2B lenta).
+
+### Estado de implementación (rama `claude/cantera-perfilapro-M7gks`)
+
+- ✅ **Carnet a 2 caras** (`printable-card-utils` · `renderPlayerCardFront`/`renderPlayerCardBack` + `sponsorBuffer`/`carnet_sponsor_url`) — commit `b95937c`.
+- ✅ **Foto en la inscripción** (`lib/player-photo.js` + `enrollment-submit` + campo en `enrollment-page`, gated por `consent_image`, best-effort) — commiteado.
+- ✅ **Carnet embebido en el primer pago** (`lib/enrollment-checkout` skim `application_fee` capado + `CANTERA_CARNET_FEE_CENTS` en `create-enrollment-checkout` + auto-`card_print_orders` idempotente en `lib/cantera-webhook`) — commit `2e56b28`.
+- ✅ **Storage del patrocinador** (migración **043** `organizations.carnet_sponsor_url` + `upload-carnet-sponsor-panel.js`, auth org-panel scoped, solo sports_club + ruta).
+- ✅ **Regla "carnet listo"** backend (`lib/carnet-ready.js` + `getRoster` devuelve `carnet_ready`/`carnet_missing` por jugador).
+- Suite **1612/1612**. **Migración 043 pendiente de ejecutar en prod.**
+
+### Pendiente (próximos chunks)
+1. **UI "carnet listo"**: chip en el roster de `panel.html` (consume `carnet_ready`/`carnet_missing`, ya en el backend) + filtro del lote de impresión (`print-order-export`/booklet) por `carnet_ready` + aviso en el panel del padre ("falta la foto del carnet").
+2. **UI del patrocinador en el Studio**: control de subida que llama a `upload-carnet-sponsor-panel` (backend ya listo) en la pestaña Carnets/Branding.
+3. **Re-subida de foto desde el panel del padre** (follow-up): endpoint scoped al JWT del tutor + control en `renderParentChildren`.
+4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
+5. **Env prod**: ejecutar **migración 043** + `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
 
 ---
 
@@ -141,7 +205,7 @@ Lo que crea:
 
 ### Defaults ratificados en el hilo de diseño
 - **Naming**: `member_club_seasons` (1 tabla, jugador + staff), no `player_club_seasons` separada de staff.
-- **Stripe model**: Connect **Standard** (responsabilidad fiscal en el club, su NIF, su IBAN). Connect Express NO.
+- **Stripe model**: ⚠️ **SUPERSEDED por la sección ★ (2026-06-07)** → ahora **Connect Express** (onboarding hospedado + progresivo, menos fricción para el club; Bizum sin contracargos neutraliza el trade de responsabilidad). El club sigue siendo el comercio legal (su NIF/IBAN, responsabilidad fiscal suya). *(El código de 4a aún usa Standard — ver delta en sección ★.)*
 - **Slug del jugador**: opaco (`p-XXXXXX`) para anti-doxxing de menores. NO derivado del nombre.
 - **Multi-deporte en seed**: sólo fútbol; el resto entra vía UPSERT en migraciones posteriores cuando llegue cliente real.
 
@@ -260,7 +324,9 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 - ¿Application_fee con mínimo absoluto (ej. 1€ por cobro) o sólo porcentaje? Importante para que cuotas bajas (5-15€ en prebenjamín) sigan siendo rentables.
 - ¿Quién emite la factura SEPA al padre por defecto? Default mío: el club, con su NIF. PerfilaPro NO emite factura al padre. Si quieren asistencia (plantilla PDF club-branded usando `invoice-utils.js`), se valora cuando un club lo pida.
-- KYC de Stripe Connect Standard tarda 1-3 días la primera vez. El wizard de onboarding gatea fichajes hasta que `charges_enabled=true`. Hay que comunicárselo al club en la venta para que no se sorprenda.
+- KYC de Stripe Connect (ahora **Express**, ver sección ★) con **onboarding progresivo** permite empezar a cobrar en minutos y completar la verificación según sube volumen; aun así la verificación plena puede tardar 1-3 días. Onboarding **asistido por el founder en la demo** (no deberes para el club) + anclado al momento del carnet. El wizard gatea fichajes hasta `charges_enabled=true`; comunicarlo en la venta.
+- **Importes de la capa 1 (suelo por jugador/temporada)**: definir con el founder. ¿€/jugador/temporada fijo, o €/club/mes por tramos de tamaño? Es el ingreso que asegura "pasar por caja"; conviene cerrarlo antes de codificar la capa 1.
+- **Mínimo de `application_fee`** (ya listado abajo): especialmente relevante ahora que la comisión es "guinda" y no cimiento — cuotas bajas (5-15€) deben seguir siendo rentables o no compensa procesarlas.
 - Beachhead concreto: ¿cuál es el club, qué tamaño (200-400 chavales mencionado en brief), cuándo se hace la primera demo? Esto afecta urgencia y orden de capas.
 - Hijos de divorciados con custodia compartida (Q4): pregúntale al founder qué porcentaje real estima en el club beachhead. Si es >15%, MVP debería soportarlo; si es <5%, Sprint 2 está bien.
 

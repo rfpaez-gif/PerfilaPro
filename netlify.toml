@@ -403,6 +403,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/upload-carnet-sponsor-panel"
+  to     = "/.netlify/functions/upload-carnet-sponsor-panel"
+  status = 200
+
+[[redirects]]
   from   = "/api/resend-invoice"
   to     = "/.netlify/functions/resend-invoice"
   status = 200

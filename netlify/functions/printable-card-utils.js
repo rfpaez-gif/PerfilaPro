@@ -682,9 +682,14 @@ async function buildBusinessCardsBookletPDF({ cards, org, siteUrl } = {}) {
 
 // ── Carnet del jugador · PVC + NFC (Cantera capa 5) ──────────────────────
 // Formato tarjeta ISO 7810 (85×55mm, mismas dims que la de visita B2B).
-// Franja con color del club + escudo, foto del jugador, dorsal grande,
-// categoría/equipo y QR que apunta a la card pública (objetivo del NFC).
-function renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer, photoBuffer, cardUrl }) {
+// ───────── Carnet del jugador · dos caras (A identidad / B patrocinador) ─────────
+//
+// Cara A — identidad: franja color+escudo+club, foto, dorsal grande, nombre,
+// categoría·equipo (el nombre de equipo ya incorpora la competición desde
+// migración 040/041), temporada y QR que apunta a la card pública (objetivo
+// del NFC). Los datos legales del club NO van en el plástico: viven en la
+// ficha digital, a un escaneo de distancia.
+function renderPlayerCardFront(doc, { card, club, season, qrBuffer, logoBuffer, photoBuffer, cardUrl }) {
   const W = BIZCARD_WIDTH, H = BIZCARD_HEIGHT;
   const color = club && club.color_primary && /^#[0-9a-fA-F]{6}$/.test(club.color_primary)
     ? club.color_primary : COLORS.ink;
@@ -694,6 +699,7 @@ function renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer, photo
   const dorsal = s.dorsal != null && s.dorsal !== '' ? String(s.dorsal) : '';
   const categoryName = s.category_name ? String(s.category_name).trim() : '';
   const teamName = s.team_name ? String(s.team_name).trim() : '';
+  const seasonStr = s.season ? String(s.season).trim() : '';
 
   doc.rect(0, 0, W, H).fill(COLORS.surface);
 
@@ -729,16 +735,18 @@ function renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer, photo
       .text(dorsal, W - 86, photoY - 6, { width: 78, align: 'right' });
   }
 
-  // Nombre + categoría/equipo (bajo la foto, columna derecha).
+  // Nombre + categoría/equipo + temporada (bajo la foto, columna derecha).
   const infoX = photoX + photoW + 10;
-  let ty = photoY + photoH - 34;
   doc.fillColor(COLORS.ink).font('PP-Sans-SemiBold').fontSize(12)
-    .text(name, infoX, ty, { width: W - infoX - 8 });
-  ty = doc.y + 1;
+    .text(name, infoX, photoY + photoH - 40, { width: W - infoX - 8 });
   const sub = [categoryName, teamName].filter(Boolean).join(' · ');
   if (sub) {
     doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(8)
-      .text(sub, infoX, ty, { width: W - infoX - 8, lineBreak: false, ellipsis: true });
+      .text(sub, infoX, doc.y + 1, { width: W - infoX - 8, lineBreak: false, ellipsis: true });
+  }
+  if (seasonStr) {
+    doc.fillColor(COLORS.inkSoft).font('PP-Sans').fontSize(7)
+      .text(`Temporada ${seasonStr}`, infoX, doc.y + 1, { width: W - infoX - 8, lineBreak: false, ellipsis: true });
   }
 
   // QR (objetivo NFC) abajo derecha, ~14mm.
@@ -751,9 +759,49 @@ function renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer, photo
     .text(cardUrl, 8, H - 9, { width: W - qrSize - 22, lineBreak: false, ellipsis: true });
 }
 
+// Cara B — patrocinador: imagen de patrocinador del club (la vende y gestiona
+// el propio club; PerfilaPro solo la imprime) ocupando casi toda la cara, con
+// una franja de validez inferior. Sin patrocinador, fallback sobrio: escudo
+// del club centrado (o su nombre) + franja de validez. El área de patrocinador
+// es además el hueco reservado para el patrocinador de RED de PerfilaPro
+// (CaixaBank u otro, Fase 2) cuando se monte el carril de patrocinio agregado.
+function renderPlayerCardBack(doc, { club, season, sponsorBuffer, logoBuffer }) {
+  const W = BIZCARD_WIDTH, H = BIZCARD_HEIGHT;
+  const color = club && club.color_primary && /^#[0-9a-fA-F]{6}$/.test(club.color_primary)
+    ? club.color_primary : COLORS.ink;
+  const s = season || {};
+  const seasonStr = s.season ? String(s.season).trim() : '';
+
+  doc.rect(0, 0, W, H).fill(COLORS.surface);
+
+  const STRIP_H = 20;            // franja de validez inferior
+  const contentBottom = H - STRIP_H;
+
+  if (sponsorBuffer) {
+    // Patrocinador del club centrado, ocupando casi toda la cara.
+    try {
+      doc.image(sponsorBuffer, 12, 12, { fit: [W - 24, contentBottom - 24], align: 'center', valign: 'center' });
+    } catch { /* patrocinador no renderizable → cae al fallback de abajo */ }
+  } else if (logoBuffer) {
+    // Fallback sobrio: escudo del club centrado.
+    try {
+      doc.image(logoBuffer, 12, 12, { fit: [W - 24, contentBottom - 24], align: 'center', valign: 'center' });
+    } catch { /* sin escudo */ }
+  } else if (club && club.name) {
+    doc.fillColor(COLORS.ink).font('PP-Sans-SemiBold').fontSize(14)
+      .text(String(club.name).trim(), 12, contentBottom / 2 - 9, { width: W - 24, align: 'center' });
+  }
+
+  // Franja de validez inferior (color del club).
+  doc.rect(0, contentBottom, W, STRIP_H).fill(color);
+  const validity = `Carnet oficial${seasonStr ? ' · Temporada ' + seasonStr : ''} · válido si la cuota está al día`;
+  doc.fillColor('#FFFFFF').font('PP-Sans').fontSize(6.5)
+    .text(validity, 8, contentBottom + 6, { width: W - 16, lineBreak: false, ellipsis: true, align: 'center' });
+}
+
 // Genera el carnet PVC de un jugador. Si no se pasan buffers, fetchea
 // escudo (club.logo_url) y foto (card.foto_url) de forma defensiva.
-async function buildPlayerCardPVC({ card, club, season, nfcUrl, logoBuffer, photoBuffer, siteUrl } = {}) {
+async function buildPlayerCardPVC({ card, club, season, nfcUrl, logoBuffer, photoBuffer, sponsorBuffer, siteUrl } = {}) {
   if (!card || !card.slug) throw new Error('buildPlayerCardPVC: card.slug es obligatorio');
   const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const cardUrl = nfcUrl || `${baseUrl}/c/${card.slug}`;
@@ -763,6 +811,8 @@ async function buildPlayerCardPVC({ card, club, season, nfcUrl, logoBuffer, phot
     : (club && club.logo_url ? await fetchLogoAsPngBuffer(club.logo_url) : null);
   const photo = photoBuffer !== undefined ? photoBuffer
     : (card.foto_url ? await fetchLogoAsPngBuffer(card.foto_url) : null);
+  const sponsor = sponsorBuffer !== undefined ? sponsorBuffer
+    : (club && club.carnet_sponsor_url ? await fetchLogoAsPngBuffer(club.carnet_sponsor_url) : null);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -775,7 +825,9 @@ async function buildPlayerCardPVC({ card, club, season, nfcUrl, logoBuffer, phot
     doc.on('data', c => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-    renderPlayerCard(doc, { card, club, season, qrBuffer, logoBuffer: logo, photoBuffer: photo, cardUrl });
+    renderPlayerCardFront(doc, { card, club, season, qrBuffer, logoBuffer: logo, photoBuffer: photo, cardUrl });
+    doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
+    renderPlayerCardBack(doc, { club, season, sponsorBuffer: sponsor, logoBuffer: logo });
     doc.end();
   });
 }
@@ -788,6 +840,7 @@ async function buildPlayerCardsBookletPDF({ players, club, siteUrl } = {}) {
   }
   const baseUrl = siteUrl || process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
   const logoBuffer = club && club.logo_url ? await fetchLogoAsPngBuffer(club.logo_url) : null;
+  const sponsorBuffer = club && club.carnet_sponsor_url ? await fetchLogoAsPngBuffer(club.carnet_sponsor_url) : null;
 
   // Fotos en paralelo (defensivo: null si falla).
   const photos = await Promise.all(players.map(p =>
@@ -806,12 +859,14 @@ async function buildPlayerCardsBookletPDF({ players, club, siteUrl } = {}) {
     doc.on('error', reject);
     players.forEach((p, i) => {
       if (!p || !p.card || !p.card.slug) return;
-      doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
       const cardUrl = `${baseUrl}/c/${p.card.slug}`;
-      renderPlayerCard(doc, {
+      doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
+      renderPlayerCardFront(doc, {
         card: p.card, club, season: p.season, cardUrl,
         qrBuffer: rasterizeQrSvgToPng(cardUrl, 600), logoBuffer, photoBuffer: photos[i],
       });
+      doc.addPage({ size: [BIZCARD_WIDTH, BIZCARD_HEIGHT], margin: 0 });
+      renderPlayerCardBack(doc, { club, season: p.season, sponsorBuffer, logoBuffer });
     });
     doc.end();
   });

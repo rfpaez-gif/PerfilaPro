@@ -43,7 +43,7 @@ const PLAN_KIND = 'cantera-plan';
 //   siteUrl          — base success/cancel
 function buildPlanCheckoutSessionParams({
   org, card, parentEmail,
-  dueNowConcepts = [], dueNowFeeCents = 0,
+  dueNowConcepts = [], dueNowFeeCents = 0, carnetFeeCents = 0,
   campaignId = null, siteUrl = 'https://perfilapro.es',
 }) {
   const metadata = {
@@ -57,6 +57,20 @@ function buildPlanCheckoutSessionParams({
   const dueNow = (dueNowConcepts || []).filter(c => Number(c.amount_cents) > 0);
   const dueNowTotal = dueNow.reduce((s, c) => s + Number(c.amount_cents), 0);
 
+  // Carnet embebido (decisión de monetización · sección ★ del handoff):
+  // PerfilaPro skimea el importe del carnet del PRIMER pago vía
+  // application_fee — no es una línea visible (el club no puede tratarlo como
+  // opcional), el padre paga la matrícula y el carnet sale de ahí. Solo si hay
+  // cobro ahora (mode payment) y cabe en el total tras la comisión; si no, el
+  // carnet se factura al club por el fallback (create-setup-fee-checkout).
+  let carnetSkimmed = 0;
+  let appFee = dueNowFeeCents;
+  if (dueNowTotal > 0 && carnetFeeCents > 0) {
+    carnetSkimmed = Math.min(carnetFeeCents, Math.max(0, dueNowTotal - dueNowFeeCents));
+    appFee = dueNowFeeCents + carnetSkimmed;
+  }
+  if (carnetSkimmed > 0) metadata.carnet_fee_cents = String(carnetSkimmed);
+
   const base = {
     payment_method_types: ['card', 'sepa_debit'],
     customer_email: parentEmail,
@@ -69,7 +83,7 @@ function buildPlanCheckoutSessionParams({
   if (dueNowTotal > 0) {
     // Cobra lo que vence ya + guarda el método para los plazos futuros.
     const piData = { setup_future_usage: 'off_session', metadata };
-    if (dueNowFeeCents > 0) piData.application_fee_amount = dueNowFeeCents;
+    if (appFee > 0) piData.application_fee_amount = appFee;
     params = {
       ...base,
       mode: 'payment',
