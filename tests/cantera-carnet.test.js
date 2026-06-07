@@ -6,6 +6,14 @@ import { makeHandler as makeExport } from '../netlify/functions/print-order-expo
 const resolve = (v) => () => Promise.resolve(v);
 const PDF_MAGIC = '%PDF';
 
+// Nº de páginas del PDF = nº de /MediaBox (uno por página en PDFKit).
+const countPages = (buf) => (buf.toString('latin1').match(/\/MediaBox/g) || []).length;
+// PNG 1×1 transparente válido, para ejercitar el render de imagen (patrocinador/foto).
+const PNG_1PX = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64',
+);
+
 // ───────────────────────── buildPlayerCardPVC ─────────────────────────
 
 describe('buildPlayerCardPVC', () => {
@@ -23,6 +31,28 @@ describe('buildPlayerCardPVC', () => {
   it('lanza sin card.slug', async () => {
     await expect(buildPlayerCardPVC({ card: {}, logoBuffer: null, photoBuffer: null })).rejects.toThrow();
   });
+  it('genera un carnet de DOS caras (2 páginas) con temporada', async () => {
+    const buf = await buildPlayerCardPVC({
+      card: { slug: 'p-1', nombre: 'Leo Pérez', foto_url: null },
+      club: { name: 'CD Test', color_primary: '#00C277', logo_url: null },
+      season: { dorsal: 10, category_name: 'Infantil', team_name: 'Primera Infantil A', season: '2025-26' },
+      logoBuffer: null, photoBuffer: null, sponsorBuffer: null,
+      siteUrl: 'https://perfilapro.es',
+    });
+    expect(buf.subarray(0, 4).toString()).toBe(PDF_MAGIC);
+    expect(countPages(buf)).toBe(2);
+  });
+  it('renderiza el patrocinador en la cara B sin romper', async () => {
+    const buf = await buildPlayerCardPVC({
+      card: { slug: 'p-2', nombre: 'Ana', foto_url: null },
+      club: { name: 'CD Test', color_primary: '#0A1F44', logo_url: null },
+      season: { dorsal: 7, season: '2025-26' },
+      logoBuffer: null, photoBuffer: PNG_1PX, sponsorBuffer: PNG_1PX,
+      siteUrl: 'https://perfilapro.es',
+    });
+    expect(buf.subarray(0, 4).toString()).toBe(PDF_MAGIC);
+    expect(countPages(buf)).toBe(2);
+  });
   it('booklet con varios jugadores genera PDF', async () => {
     const players = [
       { card: { slug: 'p-1', nombre: 'A', foto_url: null }, season: { dorsal: 1 } },
@@ -30,6 +60,8 @@ describe('buildPlayerCardPVC', () => {
     ];
     const buf = await buildPlayerCardsBookletPDF({ players, club: { name: 'CD', color_primary: '#0A1F44', logo_url: null }, siteUrl: 'https://x' });
     expect(buf.subarray(0, 4).toString()).toBe(PDF_MAGIC);
+    // 2 jugadores × 2 caras = 4 páginas.
+    expect(countPages(buf)).toBe(4);
   });
   it('booklet vacío lanza', async () => {
     await expect(buildPlayerCardsBookletPDF({ players: [], club: {} })).rejects.toThrow();
