@@ -186,6 +186,11 @@ function formPage({ token, org, campaign, lang = 'es' }) {
       <span>Autorizo el tratamiento de los datos del menor para la gestión deportiva del club. (Obligatorio)</span></label>
     <label class="check"><input type="checkbox" id="consent_image" name="consent_image">
       <span>Cedo los derechos de imagen para la ficha digital y el carnet del jugador/a. (Opcional)</span></label>
+    <div id="photoBlock" style="display:none;margin-top:.6rem">
+      <label for="player_photo">Foto del jugador/a <small>para el carnet</small></label>
+      <input id="player_photo" name="player_photo" type="file" accept="image/png,image/jpeg,image/webp">
+      <img id="photoPreview" alt="" style="display:none;max-width:90px;border-radius:8px;margin-top:.5rem">
+    </div>
 
     <div class="sect">Pago</div>
     ${amountsBlock}
@@ -202,14 +207,44 @@ function formPage({ token, org, campaign, lang = 'es' }) {
     var form = document.getElementById('enrForm');
     var btn = document.getElementById('submitBtn');
     var err = document.getElementById('enrErr');
+
+    // Foto del carnet: solo visible al ceder derechos de imagen. Se sube en
+    // el mismo acto que el consentimiento (se manda en base64 con el submit).
+    var photoData = null;
+    var photoBlock = document.getElementById('photoBlock');
+    var fileInput = document.getElementById('player_photo');
+    var preview = document.getElementById('photoPreview');
+    form.consent_image.addEventListener('change', function(){
+      photoBlock.style.display = form.consent_image.checked ? 'block' : 'none';
+      if (!form.consent_image.checked) { photoData = null; fileInput.value = ''; preview.style.display = 'none'; }
+    });
+    fileInput.addEventListener('change', function(){
+      photoData = null; preview.style.display = 'none'; err.textContent = '';
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      if (f.size > 2*1024*1024) { err.textContent = 'La foto supera el máximo de 2 MB.'; fileInput.value = ''; return; }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var res = reader.result || '';
+        var comma = res.indexOf(',');
+        photoData = { base64: comma >= 0 ? res.slice(comma+1) : res, contentType: f.type };
+        preview.src = res; preview.style.display = 'block';
+      };
+      reader.readAsDataURL(f);
+    });
+
     form.addEventListener('submit', async function(e){
       e.preventDefault();
       err.textContent = '';
       var fd = new FormData(form);
       var payload = { token: TOKEN, idioma: ${JSON.stringify(lang)} };
-      fd.forEach(function(v,k){ payload[k] = v; });
+      fd.forEach(function(v,k){ if (v instanceof File) return; payload[k] = v; });
       payload.consent_data = form.consent_data.checked;
       payload.consent_image = form.consent_image.checked;
+      if (form.consent_image.checked && photoData) {
+        payload.photo_base64 = photoData.base64;
+        payload.photo_content_type = photoData.contentType;
+      }
       btn.disabled = true; btn.textContent = 'Enviando…';
       try {
         var r = await fetch('/api/enrollment-submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });

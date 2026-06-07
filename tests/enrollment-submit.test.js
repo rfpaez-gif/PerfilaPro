@@ -16,15 +16,24 @@ function makeDb(opts = {}) {
   } = opts;
   const inserts = { cards: [], member_club_seasons: [], card_admins: [], card_consents: [] };
   const deletes = { cards: [] };
+  const updates = { cards: [] };
+  const uploads = [];
 
   return {
-    inserts, deletes,
+    inserts, deletes, updates, uploads,
+    storage: {
+      from: () => ({
+        upload: (name, buf, o) => { uploads.push({ name, len: buf.length, o }); return Promise.resolve({ error: null }); },
+        getPublicUrl: (name) => ({ data: { publicUrl: 'https://x.supabase.co/storage/v1/object/public/Avatars/' + name } }),
+      }),
+    },
     from: vi.fn((t) => {
       if (t === 'enrollment_campaigns') return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: campaign, error: null }) }) }) };
       if (t === 'organizations') return { select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: org, error: null }) }) }) };
       if (t === 'cards') return {
         select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: slugClash ? { slug: 'p-clash' } : null, error: null }) }) }),
         insert: (row) => { inserts.cards.push(row); return Promise.resolve({ error: cardInsertErr }); },
+        update: (row) => { updates.cards.push(row); return { eq: () => Promise.resolve({ error: null }) }; },
         delete: () => ({ eq: (c, v) => { deletes.cards.push(v); return Promise.resolve({ error: null }); } }),
       };
       if (t === 'member_club_seasons') return { insert: (row) => { inserts.member_club_seasons.push(row); return Promise.resolve({ error: null }); } };
@@ -116,6 +125,26 @@ describe('enrollment-submit', () => {
     const db = makeDb();
     await makeHandler(db, mockEmail)(ev({ ...VALID, consent_image: true }));
     expect(db.inserts.card_consents.map(c => c.consent_type)).toContain('image_rights');
+  });
+
+  it('con consent_image + foto: sube a storage y escribe foto_url', async () => {
+    const db = makeDb();
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64').toString('base64');
+    const res = await makeHandler(db, mockEmail)(ev({
+      ...VALID, consent_image: true, photo_base64: png, photo_content_type: 'image/png',
+    }));
+    expect(res.statusCode).toBe(201);
+    expect(db.uploads).toHaveLength(1);
+    expect(db.uploads[0].name).toMatch(/^players\/p-[0-9a-f]{8}-\d+\.png$/);
+    expect(db.updates.cards[0].foto_url).toContain('/Avatars/players/');
+  });
+  it('foto sin consent_image: NO sube nada (gated por derechos de imagen)', async () => {
+    const db = makeDb();
+    await makeHandler(db, mockEmail)(ev({
+      ...VALID, consent_image: false, photo_base64: 'AAAA', photo_content_type: 'image/png',
+    }));
+    expect(db.uploads).toHaveLength(0);
+    expect(db.updates.cards).toHaveLength(0);
   });
 
   it('payment_choice online se devuelve para que el front encadene el checkout', async () => {
