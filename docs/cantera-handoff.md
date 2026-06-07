@@ -6,6 +6,19 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 ---
 
+## ⚠️ ACCIONES PENDIENTES EN PROD (founder) — antes de encender el carnet
+
+El backend del carnet está **mergeado a `main`** (PR #178, sha `03a6e81`) pero queda **dormido / no-op de comportamiento** hasta que hagas estas dos cosas. Hasta entonces el cobro funciona **idéntico a hoy** (carnet por fallback al club), cero riesgo.
+
+1. **SQL — copiar y ejecutar en el Supabase SQL Editor**: la migración `supabase/migrations/043_cantera_carnet_sponsor.sql` (añade `organizations.carnet_sponsor_url`). Es idempotente. *(Sin ella: el render del carnet sigue funcionando —cara B con escudo— y el endpoint de subida del patrocinador daría error, pero ese endpoint aún no tiene UI que lo llame.)*
+2. **Netlify — env vars**:
+   - `CANTERA_CARNET_FEE_CENTS=1200` → enciende el skim del carnet (12€) en el primer pago. **Sin ella el skim está OFF** (default 0 → carnet por fallback al club).
+   - Confirmar `STRIPE_PLATFORM_FEE_BPS=150` → comisión 1,5%.
+
+> Recordatorio activo: **te falta hacer "el copy en SQL" (migración 043) y "lo de Netlify" (las 2 env vars)**. Mientras no estén, nada del carnet nuevo se activa.
+
+---
+
 ## ★ Modelo de monetización (CERRADO · 2026-06-07)
 
 > Esta sección **manda** sobre cualquier línea anterior del documento que diga lo contrario. En concreto **supersede**: (a) el default de §2 "Stripe model: Connect **Standard** … Express NO" → ahora es **Express**; (b) el enfoque de §4·Q3 (Stripe como mero "upgrade voluntario") → ahora Stripe/Bizum es el carril de cobro de referencia, dentro de un modelo de **tres capas de ingreso**. Las decisiones-marco **D1/D2/D3 NO se tocan**.
@@ -336,17 +349,24 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 **Mensaje para arrancar el hilo nuevo** (copiar tal cual):
 
-> Continúo el sprint Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` (banner de migración en §1). Capas 0–5 están mergeadas a `main` — trabaja desde `main`. Queda solo la **capa 6 · UI** en sub-PRs. Arranca con **6a · lecturas del Studio deportivo**: añade a `org-panel.js` los endpoints de lectura que el Studio del club necesita (plantilla agrupada por categoría con dorsal/cuota/estado de pago, stats agregadas del club, bandeja de fichajes entrantes/salientes), con tests. Después seguimos con 6b (UI Studio) y 6c (vista del padre).
+> Continúo el sprint Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` — empieza por el banner **⚠️ ACCIONES PENDIENTES EN PROD** (arriba del todo) y la **sección ★** (modelo de monetización del carnet + estado + pendiente). Todo está mergeado a `main` (incl. el carnet, PR #178); trabaja desde `main`. Las **capas 0–6 del Studio/padre y el BACKEND del carnet están listos y probados** (render 2 caras, foto en inscripción, carnet embebido en el primer pago vía `application_fee`, storage del patrocinador, regla "carnet listo" en `getRoster`). Lo que queda es **cableado de UI en `panel.html`** (bajo riesgo, el backend ya existe) + Bizum. Arranca con: (1) **chip "carnet listo"** en el roster del Studio (consume `carnet_ready`/`carnet_missing`, ya en `get_roster`); (2) **control de subida del patrocinador** en el Studio → `POST /api/upload-carnet-sponsor-panel` (backend listo); (3) **filtro del lote de impresión** por `carnet_ready` en `print-order-export`. Después: re-subida de foto desde el panel del padre, y el chunk **Bizum + Connect Express** (ojo: Bizum no guarda mandato → solo one-shot puro, no en el plan con `setup_future_usage`).
 
-**Cómo está montado el backend que la capa 6 consume** (todo en `main`):
+**Carnet del jugador — backend ya en `main` (sesión 2026-06-07)**:
+- Render: `printable-card-utils.js` → `renderPlayerCardFront` (cara A: identidad + temporada) / `renderPlayerCardBack` (cara B: patrocinador `club.carnet_sponsor_url` + validez; fallback escudo). 2 páginas/jugador. Param `sponsorBuffer`.
+- Foto: `lib/player-photo.js` + `enrollment-submit` (sube en la inscripción gated por `consent_image`, best-effort) + campo en `enrollment-page`.
+- Cobro embebido: `lib/enrollment-checkout.buildPlanCheckoutSessionParams` (skim `carnetFeeCents` en el `application_fee`, capado) + `CANTERA_CARNET_FEE_CENTS` en `create-enrollment-checkout` + auto-`card_print_orders` idempotente en `lib/cantera-webhook.handlePlanCheckoutCompleted`. Fallback manual = `create-setup-fee-checkout` (club).
+- Patrocinador: migración **043** (`organizations.carnet_sponsor_url`) + `upload-carnet-sponsor-panel.js` (auth org-panel scoped, solo sports_club).
+- Regla "carnet listo": `lib/carnet-ready.js` (`foto + equipo + dorsal`) → `getRoster` devuelve `carnet_ready`/`carnet_missing`.
+
+**Cómo está montado el resto del backend** (todo en `main`):
 - Alta/fichaje: `register-player` (3a), `request/accept/cancel` transfer (3b), `parent-consent` (3c).
 - Auth: `panel-auth` (org-panel, club) + `parent-auth` (parent-panel, tutor). `lib/panel-auth` firma/verifica ambos por `purpose`.
 - Cobros: `stripe-connect-onboard` (4a), `create-parent-checkout` (4b), `create-setup-fee-checkout` + `record-external-payment` (4c), webhook `lib/cantera-webhook` (4d).
-- Carnet: `buildPlayerCardPVC`/`buildPlayerCardsBookletPDF`, `print-order-export`, `nfc-register` (5).
+- Carnet (base): `buildPlayerCardPVC`/`buildPlayerCardsBookletPDF`, `print-order-export`, `nfc-register` (5).
 - Incidencias founder: `lib/cantera-incidents` + acciones `cantera_*` en `admin-orgs` (+ UI en admin-orgs.html).
-- Helpers (1): `cantera-flag`, `card-kind`, `pii-crypto`, `sports-categories`, `external-payments`, `consent`.
+- Helpers (1): `cantera-flag`, `card-kind`, `pii-crypto`, `sports-categories`, `external-payments`, `consent`, `player-photo`, `carnet-ready`.
 
-**Lo que la capa 6 tiene que CREAR (no existe aún)**: endpoints de lectura del Studio deportivo en `org-panel.js` (6a) + el frontend de `panel.html` ramificado por `org.kind` (6b Studio club / 6c vista padre). El grueso de 6b/6c es cablear botones a endpoints ya existentes.
+**Lo que el próximo hilo tiene que CREAR**: UI en `panel.html` (chip "carnet listo" en el roster · control de subida del patrocinador en el Studio · filtro de impresión por `carnet_ready`) + re-subida de foto desde el panel del padre + chunk Bizum/Connect Express. Casi todo es cablear front a endpoints/datos que ya existen.
 
 **Decisiones del founder en esta sesión** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.
