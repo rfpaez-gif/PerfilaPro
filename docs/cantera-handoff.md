@@ -41,12 +41,30 @@ La comisión sobre la cuota **tiene una fuga estructural**: el club puede usar t
 ### Veredicto
 Bizum sobre **Connect Express** (conviviendo con tarjeta/SEPA), **sí**. Pero la facturación **no se fía solo a la comisión**: el **suelo por jugador/temporada + el carnet** aseguran el "pasar por caja"; la comisión es la guinda. Las tres capas juntas = el negocio.
 
-### Delta de implementación pendiente (no ejecutado aún)
-1. `stripe-connect-onboard.js`: `type:'standard'` → `'express'` + onboarding incremental (`collection_options`/`currently_due`).
-2. Añadir `bizum` a `payment_method_types` en los checkouts one-shot (matrícula / plan "vence ya"); ya están en `mode:'payment'`.
-3. Carril mensual recurrente: tarjeta-guardada/SEPA (Bizum no es recurrente). Para el **plan por conceptos**, Bizum + link/recordatorio por plazo (la matriz de Cobros ya lleva estado paid/pending).
-4. Capa 1 (suelo por jugador/temporada): definir importe + mecanismo (reusar `create-org-checkout` o checkout de temporada dedicado).
-5. Confirmar con el founder los importes (§6) antes de codificar.
+### Carnet del jugador — decisiones cerradas (2026-06-07)
+
+El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval iguala la comisión anual de 1,5% sobre ~600€ y NO tiene fuga). Decisiones:
+
+- **12€/chaval/temporada, DENTRO del pack de material** (chándal, equipación…). Cobro fijo casi garantizado: el padre lo paga sin venta extra. **Credencial oficial OBLIGATORIA** (no opcional) — el QR/estado se apoya en la regla de dominio *"el que no paga la cuota, no juega"*, que convierte la matriz de Cobros en herramienta operativa crítica.
+- **PVC color a 2 caras + QR, SIN NFC en el MVP** (el QR ya hace de credencial; coste ~2,6€). El NFC puede volver con el banco.
+- **Cara A** = identidad (color+escudo+club · foto · dorsal · nombre · categoría·equipo —la competición ya va en `team_name`, mig 040/041— · **temporada** · QR). Los datos legales del club NO van en el plástico (viven tras el QR). **Cara B** = imagen de **patrocinador del club** (lo vende/gestiona el club, se queda el dinero; PerfilaPro solo imprime) + franja de validez; sin patrocinador → escudo centrado. El área de cara B es además el **hueco reservado para el patrocinador de RED de PerfilaPro (CaixaBank, Fase 2)**.
+- **Foto** capturada **en la inscripción**, en el mismo acto que el consentimiento de imagen (`consent_image`).
+- **Cobro embebido en el primer pago**: PerfilaPro skimea los 12€ del primer pago del plan vía `application_fee` (invisible/no-toggle para el club). Fallback `create-setup-fee-checkout` al club para clubes manuales/Bizum.
+- **CaixaBank = Fase 2**, como **patrocinio del carnet** (plástico subvencionado + co-brand), NO como cuentas bancarias a menores (choca con la arquitectura LOPD + KYC + es venta B2B lenta).
+
+### Estado de implementación (rama `claude/cantera-perfilapro-M7gks`)
+
+- ✅ **Carnet a 2 caras** (`printable-card-utils` · `renderPlayerCardFront`/`renderPlayerCardBack` + `sponsorBuffer`/`carnet_sponsor_url`) — commit `b95937c`.
+- ✅ **Foto en la inscripción** (`lib/player-photo.js` + `enrollment-submit` + campo en `enrollment-page`, gated por `consent_image`, best-effort) — commiteado.
+- ✅ **Carnet embebido en el primer pago** (`lib/enrollment-checkout` skim `application_fee` capado + `CANTERA_CARNET_FEE_CENTS` en `create-enrollment-checkout` + auto-`card_print_orders` idempotente en `lib/cantera-webhook`) — commit `2e56b28`.
+- Suite **1601/1601**. Sin migraciones nuevas todavía (el sponsor pide una).
+
+### Pendiente (próximos chunks)
+1. **Regla "carnet listo"** (foto + equipo + dorsal): chip en el roster (`org-panel get_roster`) + filtro del lote de impresión (`print-order-export`/booklet) + aviso en el panel del padre ("falta la foto del carnet").
+2. **Sponsor cara B · storage**: migración `organizations.carnet_sponsor_url` + acción `org-panel`/endpoint para subir el patrocinador (reusar patrón `upload-org-logo-panel`) + UI en el Studio. *(El render YA lo soporta vía `sponsorBuffer`/`club.carnet_sponsor_url`.)*
+3. **Re-subida de foto desde el panel del padre** (follow-up): endpoint scoped al JWT del tutor + control en `renderParentChildren`.
+4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
+5. **Env prod**: `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
 
 ---
 

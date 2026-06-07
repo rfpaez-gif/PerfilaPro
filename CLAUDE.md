@@ -552,6 +552,7 @@ CANTERA_PII_KEY                  # AES key (32 bytes hex, `openssl rand -hex 32`
 STRIPE_CONNECT_CLIENT_ID         # OAuth client ID Standard accounts.
 STRIPE_CONNECT_WEBHOOK_SECRET    # Webhook secret separado para eventos Connect.
 STRIPE_PLATFORM_FEE_BPS          # bps comisión platform sobre cuota padre. Default 0.
+CANTERA_CARNET_FEE_CENTS         # Carnet embebido: importe (céntimos) que PerfilaPro skimea del primer pago del plan vía application_fee. Default 0 (off → carnet por fallback al club). Ej. 1200 = 12€.
 STRIPE_PRICE_PLAYER_SETUP_FEE    # 12€ carnet setup.
 STRIPE_PRICE_PLAYER_RENEWAL      # 6€ renovación anual.
 STRIPE_PRICE_PARENT_PREMIUM      # 4-6€/mes premium padre (opcional Sprint 2).
