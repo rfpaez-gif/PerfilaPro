@@ -152,6 +152,10 @@ describe('org-panel · Cantera reads (layer 6a)', () => {
     const bySlug = {};
     for (const cat of body.categories) for (const m of cat.members) bySlug[m.slug] = m;
     expect(bySlug['p-1'].payment).toMatchObject({ source: 'stripe', status: 'active' });
+
+    // Regla "carnet listo": p-1 tiene equipo+dorsal pero NO foto → falta foto.
+    expect(bySlug['p-1'].carnet_ready).toBe(false);
+    expect(bySlug['p-1'].carnet_missing).toEqual(['foto']);
     expect(bySlug['p-2'].payment).toMatchObject({ source: 'manual', status: 'paid', method: 'bizum' });
     expect(bySlug['p-3'].payment).toMatchObject({ status: 'unpaid' });
     expect(bySlug['p-2'].previous_club_name).toBe('Otro CF');
