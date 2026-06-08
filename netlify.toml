@@ -334,6 +334,13 @@
   to     = "/.netlify/functions/parent-data"
   status = 200
 
+# Foto del jugador desde el panel del padre (JWT parent-panel): subir/
+# reemplazar la foto del menor después de la inscripción.
+[[redirects]]
+  from   = "/api/upload-player-photo"
+  to     = "/.netlify/functions/upload-player-photo"
+  status = 200
+
 # Capa 3a · alta de jugador/staff desde el Studio del club (JWT org-panel).
 [[redirects]]
   from   = "/api/register-player"

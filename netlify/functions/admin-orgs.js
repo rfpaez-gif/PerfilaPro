@@ -20,6 +20,7 @@ const { buildEditLinkEmail, EDIT_LINK_STRINGS } = require('./send-edit-link');
 const {
   buildBusinessCardPDF,
   buildBusinessCardsBookletPDF,
+  buildPlayerCardPVC,
   fetchLogoAsPngBuffer,
 } = require('./printable-card-utils');
 const { inviteTeamMembers } = require('./lib/team-invite');
@@ -1594,6 +1595,75 @@ function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStrip
         const overview = await cantera.playerOverview(db, body.card_slug);
         if (!overview) return jsonResponse(404, { error: 'Jugador no encontrado' });
         return jsonResponse(200, { ok: true, ...overview });
+      }
+
+      // Preview del carnet PVC+NFC de UN jugador (founder). Render directo
+      // desde el roster — NO depende de un pedido pagado en card_print_orders.
+      // Lo que el founder ve aquí es exactamente lo que se imprimirá. Reusa
+      // buildPlayerCardPVC (misma pieza que el booklet de print-order-export).
+      // Caso de uso: el founder quiere ver el carnet de un jugador recién
+      // inscrito sin tener que pasar por el cobro del setup fee.
+      if (action === 'cantera_preview_carnet') {
+        if (!isCanteraActive()) return canteraDisabledResponse();
+        if (!body.card_slug) return jsonResponse(400, { error: 'card_slug requerido' });
+
+        const { data: card, error: cardErr } = await db
+          .from('cards')
+          .select('slug, nombre, foto_url, card_kind, organization_id')
+          .eq('slug', body.card_slug)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (cardErr) return jsonResponse(500, { error: cardErr.message });
+        if (!card || card.card_kind !== 'player') return jsonResponse(404, { error: 'Jugador no encontrado' });
+        if (!card.organization_id) return jsonResponse(400, { error: 'El jugador no tiene club activo' });
+
+        const { data: org, error: orgErr } = await db
+          .from('organizations')
+          .select('id, slug, name, color_primary, logo_url, carnet_sponsor_url, sport')
+          .eq('id', card.organization_id)
+          .is('deleted_at', null)
+          .maybeSingle();
+        if (orgErr) return jsonResponse(500, { error: orgErr.message });
+        if (!org) return jsonResponse(404, { error: 'Club no encontrado' });
+
+        // Membresía activa (dorsal/categoría/equipo) para pintar el frente.
+        const { data: ms } = await db
+          .from('member_club_seasons')
+          .select('dorsal, team_name, category_id, season')
+          .eq('card_slug', card.slug)
+          .is('left_at', null)
+          .order('joined_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        let categoryName = null;
+        if (ms && ms.category_id) {
+          const { data: cat } = await db
+            .from('sports_categories')
+            .select('display_name_es')
+            .eq('id', ms.category_id)
+            .maybeSingle();
+          categoryName = cat ? cat.display_name_es : null;
+        }
+
+        const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+        try {
+          const pdf = await buildPlayerCardPVC({
+            card,
+            club: org,
+            season: ms ? { dorsal: ms.dorsal, team_name: ms.team_name, category_name: categoryName, season: ms.season } : null,
+            siteUrl,
+          });
+          return jsonResponse(200, {
+            ok: true,
+            filename: `carnet-${card.slug}.pdf`,
+            base64: pdf.toString('base64'),
+            has_photo: !!card.foto_url,
+          });
+        } catch (err) {
+          console.error('cantera_preview_carnet: render falló:', err.message);
+          return jsonResponse(500, { error: 'No se pudo generar el carnet' });
+        }
       }
 
       // Familia 1: editar membresía abierta.

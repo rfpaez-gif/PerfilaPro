@@ -191,6 +191,9 @@
     .pp-child { background: #fff; border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: var(--pp-r-lg, 16px); padding: 1.5rem; margin-bottom: 1.25rem; }
     .pp-child__head { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
     .pp-child__avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #E5E7EB; flex-shrink: 0; }
+    .pp-child__avatarwrap { display: flex; flex-direction: column; align-items: center; gap: .35rem; flex-shrink: 0; }
+    .pp-child__photobtn { background: none; border: none; padding: 0; font-size: 11px; color: var(--accent, #00C277); font-weight: 600; cursor: pointer; }
+    .pp-child__photobtn:hover { text-decoration: underline; }
     .pp-child__name { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; margin: 0; letter-spacing: -0.01em; }
     .pp-child__club { font-size: 13px; color: #6B7280; margin: .15rem 0 0; }
     .pp-child__grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1.25rem; margin: 1rem 0; }
@@ -2769,7 +2772,10 @@
           }</tbody></table></div>
         </details>` : '';
 
-      const avatar = c.foto_url ? `<img class="pp-child__avatar" src="${escapeHtml(c.foto_url)}" alt="">` : `<span class="pp-child__avatar"></span>`;
+      const avatar = `<div class="pp-child__avatarwrap">
+            ${c.foto_url ? `<img class="pp-child__avatar" src="${escapeHtml(c.foto_url)}" alt="">` : `<span class="pp-child__avatar"></span>`}
+            <button type="button" class="pp-child__photobtn" data-photo="${i}">${c.foto_url ? '📷 Cambiar foto' : '📷 Añadir foto'}</button>
+          </div>`;
       const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
       const canPayStripe = c.club && c.payment && c.payment.status !== 'active';
 
@@ -2825,6 +2831,41 @@
     $('parentChildren').querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => startParentCheckout(parentChildren[+b.dataset.pay], b)));
     $('parentChildren').querySelectorAll('[data-payplan]').forEach(b => b.addEventListener('click', () => startPlanCheckout(parentChildren[+b.dataset.payplan], b)));
     $('parentChildren').querySelectorAll('[data-consent]').forEach(b => b.addEventListener('click', () => openConsent(parentChildren[+b.dataset.consent])));
+    $('parentChildren').querySelectorAll('[data-photo]').forEach(b => b.addEventListener('click', () => startPhotoUpload(parentChildren[+b.dataset.photo], b)));
+  }
+
+  // Subir/reemplazar la foto del menor → upload-player-photo (scoped al JWT
+  // del tutor). Abre un selector de archivo, valida <2 MB, lo manda en base64
+  // y recarga el panel para pintar la foto nueva. La foto va al carnet y a la
+  // ficha; NO hace pública la card (eso es un consentimiento aparte).
+  function startPhotoUpload(child, btn) {
+    if (!child || !child.slug) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp';
+    input.addEventListener('change', () => {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { pToast('err', 'La foto supera el máximo de 2 MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const res = reader.result || '';
+        const comma = res.indexOf(',');
+        const base64 = comma >= 0 ? res.slice(comma + 1) : res;
+        const original = btn ? btn.textContent : null;
+        if (btn) { btn.disabled = true; btn.textContent = 'Subiendo…'; }
+        try {
+          await apiRaw('/api/upload-player-photo', { card_slug: child.slug, base64, contentType: f.type });
+          pToast('ok', 'Foto actualizada.');
+          await loadParentDashboard();
+        } catch (e) {
+          pToast('err', e.message);
+          if (btn && original) { btn.disabled = false; btn.textContent = original; }
+        }
+      };
+      reader.readAsDataURL(f);
+    });
+    input.click();
   }
 
   // ── Modal del padre ──────────────────────────────────────
