@@ -1905,6 +1905,7 @@ function incRender() {
     </div>
     <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem">
       <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incRevealBirthdate()">👁 Revelar fecha nac.</button>
+      ${card.card_kind === 'player' ? `<button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incPreviewCarnet(this)">🪪 Ver carnet</button>` : ''}
       <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incSetVisibility(${card.public_card ? 'false' : 'true'})">${card.public_card ? '🔒 Ocultar' : '🌐 Hacer pública'}</button>
       <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incReassign()">🔄 Reasignar club</button>
       <button class="pp-btn pp-btn--ghost pp-btn--sm" onclick="incDelete(false)">🗑 Borrar (soft)</button>
@@ -1941,6 +1942,29 @@ function incRevealBirthdate() {
 }
 function incSetVisibility(v) {
   incAction({ action: 'cantera_set_visibility', card_slug: incSlugNow(), public_card: v }, v ? 'Ficha pública' : 'Ficha oculta');
+}
+// Previsualiza el carnet PVC+NFC del jugador (render directo, sin pasar por
+// el cobro del setup fee). Abre el PDF en una pestaña nueva. Si el jugador
+// aún no tiene foto, el carnet sale con el placeholder y avisamos.
+async function incPreviewCarnet(btn) {
+  const original = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  try {
+    const json = await callAdmin({ action: 'cantera_preview_carnet', card_slug: incSlugNow() });
+    if (!json.base64) throw new Error('Respuesta sin PDF');
+    const binary = atob(json.base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(json.has_photo ? 'Carnet generado' : 'Carnet generado (sin foto · el jugador aún no la ha subido)', json.has_photo ? 'ok' : 'err');
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  } finally {
+    if (btn && original) { btn.disabled = false; btn.textContent = original; }
+  }
 }
 function incDelete(hard) {
   if (hard && !confirm('Borrado DEFINITIVO de la ficha (cascade membresías + tutores). Irreversible. ¿Seguro?')) return;
