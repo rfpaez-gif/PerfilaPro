@@ -2,7 +2,7 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-09 (UI del carnet cableada en rama `claude/cantera-handoff-docs-pf9ozx` — items 1, 2 y 3 del pendiente HECHOS · **migración 043 + env vars EJECUTADAS en prod** → carnet nuevo ENCENDIDO. Queda solo el chunk **(4) Bizum + Connect Express** para un hilo dedicado).
+Última actualización: 2026-06-09 (chunk **(4) Bizum + Connect Express** HECHO en rama `claude/bizum-connect-express-ga8ga4` — Bizum en los tres pagos únicos + Connect Standard→Express con onboarding incremental, suite 1650/1650. **Sprint Cantera cerrado**, salvo la acción manual de habilitar Bizum en el Dashboard de Stripe. UI del carnet (items 1–3) mergeada en #183).
 
 ---
 
@@ -76,7 +76,11 @@ El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval 
 1. ✅ **UI "carnet listo"** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): chip por jugador + contador `🪪 N/M carnets listos` en el roster de `panel.html` (`get_roster.totals.carnet_ready`) · filtro `only_ready` en `print-order-export` (CSV + PDF booklet, opt-in) · aviso "🪪 Falta la foto del carnet" en el panel del padre (`parent-data.carnet_photo_missing`, junto al botón de subir foto).
 2. ✅ **UI del patrocinador en el Studio** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): sección "Patrocinador del carnet" en la pestaña Carnets de `panel.html` con previsualización + subida que llama a `upload-carnet-sponsor-panel` (reemplaza la imagen anterior). `sanitizeSportsOrg` expone `carnet_sponsor_url` para previsualizar. Sin botón de "quitar" (el backend solo sube/reemplaza, no borra a null).
 3. ✅ **Re-subida de foto desde el panel del padre** (HECHO en PR #180): `upload-player-photo` scoped al JWT del tutor + botón "📷 Cambiar/Añadir foto" en `renderParentChildren`.
-4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
+4. ✅ **Bizum + Connect Express** (HECHO, rama `claude/bizum-connect-express-ga8ga4`):
+   - **Bizum en los tres pagos únicos.** (a) Autónomo Base/Pro (`create-checkout`) + carnet del club (`create-setup-fee-checkout`) = cuenta plataforma, métodos automáticos del Dashboard → **cero código**, se activa habilitando Bizum en el Dashboard de Stripe. (b) Plan de cantera one-shot puro (`lib/enrollment-checkout.buildPlanCheckoutSessionParams`, nuevo param `hasScheduled`): cuando el plan entero vence ya (sin plazos futuros), quita `setup_future_usage` y añade `bizum` a `payment_method_types`; con plazos futuros sigue en card/SEPA con mandato. El carril mensual (suscripción) y B2B/org intactos.
+   - **Connect Standard→Express** (`stripe-connect-onboard.js`): `accounts.create` ahora `type:'express'`, `country:'ES'`, capabilities `card_payments`/`sepa_debit_payments`/`bizum_payments`/`transfers`; Account Link con `collection_options.fields='currently_due'` (onboarding incremental). Solo afecta cuentas nuevas (no había cuentas conectadas reales → migración segura).
+   - Suite **1650/1650**. Sin migraciones ni env vars nuevas.
+   - ⚠️ **Acción manual en prod pendiente**: habilitar **Bizum** en el Dashboard de Stripe (cuenta plataforma) para que aparezca en los checkouts de autónomo + carnet. La capability `bizum_payments` de la cuenta Express del club se pide sola en el onboarding.
 5. ✅ **Env prod** (HECHO 2026-06-09): migración **043** ejecutada + `CANTERA_CARNET_FEE_CENTS=1200` + `STRIPE_PLATFORM_FEE_BPS=150` confirmadas en Netlify.
 
 > **Nota de scope** (item 1): `print-order-export` (auth founder password+TOTP) aún **no tiene UI** — el filtro `only_ready` queda listo en backend para cuando se construya el botón de export de lote en `admin-orgs.html`. El chip del roster y el aviso del padre sí son visibles ya.

@@ -45,7 +45,7 @@ async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, ca
   if (existing) return jsonResponse(409, { error: 'Ya hay un plan de pagos activo para este jugador' });
 
   const asOf = new Date().toISOString().slice(0, 10);
-  const { dueNow } = splitPlanByDue(plan, asOf);
+  const { dueNow, scheduled } = splitPlanByDue(plan, asOf);
   const dueNowTotal = sumCents(dueNow);
   const dueNowFeeCents = applicationFeeCents(dueNowTotal, feeBps);
 
@@ -56,7 +56,8 @@ async function handlePlanCheckout({ db, stripe, org, card, parentEmail, plan, ca
   if (insErr) return jsonResponse(500, { error: insErr.message });
 
   const { params, options } = buildPlanCheckoutSessionParams({
-    org, card, parentEmail, dueNowConcepts: dueNow, dueNowFeeCents, carnetFeeCents, campaignId, siteUrl,
+    org, card, parentEmail, dueNowConcepts: dueNow, dueNowFeeCents, carnetFeeCents,
+    hasScheduled: scheduled.length > 0, campaignId, siteUrl,
   });
 
   try {

@@ -76,9 +76,17 @@ describe('stripe-connect-onboard', () => {
     const out = JSON.parse(res.body);
     expect(out.url).toContain('connect.stripe.com');
     expect(out.account_id).toBe('acct_new');
-    expect(stripe.accounts.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'standard' }));
+    expect(stripe.accounts.create).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'express',
+      country: 'ES',
+      capabilities: expect.objectContaining({ bizum_payments: { requested: true } }),
+    }));
     expect(db.updates).toContainEqual({ stripe_connect_account_id: 'acct_new' });
-    expect(stripe.accountLinks.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'account_onboarding', account: 'acct_new' }));
+    expect(stripe.accountLinks.create).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'account_onboarding',
+      account: 'acct_new',
+      collection_options: { fields: 'currently_due' },
+    }));
   });
 
   it('onboard: reusa la cuenta existente sin crear otra', async () => {
