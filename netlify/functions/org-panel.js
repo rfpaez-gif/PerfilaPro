@@ -565,6 +565,28 @@ function makeHandler(db, emailClient) {
       if (action === 'enrollment_invite') return await enrollmentInvite(db, emailClient, sportsOrg, body, siteUrl);
     }
 
+    // ── CANTERA · datos de pago manual del club (transferencia/Bizum) ──
+    // El club publica IBAN + Bizum + instrucciones que el panel del padre
+    // muestra cuando no hay Stripe Connect. Texto informativo (no mueve
+    // dinero); el backend lo sanea. Mismo gate (flag + sports_club).
+    if (action === 'update_payment_info') {
+      if (!isCanteraActive()) return canteraDisabledResponse();
+      const loaded = await loadSportsOrg(db, org.id);
+      if (loaded.error) return loaded.error;
+      const clean = (v, max) => {
+        const s = String(v == null ? '' : v).replace(/<[^>]*>/g, '').trim();
+        return s ? s.slice(0, max) : null;
+      };
+      const update = {
+        payment_iban: clean(body.payment_iban, 34),
+        payment_bizum: clean(body.payment_bizum, 30),
+        payment_instructions: clean(body.payment_instructions, 500),
+      };
+      const { error } = await db.from('organizations').update(update).eq('id', org.id);
+      if (error) return jsonResponse(500, { error: error.message });
+      return jsonResponse(200, { ok: true, ...update });
+    }
+
     return jsonResponse(400, { error: `Acción desconocida: ${action}` });
   };
 }
@@ -1162,6 +1184,9 @@ function sanitizeSportsOrg(org) {
     monthly_fee_cents: org.cantera_monthly_fee_cents ?? null,
     stripe_connect_charges_enabled: !!org.stripe_connect_charges_enabled,
     stripe_connect_payouts_enabled: !!org.stripe_connect_payouts_enabled,
+    payment_iban: org.payment_iban || null,
+    payment_bizum: org.payment_bizum || null,
+    payment_instructions: org.payment_instructions || null,
   };
 }
 

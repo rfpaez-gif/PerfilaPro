@@ -136,7 +136,7 @@ function makeHandler(db) {
     if (orgIds.length) {
       const { data: orgs } = await db
         .from('organizations')
-        .select('id, slug, name, logo_url, color_primary, sport, kind, cantera_monthly_fee_cents, deleted_at')
+        .select('id, slug, name, logo_url, color_primary, sport, kind, cantera_monthly_fee_cents, stripe_connect_charges_enabled, payment_iban, payment_bizum, payment_instructions, deleted_at')
         .in('id', orgIds);
       for (const o of orgs || []) orgById.set(o.id, o);
       // Catálogo de categorías por deporte (para nombrar category_id).
@@ -299,6 +299,14 @@ function makeHandler(db) {
           color_primary: clubLive.color_primary || null,
           sport: clubLive.sport || null,
           monthly_fee_cents: clubLive.cantera_monthly_fee_cents ?? null,
+          // Pago online solo si el club tiene Stripe Connect listo. Si no,
+          // el padre paga por transferencia/Bizum con estos datos.
+          pay_online: !!clubLive.stripe_connect_charges_enabled,
+          pay_instructions: {
+            iban: clubLive.payment_iban || null,
+            bizum: clubLive.payment_bizum || null,
+            text: clubLive.payment_instructions || null,
+          },
         } : null,
         membership: active ? {
           season: active.season,

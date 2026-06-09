@@ -743,6 +743,21 @@
 
         <div id="connectBanner" class="pp-connect-banner" style="display:none"></div>
 
+        <details class="pp-payinfo" style="margin:1.25rem 0;border:1px solid #E5E7EB;border-radius:10px;padding:.75rem 1rem">
+          <summary style="cursor:pointer;font-weight:600;font-size:14px">💸 Datos para pago manual (transferencia / Bizum)</summary>
+          <p class="pp-form__hint" style="margin:.5rem 0 .75rem">Si no cobras por Stripe, publica aquí tu IBAN o Bizum. Los padres lo verán en su panel con el importe y un concepto para que puedas identificar cada ingreso. No mueve dinero: tú apuntas el pago en "Apuntar pago manual".</p>
+          <div class="pp-form__row"><label class="pp-form__label" for="payIban">IBAN para transferencia</label>
+            <input class="pp-input" id="payIban" type="text" maxlength="34" placeholder="ES00 0000 0000 0000 0000 0000"></div>
+          <div class="pp-form__row"><label class="pp-form__label" for="payBizum">Número de Bizum</label>
+            <input class="pp-input" id="payBizum" type="text" maxlength="30" placeholder="600 000 000"></div>
+          <div class="pp-form__row"><label class="pp-form__label" for="payInstructions">Instrucciones (opcional)</label>
+            <textarea class="pp-input" id="payInstructions" rows="3" maxlength="500" placeholder="Ej.: indica el nombre del jugador en el concepto. Plazo de pago hasta el día 5 de cada mes."></textarea></div>
+          <div class="pp-form__actions" style="margin-top:.5rem">
+            <button type="button" class="pp-btn pp-btn--primary" id="savePayInfoBtn">Guardar datos de pago</button>
+            <span id="payInfoMsg" style="margin-left:.75rem;font-size:13px;color:#6B7280"></span>
+          </div>
+        </details>
+
         <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.25rem 0 .5rem">
           <h3 class="pp-spark__title" style="margin:0">Estado por jugador</h3>
           <button type="button" class="pp-btn pp-btn--ghost" id="openRecordPaymentBtn">+ Apuntar pago manual</button>
@@ -2303,6 +2318,12 @@
       if (b) b.addEventListener('click', startConnectOnboard);
     }
 
+    // Prefill de los datos de pago manual (transferencia/Bizum) del club.
+    const o = stats.org || {};
+    if ($('payIban')) $('payIban').value = o.payment_iban || '';
+    if ($('payBizum')) $('payBizum').value = o.payment_bizum || '';
+    if ($('payInstructions')) $('payInstructions').value = o.payment_instructions || '';
+
     // Estado por jugador: en modelo plan refleja el progreso del plan
     // (conceptos pagados + cobrado/total); en mensual, el pago de la cuota.
     if (isPlan) renderPaymentsPlanTable(roster, p);
@@ -2573,6 +2594,25 @@
 
 
   // Apuntar pago manual → record-external-payment
+  // Guardar datos de pago manual del club (transferencia/Bizum) → update_payment_info.
+  $('savePayInfoBtn').addEventListener('click', async () => {
+    const btn = $('savePayInfoBtn'); const msg = $('payInfoMsg');
+    btn.disabled = true; msg.textContent = 'Guardando…'; msg.style.color = '#6B7280';
+    try {
+      await api('update_payment_info', {
+        payment_iban: $('payIban').value.trim(),
+        payment_bizum: $('payBizum').value.trim(),
+        payment_instructions: $('payInstructions').value.trim(),
+      });
+      msg.textContent = '✓ Datos guardados';
+      msg.style.color = '#00875A';
+    } catch (e) {
+      msg.textContent = e.message; msg.style.color = '#B0392A';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   $('openRecordPaymentBtn').addEventListener('click', () => {
     const players = [];
     (rosterData?.categories || []).forEach(cat => cat.members.forEach(m => players.push(m)));
@@ -2777,6 +2817,9 @@
             <button type="button" class="pp-child__photobtn" data-photo="${i}">${c.foto_url ? '📷 Cambiar foto' : '📷 Añadir foto'}</button>
           </div>`;
       const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
+      // Pago online solo si el club tiene Stripe Connect; si no, el padre paga
+      // por transferencia/Bizum con los datos que el club publica.
+      const payOnline = !!(c.club && c.club.pay_online);
       const canPayStripe = c.club && c.payment && c.payment.status !== 'active';
 
       // Modelo de cobro del hijo: plan de pagos a medida vs cuota mensual.
@@ -2797,8 +2840,33 @@
             : 'Total temporada: <strong>' + eurFromCents(plan.total_cents) + '</strong>. Lo que vence ahora se cobra al pagar; el resto en su fecha.'}</p>
         </div>` : '';
       const payBtnHtml = plan
-        ? (plan.payable ? `<button type="button" class="pp-btn pp-btn--primary" data-payplan="${i}">Pagar el plan de la temporada</button>` : '')
-        : (canPayStripe ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : '');
+        ? ((plan.payable && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-payplan="${i}">Pagar el plan de la temporada</button>` : '')
+        : ((canPayStripe && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : '');
+
+      // Cuando el club NO cobra online, mostramos cómo pagar por transferencia/
+      // Bizum con un concepto auto-generado para que el club concilie. Si el
+      // club no ha publicado datos, mensaje genérico.
+      const inst = (c.club && c.club.pay_instructions) || {};
+      const hasInstData = inst.iban || inst.bizum || inst.text;
+      const concept = `${c.nombre || 'Jugador'}${m && m.category ? ' · ' + m.category : ''}`;
+      const amountLabel = plan
+        ? (plan.has_charges
+            ? eurFromCents(Math.max(0, (plan.total_cents || 0) - (plan.paid_cents || 0))) + ' pendientes'
+            : eurFromCents(plan.total_cents) + ' (temporada)')
+        : fee;
+      const showInstructions = !payOnline && c.club && (plan || fee);
+      const payInstructionsHtml = showInstructions ? `
+        <div class="pp-child__pay" style="margin-top:.75rem;padding:.85rem;background:#FFF8EC;border:1px solid #F0E2C0;border-radius:10px">
+          <strong style="display:block;margin-bottom:.45rem;font-size:14px">💸 Cómo pagar al club</strong>
+          ${hasInstData ? `
+            ${amountLabel ? `<div style="font-size:13px;margin-bottom:.3rem">Importe: <strong>${escapeHtml(amountLabel)}</strong></div>` : ''}
+            ${inst.iban ? `<div style="font-size:13px">Transferencia · IBAN: <strong>${escapeHtml(inst.iban)}</strong></div>` : ''}
+            ${inst.bizum ? `<div style="font-size:13px">Bizum: <strong>${escapeHtml(inst.bizum)}</strong></div>` : ''}
+            <div style="font-size:13px;margin-top:.3rem">Concepto: <strong>${escapeHtml(concept)}</strong></div>
+            ${inst.text ? `<p style="font-size:12px;color:#6B7280;margin:.5rem 0 0;white-space:pre-line">${escapeHtml(inst.text)}</p>` : ''}
+            <p style="font-size:12px;color:#6B7280;margin:.5rem 0 0">Cuando pagues, el club registrará tu pago. Si tienes dudas, contacta con el club.</p>
+          ` : `<p style="font-size:13px;color:#6B7280;margin:0">El club te indicará cómo abonar el pago (transferencia, Bizum o efectivo).</p>`}
+        </div>` : '';
 
       return `<section class="pp-child">
         <div class="pp-child__head">
@@ -2818,6 +2886,7 @@
           <div class="pp-child__field"><strong>Estadísticas</strong>${statsHtml}</div>
         </div>
         ${planHtml}
+        ${payInstructionsHtml}
         <div class="pp-child__actions">
           ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">Ver ficha ↗</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">Hacer pública la ficha</button>` : '')}
           ${payBtnHtml}
