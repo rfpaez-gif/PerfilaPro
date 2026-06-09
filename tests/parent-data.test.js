@@ -189,4 +189,20 @@ describe('parent-data · panel del padre (capa 6c)', () => {
     expect(plan.concepts).toHaveLength(1);
     expect(plan.total_cents).toBe(16000);
   });
+
+  it('club sin Stripe Connect → pay_online false y sin instrucciones', async () => {
+    const res = await makeHandler(makeDb(baseResolvers()))(event({ action: 'get_children' }, token));
+    const child = JSON.parse(res.body).children[0];
+    expect(child.club.pay_online).toBe(false);
+    expect(child.club.pay_instructions).toEqual({ iban: null, bizum: null, text: null });
+  });
+
+  it('club con Stripe Connect y datos de pago → pay_online true + instrucciones', async () => {
+    const club = { ...CLUB, stripe_connect_charges_enabled: true, payment_iban: 'ES99 1234', payment_bizum: '600111222', payment_instructions: 'Indica el nombre' };
+    const db = makeDb(baseResolvers({ organizations: () => ({ data: [club], error: null }) }));
+    const res = await makeHandler(db)(event({ action: 'get_children' }, token));
+    const child = JSON.parse(res.body).children[0];
+    expect(child.club.pay_online).toBe(true);
+    expect(child.club.pay_instructions).toEqual({ iban: 'ES99 1234', bizum: '600111222', text: 'Indica el nombre' });
+  });
 });
