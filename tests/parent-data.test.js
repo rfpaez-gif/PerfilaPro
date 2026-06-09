@@ -112,6 +112,16 @@ describe('parent-data · panel del padre (capa 6c)', () => {
     expect(c.history).toHaveLength(1);
     expect(c.history[0]).toMatchObject({ season: '2024-25', exit_reason: 'fin_temporada' });
     expect(c.pending_transfer).toBeNull();
+    // jugador con club activo y sin foto → avisamos al tutor de la foto del carnet
+    expect(c.carnet_photo_missing).toBe(true);
+  });
+
+  it('no avisa de la foto del carnet si el jugador ya tiene foto', async () => {
+    const db = makeDb(baseResolvers({
+      cards: () => ({ data: [{ slug: 'p-1', nombre: 'Ana', foto_url: 'https://x/ana.png', card_kind: 'player', idioma: 'es', organization_id: 'club-1', public_card: false, birth_year: 2015, gender: 'F', status: 'active', deleted_at: null }], error: null }),
+    }));
+    const res = await makeHandler(db)(event({ action: 'get_children' }, token));
+    expect(JSON.parse(res.body).children[0].carnet_photo_missing).toBe(false);
   });
 
   it('cuota Stripe activa gana sobre pago manual', async () => {

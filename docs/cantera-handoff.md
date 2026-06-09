@@ -75,11 +75,13 @@ El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval 
 - Suite **1612/1612**. **Migración 043 pendiente de ejecutar en prod.**
 
 ### Pendiente (próximos chunks)
-1. **UI "carnet listo"**: chip en el roster de `panel.html` (consume `carnet_ready`/`carnet_missing`, ya en el backend) + filtro del lote de impresión (`print-order-export`/booklet) por `carnet_ready` + aviso en el panel del padre ("falta la foto del carnet").
+1. ✅ **UI "carnet listo"** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): chip por jugador + contador `🪪 N/M carnets listos` en el roster de `panel.html` (`get_roster.totals.carnet_ready`) · filtro `only_ready` en `print-order-export` (CSV + PDF booklet, opt-in) · aviso "🪪 Falta la foto del carnet" en el panel del padre (`parent-data.carnet_photo_missing`, junto al botón de subir foto).
 2. **UI del patrocinador en el Studio**: control de subida que llama a `upload-carnet-sponsor-panel` (backend ya listo) en la pestaña Carnets/Branding.
-3. **Re-subida de foto desde el panel del padre** (follow-up): endpoint scoped al JWT del tutor + control en `renderParentChildren`.
+3. ✅ **Re-subida de foto desde el panel del padre** (HECHO en PR #180): `upload-player-photo` scoped al JWT del tutor + botón "📷 Cambiar/Añadir foto" en `renderParentChildren`.
 4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
 5. **Env prod**: ejecutar **migración 043** + `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
+
+> **Nota de scope** (item 1): `print-order-export` (auth founder password+TOTP) aún **no tiene UI** — el filtro `only_ready` queda listo en backend para cuando se construya el botón de export de lote en `admin-orgs.html`. El chip del roster y el aviso del padre sí son visibles ya.
 
 ---
 
