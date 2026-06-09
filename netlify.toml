@@ -1,5 +1,11 @@
 [build]
-  command        = "npm test"
+  # PerfilaPro no tiene paso de compilación: `public/` se sirve tal cual y las
+  # funciones las empaqueta Netlify. Los tests NO corren aquí — gatear el deploy
+  # de producción con la suite completa dentro del contenedor de Netlify lo hacía
+  # frágil (versión de Node / memoria / dep nativa rompían deploys con el código
+  # sano). La suite corre ahora en GitHub Actions (.github/workflows/ci.yml),
+  # bloqueando el merge si falla.
+  command        = "echo 'PerfilaPro: sin paso de build — los tests corren en GitHub Actions'"
   publish        = "public"
   functions      = "netlify/functions"
   edge_functions = "netlify/edge-functions"
@@ -22,17 +28,17 @@
 [functions."charge-due-enrollment-concepts"]
   schedule = "0 6 * * *"
 
-# Producción: rama main
+# Producción: rama main. Sin build (los tests corren en GitHub Actions).
 [context.production]
-  command = "npm test"
+  command = "echo 'PerfilaPro: sin paso de build — los tests corren en GitHub Actions'"
 
 # Vista previa de ramas (develop, feature branches)
 [context.branch-deploy]
-  command = "npm test"
+  command = "echo 'PerfilaPro: sin paso de build — los tests corren en GitHub Actions'"
 
 # Vista previa de Pull Requests
 [context.deploy-preview]
-  command = "npm test"
+  command = "echo 'PerfilaPro: sin paso de build — los tests corren en GitHub Actions'"
 
 # Headers de seguridad globales (auditoría de lanzamiento · S3).
 # Baseline aplicada a todas las rutas: anti-clickjacking, anti-MIME-sniffing,

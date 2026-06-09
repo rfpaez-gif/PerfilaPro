@@ -1,0 +1,24 @@
+name: CI
+
+# Gate de calidad de PerfilaPro. Corre la suite completa de Vitest en cada PR
+# y en cada push a main. El deploy de Netlify ya NO ejecuta los tests (solo
+# publica), así que esta es la red de seguridad: si la suite falla, el check
+# queda en rojo y se puede bloquear el merge (Settings → Branches → require
+# status checks).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
