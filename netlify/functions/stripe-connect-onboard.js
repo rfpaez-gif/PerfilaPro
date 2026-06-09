@@ -2,13 +2,24 @@
 
 // POST /api/stripe-connect-onboard { action }   ·   Cantera capa 4a
 //
-// Onboarding de Stripe Connect Standard para un club deportivo. El club
+// Onboarding de Stripe Connect Express para un club deportivo. El club
 // conecta SU cuenta Stripe (su NIF, su IBAN, su responsabilidad fiscal);
 // PerfilaPro cobra application_fee sobre las cuotas padre→club (capa 4b).
 //
-// Usamos onboarding API-based (Account Links), no OAuth: creamos una
-// cuenta `standard` y devolvemos un enlace de onboarding hospedado por
-// Stripe. No requiere STRIPE_CONNECT_CLIENT_ID.
+// Express (no Standard): Stripe hospeda el onboarding y la verificación, el
+// club no se da de alta en su propio Dashboard sino que rellena un formulario
+// corto Perfila→Stripe. Onboarding INCREMENTAL (collection_options.fields =
+// 'currently_due'): el club empieza a cobrar en minutos con lo mínimo (CIF +
+// IBAN + DNI del presidente) y completa el resto según sube volumen.
+//
+// Pedimos las capabilities de cobro del carril cantera: card_payments,
+// sepa_debit_payments y bizum_payments (Bizum solo entra en checkouts
+// one-shot puros; ver lib/enrollment-checkout.js) + transfers para los
+// direct charges con application_fee.
+//
+// Usamos onboarding API-based (Account Links), no OAuth: creamos una cuenta
+// `express` y devolvemos un enlace de onboarding hospedado por Stripe. No
+// requiere STRIPE_CONNECT_CLIENT_ID.
 //
 // Acciones:
 //   - onboard → crea la cuenta si no existe y devuelve un Account Link.
@@ -81,8 +92,15 @@ function makeHandler(stripe, db) {
         let acct;
         try {
           acct = await stripe.accounts.create({
-            type: 'standard',
+            type: 'express',
+            country: 'ES',
             email: org.email || undefined,
+            capabilities: {
+              card_payments: { requested: true },
+              sepa_debit_payments: { requested: true },
+              bizum_payments: { requested: true },
+              transfers: { requested: true },
+            },
             metadata: { org_id: org.id, org_slug: org.slug },
           });
         } catch (err) {
@@ -102,6 +120,7 @@ function makeHandler(stripe, db) {
           refresh_url: `${siteUrl}/panel.html?connect=refresh`,
           return_url: `${siteUrl}/panel.html?connect=done`,
           type: 'account_onboarding',
+          collection_options: { fields: 'currently_due' },
         });
       } catch (err) {
         console.error('connect-onboard: accountLinks.create falló:', err.message);

@@ -26,9 +26,12 @@ const PLAN_KIND = 'cantera-plan';
 
 // Construye la Checkout Session del PLAN de pagos a medida. A diferencia de
 // la inscripción por suscripción, aquí:
-//   - lo que vence ya (dueNowConcepts) se cobra en modo `payment`, con
-//     setup_future_usage='off_session' para guardar el mandato SEPA/tarjeta
-//     que el cron usará para los plazos futuros;
+//   - lo que vence ya (dueNowConcepts) se cobra en modo `payment`. Si quedan
+//     plazos futuros (hasScheduled), añade setup_future_usage='off_session'
+//     para guardar el mandato SEPA/tarjeta que el cron usará para cobrarlos;
+//   - si TODO vence ya (one-shot puro, sin plazos futuros), NO guarda mandato
+//     y ofrece además Bizum (pago push autenticado, sin contracargos). Bizum
+//     no guarda mandato → solo cabe aquí, nunca en el carril con plazos;
 //   - si no vence nada al firmar, modo `setup` (solo guarda el mandato).
 // Direct charge en la cuenta conectada del club, con application_fee_amount
 // (céntimos) sobre el total que se cobra ahora.
@@ -39,11 +42,15 @@ const PLAN_KIND = 'cantera-plan';
 //   parentEmail      — email del tutor
 //   dueNowConcepts   — conceptos que se cobran al firmar (puede ser [])
 //   dueNowFeeCents   — application_fee (céntimos) sobre el total de arriba
+//   hasScheduled     — ¿quedan plazos futuros que cobrará el cron? Default true
+//                      (conservador: guarda mandato). El endpoint pasa false
+//                      solo cuando confirma que el plan entero vence ya.
 //   campaignId       — enrollment_campaigns.id (o null)
 //   siteUrl          — base success/cancel
 function buildPlanCheckoutSessionParams({
   org, card, parentEmail,
   dueNowConcepts = [], dueNowFeeCents = 0, carnetFeeCents = 0,
+  hasScheduled = true,
   campaignId = null, siteUrl = 'https://perfilapro.es',
 }) {
   const metadata = {
@@ -71,8 +78,12 @@ function buildPlanCheckoutSessionParams({
   }
   if (carnetSkimmed > 0) metadata.carnet_fee_cents = String(carnetSkimmed);
 
+  // One-shot puro: hay cobro ahora Y no quedan plazos futuros que cobre el
+  // cron. Solo entonces ofrecemos Bizum (no guarda mandato).
+  const oneShotPure = dueNowTotal > 0 && !hasScheduled;
+
   const base = {
-    payment_method_types: ['card', 'sepa_debit'],
+    payment_method_types: oneShotPure ? ['card', 'sepa_debit', 'bizum'] : ['card', 'sepa_debit'],
     customer_email: parentEmail,
     metadata,
     success_url: `${siteUrl}/panel.html?enroll=done`,
@@ -81,13 +92,11 @@ function buildPlanCheckoutSessionParams({
 
   let params;
   if (dueNowTotal > 0) {
-    // Cobra lo que vence ya + guarda el método para los plazos futuros.
-    const piData = { setup_future_usage: 'off_session', metadata };
+    const piData = { metadata };
     if (appFee > 0) piData.application_fee_amount = appFee;
     params = {
       ...base,
       mode: 'payment',
-      customer_creation: 'always',
       line_items: dueNow.map(c => ({
         price_data: {
           currency: 'eur',
@@ -98,8 +107,14 @@ function buildPlanCheckoutSessionParams({
       })),
       payment_intent_data: piData,
     };
+    if (!oneShotPure) {
+      // Quedan plazos futuros → guardar el método para que el cron los cobre.
+      piData.setup_future_usage = 'off_session';
+      params.customer_creation = 'always';
+    }
   } else {
-    // Nada vence al firmar → solo guardar el mandato (sin cobro).
+    // Nada vence al firmar → solo guardar el mandato (sin cobro). Bizum no
+    // aplica en modo setup (no guarda mandato), por eso oneShotPure es false.
     params = { ...base, mode: 'setup', setup_intent_data: { metadata } };
   }
 

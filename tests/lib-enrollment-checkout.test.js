@@ -60,21 +60,62 @@ describe('buildPlanCheckoutSessionParams', () => {
     { concepto: 'Ficha federativa', amount_cents: 18000, due_date: '2026-09-01' },
   ];
 
-  it('con conceptos que vencen ya: modo payment + setup_future_usage + application_fee', () => {
+  it('con conceptos que vencen ya y plazos futuros (hasScheduled): modo payment + setup_future_usage + application_fee, sin Bizum', () => {
     const { params, options } = buildPlanCheckoutSessionParams({
       org: ORG, card: CARD, parentEmail: 'madre@e.es',
-      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, campaignId: 'camp-1', siteUrl: 'https://pp.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, hasScheduled: true, campaignId: 'camp-1', siteUrl: 'https://pp.es',
     });
     expect(params.mode).toBe('payment');
     expect(params.payment_method_types).toEqual(['card', 'sepa_debit']);
     expect(params.line_items).toHaveLength(2);
     expect(params.line_items[0].price_data.unit_amount).toBe(16000);
     expect(params.payment_intent_data.setup_future_usage).toBe('off_session');
+    expect(params.customer_creation).toBe('always');
     expect(params.payment_intent_data.application_fee_amount).toBe(1020);
     expect(params.metadata.kind).toBe(PLAN_KIND);
     expect(params.metadata.card_slug).toBe('p-abc');
     expect(params.metadata.enrollment_campaign_id).toBe('camp-1');
     expect(options.stripeAccount).toBe('acct_1');
+  });
+
+  it('default conservador (hasScheduled omitido): guarda mandato y NO ofrece Bizum', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'madre@e.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, siteUrl: 'https://pp.es',
+    });
+    expect(params.payment_intent_data.setup_future_usage).toBe('off_session');
+    expect(params.payment_method_types).toEqual(['card', 'sepa_debit']);
+  });
+
+  it('one-shot puro (todo vence ya, hasScheduled:false): ofrece Bizum, sin setup_future_usage ni customer_creation', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'madre@e.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, hasScheduled: false, siteUrl: 'https://pp.es',
+    });
+    expect(params.mode).toBe('payment');
+    expect(params.payment_method_types).toEqual(['card', 'sepa_debit', 'bizum']);
+    expect(params.payment_intent_data.setup_future_usage).toBeUndefined();
+    expect(params.customer_creation).toBeUndefined();
+    expect(params.payment_intent_data.application_fee_amount).toBe(1020);
+  });
+
+  it('one-shot puro: el carnet embebido se sigue skimando vía application_fee', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es',
+      dueNowConcepts: DUE_NOW, dueNowFeeCents: 1020, carnetFeeCents: 1200, hasScheduled: false, siteUrl: 'https://pp.es',
+    });
+    expect(params.payment_method_types).toContain('bizum');
+    expect(params.payment_intent_data.application_fee_amount).toBe(2220);
+    expect(params.metadata.carnet_fee_cents).toBe('1200');
+  });
+
+  it('modo setup (nada vence ya) nunca ofrece Bizum aunque hasScheduled sea false', () => {
+    const { params } = buildPlanCheckoutSessionParams({
+      org: ORG, card: CARD, parentEmail: 'm@e.es',
+      dueNowConcepts: [], hasScheduled: false, siteUrl: 'https://pp.es',
+    });
+    expect(params.mode).toBe('setup');
+    expect(params.payment_method_types).toEqual(['card', 'sepa_debit']);
   });
 
   it('sin conceptos que vencen ya: modo setup (solo guarda el mandato)', () => {
