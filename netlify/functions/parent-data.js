@@ -291,6 +291,10 @@ function makeHandler(db) {
         birth_year: card.birth_year ?? null,
         gender: card.gender || null,
         my_role: roleBySlug.get(card.slug) || null,
+        // El carnet necesita foto; el dorsal/equipo los pone el club. Avisamos
+        // al tutor solo de lo que él puede arreglar: la foto que falta, y solo
+        // si el jugador tiene club activo (carnet contextualmente relevante).
+        carnet_photo_missing: card.card_kind === 'player' && !card.foto_url && !!active,
         club: clubLive ? {
           id: clubLive.id,
           slug: clubLive.slug,

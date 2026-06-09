@@ -1181,6 +1181,7 @@ function sanitizeSportsOrg(org) {
     sport: org.sport || null,
     logo_url: org.logo_url || null,
     color_primary: org.color_primary || null,
+    carnet_sponsor_url: org.carnet_sponsor_url || null,
     monthly_fee_cents: org.cantera_monthly_fee_cents ?? null,
     stripe_connect_charges_enabled: !!org.stripe_connect_charges_enabled,
     stripe_connect_payouts_enabled: !!org.stripe_connect_payouts_enabled,
@@ -1393,6 +1394,7 @@ async function getRoster(db, org) {
       staff: staff.length,
       paying,
       unpaid: players.length - paying,
+      carnet_ready: players.filter((p) => p.carnet_ready).length,
     },
   });
 }
