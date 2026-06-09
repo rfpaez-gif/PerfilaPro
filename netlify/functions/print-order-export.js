@@ -13,6 +13,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { checkAdminAuth, unauthorizedResponse } = require('./admin-auth');
 const { buildPlayerCardsBookletPDF } = require('./printable-card-utils');
+const { carnetReadiness } = require('./lib/carnet-ready');
 
 const defaultDb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
@@ -55,7 +56,13 @@ function makeHandler(db) {
     if (orgId) q = q.eq('organization_id', orgId);
     const { data: orders, error: ordErr } = await q;
     if (ordErr) return jsonResponse(500, { error: ordErr.message });
-    const list = orders || [];
+    let list = orders || [];
+
+    // Filtro opcional "solo carnets listos" (foto + equipo + dorsal). Por
+    // defecto exporta todo el lote; con only_ready el founder no manda a
+    // imprenta carnets incompletos (mismo criterio que el chip del roster).
+    const onlyReady = body.only_ready === true || body.only_ready === 'true';
+    if (onlyReady && list.length) list = await filterCarnetReady(db, list);
 
     if (format === 'csv') {
       // Nombres de los jugadores para que la imprenta lea algo humano.
@@ -119,6 +126,26 @@ function makeHandler(db) {
 
     return jsonResponse(400, { error: 'format debe ser csv o pdf' });
   };
+}
+
+// Filtra el lote a los jugadores cuyo carnet está listo (foto + equipo +
+// dorsal). Resuelve foto desde cards y dorsal/equipo desde la membresía
+// activa; reusa la misma regla que get_roster (lib/carnet-ready).
+async function filterCarnetReady(db, list) {
+  const slugs = [...new Set(list.map((o) => o.card_slug))];
+  const { data: cards } = await db.from('cards').select('slug, foto_url').in('slug', slugs);
+  const fotoBySlug = {}; (cards || []).forEach((c) => { fotoBySlug[c.slug] = c.foto_url; });
+  const { data: seasons } = await db.from('member_club_seasons')
+    .select('card_slug, role, dorsal, team_id, team_name').in('card_slug', slugs).is('left_at', null);
+  const seasonBySlug = {};
+  (seasons || []).forEach((s) => { if (!seasonBySlug[s.card_slug]) seasonBySlug[s.card_slug] = s; });
+  return list.filter((o) => {
+    const s = seasonBySlug[o.card_slug] || {};
+    return carnetReadiness({
+      role: s.role || 'jugador', foto_url: fotoBySlug[o.card_slug],
+      team_id: s.team_id, team_name: s.team_name, dorsal: s.dorsal,
+    }).ready;
+  });
 }
 
 exports.handler = makeHandler(defaultDb);

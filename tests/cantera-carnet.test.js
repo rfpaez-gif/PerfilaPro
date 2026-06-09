@@ -149,4 +149,44 @@ describe('print-order-export', () => {
   it('format inválido → 400', async () => {
     expect((await makeExport(expDb())(expEvent({ format: 'xml' }))).statusCode).toBe(400);
   });
+
+  // Filtro "solo carnets listos" (foto + equipo + dorsal).
+  function expDbReady() {
+    const orders = [
+      { id: 'o1', card_slug: 'p-1', organization_id: 'c1', kind: 'setup', status: 'paid', nfc_uid: null, ordered_at: '2026-01-01' },
+      { id: 'o2', card_slug: 'p-2', organization_id: 'c1', kind: 'setup', status: 'paid', nfc_uid: null, ordered_at: '2026-01-02' },
+    ];
+    const cards = [
+      { slug: 'p-1', nombre: 'Leo', foto_url: 'https://x/p1.png' },  // listo
+      { slug: 'p-2', nombre: 'Ana', foto_url: null },                 // falta foto
+    ];
+    const seasons = [
+      { card_slug: 'p-1', role: 'jugador', dorsal: 10, team_id: null, team_name: 'Infantil A' },
+      { card_slug: 'p-2', role: 'jugador', dorsal: 7, team_id: null, team_name: 'Infantil A' },
+    ];
+    return {
+      from: (t) => {
+        if (t === 'card_print_orders') {
+          const chain = { select: () => chain, eq: () => chain, order: () => Promise.resolve({ data: orders, error: null }) };
+          return chain;
+        }
+        if (t === 'cards') return { select: () => ({ in: () => Promise.resolve({ data: cards, error: null }) }) };
+        if (t === 'member_club_seasons') return { select: () => ({ in: () => ({ is: () => Promise.resolve({ data: seasons, error: null }) }) }) };
+        return {};
+      },
+    };
+  }
+
+  it('only_ready=true filtra a los carnets listos (foto+equipo+dorsal)', async () => {
+    const res = await makeExport(expDbReady())(expEvent({ format: 'csv', only_ready: true }));
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('p-1');
+    expect(res.body).not.toContain('p-2');
+  });
+
+  it('sin only_ready exporta todo el lote', async () => {
+    const res = await makeExport(expDbReady())(expEvent({ format: 'csv' }));
+    expect(res.body).toContain('p-1');
+    expect(res.body).toContain('p-2');
+  });
 });
