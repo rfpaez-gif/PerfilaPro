@@ -1393,6 +1393,7 @@ async function getRoster(db, org) {
       staff: staff.length,
       paying,
       unpaid: players.length - paying,
+      carnet_ready: players.filter((p) => p.carnet_ready).length,
     },
   });
 }

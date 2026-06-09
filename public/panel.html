@@ -1940,7 +1940,8 @@
       `<span class="pp-chip">${t.players || 0} jugadores</span>` +
       `<span class="pp-chip">${t.staff || 0} cuerpo técnico</span>` +
       `<span class="pp-chip pp-chip--ok">${t.paying || 0} al día</span>` +
-      `<span class="pp-chip pp-chip--warn">${t.unpaid || 0} pendientes</span>`;
+      `<span class="pp-chip pp-chip--warn">${t.unpaid || 0} pendientes</span>` +
+      `<span class="pp-chip" title="Jugadores con foto + equipo + dorsal, listos para imprimir el carnet">🪪 ${t.carnet_ready || 0}/${t.players || 0} carnets listos</span>`;
 
     clubTeams = data.teams || [];
     clubCompetitions = data.competitions || [];
@@ -2068,10 +2069,20 @@
       list.map(tm => `<option value="${escapeHtml(tm.id)}" ${tm.id === currentTeamId ? 'selected' : ''}>${escapeHtml(tm.name)}</option>`).join('');
   }
 
+  // Chip "carnet listo": verde si el jugador tiene foto+equipo+dorsal; ámbar
+  // listando lo que falta. Consume carnet_ready/carnet_missing de get_roster.
+  const CARNET_MISSING_LABEL = { foto: 'foto', equipo: 'equipo', dorsal: 'dorsal' };
+  function carnetChip(m) {
+    if (m.carnet_ready) return `<span class="pp-chip pp-chip--ok" style="padding:.15rem .5rem;font-size:11px" title="Foto + equipo + dorsal listos para imprimir">🪪 carnet listo</span>`;
+    const miss = (m.carnet_missing || []).map(k => CARNET_MISSING_LABEL[k] || k);
+    if (!miss.length) return '';
+    return `<span class="pp-chip pp-chip--warn" style="padding:.15rem .5rem;font-size:11px" title="Falta para imprimir el carnet">🪪 falta ${escapeHtml(miss.join(', '))}</span>`;
+  }
+
   function rosterRowHtml(m) {
     const catId = m.category_id || null;
     return `<tr data-slug="${escapeHtml(m.slug)}" data-name="${escapeHtml((m.nombre || '').toLowerCase())}" data-team="${escapeHtml(m.team_id || '')}" data-cat="${escapeHtml(catId || '')}" data-pay="${isPaidPayment(m.payment) ? 'paid' : 'unpaid'}">
-      <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}</td>
+      <td><strong>${escapeHtml(m.nombre || '—')}</strong>${m.previous_club_name ? `<br><small style="color:#6B7280">viene de ${escapeHtml(m.previous_club_name)}</small>` : ''}<br>${carnetChip(m)}</td>
       <td><input class="pp-input pp-input--mini" type="number" min="0" max="999" data-field="dorsal" value="${m.dorsal != null ? m.dorsal : ''}" placeholder="—"></td>
       <td><select class="pp-input pp-input--mini" data-field="team_id" style="max-width:11rem">${teamSelectOptions(catId, m.team_id)}</select></td>
       <td>${payBadge(m.payment)}</td>

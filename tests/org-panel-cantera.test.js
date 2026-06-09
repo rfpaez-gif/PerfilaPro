@@ -162,7 +162,8 @@ describe('org-panel · Cantera reads (layer 6a)', () => {
 
     expect(body.staff).toHaveLength(1);
     expect(body.staff[0].role).toBe('entrenador');
-    expect(body.totals).toEqual({ players: 3, staff: 1, paying: 2, unpaid: 1 });
+    // ninguno de los 3 jugadores tiene foto en el seed → 0 carnets listos
+    expect(body.totals).toEqual({ players: 3, staff: 1, paying: 2, unpaid: 1, carnet_ready: 0 });
   });
 
   it('get_club_stats aggregates members, payments coverage, MRR and transfers', async () => {
