@@ -44,6 +44,7 @@ const SPORTS_ORG = {
   cantera_monthly_fee_cents: 3000,
   color_primary: '#00aa00',
   logo_url: null,
+  carnet_sponsor_url: 'https://x/sponsor.png',
   stripe_connect_account_id: 'acct_1',
   stripe_connect_charges_enabled: true,
   stripe_connect_payouts_enabled: false,
@@ -141,6 +142,8 @@ describe('org-panel · Cantera reads (layer 6a)', () => {
     expect(body.season).toBe('2025-26');
     expect(body.org.monthly_fee_cents).toBe(3000);
     expect(body.org.kind).toBe('sports_club');
+    // patrocinador del carnet expuesto al Studio para previsualizar/reemplazar
+    expect(body.org.carnet_sponsor_url).toBe('https://x/sponsor.png');
 
     // sort_order: alevin (30) before infantil (40)
     expect(body.categories.map((c) => c.code)).toEqual(['alevin', 'infantil']);

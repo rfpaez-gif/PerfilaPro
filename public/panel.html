@@ -727,6 +727,20 @@
         </div>
         <p class="pp-section__sub" style="margin-top:1.25rem;font-size:13px">Una vez confirmes el pago, preparamos los carnets y los enviamos al club. Recibirás un email con el seguimiento.</p>
       </section>
+
+      <!-- Patrocinador de la cara B del carnet (migración 043) -->
+      <section class="pp-section">
+        <h2 class="pp-section__title">Patrocinador del carnet</h2>
+        <p class="pp-section__sub">La cara trasera del carnet puede llevar la imagen de un <strong>patrocinador del club</strong> (lo gestionas tú; PerfilaPro solo lo imprime). Sin patrocinador, la cara B lleva el escudo centrado. Formatos: PNG, JPG, WEBP o SVG · máx 2 MB.</p>
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.5rem">
+          <div id="sponsorPreview" style="width:140px;height:88px;border:1px solid #E5E7EB;border-radius:10px;background:#F8FAF9 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:#9CA3AF;font-size:12px;text-align:center;padding:.25rem">Sin patrocinador</div>
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            <button type="button" class="pp-btn pp-btn--primary" id="sponsorUploadBtn">📷 Subir imagen del patrocinador</button>
+            <small style="color:#6B7280;font-size:12px">Subir una imagen nueva reemplaza la anterior.</small>
+          </div>
+        </div>
+        <p class="pp-form__hint" id="sponsorMsg" style="margin:.6rem 0 0"></p>
+      </section>
     </div>
 
     <!-- ── Tab: Cobros ────────────────────────────────────── -->
@@ -1633,11 +1647,59 @@
       renderRoster(roster);
       renderClubStats(stats);
       renderPayments(roster, stats);
+      renderCarnetSponsor();
       const sb = $('sBrandSlug'); if (sb) sb.textContent = (sportsOrg && sportsOrg.slug) || '';
       sportsLoaded = true;
     } catch (e) {
       if (e.message !== 'Sesión expirada') sToast('err', 'No se pudo cargar el Studio: ' + e.message);
     }
+  }
+
+  // ── Patrocinador del carnet (cara B · migración 043) ─────
+  // Render del patrocinador actual + subida que reemplaza la imagen vía
+  // upload-carnet-sponsor-panel (auth org-panel, scoped al club). El render
+  // del carnet (printable-card-utils · renderPlayerCardBack) la consume.
+  function renderCarnetSponsor() {
+    const prev = $('sponsorPreview');
+    const url = sportsOrg && sportsOrg.carnet_sponsor_url;
+    if (prev) {
+      if (url) { prev.style.backgroundImage = `url("${url}")`; prev.textContent = ''; }
+      else { prev.style.backgroundImage = 'none'; prev.textContent = 'Sin patrocinador'; }
+    }
+    const btn = $('sponsorUploadBtn');
+    if (btn) btn.onclick = () => uploadCarnetSponsor(btn);
+  }
+
+  function uploadCarnetSponsor(btn) {
+    const msg = $('sponsorMsg'); if (msg) { msg.style.color = '#6B7280'; msg.textContent = ''; }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+    input.addEventListener('change', () => {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { if (msg) { msg.style.color = '#B0392A'; msg.textContent = 'La imagen supera el máximo de 2 MB.'; } return; }
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const res = reader.result || '';
+        const comma = res.indexOf(',');
+        const base64 = comma >= 0 ? res.slice(comma + 1) : res;
+        const original = btn.textContent;
+        btn.disabled = true; btn.textContent = 'Subiendo…';
+        try {
+          const json = await apiRaw('/api/upload-carnet-sponsor-panel', { base64, contentType: f.type });
+          if (sportsOrg) sportsOrg.carnet_sponsor_url = json.carnet_sponsor_url || null;
+          renderCarnetSponsor();
+          if (msg) { msg.style.color = '#00A865'; msg.textContent = 'Patrocinador actualizado. Aparecerá en la cara B de los próximos carnets.'; }
+        } catch (e) {
+          if (msg) { msg.style.color = '#B0392A'; msg.textContent = e.message; }
+        } finally {
+          btn.disabled = false; btn.textContent = original;
+        }
+      };
+      reader.readAsDataURL(f);
+    });
+    input.click();
   }
 
   // ── Inscripciones (capa I3) ──────────────────────────────
