@@ -72,6 +72,42 @@ function buildSubmitEmail({ clubName, playerName, panelUrl, idioma = 'es' }) {
   return buildEmailLayout({ preheader: T.preheader, title: T.title(playerName), bodyHtml, idioma: lang });
 }
 
+// Aviso al admin del club en cada inscripción. El Studio del club es es-only,
+// así que el email va siempre en español. Datos mínimos para encuadrar al
+// jugador: nombre + año de nacimiento + categoría resuelta.
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function buildClubEnrollmentEmail({ clubName, playerName, birthYear, categoryName, season }) {
+  const siteUrl = process.env.URL || process.env.SITE_URL || 'https://perfilapro.es';
+  const rows = [
+    ['Jugador/a', playerName],
+    ['Año de nacimiento', birthYear || '—'],
+    ['Categoría', categoryName || 'Sin asignar'],
+  ];
+  if (season) rows.push(['Temporada', season]);
+  const rowsHtml = rows.map(([k, v]) =>
+    `<tr><td style="padding:8px 0;font-size:14px;color:${COLORS.inkSoft};border-bottom:1px solid #EEE">${k}</td><td style="padding:8px 0;font-size:14px;font-weight:700;color:${COLORS.ink};text-align:right;border-bottom:1px solid #EEE">${escHtml(v)}</td></tr>`
+  ).join('');
+  const bodyHtml = `
+            <p style="margin:0 0 20px;font-size:15px;color:${COLORS.inkSoft};line-height:1.7">
+              Nueva inscripción en <strong>${escHtml(clubName)}</strong>. Estos son los datos para encuadrar al jugador/a:
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px">${rowsHtml}</table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px">
+              <tr><td align="center">
+                <a href="${siteUrl}/panel.html" style="display:inline-block;background:${COLORS.accent};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px">Ver la plantilla →</a>
+              </td></tr>
+            </table>
+            <p style="margin:0;font-size:13px;color:${COLORS.inkSoft};line-height:1.6">Entra a tu panel del club para ver la ficha completa, asignar dorsal y equipo, y gestionar el cobro.</p>`;
+  return {
+    subject: `Nueva inscripción · ${playerName}${categoryName ? ' (' + categoryName + ')' : ''}`,
+    html: buildEmailLayout({ preheader: `Nueva inscripción en ${clubName}`, title: 'Nueva inscripción', bodyHtml, idioma: 'es' }),
+  };
+}
+
 function makeHandler(db, emailClient) {
   return async (event) => {
     if (!isCanteraActive()) return canteraDisabledResponse();
@@ -106,7 +142,7 @@ function makeHandler(db, emailClient) {
     // Club (debe ser sports_club activo).
     const { data: org, error: orgErr } = await db
       .from('organizations')
-      .select('id, name, kind, sport, deleted_at')
+      .select('id, name, kind, sport, email, deleted_at')
       .eq('id', campaign.organization_id)
       .maybeSingle();
     if (orgErr) return jsonResponse(500, { error: orgErr.message });
@@ -211,6 +247,32 @@ function makeHandler(db, emailClient) {
       }
     }
 
+    // ── Aviso al admin del club (best-effort) ──
+    // En cada inscripción el club recibe un email con el mínimo para encuadrar
+    // al jugador: nombre, año de nacimiento y categoría resuelta. No bloquea
+    // la inscripción si falla ni si el club no tiene email configurado.
+    if (emailClient && org.email) {
+      try {
+        const birthYear = (data.birth_date || '').slice(0, 4) || null;
+        let categoryName = null;
+        if (result.category_id) {
+          const { data: cat } = await db
+            .from('sports_categories').select('display_name_es')
+            .eq('id', result.category_id).maybeSingle();
+          categoryName = cat ? cat.display_name_es : null;
+        }
+        const { subject, html } = buildClubEnrollmentEmail({
+          clubName: org.name, playerName: data.nombre,
+          birthYear, categoryName, season: result.season,
+        });
+        await emailClient.emails.send({
+          from: 'PerfilaPro <hola@perfilapro.es>', to: org.email, subject, html,
+        });
+      } catch (err) {
+        console.error('enrollment-submit: aviso al club falló:', err.message);
+      }
+    }
+
     captureEvent(slug, 'enrollment_submitted', {
       organization_id: org.id, sport: org.sport,
       payment_choice: data.payment_choice, category_id: result.category_id,
@@ -235,4 +297,5 @@ function makeHandler(db, emailClient) {
 exports.handler = makeHandler(defaultDb, defaultEmail);
 exports.makeHandler = makeHandler;
 exports.buildSubmitEmail = buildSubmitEmail;
+exports.buildClubEnrollmentEmail = buildClubEnrollmentEmail;
 exports.SUBMIT_STRINGS = SUBMIT_STRINGS;

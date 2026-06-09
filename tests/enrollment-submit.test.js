@@ -39,7 +39,10 @@ function makeDb(opts = {}) {
       if (t === 'member_club_seasons') return { insert: (row) => { inserts.member_club_seasons.push(row); return Promise.resolve({ error: null }); } };
       if (t === 'card_admins') return { insert: (rows) => { inserts.card_admins.push(rows); return Promise.resolve({ error: null }); } };
       if (t === 'card_consents') return { insert: (row) => { inserts.card_consents.push(row); return { select: () => ({ single: () => Promise.resolve({ data: { id: 'c1' }, error: null }) }) }; } };
-      if (t === 'sports_categories') return { select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: categories, error: null }) }) }) };
+      if (t === 'sports_categories') return { select: () => ({ eq: () => ({
+        order: () => Promise.resolve({ data: categories, error: null }),
+        maybeSingle: () => Promise.resolve({ data: { display_name_es: 'Alevín' }, error: null }),
+      }) }) };
       return {};
     }),
   };
@@ -145,6 +148,27 @@ describe('enrollment-submit', () => {
     }));
     expect(db.uploads).toHaveLength(0);
     expect(db.updates.cards).toHaveLength(0);
+  });
+
+  it('sin email del club → solo manda el email al padre (1 envío)', async () => {
+    const db = makeDb(); // SPORTS_ORG no tiene email
+    await makeHandler(db, mockEmail)(ev(VALID));
+    expect(mockEmail.emails.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('con email del club → avisa al club con año de nacimiento + categoría', async () => {
+    const db = makeDb({ org: { ...SPORTS_ORG, email: 'club@ef.es' } });
+    const res = await makeHandler(db, mockEmail)(ev(VALID));
+    expect(res.statusCode).toBe(201);
+    // padre + club = 2 envíos.
+    expect(mockEmail.emails.send).toHaveBeenCalledTimes(2);
+    const clubCall = mockEmail.emails.send.mock.calls.find(([c]) => c.to === 'club@ef.es');
+    expect(clubCall).toBeTruthy();
+    const [msg] = clubCall;
+    expect(msg.subject).toContain('Lucía Fernández');
+    expect(msg.subject).toContain('Alevín');
+    expect(msg.html).toContain('2015');   // año de nacimiento
+    expect(msg.html).toContain('Alevín'); // categoría resuelta
   });
 
   it('payment_choice online se devuelve para que el front encadene el checkout', async () => {
