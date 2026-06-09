@@ -2,20 +2,18 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-07 (★ **modelo de monetización CERRADO** — ver sección ★ inmediatamente debajo. Revierte el default "Connect Standard" → **Express** y refina Q3. Decisión estratégica, todavía sin tocar código).
+Última actualización: 2026-06-09 (UI del carnet cableada en rama `claude/cantera-handoff-docs-pf9ozx` — items 1, 2 y 3 del pendiente HECHOS · **migración 043 + env vars EJECUTADAS en prod** → carnet nuevo ENCENDIDO. Queda solo el chunk **(4) Bizum + Connect Express** para un hilo dedicado).
 
 ---
 
-## ⚠️ ACCIONES PENDIENTES EN PROD (founder) — antes de encender el carnet
+## ✅ ACCIONES EN PROD COMPLETADAS (2026-06-09)
 
-El backend del carnet está **mergeado a `main`** (PR #178, sha `03a6e81`) pero queda **dormido / no-op de comportamiento** hasta que hagas estas dos cosas. Hasta entonces el cobro funciona **idéntico a hoy** (carnet por fallback al club), cero riesgo.
+El carnet nuevo está **encendido en prod**. El founder ejecutó:
 
-1. **SQL — copiar y ejecutar en el Supabase SQL Editor**: la migración `supabase/migrations/043_cantera_carnet_sponsor.sql` (añade `organizations.carnet_sponsor_url`). Es idempotente. *(Sin ella: el render del carnet sigue funcionando —cara B con escudo— y el endpoint de subida del patrocinador daría error, pero ese endpoint aún no tiene UI que lo llame.)*
-2. **Netlify — env vars**:
-   - `CANTERA_CARNET_FEE_CENTS=1200` → enciende el skim del carnet (12€) en el primer pago. **Sin ella el skim está OFF** (default 0 → carnet por fallback al club).
-   - Confirmar `STRIPE_PLATFORM_FEE_BPS=150` → comisión 1,5%.
+1. ✅ **SQL** — migración `043_cantera_carnet_sponsor.sql` (`organizations.carnet_sponsor_url`) ejecutada en el Supabase SQL Editor. Desbloquea la UI de subida del patrocinador (pestaña Carnets del Studio).
+2. ✅ **Netlify env vars** — `CANTERA_CARNET_FEE_CENTS=1200` (skim 12€ embebido en el primer pago) + `STRIPE_PLATFORM_FEE_BPS=150` (comisión 1,5%) confirmadas.
 
-> Recordatorio activo: **te falta hacer "el copy en SQL" (migración 043) y "lo de Netlify" (las 2 env vars)**. Mientras no estén, nada del carnet nuevo se activa.
+> El backend del carnet (PR #178) + la UI (rama `claude/cantera-handoff-docs-pf9ozx`) están vivos. El cobro embebido del carnet y la cara B con patrocinador operan.
 
 ---
 
@@ -72,14 +70,14 @@ El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval 
 - ✅ **Carnet embebido en el primer pago** (`lib/enrollment-checkout` skim `application_fee` capado + `CANTERA_CARNET_FEE_CENTS` en `create-enrollment-checkout` + auto-`card_print_orders` idempotente en `lib/cantera-webhook`) — commit `2e56b28`.
 - ✅ **Storage del patrocinador** (migración **043** `organizations.carnet_sponsor_url` + `upload-carnet-sponsor-panel.js`, auth org-panel scoped, solo sports_club + ruta).
 - ✅ **Regla "carnet listo"** backend (`lib/carnet-ready.js` + `getRoster` devuelve `carnet_ready`/`carnet_missing` por jugador).
-- Suite **1612/1612**. **Migración 043 pendiente de ejecutar en prod.**
+- Suite **1612/1612** (backend). **Migración 043 EJECUTADA en prod (2026-06-09)** — carnet encendido.
 
 ### Pendiente (próximos chunks)
 1. ✅ **UI "carnet listo"** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): chip por jugador + contador `🪪 N/M carnets listos` en el roster de `panel.html` (`get_roster.totals.carnet_ready`) · filtro `only_ready` en `print-order-export` (CSV + PDF booklet, opt-in) · aviso "🪪 Falta la foto del carnet" en el panel del padre (`parent-data.carnet_photo_missing`, junto al botón de subir foto).
 2. ✅ **UI del patrocinador en el Studio** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): sección "Patrocinador del carnet" en la pestaña Carnets de `panel.html` con previsualización + subida que llama a `upload-carnet-sponsor-panel` (reemplaza la imagen anterior). `sanitizeSportsOrg` expone `carnet_sponsor_url` para previsualizar. Sin botón de "quitar" (el backend solo sube/reemplaza, no borra a null).
 3. ✅ **Re-subida de foto desde el panel del padre** (HECHO en PR #180): `upload-player-photo` scoped al JWT del tutor + botón "📷 Cambiar/Añadir foto" en `renderParentChildren`.
 4. **Bizum**: añadirlo a `payment_method_types` SOLO en one-shot puro (sin `setup_future_usage`; Bizum no guarda mandato). El plan con mandato y el carril mensual siguen en card/SEPA. Connect **Standard→Express** + onboarding incremental.
-5. **Env prod**: ejecutar **migración 043** + `CANTERA_CARNET_FEE_CENTS=1200` (sin ella el skim está off → carnet por fallback) + confirmar `STRIPE_PLATFORM_FEE_BPS=150` (1,5%).
+5. ✅ **Env prod** (HECHO 2026-06-09): migración **043** ejecutada + `CANTERA_CARNET_FEE_CENTS=1200` + `STRIPE_PLATFORM_FEE_BPS=150` confirmadas en Netlify.
 
 > **Nota de scope** (item 1): `print-order-export` (auth founder password+TOTP) aún **no tiene UI** — el filtro `only_ready` queda listo en backend para cuando se construya el botón de export de lote en `admin-orgs.html`. El chip del roster y el aviso del padre sí son visibles ya.
 
@@ -351,7 +349,9 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 **Mensaje para arrancar el hilo nuevo** (copiar tal cual):
 
-> Continúo el sprint Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` — empieza por el banner **⚠️ ACCIONES PENDIENTES EN PROD** (arriba del todo) y la **sección ★** (modelo de monetización del carnet + estado + pendiente). Todo está mergeado a `main` (incl. el carnet, PR #178); trabaja desde `main`. Las **capas 0–6 del Studio/padre y el BACKEND del carnet están listos y probados** (render 2 caras, foto en inscripción, carnet embebido en el primer pago vía `application_fee`, storage del patrocinador, regla "carnet listo" en `getRoster`). Lo que queda es **cableado de UI en `panel.html`** (bajo riesgo, el backend ya existe) + Bizum. Arranca con: (1) **chip "carnet listo"** en el roster del Studio (consume `carnet_ready`/`carnet_missing`, ya en `get_roster`); (2) **control de subida del patrocinador** en el Studio → `POST /api/upload-carnet-sponsor-panel` (backend listo); (3) **filtro del lote de impresión** por `carnet_ready` en `print-order-export`. Después: re-subida de foto desde el panel del padre, y el chunk **Bizum + Connect Express** (ojo: Bizum no guarda mandato → solo one-shot puro, no en el plan con `setup_future_usage`).
+> Continúo el sprint Cantera para **cerrarlo**. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` — empieza por el banner **✅ ACCIONES EN PROD COMPLETADAS** (arriba del todo) y la **sección ★** (modelo de monetización del carnet). Todo está mergeado a `main` y el carnet está **encendido en prod** (migración 043 + env vars ya ejecutadas). La **UI del carnet está cableada** (items 1–3 del pendiente: chip "carnet listo" + filtro `only_ready` en `print-order-export` + aviso "falta foto" en el panel del padre + subida del patrocinador en el Studio) en la rama `claude/cantera-handoff-docs-pf9ozx` (4 commits sobre `main`, suite 1646/1646). **Lo único que queda es el chunk (4): Bizum + Connect Express** — trabaja desde `main` (o rebasa la rama anterior si no se ha mergeado). Decisiones de Stripe a respetar: **Bizum solo en one-shot puro** (sin `setup_future_usage`; Bizum no guarda mandato → NO en el plan con mandato ni en la cuota mensual recurrente, que siguen en card/SEPA); **Connect Standard→Express** con onboarding incremental (`currently_due`). Revisa conmigo las decisiones de pasarela antes de codificar.
+
+> **Nota**: la rama `claude/cantera-handoff-docs-pf9ozx` con los items 1–3 + patrocinador está pusheada pero **sin PR** (el founder decide si mergear). Si arrancas Bizum desde `main` antes de mergearla, los chips/filtros del carnet no estarán en `main` todavía — coordinar el merge primero.
 
 **Carnet del jugador — backend ya en `main` (sesión 2026-06-07)**:
 - Render: `printable-card-utils.js` → `renderPlayerCardFront` (cara A: identidad + temporada) / `renderPlayerCardBack` (cara B: patrocinador `club.carnet_sponsor_url` + validez; fallback escudo). 2 páginas/jugador. Param `sponsorBuffer`.
