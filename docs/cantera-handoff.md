@@ -2,7 +2,39 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-09 (chunk **(4) Bizum + Connect Express** HECHO en rama `claude/bizum-connect-express-ga8ga4` — Bizum en los tres pagos únicos + Connect Standard→Express con onboarding incremental, suite 1650/1650. **Sprint Cantera cerrado**, salvo la acción manual de habilitar Bizum en el Dashboard de Stripe. UI del carnet (items 1–3) mergeada en #183).
+Última actualización: 2026-06-09 (tarde) — **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+
+---
+
+## 🔧 DEPLOY ARREGLADO (2026-06-09 · tarde)
+
+**Síntoma**: TODOS los deploys de Netlify fallaban desde ~7 jun ("Build script returned non-zero exit code: 2"), fase **Building** → Failed. Incluía #181–#184. La suite pasaba limpia en local. Resultado invisible pero grave: **el código de #181–#184 estaba mergeado en `main` pero NUNCA llegó a producción** porque cada deploy moría antes de publicar.
+
+**Causa**: `netlify.toml` usaba `npm test` como build command en los 4 contextos. Eso corría los 1650 tests **dentro del contenedor de build de Netlify**. PerfilaPro no tiene paso de compilación (sirve `public/` + funciones), así que gatear el deploy con la suite lo hacía frágil (versión de Node sin fijar / memoria / dep nativa) — fallaba aunque el código estuviera sano.
+
+**Arreglo (#185, mergeado, commit `074c750`)**:
+1. `netlify.toml` → build command = no-op (`echo …`) en `[build]` + los 3 contextos. Netlify solo publica `public/` + empaqueta funciones. **Deploy fiable siempre.**
+2. `.github/workflows/ci.yml` (NUEVO) → `npm ci` + `npm test` en Node 22 en cada PR y push a `main`. Es el nuevo **gate de calidad**.
+3. `CLAUDE.md` → documentado el split CI/deploy (sección Commands).
+
+**Verificado**: deploy `074c750` Published en verde (78 functions + 2 edge + 93 redirects, build 1m 7s). Producción restaurada y al día con `main`.
+
+**Notas para el próximo hilo**:
+- El check `test` de GitHub Actions tardó en arrancar la 1ª vez (cola de runners en el primer workflow del repo, normal). Corre igual en cada PR.
+- **Pendiente opcional**: activar branch protection en GitHub (Settings → Branches → require status checks → marcar `test`) para impedir merges con tests en rojo. No está configurado.
+- **NO volver a poner `npm test` como build command de Netlify.** Los tests viven en CI; Netlify solo publica.
+
+---
+
+## ⏳ PENDIENTE TRAS CERRAR EL SPRINT (estado 2026-06-09 tarde)
+
+Nada de **código bloqueante**: el sprint Cantera está cerrado y todo desplegado/vivo. Lo que queda son acciones manuales + decisiones de negocio del founder:
+
+1. **Bizum en Live** (acción manual Stripe Dashboard): habilitar Bizum en la cuenta plataforma para que aparezca en los checkouts de autónomo + carnet. Hecho en Test; falta repetir con el interruptor en **Live**. La capability `bizum_payments` de los clubes se pide sola en su onboarding Express.
+2. **Legal/fiscal antes de cobrar de verdad** (el founder dice que hay tiempo): alta de autónomo (036 + RETA) + proveedor Verifactu/AEAT. **No hay "periodo de gracia" legal** para facturar sin estar de alta. La integración Quipu es un esqueleto sin implementar (Sprint 3). Orden correcto: gestor → alta → Verifactu → Stripe Live.
+3. **Capa 1 · "suelo" por jugador/temporada — SIN CODIFICAR a propósito.** Es la cuota fija anti-free-ride (la pieza de producto más relevante que falta). Espera a que el founder **fije el importe** (€/jugador/temporada fijo, o €/club/mes por tramos). Ver §6.
+4. **Decisiones operativas del founder** (§6): mínimo absoluto de `application_fee` (cuotas bajas 5–15€ rentables), quién emite la factura SEPA al padre (default: el club), custodia 50/50 (Q4 → Sprint 2 salvo que el beachhead tenga >15% divorcios), club beachhead concreto.
+5. **Roll-over de temporada** (§0-bis): no automatizado; a mano en fase 1, batch cuando haya volumen.
 
 ---
 
