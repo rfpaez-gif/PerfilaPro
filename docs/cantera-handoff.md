@@ -2,7 +2,25 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-09 (tarde) — **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+Última actualización: 2026-06-09 (noche) — **canal B2C: pago reactivado en modo Test** (ver banner **🟢 B2C PAGO REACTIVADO**). Antes (tarde): **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+
+---
+
+## 🟢 B2C PAGO REACTIVADO (2026-06-09 · noche)
+
+El carril autónomo B2C había estado en modo "todo gratis" (wedge B2C→B2B). El founder lo ha **vuelto a pasar a pago**. **Cero código** — todo fue env vars en Netlify + config del Dashboard de Stripe.
+
+**Qué se hizo (Netlify env vars borradas):**
+- `WEB_FUNNEL_FREE_ACTIVE` — interruptor principal del "todo gratis". Borrado → toda alta orgánica vuelve a pasar por Stripe.
+- `LAUNCH_PROMO_ACTIVE` — borrado → el botón de upgrade del editor vuelve a cobrar (`create-checkout`) en vez de regalar el plan (`claim-launch-promo`).
+- `DEMO_FUNNEL_FREE_ACTIVE` — borrado → las altas vía cards demo dejan de dar Pro gratis.
+- Tras borrarlas: **Clear cache and deploy** (los cambios de env var solo aplican tras redeploy). Confirmado funcionando: el editor muestra precios reales (9€/19€ sin tachar) y el checkout abre Stripe con **Bizum** visible.
+
+**Estado de cobro: TEST.** Las claves Stripe en Netlify son de Test (Test vs Live lo determinan las claves, no un flag). NO se cobra dinero real todavía — coherente con el alta fiscal pendiente.
+
+**Cómo entra Bizum en B2C (sin código):** `create-checkout` (autónomo Base/Pro) y `create-setup-fee-checkout` (carnet) son `mode:'payment'` **sin `payment_method_types` explícito** → métodos automáticos del Dashboard. Activar/desactivar medios de pago se hace en Stripe → *Settings → Payment methods* y se refleja al instante. Criterio acordado: dejar **Tarjeta + Bizum (+ Apple/Google Pay)**, quitar BNPL/SEPA/exóticos. **La lista de métodos es por modo** (lo de Test no se copia a Live).
+
+**Pendiente para cobrar de verdad (cuando toque):** (1) poner claves Stripe **Live** en Netlify, (2) **activar Bizum en Live** en el Dashboard, (3) re-configurar la lista de métodos en Live, (4) el alta fiscal + Verifactu (ver ⏳ PENDIENTE, ítem 2). **Reversible:** volver a poner las env vars `*_FREE_ACTIVE`/`LAUNCH_PROMO_ACTIVE=1` reactiva el modo gratis.
 
 ---
 
@@ -30,7 +48,7 @@ Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera
 
 Nada de **código bloqueante**: el sprint Cantera está cerrado y todo desplegado/vivo. Lo que queda son acciones manuales + decisiones de negocio del founder:
 
-1. **Bizum en Live** (acción manual Stripe Dashboard): habilitar Bizum en la cuenta plataforma para que aparezca en los checkouts de autónomo + carnet. Hecho en Test; falta repetir con el interruptor en **Live**. La capability `bizum_payments` de los clubes se pide sola en su onboarding Express.
+1. **Stripe Live** (acción manual Stripe Dashboard + Netlify): poner claves Live en Netlify + **activar Bizum en Live** + re-configurar la lista de métodos en Live (la de Test no se copia). Hoy todo está en **Test** (B2C reactivado, ver banner 🟢). La capability `bizum_payments` de los clubes se pide sola en su onboarding Express.
 2. **Legal/fiscal antes de cobrar de verdad** (el founder dice que hay tiempo): alta de autónomo (036 + RETA) + proveedor Verifactu/AEAT. **No hay "periodo de gracia" legal** para facturar sin estar de alta. La integración Quipu es un esqueleto sin implementar (Sprint 3). Orden correcto: gestor → alta → Verifactu → Stripe Live.
 3. **Capa 1 · "suelo" por jugador/temporada — SIN CODIFICAR a propósito.** Es la cuota fija anti-free-ride (la pieza de producto más relevante que falta). Espera a que el founder **fije el importe** (€/jugador/temporada fijo, o €/club/mes por tramos). Ver §6.
 4. **Decisiones operativas del founder** (§6): mínimo absoluto de `application_fee` (cuotas bajas 5–15€ rentables), quién emite la factura SEPA al padre (default: el club), custodia 50/50 (Q4 → Sprint 2 salvo que el beachhead tenga >15% divorcios), club beachhead concreto.
