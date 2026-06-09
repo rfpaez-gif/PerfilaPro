@@ -19,6 +19,8 @@ npx vitest@1.6.0 run tests/stripe-webhook.test.js
 
 > Note: `vitest` is not in PATH — always use `npx vitest@1.6.0 run` directly.
 
+> **CI / deploy split**: the test suite runs in GitHub Actions (`.github/workflows/ci.yml`) on every PR and push to `main` — that is the quality gate. Netlify's build command is a no-op (`echo …`); it only publishes `public/` + bundles the functions. Tests are deliberately NOT the Netlify build command anymore: running 1650 tests inside Netlify's build container made production deploys fragile (Node version / memory / native-dep drift broke deploys with healthy code).
+
 ## Architecture
 
 PerfilaPro is a **serverless digital business card platform** deployed on Netlify. It has no build step — `public/` is served as-is and Netlify Functions handle all backend logic.
