@@ -2,7 +2,55 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-09 (noche) — **canal B2C: pago reactivado en modo Test** (ver banner **🟢 B2C PAGO REACTIVADO**). Antes (tarde): **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+Última actualización: 2026-06-10 — **naming del programa cerrado** (ver banner **🏷️ MARCA DEL PROGRAMA**): *Programa **Savia Joven*** + lema *"Crece jugando, con los tuyos."* + carnet ***Dorsal***. Pendiente verificación legal (Fase 0). Antes (2026-06-09 noche): **canal B2C: pago reactivado en modo Test** (ver banner **🟢 B2C PAGO REACTIVADO**). Antes (tarde): **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+
+---
+
+## 🏷️ MARCA DEL PROGRAMA (2026-06-10 · naming cerrado, pendiente verificación legal)
+
+Decisión de naming para el paraguas institucional del vertical Cantera — el "programa blanco" que se vende a **CARM + mecenas + FFRM** (no es un nombre técnico, es el relato comercial/institucional). Sistema cerrado en sesión de naming; **no es oficial hasta pasar el checklist de Fase 0** (abajo).
+
+### Sistema de marca
+
+> ## Programa **Savia Joven**
+> ### *Crece jugando, con los tuyos.*
+> **El carnet (producto tangible):** tu **Dorsal**.
+
+- **Nombre del programa**: **Savia Joven**. Sustantivo cálido = identidad/pertenencia. El verbo de acción NO va en el nombre (un nombre es sustantivo; el empujón vive en el lema, patrón Nike↔"Just Do It").
+- **Lema**: ***"Crece jugando, con los tuyos."*** — funde crecimiento (savia→crecer) + deporte (jugando) + familia/equipo/Región (con los tuyos). Los **tres actores** del modelo cantera en 4 palabras: el chaval crece, juega, y la familia/club está detrás (la familia es el comprador y el motor emocional).
+- **Carnet**: **Dorsal** — la credencial física PVC+QR (capa 5 / sección ★) se nombra "tu Dorsal". El dorsal ES la identidad portable del jugador.
+
+### Reservas (por si hay colisión en la verificación legal)
+En orden de preferencia: **Savia Nueva** · **Savia Activa** · **Latido**.
+- *Savia Nueva* — talento joven emergente (idiom); algo más sugestivo/débil como marca.
+- *Savia Activa* — el verbo dentro del nombre ("activa" = adjetivo + orden); mejor como campaña que como marca.
+- *Latido* — vida/salud/pasión; distintivo y poco saturado; fuera de la familia "Savia".
+
+### Titulares de spot (registro emocional, para campaña/vídeo)
+- *"Los tuyos no quieren perderse ni un partido."*
+- *"Detrás de cada jugador, los suyos."*
+- *"A los tuyos les encanta verte crecer."*
+
+### Relato y tono de voz
+- **Metáfora madre**: la savia sube desde las **raíces** → la **familia es la raíz que nutre**, el **club la encauza**, el **chaval es la rama que crece**. Murcia, "huerta de Europa", es el sustrato fértil del que brota la savia del deporte base. La huerta vive en el relato, no en el nombre (nombres literales tipo "huerta/campo" suenan a marca de hortalizas).
+- **Tono CARM**: imperativo y cálido (*crece, muévete, juega, cuida*), nunca burocrático. Calcado del registro de las campañas de salud/deporte de la Región (*Activa Murcia*, *Movimiento Actívate*, *Murcia Muévete*, Deporte en Edad Escolar). Pendiente: localizar el spot TV concreto que el founder tiene de referencia (canal [Publicidad Institucional – Región de Murcia](https://www.youtube.com/@publicidad-gob-regiondemurcia)) para afinar el ritmo del copy.
+- **Tripleta institucional** (para decks ante CARM/FFRM/mecenas): *"Crecer jugando, crecer sano, crecer protegido."* → deporte · salud · **LOPIVI/protección del menor**.
+
+### Por qué se descartaron otros nombres (no re-debatir)
+- **Arraigo** — "arraigo" es término técnico de extranjería en España (arraigo social/laboral). Con dinero público de la CARM (gobierno PP) + coalición transversal, cargar el nombre con esa connotación es un riesgo político gratuito. Fuera.
+- **Federia / Fénix / descriptivos** — Federia es fuerte como marca legal pero endogámica (habla de "lo federado", no del producto: deporte base, vida, salud). Fénix descartado de inicio. Los descriptivos puros ("Carnet Deportivo") no registran.
+- **Criterio de selección**: políticamente neutro (palatable de PP a izquierda, porque pasa por subvención pública) + cargado de relato deporte base/vida/salud + sugestivo > descriptivo (registrable).
+
+### ✅ Checklist Fase 0 · verificación legal antes de oficializar (PENDIENTE)
+Primer entregable de Fase 0. Hasta cerrarlo, "Savia Joven" es **candidato**, no marca.
+- [ ] **OEPM** (marca nacional) — buscar "Savia Joven" + reservas en el localizador de marcas. Clases Niza relevantes: **9** (software/credenciales digitales descargables), **42** (SaaS — la plataforma), **41** (servicios deportivos y educativos / organización de actividad deportiva), **35** (gestión/publicidad), y para el plástico **16** (impresos) / **40** (servicios de impresión). Atención a colisión conocida: **"Savia by MAPFRE"** (telemedicina, clase salud 44) — clases distintas a las nuestras, confirmar coexistencia.
+- [ ] **EUIPO** (marca UE) — misma búsqueda, por si se quiere protección europea o hay marca UE que cubra España.
+- [ ] **Dominios** — `saviajoven.es` / `.com` / `.org` (+ reservas). Comprobar disponibilidad y registrar el principal antes de difundir.
+- [ ] **Redes** — handles `@saviajoven` (Instagram, TikTok, X, YouTube) disponibles/coherentes.
+- [ ] **Conflicto deportivo** — descartar que un club/federación/programa de deporte base existente use ya "Savia Joven" en Murcia/España (riesgo de confusión en el mismo sector).
+- [ ] **Decisión**: si "Savia Joven" choca → caer a la primera reserva libre (Savia Nueva → Savia Activa → Latido) y re-verificar.
+
+> *No soy asesor de marcas — este checklist es la guía de verificación; la búsqueda OEPM/EUIPO y, si procede, el registro, los confirma el founder o un agente de la propiedad industrial.*
 
 ---
 
