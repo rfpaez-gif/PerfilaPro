@@ -61,6 +61,21 @@
 
     .pp-content { max-width: 980px; margin: 0 auto; padding: 1.5rem; }
 
+    /* ── Hint instalación iOS (oculto salvo Safari iPhone) ── */
+    .pp-ios-hint { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
+      background: #fff; border-top: 1px solid var(--color-gris-200, #E5E7EB);
+      box-shadow: 0 -6px 24px rgba(0,0,0,.12); padding: 1rem 1.1rem calc(1rem + env(safe-area-inset-bottom));
+      align-items: flex-start; gap: .75rem; }
+    .pp-ios-hint--on { display: flex; }
+    .pp-ios-hint__body { font-size: 13.5px; line-height: 1.5; color: var(--color-tinta, #0A1F44); flex: 1; }
+    .pp-ios-hint__body strong { display: block; font-weight: 700; margin-bottom: .15rem; }
+    .pp-ios-hint__body span { color: var(--color-gris-500, #6B7280); }
+    .pp-ios-hint__body em { font-style: normal; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-ios-hint__body svg { vertical-align: -3px; margin: 0 1px; }
+    .pp-ios-hint__close { background: var(--color-gris-100, #F3F4F6); border: none; color: var(--color-gris-500, #6B7280);
+      width: 28px; height: 28px; border-radius: 999px; font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
+    .pp-ios-hint__close:hover { background: var(--color-gris-200, #E5E7EB); }
+
     /* ── Toast ──────────────────────────────────────────── */
     .pp-toast { padding: .75rem 1rem; border-radius: 10px; font-size: 13px; margin: 0 0 1rem; display: none; line-height: 1.5; }
     .pp-toast--ok  { background: var(--color-verde-light, #E6F9F0); color: var(--color-verde-dark, #00A865); border: 1px solid #BFE9D0; }
@@ -222,6 +237,19 @@
   </style>
 </head>
 <body>
+
+<!-- ── HINT INSTALACIÓN iOS ─────────────────────────────────
+     Solo se muestra en Safari de iPhone/iPad cuando la app NO está
+     instalada (Apple no ofrece prompt automático). JS lo desvela. -->
+<div class="pp-ios-hint" id="iosInstallHint" role="dialog" aria-label="Instalar la aplicación">
+  <button class="pp-ios-hint__close" id="iosHintClose" aria-label="Cerrar">×</button>
+  <div class="pp-ios-hint__body">
+    <strong>Instala PerfilaPro en tu iPhone</strong>
+    <span>Pulsa
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M12 3l3.5 3.5-1.4 1.4L13 5.8V15h-2V5.8L9.9 7.9 8.5 6.5 12 3z" fill="#0A6CFF"/><path d="M5 11h2v8h10v-8h2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-8z" fill="#0A6CFF"/></svg>
+      <em>Compartir</em> y luego <em>«Añadir a pantalla de inicio»</em>.</span>
+  </div>
+</div>
 
 <!-- ── LOGIN ────────────────────────────────────────────── -->
 <div class="pp-login" id="loginScreen">
@@ -3193,6 +3221,30 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
+
+  // PWA · hint de instalación para iOS. Apple no dispara prompt automático:
+  // solo se muestra en Safari de iPhone/iPad, si la app no está instalada y
+  // el usuario no lo ha descartado antes.
+  (function initIosInstallHint() {
+    const ua = navigator.userAgent || '';
+    const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+      (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS se hace pasar por Mac
+    const isSafari = !/CriOS|FxiOS|EdgiOS|OPiOS|mercury/i.test(ua); // Add-to-Home-Screen solo en Safari
+    const standalone = (('standalone' in navigator) && navigator.standalone) ||
+      window.matchMedia('(display-mode: standalone)').matches;
+    let dismissed = false;
+    try { dismissed = localStorage.getItem('pp_ios_hint_dismissed') === '1'; } catch {}
+    if (!isIOS || !isSafari || standalone || dismissed) return;
+
+    const hint = document.getElementById('iosInstallHint');
+    if (!hint) return;
+    setTimeout(() => hint.classList.add('pp-ios-hint--on'), 1200);
+    const close = document.getElementById('iosHintClose');
+    if (close) close.addEventListener('click', () => {
+      hint.classList.remove('pp-ios-hint--on');
+      try { localStorage.setItem('pp_ios_hint_dismissed', '1'); } catch {}
+    });
+  })();
 })();
 </script>
 
