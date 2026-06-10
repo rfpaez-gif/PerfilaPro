@@ -1,0 +1,33 @@
+{
+  "name": "PerfilaPro",
+  "short_name": "PerfilaPro",
+  "description": "Tu panel PerfilaPro: equipo, estadísticas y gestión desde el móvil.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/panel.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A1F44",
+  "background_color": "#FAF7F0",
+  "icons": [
+    {
+      "src": "/assets/brand/svg/perfilapro-isotype-verde.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

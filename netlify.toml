@@ -56,6 +56,23 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy        = "geolocation=(), microphone=(), camera=(), payment=(self)"
 
+# PWA · el service worker no debe quedar cacheado por el navegador/CDN: así un
+# deploy nuevo propaga el SW actualizado en la siguiente visita (el SW versiona
+# sus propias cachés internamente con VERSION). Service-Worker-Allowed permite
+# scope "/" por vivir en la raíz.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control          = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# PWA · content-type explícito del manifest (algunos clientes son quisquillosos).
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type  = "application/manifest+json"
+    Cache-Control = "public, max-age=3600"
+
 # perfilapro.cat: dominio puerta de entrada para la versión catalana.
 # Cualquier ruta entrante por el .cat se 301 a su equivalente bajo
 # perfilapro.es/ca/* — un único canonical SEO, sin contenido duplicado.
