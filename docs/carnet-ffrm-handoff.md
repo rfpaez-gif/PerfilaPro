@@ -11,11 +11,40 @@ de `CLAUDE.md` y del `docs/cantera-handoff.md`. Este doc no repite la infra Cant
 asume que existe y la reutiliza.
 
 Última actualización: 2026-06-10 — **fase de estrategia cerrada, fase de construcción por
-empezar.** Aún no se ha escrito código de este carril. Decisiones-marco tomadas (abajo).
+empezar.** Aún no se ha escrito código de este carril. Decisiones-marco tomadas (abajo) +
+candidatos de marca propuestos (§8-bis).
 
 > Nota de rama: la rama `claude/greeting-5kgcks` contiene además un experimento de **PWA
 > para `/panel.html`** (manifest + service worker + hint iOS) que quedó **aparcado** — no
 > es parte de este carril. Si no se retoma para el Studio del club/B2B, se puede revertir.
+
+---
+
+## 0 · BOOTSTRAP — empieza por aquí (hilo limpio)
+
+**Dónde vive todo:** rama **`claude/greeting-5kgcks`**. Este doc + la infra Cantera + el
+experimento PWA aparcado están en esa rama, **NO en `main`**. Si abres un hilo y no ves este
+archivo, es que estás en otra rama — no reconstruyas nada, cámbiate de rama.
+
+```bash
+git fetch origin claude/greeting-5kgcks
+git checkout claude/greeting-5kgcks          # continuar la misma línea (recomendado)
+# o leer sin cambiar de rama:
+git show origin/claude/greeting-5kgcks:docs/carnet-ffrm-handoff.md
+```
+
+**Orden de lectura obligatorio:**
+1. Sección "Cantera · vertical deporte base" de `CLAUDE.md`.
+2. `docs/cantera-handoff.md` (estado de la infra Cantera que se reutiliza).
+3. Este doc, completo.
+
+**Estado:** estrategia CERRADA, construcción por empezar. **Cero código de este carril aún.**
+
+**Primera acción del hilo limpio:** arrancar **Fase 0 (blindaje IP) + Fase 1 (piloto físico)**
+en paralelo (§7). Lo único que bloquea la Fase 0 es **elegir el nombre de marca** (§8-bis) —
+es decisión del founder.
+
+**No re-debatir:** §1 (decisiones-marco) y §2 (realidades verificadas) están cerradas.
 
 ---
 
@@ -218,10 +247,18 @@ sí.** Convertir idea→posición rápido:
 ## 7 · HOJA DE RUTA (fases)
 
 **Fase 0 — Blindaje (esta semana, en paralelo a todo):**
-- Decidir **nombre del programa** y de la marca → registrar OEPM + dominios.
-- Memo de autoría datado (documento de concepto).
-- Plantilla NDA + cláusula no-circunvención para socios.
-- Consulta express con abogado IP.
+- Decidir **nombre del programa** y de la marca (candidatos en §8-bis) → verificar
+  disponibilidad en **OEPM + EUIPO + dominios** y registrar.
+- **Memo de autoría datado** — 1-2 págs: título del concepto, fecha, autor (nombre + ID), la
+  tesis + el mecanismo (los dos botones), estado de desarrollo (qué código ya existe), y
+  **referencia a los commits git** (`6e17e83` este doc) como prueba de anterioridad. Destino:
+  depósito en Registro de la Propiedad Intelectual o sellado de tiempo (Safe Creative).
+- **Checklist marca + dominios** — nombre(s) candidato(s); clases de Niza (probable: 9
+  software · 35 gestión/publicidad · 41 deporte/educación · 42 tecnología — confirmar con
+  agente); búsqueda de disponibilidad (OEPM + EUIPO + dominios); dominios (.es/.com +
+  variantes); handles de redes.
+- **Plantilla NDA + cláusula no-circunvención** para socios privados.
+- **Consulta express con abogado IP/mercantil.**
 
 **Fase 1 — Producto demostrable (piloto físico real):**
 - Activar el carril (`CANTERA_VERTICAL_ACTIVE`) en un entorno demo.
@@ -256,10 +293,40 @@ sí.** Convertir idea→posición rápido:
 - ¿Dato Fénix cedible? ¿Potestad FFRM vs RFEF? (bloqueante de la "oficialidad")
 - Modelo de reparto exacto del mecenazgo (federación / club / plataforma).
 - ¿Carnet **obligatorio** (distribución garantizada → valor publicitario) o **voluntario**?
-- Nombre del programa y de la marca a registrar.
+- Nombre del programa y de la marca a registrar (candidatos en §8-bis — **elegir**).
 - ¿Quién vende el patrocinio máster (federación / agencia / founder)?
 - ¿"Carnet **oficial**" (requiere Fénix) vs "carnet **avalado** por la FFRM" (no requiere
   ceder dato) como posicionamiento de arranque?
+
+---
+
+## 8-bis · Marca y nombre — candidatos propuestos (2026-06-10)
+
+Pensar en **dos capas**: **paraguas institucional** (el programa "blanco" que se vende a
+federación/mecenas) + **producto** (el carnet que toca el usuario). Fuerza de marca legal:
+**inventada > sugestiva > descriptiva**. TODOS requieren verificar disponibilidad en
+**OEPM + EUIPO + dominios** antes de fijar.
+
+**Paraguas institucional (programa):**
+- **Arraigo** ⭐ recomendado — pertenencia/raíz; sugestivo (registrable), tono blanco e
+  institucional. "Programa Arraigo".
+- **Federia** — inventada de "federado"; marca legalmente la más fuerte, suena a plataforma.
+  Buen todo-en-uno si se quiere marca única.
+- **Raíces** — "deporte **base**" = raíces; cálido y on-message, pero palabra común → marca
+  débil, combinar con distintivo.
+- **Vínculo** — lazo jugador-club-región; blanco, común.
+
+**Producto (carnet):**
+- **Dorsal** ⭐ — el dorsal es la identidad portable del jugador; corto y moderno. Algo
+  descriptivo en deporte → verificar colisión.
+- **Insignia** — credencial/escudo; riesgo de colisión con marcas existentes.
+
+**Emparejamiento recomendado:** Programa **Arraigo** + carnet **Dorsal**. Alternativa
+monolítica: **Federia**.
+
+⚠️ **Evitar:** cualquier cosa cercana a **"Fénix"** (es el sistema RFEF) y términos puramente
+descriptivos ("Carnet Deportivo", "Carné Base") — no registrables. Decisión del founder
+pendiente; bloquea el arranque de la Fase 0.
 
 ---
 
