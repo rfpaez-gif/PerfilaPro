@@ -38,7 +38,8 @@ En orden de preferencia: **Savia Nueva** · **Savia Activa** · **Latido**.
 
 ### Por qué se descartaron otros nombres (no re-debatir)
 - **Arraigo** — "arraigo" es término técnico de extranjería en España (arraigo social/laboral). Con dinero público de la CARM (gobierno PP) + coalición transversal, cargar el nombre con esa connotación es un riesgo político gratuito. Fuera.
-- **Federia / Fénix / descriptivos** — Federia es fuerte como marca legal pero endogámica (habla de "lo federado", no del producto: deporte base, vida, salud). Fénix descartado de inicio. Los descriptivos puros ("Carnet Deportivo") no registran.
+- **Fénix** — ⛔ **INTOCABLE**: es el nombre del **programa de la RFEF** (marca de la federación). No usar bajo ningún concepto para el programa ni el carnet.
+- **Federia / descriptivos** — Federia es fuerte como marca legal pero endogámica (habla de "lo federado", no del producto: deporte base, vida, salud). Los descriptivos puros ("Carnet Deportivo") no registran.
 - **Criterio de selección**: políticamente neutro (palatable de PP a izquierda, porque pasa por subvención pública) + cargado de relato deporte base/vida/salud + sugestivo > descriptivo (registrable).
 
 ### ✅ Checklist Fase 0 · verificación legal antes de oficializar (PENDIENTE)
