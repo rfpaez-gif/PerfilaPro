@@ -11,9 +11,7 @@
   <link rel="canonical" href="https://perfilapro.es/es/editar" />
   <meta name="robots" content="noindex,nofollow">
   <title>Editar mi perfil — PerfilaPro</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/fonts.css">
   <link rel="stylesheet" href="/styles/brand.css">
   <style>
     /* ── Layout específico de editar ────────────────────────── */
@@ -965,6 +963,13 @@
               <span>1 año · estadísticas</span>
             </button>
           </div>
+          <!-- P0-2 · Consentimiento de desistimiento (RDL 1/2007 art. 103.a).
+               Obligatorio y sin premarcar para planes de pago; bloquea el botón
+               hasta marcarse. Oculto en modo Promo Lanzamiento (sin pago). -->
+          <label id="desistimientoRow" hidden style="display:flex;gap:.6em;align-items:flex-start;text-align:left;font-size:.85rem;line-height:1.45;margin:0 0 14px;color:var(--color-gris-500,#555)">
+            <input type="checkbox" id="desistimientoChk" style="margin-top:.2em;flex:0 0 auto;width:18px;height:18px">
+            <span>Solicito que mi perfil se active de forma inmediata tras el pago y entiendo que, al tratarse de un servicio digital de ejecución inmediata, <strong>pierdo el derecho de desistimiento de 14 días</strong> una vez activado (art. 103.a RDL 1/2007). He leído y acepto los <a href="/es/terminos" target="_blank" rel="noopener">Términos</a> y la <a href="/es/privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+          </label>
           <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar plan Trimestral · 9€ →</button>
         </div>
 
@@ -1696,8 +1701,27 @@
             freeBannerBtn.textContent = ctaLabel(selectedPlan);
           });
         });
+        // P0-2 · Gate de desistimiento. Para planes de pago (no promo) el botón
+        // queda deshabilitado hasta que el usuario marca la casilla de renuncia.
+        const desistRow = document.getElementById('desistimientoRow');
+        const desistChk = document.getElementById('desistimientoChk');
+        const requireDesist = !launchPromoActive;
+        if (requireDesist && desistRow) {
+          desistRow.hidden = false;
+          freeBannerBtn.disabled = true;
+          freeBannerBtn.style.opacity = '.5';
+          freeBannerBtn.style.cursor = 'not-allowed';
+          if (desistChk) desistChk.addEventListener('change', function () {
+            const ok = desistChk.checked;
+            freeBannerBtn.disabled = !ok;
+            freeBannerBtn.style.opacity = ok ? '' : '.5';
+            freeBannerBtn.style.cursor = ok ? '' : 'not-allowed';
+          });
+        }
         if (freeBannerBtn) {
           freeBannerBtn.addEventListener('click', async function() {
+            // Defensa extra: el botón ya está disabled sin la casilla marcada.
+            if (requireDesist && !(desistChk && desistChk.checked)) { return; }
             const label = freeBannerBtn.textContent;
             freeBannerBtn.style.pointerEvents = 'none';
             try {
@@ -1798,6 +1822,10 @@
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
                   idioma: idiomaPath,
+                  // P0-2 · prueba del consentimiento de desistimiento (queda en
+                  // session.metadata, el registro del pedido en Stripe).
+                  desistimiento_ack_at: new Date().toISOString(),
+                  terms_version: '2026-04',
                 }),
               });
               const j = await r.json();

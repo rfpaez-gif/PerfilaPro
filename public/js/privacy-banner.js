@@ -89,13 +89,18 @@
     var btns = document.createElement('div');
     btns.style.cssText = 'display:flex;gap:8px;flex:0 0 auto';
 
+    // AEPD: "Rechazar" debe tener la MISMA jerarquía visual que "Aceptar"
+    // (mismo tamaño, peso y visibilidad). Ambos botones comparten estilo
+    // idéntico — solo cambia la etiqueta — para no inducir la aceptación.
+    var equalBtnStyle = [
+      'background:#fff', 'color:#111', 'border:0', 'border-radius:999px',
+      'padding:8px 16px', 'cursor:pointer', 'font-weight:600', 'font-size:14px',
+    ].join(';');
+
     var btnReject = document.createElement('button');
     btnReject.type = 'button';
     btnReject.textContent = T.reject;
-    btnReject.style.cssText = [
-      'background:transparent', 'color:#fff', 'border:1px solid rgba(255,255,255,.4)',
-      'border-radius:999px', 'padding:8px 16px', 'cursor:pointer',
-    ].join(';');
+    btnReject.style.cssText = equalBtnStyle;
     btnReject.addEventListener('click', function () {
       setConsent('rejected');
       banner.remove();
@@ -104,10 +109,7 @@
     var btnAccept = document.createElement('button');
     btnAccept.type = 'button';
     btnAccept.textContent = T.accept;
-    btnAccept.style.cssText = [
-      'background:#fff', 'color:#111', 'border:0', 'border-radius:999px',
-      'padding:8px 16px', 'cursor:pointer', 'font-weight:600',
-    ].join(';');
+    btnAccept.style.cssText = equalBtnStyle;
     btnAccept.addEventListener('click', function () {
       setConsent('accepted');
       banner.remove();
