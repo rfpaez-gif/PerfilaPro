@@ -27,7 +27,16 @@ function makeHandler(stripe) {
       return { statusCode: 400, body: 'JSON inválido' };
     }
 
-    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken } = body;
+    const { nombre, sector, cp, whatsapp, servicios, desc, direccion, local_publico, plan, foto, telefono, email, agent_code, ocupacion_code, slug: slugOverride, cancel_url: cancelUrl, idioma: rawIdioma, organization_id: rawOrgId, redeemed_token: rawRedeemedToken, desistimiento_ack_at: rawDesistAck, terms_version: rawTermsVersion } = body;
+
+    // P0-2 · Prueba del consentimiento de desistimiento (RDL 1/2007 art. 103.a).
+    // El front bloquea el pago hasta marcar la casilla y manda el timestamp +
+    // versión de términos; los guardamos en session.metadata para que queden
+    // junto al registro del pedido en Stripe (auditable en el Dashboard).
+    const desistAckAt = (typeof rawDesistAck === 'string' && !Number.isNaN(Date.parse(rawDesistAck)))
+      ? rawDesistAck.substring(0, 40) : '';
+    const termsVersion = (typeof rawTermsVersion === 'string')
+      ? rawTermsVersion.replace(/[^\w.\-:/ ]/g, '').substring(0, 20) : '';
 
     // organization_id (opcional) y redeemed_token (opcional) viajan dentro
     // de session.metadata como strings (Stripe sólo acepta strings). El
@@ -94,6 +103,9 @@ function makeHandler(stripe) {
           idioma,
           organization_id: orgIdStr,
           redeemed_token: redeemedTokenStr,
+          // P0-2 · consentimiento de desistimiento (timestamp + versión de términos)
+          desistimiento_ack_at: desistAckAt,
+          terms_version: termsVersion,
         },
         success_url: `${siteUrl}/${idioma}/success?slug=${slug}`,
         cancel_url:  cancelUrl || `${siteUrl}/${idioma}/#crear`,

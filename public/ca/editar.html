@@ -11,9 +11,7 @@
   <link rel="canonical" href="https://perfilapro.es/ca/editar" />
   <meta name="robots" content="noindex,nofollow">
   <title>Editar el meu perfil — PerfilaPro</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/fonts.css">
   <link rel="stylesheet" href="/styles/brand.css">
   <style>
     /* ── Layout específico de editar ────────────────────────── */
@@ -965,6 +963,13 @@
               <span>1 any · estadístiques</span>
             </button>
           </div>
+          <!-- P0-2 · Consentiment de desistiment (RDL 1/2007 art. 103.a).
+               Obligatori i sense premarcar per a plans de pagament; bloqueja el
+               botó fins a marcar-se. Ocult en mode Promo Llançament (sense pagament). -->
+          <label id="desistimientoRow" hidden style="display:flex;gap:.6em;align-items:flex-start;text-align:left;font-size:.85rem;line-height:1.45;margin:0 0 14px;color:var(--color-gris-500,#555)">
+            <input type="checkbox" id="desistimientoChk" style="margin-top:.2em;flex:0 0 auto;width:18px;height:18px">
+            <span>Sol·licito que el meu perfil s'activi de manera immediata després del pagament i entenc que, en tractar-se d'un servei digital d'execució immediata, <strong>perdo el dret de desistiment de 14 dies</strong> un cop activat (art. 103.a RDL 1/2007). He llegit i accepto els <a href="/ca/terminos" target="_blank" rel="noopener">Termes</a> i la <a href="/ca/privacidad" target="_blank" rel="noopener">Política de Privadesa</a>.</span>
+          </label>
           <button class="pp-upgrade__cta" id="freeBannerBtn" type="button">Activar pla Trimestral · 9€ →</button>
         </div>
 
@@ -1687,8 +1692,27 @@
             freeBannerBtn.textContent = ctaLabel(selectedPlan);
           });
         });
+        // P0-2 · Gate de desistiment. Per a plans de pagament (no promo) el botó
+        // queda deshabilitat fins que l'usuari marca la casella de renúncia.
+        const desistRow = document.getElementById('desistimientoRow');
+        const desistChk = document.getElementById('desistimientoChk');
+        const requireDesist = !launchPromoActive;
+        if (requireDesist && desistRow) {
+          desistRow.hidden = false;
+          freeBannerBtn.disabled = true;
+          freeBannerBtn.style.opacity = '.5';
+          freeBannerBtn.style.cursor = 'not-allowed';
+          if (desistChk) desistChk.addEventListener('change', function () {
+            const ok = desistChk.checked;
+            freeBannerBtn.disabled = !ok;
+            freeBannerBtn.style.opacity = ok ? '' : '.5';
+            freeBannerBtn.style.cursor = ok ? '' : 'not-allowed';
+          });
+        }
         if (freeBannerBtn) {
           freeBannerBtn.addEventListener('click', async function() {
+            // Defensa extra: el botó ja està disabled sense la casella marcada.
+            if (requireDesist && !(desistChk && desistChk.checked)) { return; }
             const label = freeBannerBtn.textContent;
             freeBannerBtn.style.pointerEvents = 'none';
             try {
@@ -1789,6 +1813,10 @@
                   plan: selectedPlan, slug: slug,
                   cancel_url: window.location.href,
                   idioma: idiomaPath,
+                  // P0-2 · prova del consentiment de desistiment (queda a
+                  // session.metadata, el registre de la comanda a Stripe).
+                  desistimiento_ack_at: new Date().toISOString(),
+                  terms_version: '2026-04',
                 }),
               });
               const j = await r.json();
