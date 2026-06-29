@@ -60,6 +60,26 @@ async function rawFetch(url, fetchImpl) {
   }
 }
 
+// Extrae cada <select name> del HTML con sus <option value>texto. Capado
+// para no devolver una respuesta enorme.
+function dumpSelects(html) {
+  const out = [];
+  const selRe = /<select\b[^>]*\bname="([^"]+)"[^>]*>([\s\S]*?)<\/select>/gi;
+  let m;
+  while ((m = selRe.exec(html)) !== null && out.length < 30) {
+    const name = m[1];
+    const inner = m[2];
+    const options = [];
+    const optRe = /<option\b[^>]*\bvalue="([^"]*)"[^>]*>([\s\S]*?)<\/option>/gi;
+    let o;
+    while ((o = optRe.exec(inner)) !== null && options.length < 70) {
+      options.push({ value: o[1], text: o[2].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 40) });
+    }
+    out.push({ name, options });
+  }
+  return out;
+}
+
 // Diagnóstico: qué devuelve el BOE y qué nombres de campo / código de
 // provincia trae el formulario de búsqueda. Sirve para corregir la URL
 // de búsqueda sin acceso directo al portal.
@@ -81,18 +101,15 @@ async function debugProbe(fetchImpl) {
     out.search = { url: searchUrl, error: e.message };
   }
 
-  // 2) El formulario de búsqueda: nombres de campos + contexto de "Tarragona".
+  // 2) El formulario de búsqueda: vuelca cada <select> con sus opciones
+  //    (value+texto) para leer los códigos reales de campo[N]/dato[N]
+  //    (qué código = provincia, tipo de bien, estado, y sus valores).
   try {
     const { status, html } = await rawFetch('https://subastas.boe.es/subastas_ava.php', fetchImpl);
-    const names = [...html.matchAll(/<(?:select|input)[^>]*\bname="([^"]+)"/gi)].map((m) => m[1]);
-    const lower = html.toLowerCase();
-    const ti = lower.indexOf('tarragona');
-    const provincia = ti >= 0 ? html.slice(Math.max(0, ti - 140), ti + 40).replace(/\s+/g, ' ') : null;
     out.form = {
       status,
       length: html.length,
-      fieldNames: [...new Set(names)].slice(0, 50),
-      tarragonaContext: provincia,
+      selects: dumpSelects(html),
     };
   } catch (e) {
     out.form = { error: e.message };
