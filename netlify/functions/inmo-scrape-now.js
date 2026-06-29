@@ -80,6 +80,25 @@ function dumpSelects(html) {
   return out;
 }
 
+// Vuelca los <input> del formulario (name/value/type), filtrado a los
+// que importan (campo[N]/dato[N]/accion/page_hits/sort). Los campo[N]
+// son inputs ocultos con el CÓDIGO de campo — la pieza que falta para
+// armar la URL de búsqueda.
+function dumpInputs(html) {
+  const out = [];
+  const tagRe = /<input\b[^>]*>/gi;
+  let t;
+  while ((t = tagRe.exec(html)) !== null && out.length < 90) {
+    const tag = t[0];
+    const name = (tag.match(/\bname="([^"]*)"/i) || [])[1];
+    if (!name || !/^(campo|dato)\[|^(accion|page_hits|sort_field|sort_order)/.test(name)) continue;
+    const value = (tag.match(/\bvalue="([^"]*)"/i) || [])[1] || '';
+    const type = (tag.match(/\btype="([^"]*)"/i) || [])[1] || 'text';
+    out.push({ name, value, type });
+  }
+  return out;
+}
+
 // Diagnóstico: qué devuelve el BOE y qué nombres de campo / código de
 // provincia trae el formulario de búsqueda. Sirve para corregir la URL
 // de búsqueda sin acceso directo al portal.
@@ -109,6 +128,7 @@ async function debugProbe(fetchImpl) {
     out.form = {
       status,
       length: html.length,
+      inputs: dumpInputs(html),
       selects: dumpSelects(html),
     };
   } catch (e) {
