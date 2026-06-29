@@ -17,6 +17,7 @@ const { Resend } = require('resend');
 
 const { isInmoActive, inmoDisabledResponse } = require('./lib/inmo/flag');
 const { centsToEuros } = require('./lib/inmo/subasta-model');
+const boe = require('./lib/inmo/boe-client');
 const { scrapeCoastalSubastas, persist } = require('./inmo-scrape-subastas');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
@@ -39,6 +40,67 @@ function summarize(rows, siteUrl) {
   }));
 }
 
+// fetch con timeout que NO lanza en HTTP != 2xx (queremos ver el status).
+async function rawFetch(url, fetchImpl) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const res = await fetchImpl(url, {
+      signal: ctrl.signal,
+      headers: {
+        'User-Agent': boe.BROWSER_UA,
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'es-ES,es;q=0.9',
+      },
+    });
+    const html = await res.text();
+    return { status: res.status, html };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Diagnóstico: qué devuelve el BOE y qué nombres de campo / código de
+// provincia trae el formulario de búsqueda. Sirve para corregir la URL
+// de búsqueda sin acceso directo al portal.
+async function debugProbe(fetchImpl) {
+  const out = { usingCustomUrl: !!process.env.INMO_BOE_SEARCH_URL };
+
+  // 1) La URL de búsqueda que usa el scraper.
+  const searchUrl = boe.buildSearchUrl();
+  try {
+    const { status, html } = await rawFetch(searchUrl, fetchImpl);
+    out.search = {
+      url: searchUrl,
+      status,
+      length: html.length,
+      idSubs: boe.extractIdSubs(html).length,
+      snippet: html.replace(/\s+/g, ' ').slice(0, 1500),
+    };
+  } catch (e) {
+    out.search = { url: searchUrl, error: e.message };
+  }
+
+  // 2) El formulario de búsqueda: nombres de campos + contexto de "Tarragona".
+  try {
+    const { status, html } = await rawFetch('https://subastas.boe.es/subastas_ava.php', fetchImpl);
+    const names = [...html.matchAll(/<(?:select|input)[^>]*\bname="([^"]+)"/gi)].map((m) => m[1]);
+    const lower = html.toLowerCase();
+    const ti = lower.indexOf('tarragona');
+    const provincia = ti >= 0 ? html.slice(Math.max(0, ti - 140), ti + 40).replace(/\s+/g, ' ') : null;
+    out.form = {
+      status,
+      length: html.length,
+      fieldNames: [...new Set(names)].slice(0, 50),
+      tarragonaContext: provincia,
+    };
+  } catch (e) {
+    out.form = { error: e.message };
+  }
+
+  return out;
+}
+
 function makeHandler(db, emailClient = resend, deps = {}) {
   return async (event) => {
     if (!isInmoActive()) return inmoDisabledResponse();
@@ -50,8 +112,14 @@ function makeHandler(db, emailClient = resend, deps = {}) {
 
     const siteUrl = process.env.SITE_URL || 'https://perfilapro.es';
     const dry = event.queryStringParameters?.dry === '1';
+    const debug = event.queryStringParameters?.debug === '1';
 
     try {
+      if (debug) {
+        const fetchImpl = deps.fetchImpl || globalThis.fetch;
+        return json(200, { debug: true, ...(await debugProbe(fetchImpl)) });
+      }
+
       if (dry) {
         // Rastrea sin tocar la BD: prueba pura del scraper + geofiltro.
         const rows = await scrapeCoastalSubastas({ ...deps, log: (m) => console.log(`inmo-now: ${m}`) });
