@@ -28,6 +28,11 @@
 [functions."charge-due-enrollment-concepts"]
   schedule = "0 6 * * *"
 
+# INMO · rastreo diario de subastas de inmuebles en la costa de Tarragona
+# (Portal de Subastas del BOE). No-op si INMO_VERTICAL_ACTIVE != 1.
+[functions."inmo-scrape-subastas"]
+  schedule = "0 7 * * *"
+
 # Producción: rama main. Sin build (los tests corren en GitHub Actions).
 [context.production]
   command = "echo 'PerfilaPro: sin paso de build — los tests corren en GitHub Actions'"
@@ -185,6 +190,19 @@
   to     = "/.netlify/functions/card"
   status = 200
   force  = true
+
+# INMO · ficha pública de una subasta (vitrina). /s/:slug → subasta.
+[[redirects]]
+  from   = "/s/:slug"
+  to     = "/.netlify/functions/subasta"
+  status = 200
+  force  = true
+
+# INMO · disparador manual del rastreo (prueba). Protegido con ?key=.
+[[redirects]]
+  from   = "/api/inmo-scrape-now"
+  to     = "/.netlify/functions/inmo-scrape-now"
+  status = 200
 
 # Cantera · inscripción de temporada (capa I4). Página pública del
 # formulario del padre; el club reparte /es|ca/inscripcion/:token.
