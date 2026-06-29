@@ -23,18 +23,26 @@ const DEFAULT_TIMEOUT_MS = 20000;
 const BROWSER_UA =
   'Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0';
 
-// URL de búsqueda. Por defecto, búsqueda avanzada de bienes inmuebles en
-// la provincia de Tarragona (código 43). Sobrescribible por env para
-// pegar la URL exacta copiada del navegador.
+// URL de búsqueda del buscador avanzado del BOE. El formulario usa pares
+// campo[N] (código de campo) + dato[N] (valor). Códigos confirmados
+// contra el formulario real (subastas_ava.php):
+//   campo[3]=BIEN.TIPO          → dato[3]=I  (I=Inmueble, V=Vehículo, M=Mueble)
+//   campo[8]=BIEN.COD_PROVINCIA → dato[8]=43 (Tarragona)
+//   campo[2]=SUBASTA.ESTADO.CODIGO → dato[2] (PU/EJ/SU/CA/PC/FS): sin filtrar
+//                                    por defecto para no perder próximas.
+// Sobrescribible por env (INMO_BOE_SEARCH_URL) para afinar el filtro.
 function buildSearchUrl() {
   if (process.env.INMO_BOE_SEARCH_URL) return process.env.INMO_BOE_SEARCH_URL;
-  return (
-    'https://subastas.boe.es/subastas_ava.php' +
-    '?accion=Buscar' +
-    '&dato%5Bbien_tipo%5D=I' +            // I = inmuebles
-    '&dato%5Bprovincia%5D=43' +           // 43 = Tarragona
-    '&campo%5B0%5D=SUBASTA.ESTADO&dato%5B0%5D=EJ'  // EJ = en ejecución/abiertas
-  );
+  const enc = (k, v) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+  const parts = [
+    enc('campo[3]', 'BIEN.TIPO'), enc('dato[3]', 'I'),            // inmuebles
+    enc('campo[8]', 'BIEN.COD_PROVINCIA'), enc('dato[8]', '43'),  // Tarragona
+    enc('page_hits', '500'),
+    enc('sort_field[0]', 'SUBASTA.FECHA_FIN'),
+    enc('sort_order[0]', 'desc'),
+    enc('accion', 'Buscar'),
+  ];
+  return 'https://subastas.boe.es/subastas_ava.php?' + parts.join('&');
 }
 
 // GET con UA de navegador + timeout. fetchImpl inyectable para tests.
