@@ -107,17 +107,39 @@ async function debugProbe(fetchImpl) {
 
   // 1) La URL de búsqueda que usa el scraper.
   const searchUrl = boe.buildSearchUrl();
+  let ids = [];
   try {
     const { status, html } = await rawFetch(searchUrl, fetchImpl);
+    ids = boe.extractIdSubs(html);
     out.search = {
       url: searchUrl,
       status,
       length: html.length,
-      idSubs: boe.extractIdSubs(html).length,
-      snippet: html.replace(/\s+/g, ' ').slice(0, 1500),
+      idSubs: ids.length,
+      idSubsSample: ids.slice(0, 5),
+      snippet: html.replace(/\s+/g, ' ').slice(0, 1200),
     };
   } catch (e) {
     out.search = { url: searchUrl, error: e.message };
+  }
+
+  // 1b) Si hay resultados, baja la PRIMERA ficha y la parsea — así
+  //     verificamos el parser de detalle en la misma pasada.
+  if (ids.length) {
+    const detalleUrl = `https://subastas.boe.es/detalleSubasta.php?idSub=${ids[0]}`;
+    try {
+      const { status, html } = await rawFetch(detalleUrl, fetchImpl);
+      const parsed = boe.parseDetalle(html, { idSubasta: ids[0], detalleUrl });
+      out.detalle = {
+        url: detalleUrl,
+        status,
+        length: html.length,
+        parsed,
+        snippet: html.replace(/\s+/g, ' ').slice(0, 2500),
+      };
+    } catch (e) {
+      out.detalle = { url: detalleUrl, error: e.message };
+    }
   }
 
   // 2) El formulario de búsqueda: vuelca cada <select> con sus opciones
