@@ -198,6 +198,12 @@
   status = 200
   force  = true
 
+# INMO · disparador manual del rastreo (prueba). Protegido con ?key=.
+[[redirects]]
+  from   = "/api/inmo-scrape-now"
+  to     = "/.netlify/functions/inmo-scrape-now"
+  status = 200
+
 # Cantera · inscripción de temporada (capa I4). Página pública del
 # formulario del padre; el club reparte /es|ca/inscripcion/:token.
 [[redirects]]
