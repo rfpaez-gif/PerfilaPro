@@ -50,11 +50,18 @@ function reminderField(days) {
   return `reminder_${days}_sent`;
 }
 
-function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl, idioma = 'es' }) {
+function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl, idioma = 'es', editToken }) {
   const lang = idioma === 'ca' ? 'ca' : 'es';
   const T = REMINDER_STRINGS[lang];
   const firstName = (nombre || '').split(' ')[0];
   const cardUrl = `${siteUrl}/c/${slug}`;
+  // El CTA lleva a la vía de renovación específica (editar.html reconoce
+  // la card vía slug+token y muestra el banner de renovación), no a la
+  // landing genérica de alta — antes el aviso no discriminaba que el
+  // cliente ya tenía tarjeta y solo necesitaba renovarla.
+  const renewUrl = editToken
+    ? `${siteUrl}/${lang}/editar?slug=${slug}&token=${editToken}#renewBanner`
+    : `${siteUrl}/${lang}/editar`;
   const expiraFecha = new Date(expiresAt).toLocaleDateString(T.locale, {
     day: 'numeric', month: 'long', year: 'numeric',
   });
@@ -95,7 +102,7 @@ function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl, idioma
     preheader: T.preheader(daysLeft),
     title: T.title(firstName),
     bodyHtml,
-    cta: { text: T.cta, url: `${siteUrl}/${lang}/` },
+    cta: { text: T.cta, url: renewUrl },
     siteUrl,
     idioma: lang,
   });
@@ -118,7 +125,7 @@ async function processReminders(db, emailClient) {
 
     const { data: cards, error } = await db
       .from('cards')
-      .select('slug, nombre, email, expires_at, idioma')
+      .select('slug, nombre, email, expires_at, idioma, edit_token')
       .eq('status', 'active')
       .eq(field, false)
       .neq('plan', 'b2b')
@@ -141,6 +148,7 @@ async function processReminders(db, emailClient) {
         expiresAt: card.expires_at,
         siteUrl,
         idioma: card.idioma,
+        editToken: card.edit_token,
       });
 
       try {

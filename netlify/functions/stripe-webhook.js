@@ -229,6 +229,126 @@ function buildEmail({ nombre, slug, plan, expiresAt, siteUrl, editToken, idioma 
   };
 }
 
+const RENEWAL_DAYS = 365;
+const RENEWAL_KIND = 'renewal';
+
+// Renovación self-service (renew-checkout.js). A diferencia del carril de
+// alta, NO crea una card — extiende expires_at de la MISMA fila (partiendo
+// de la fecha de caducidad actual si aún no venció, o de hoy si ya pasó) y
+// reactiva los recordatorios (reminder_X_sent → false) para el siguiente
+// ciclo. Idempotente: si stripe_session_id ya coincide con esta sesión
+// (replay del webhook), no vuelve a extender.
+async function handleRenewalCheckout({ db, emailClient, session, siteUrl }) {
+  const slug = session.metadata && session.metadata.slug;
+  if (!slug) return { ok: false, reason: 'missing_slug' };
+
+  const { data: card, error } = await db
+    .from('cards')
+    .select('slug, nombre, email, idioma, edit_token, expires_at, plan, stripe_session_id, deleted_at')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (error || !card || card.deleted_at) {
+    console.error('renewal webhook: card no encontrada:', slug);
+    return { ok: false, reason: 'card_not_found' };
+  }
+
+  if (card.stripe_session_id === session.id) {
+    return { ok: true, slug, replayed: true, expires_at: card.expires_at };
+  }
+
+  const previousPlan = card.plan;
+  const base = card.expires_at && new Date(card.expires_at) > new Date()
+    ? new Date(card.expires_at)
+    : new Date();
+  const expiresAt = new Date(base.getTime() + RENEWAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: updErr } = await db
+    .from('cards')
+    .update({
+      plan: 'renovacion',
+      status: 'active',
+      expires_at: expiresAt,
+      stripe_session_id: session.id,
+      reminder_30_sent: false,
+      reminder_15_sent: false,
+      reminder_7_sent: false,
+    })
+    .eq('slug', slug);
+
+  if (updErr) {
+    console.error('renewal webhook: error actualizando card:', updErr.message);
+    return { ok: false, reason: 'db_update_failed' };
+  }
+
+  console.log(`Renovación aplicada: ${slug} (${previousPlan} → renovacion), vence ${expiresAt}`);
+  captureEvent(slug, 'renewal_completed', { previous_plan: previousPlan }).catch(() => {});
+
+  const email = card.email || session.customer_details?.email || null;
+  const idioma = card.idioma === 'ca' ? 'ca' : 'es';
+
+  let pdfAttachment = null;
+  try {
+    const planInfo = PLAN_INFO.renovacion;
+    const { base: baseAmount, iva } = calcIva(planInfo.total);
+    const fecha = new Date().toISOString();
+
+    let numero;
+    try {
+      numero = await getNextInvoiceNumber(db);
+    } catch (numErr) {
+      const year = new Date().getFullYear();
+      numero = `FAC-${year}-${Date.now().toString().slice(-6)}`;
+      console.warn('renewal webhook: getNextInvoiceNumber falló, usando fallback:', numErr.message);
+    }
+
+    const pdfBuffer = await buildPDF({
+      numero, fecha,
+      emailCliente: email,
+      nombreCliente: card.nombre,
+      plan: 'renovacion',
+      base: baseAmount, iva,
+      total: planInfo.total,
+    });
+
+    const { error: factError } = await db.from('facturas').insert({
+      numero_factura: numero,
+      fecha,
+      email_cliente: email,
+      nombre_cliente: card.nombre || null,
+      plan: 'renovacion',
+      base_imponible: baseAmount,
+      iva,
+      total: planInfo.total,
+      stripe_session_id: session.id,
+      stripe_payment_id: session.payment_intent || null,
+    });
+    if (factError) console.warn('renewal webhook: factura no guardada (no fatal):', factError.message);
+
+    pdfAttachment = { numero, buffer: pdfBuffer };
+  } catch (err) {
+    console.error('renewal webhook: error generando factura (no fatal):', err.message);
+  }
+
+  const emailSent = await sendConfirmationEmail({
+    email, nombre: card.nombre, slug,
+    plan: 'renovacion',
+    expiresAt, editToken: card.edit_token, emailClient, pdfAttachment,
+    idioma,
+    subjectPrefix: idioma === 'ca' ? '[Renovació]' : '[Renovación]',
+  });
+
+  if (emailSent) {
+    const { error: tsErr } = await db
+      .from('cards')
+      .update({ kit_email_sent_at: new Date().toISOString() })
+      .eq('slug', slug);
+    if (tsErr) console.warn('renewal webhook: no se pudo marcar kit_email_sent_at (no fatal):', tsErr.message);
+  }
+
+  return { ok: true, slug, expires_at: expiresAt, email_sent: emailSent };
+}
+
 async function sendConfirmationEmail({
   email, nombre, slug, plan, expiresAt, editToken, emailClient,
   pdfAttachment, cardPdfBuffer, qrPngBuffer, subjectPrefix, idioma = 'es',
@@ -400,6 +520,14 @@ function makeHandler(stripeClient, db, emailClient = resend) {
           db, stripe: stripeClient, session, account: stripeEvent.account,
         });
         if (!result.ok) console.log('cantera plan checkout skipped:', result.reason);
+        return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
+      }
+
+      // Desvío renovación: checkout de renew-checkout.js (no crea card, solo
+      // extiende expires_at de la existente). Ver handleRenewalCheckout arriba.
+      if (session.metadata && session.metadata.kind === RENEWAL_KIND) {
+        const result = await handleRenewalCheckout({ db, emailClient, session, siteUrl });
+        if (!result.ok) console.log('renewal checkout skipped:', result.reason);
         return { statusCode: 200, body: JSON.stringify({ received: true, ...result }) };
       }
 
@@ -667,3 +795,5 @@ exports.handler = makeHandler(stripe, supabase);
 exports.makeHandler = makeHandler;
 exports.buildEmail = buildEmail;
 exports.sendConfirmationEmail = sendConfirmationEmail;
+exports.handleRenewalCheckout = handleRenewalCheckout;
+exports.RENEWAL_KIND = RENEWAL_KIND;

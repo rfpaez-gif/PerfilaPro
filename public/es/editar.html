@@ -919,6 +919,24 @@
           </div>
         </div>
 
+        <!-- Banner de renovación — vía comercial específica para autónomos de
+             pago (Base/Pro/renovación) cuya tarjeta se acerca a caducar.
+             Distinto del freeBanner: NO repite el formulario de alta, llama
+             a /api/renew-checkout con el mismo slug+token para extender la
+             MISMA tarjeta (ver renew-checkout.js + stripe-webhook.js →
+             handleRenewalCheckout). Antes, el único aviso que le llegaba al
+             cliente (el email de remind-expiry) mandaba a la landing
+             genérica de alta sin distinguir que ya tenía tarjeta. -->
+        <div class="pp-upgrade pp-upgrade--renew" id="renewBanner" hidden style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:16px;padding:1.5rem 1.75rem;margin-bottom:1.5rem">
+          <p class="pp-upgrade__eyebrow" style="color:#8A5A00">Tu tarjeta caduca pronto</p>
+          <h2 class="pp-upgrade__title" style="margin:.4rem 0 .6rem">Renueva antes del <span id="renewDate">—</span></h2>
+          <p class="pp-upgrade__sub" style="color:#6B4F00">
+            Tu perfil sigue activo y funcionando. Renueva 12 meses más por <strong>5€</strong> — mismo enlace, mismos datos, sin rellenar nada de nuevo.
+          </p>
+          <div id="renewMsg" style="display:none" class="pp-msg"></div>
+          <button class="pp-upgrade__cta" id="renewBannerBtn" type="button" style="margin-top:1rem">Renovar 12 meses · 5€ →</button>
+        </div>
+
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__eyebrow">Activa tu plan</p>
           <h2 class="pp-upgrade__title"><span id="upgradeName">Tu trabajo</span>, <em>así se va a ver</em></h2>
@@ -1640,6 +1658,53 @@
         }
         document.getElementById('offboardedViewLink').href = '/c/' + slug;
         offboardedBanner.hidden = false;
+      }
+
+      // Banner de renovación — vía comercial específica (ver comentario en
+      // el HTML). Ventana de 35 días cubre los tres recordatorios de email
+      // (30/15/7 días) con margen; también se muestra si la card ya venció.
+      const renewBanner = document.getElementById('renewBanner');
+      const isPaidAutonomo = !!(card.stripe_session_id || card.kit_email_sent_at) &&
+        ['base', 'pro', 'renovacion'].indexOf(card.plan) !== -1 &&
+        !card.organization_id;
+      if (renewBanner && isPaidAutonomo && !isOffboarded && card.expires_at) {
+        const daysLeft = Math.ceil((new Date(card.expires_at) - Date.now()) / (24 * 60 * 60 * 1000));
+        if (daysLeft <= 35) {
+          const rd = new Date(card.expires_at);
+          document.getElementById('renewDate').textContent = rd.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+          renewBanner.hidden = false;
+          if (location.hash === '#renewBanner') {
+            setTimeout(function () { renewBanner.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+          }
+          const renewBtn = document.getElementById('renewBannerBtn');
+          const renewMsg = document.getElementById('renewMsg');
+          if (renewBtn) {
+            renewBtn.addEventListener('click', async function () {
+              const label = renewBtn.textContent;
+              renewBtn.disabled = true;
+              renewBtn.textContent = 'Redirigiendo…';
+              try {
+                const r = await fetch('/api/renew-checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ slug, token }),
+                });
+                const j = await r.json();
+                if (r.ok && j.url) {
+                  window.location.href = j.url;
+                } else {
+                  showMsg(renewMsg, 'err', j.error || 'No se pudo iniciar el pago.');
+                  renewBtn.disabled = false;
+                  renewBtn.textContent = label;
+                }
+              } catch (err) {
+                showMsg(renewMsg, 'err', 'Error de conexión. Inténtalo de nuevo.');
+                renewBtn.disabled = false;
+                renewBtn.textContent = label;
+              }
+            });
+          }
+        }
       }
 
       // Upgrade banner — visible mientras la card no tenga ni session

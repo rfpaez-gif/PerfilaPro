@@ -186,6 +186,11 @@
   status = 200
 
 [[redirects]]
+  from   = "/api/renew-checkout"
+  to     = "/.netlify/functions/renew-checkout"
+  status = 200
+
+[[redirects]]
   from   = "/c/:slug"
   to     = "/.netlify/functions/card"
   status = 200
