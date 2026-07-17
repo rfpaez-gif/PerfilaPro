@@ -119,6 +119,18 @@ describe('buildReminderEmail', () => {
     expect(html).toContain('https://perfilapro.com/c/carlos-electricista');
   });
 
+  it('el CTA de renovación apunta a /editar con slug+token, NO a la landing genérica', () => {
+    const { html } = buildReminderEmail({ ...base, editToken: 'tok-xyz' });
+    expect(html).toContain('https://perfilapro.com/es/editar?slug=carlos-electricista&amp;token=tok-xyz#renewBanner');
+    // No debe quedar el CTA antiguo que mandaba a la home sin discriminar renovación.
+    expect(html).not.toContain('href="https://perfilapro.com/es/"');
+  });
+
+  it('sin editToken, el CTA cae a /editar genérico (no a la home)', () => {
+    const { html } = buildReminderEmail(base);
+    expect(html).toContain('https://perfilapro.com/es/editar"');
+  });
+
   it('usa color coral para urgencia de 7 días', () => {
     const { html } = buildReminderEmail({ ...base, daysLeft: 7 });
     expect(html).toContain('#E5484D');

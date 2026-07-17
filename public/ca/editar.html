@@ -919,6 +919,21 @@
           </div>
         </div>
 
+        <!-- Banner de renovació — via comercial específica per a autònoms de
+             pagament (Base/Pro/renovació) la targeta dels quals s'acosta a
+             caducar. Diferent del freeBanner: NO repeteix el formulari
+             d'alta, crida a /api/renew-checkout amb el mateix slug+token
+             per estendre la MATEIXA targeta. -->
+        <div class="pp-upgrade pp-upgrade--renew" id="renewBanner" hidden style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:16px;padding:1.5rem 1.75rem;margin-bottom:1.5rem">
+          <p class="pp-upgrade__eyebrow" style="color:#8A5A00">La teva targeta caduca aviat</p>
+          <h2 class="pp-upgrade__title" style="margin:.4rem 0 .6rem">Renova abans del <span id="renewDate">—</span></h2>
+          <p class="pp-upgrade__sub" style="color:#6B4F00">
+            El teu perfil segueix actiu i funcionant. Renova 12 mesos més per <strong>5€</strong> — mateix enllaç, mateixes dades, sense emplenar res de nou.
+          </p>
+          <div id="renewMsg" style="display:none" class="pp-msg"></div>
+          <button class="pp-upgrade__cta" id="renewBannerBtn" type="button" style="margin-top:1rem">Renovar 12 mesos · 5€ →</button>
+        </div>
+
         <div class="pp-upgrade" id="freeBanner">
           <p class="pp-upgrade__eyebrow">Activa el teu pla</p>
           <h2 class="pp-upgrade__title"><span id="upgradeName">La teva feina</span>, <em>així es veurà</em></h2>
@@ -1635,6 +1650,53 @@
         }
         document.getElementById('offboardedViewLink').href = '/c/' + slug;
         offboardedBanner.hidden = false;
+      }
+
+      // Banner de renovació — via comercial específica (veure comentari a
+      // l'HTML). Finestra de 35 dies cobreix els tres recordatoris d'email
+      // (30/15/7 dies) amb marge; també es mostra si la targeta ja ha vençut.
+      const renewBanner = document.getElementById('renewBanner');
+      const isPaidAutonomo = !!(card.stripe_session_id || card.kit_email_sent_at) &&
+        ['base', 'pro', 'renovacion'].indexOf(card.plan) !== -1 &&
+        !card.organization_id;
+      if (renewBanner && isPaidAutonomo && !isOffboarded && card.expires_at) {
+        const daysLeft = Math.ceil((new Date(card.expires_at) - Date.now()) / (24 * 60 * 60 * 1000));
+        if (daysLeft <= 35) {
+          const rd = new Date(card.expires_at);
+          document.getElementById('renewDate').textContent = rd.toLocaleDateString('ca-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+          renewBanner.hidden = false;
+          if (location.hash === '#renewBanner') {
+            setTimeout(function () { renewBanner.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
+          }
+          const renewBtn = document.getElementById('renewBannerBtn');
+          const renewMsg = document.getElementById('renewMsg');
+          if (renewBtn) {
+            renewBtn.addEventListener('click', async function () {
+              const label = renewBtn.textContent;
+              renewBtn.disabled = true;
+              renewBtn.textContent = 'Redirigint…';
+              try {
+                const r = await fetch('/api/renew-checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ slug, token }),
+                });
+                const j = await r.json();
+                if (r.ok && j.url) {
+                  window.location.href = j.url;
+                } else {
+                  showMsg(renewMsg, 'err', j.error || 'No s\'ha pogut iniciar el pagament.');
+                  renewBtn.disabled = false;
+                  renewBtn.textContent = label;
+                }
+              } catch (err) {
+                showMsg(renewMsg, 'err', 'Error de connexió. Torna-ho a provar.');
+                renewBtn.disabled = false;
+                renewBtn.textContent = label;
+              }
+            });
+          }
+        }
       }
 
       // Upgrade banner — visible mentre la card no tingui ni session

@@ -112,6 +112,20 @@ Users land here from the edit link in their confirmation or reminder emails. The
 
 **Hook B2B post-completación** (`lib/team-kit.js`): cuando un miembro B2B (card con `organization_id` + `plan='b2b'`) hace su PRIMER POST a `edit-card` (gated por `cards.kit_email_sent_at IS NULL`), `edit-card` dispara `sendTeamKit` después del UPDATE. Genera la tarjeta de visita 85×55mm con los datos reales del miembro (foto + WhatsApp ya rellenados), la adjunta al email y envía el welcome kit B2B con branding de la org (logo + `color_primary` + nombre bajo "Equipo de"). Paralelo al kit post-pago autónomo (`stripe-webhook → buildEmail()`) pero recortado: **sin factura adjunta** (paga la org, no el miembro), **sin QR PNG suelto** (el QR ya va en la tarjeta), **sin sección "plan / activa hasta"** (el miembro no tiene plan propio). Marca `cards.kit_email_sent_at` en éxito para no re-enviar en saves posteriores. Si el send falla, queda NULL y el admin puede reenviar desde el panel. Email sólo se dispara después de update exitoso del carril B2B locked (que ya exige WhatsApp obligatorio), así que la tarjeta nunca sale con datos a medias.
 
+### Renovación self-service (renew-checkout.js)
+
+Vía comercial específica para autónomos de pago (Base/Pro) cuya tarjeta se acerca a caducar. Antes de esto, el único aviso que le llegaba al cliente (`remind-expiry.js`, 30/15/7 días antes) tenía un CTA que apuntaba a la landing genérica de alta — el cliente tenía que rellenar el formulario completo desde cero como si fuera nuevo, sin que el sistema discriminara que ya tenía tarjeta.
+
+**Flujo**:
+1. `remind-expiry.js` incluye `edit_token` en la query de cards y construye el CTA como `${siteUrl}/${lang}/editar?slug=&token=#renewBanner` en vez de `${siteUrl}/${lang}/`.
+2. `public/{es,ca}/editar.html` pinta un banner `#renewBanner` (distinto del `#freeBanner` de alta) cuando la card es autónoma de pago (`stripe_session_id` o `kit_email_sent_at` presentes, `plan` en `base|pro|renovacion`, sin `organization_id`) y `expires_at` cae dentro de los próximos 35 días (cubre los tres umbrales de email + margen; también se muestra si ya caducó).
+3. El botón del banner llama a `POST /api/renew-checkout { slug, token }` — mismo auth que `edit-card` (slug + edit_token, sin TTL en el token original de bienvenida; 7 días si fue regenerado por `send-edit-link`). Valida que la card sea autónoma (`card_kind`), no B2B, con un plan renovable y `status='active'`, y abre un Stripe Checkout (`mode:'payment'`) con `STRIPE_PRICE_RENOVACION` y `metadata.kind='renewal'`.
+4. `stripe-webhook.js` enruta `checkout.session.completed` con `metadata.kind='renewal'` a `handleRenewalCheckout` (definida en el propio `stripe-webhook.js`, no un lib aparte, porque reusa `sendConfirmationEmail`/`buildPDF`/`PLAN_INFO` ya importados ahí). A diferencia del carril de alta, **no crea una card nueva** — hace `UPDATE` sobre la misma fila: `plan='renovacion'`, `expires_at` = fecha de caducidad actual + 365 días (o desde hoy si ya había caducado, para no regalar días muertos), reactiva los tres `reminder_X_sent → false` para el siguiente ciclo, genera factura (`PLAN_INFO.renovacion` = 5€/12 meses) y reenvía el email de confirmación con prefix `[Renovación]`/`[Renovació]`. Idempotente: si `stripe_session_id` de la card ya coincide con la sesión del evento (replay del webhook), no vuelve a extender.
+
+**Por qué esto y no reusar `create-checkout`**: el precio de renovación (5€) es distinto del precio de alta (9€/19€) — es un precio de fidelización, no el precio de entrada — y el flujo no debe pedir de nuevo nombre/sector/WhatsApp/servicios: la card ya existe, solo se extiende. Reusar el checkout de alta habría creado una fila duplicada o forzado al cliente a repetir el formulario.
+
+**Env var**: `STRIPE_PRICE_RENOVACION` — si no está configurada, `renew-checkout` devuelve 503 y el banner de renovación llama al endpoint pero recibe el error (no rompe la página, solo no permite pagar hasta que el founder cree el Price en Stripe Dashboard).
+
 ### GDPR endpoints
 
 Both endpoints reuse the same `edit_token` mechanism as `edit-card` (32-byte hex, 7-day TTL), so the user only needs the link in their confirmation/reminder email to exercise their rights.
@@ -594,6 +608,7 @@ STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 STRIPE_PRICE_BASE
 STRIPE_PRICE_PRO
+STRIPE_PRICE_RENOVACION  # renew-checkout.js — renovación self-service, 5€/12 meses (plan 'renovacion')
 STRIPE_PRICE_MONTHLY  # Legacy dormido (sprint 3 antiguo) — no usado por carril B2B
 STRIPE_PRICE_ANNUAL   # Legacy dormido (sprint 3 antiguo) — no usado por carril B2B
 STRIPE_PRICE_TEAM_MONTHLY  # Bloque A B2B — €/profesional/mes, tier Team
@@ -631,6 +646,7 @@ QUIPU_ENV             # Sprint 3 — sandbox | production
 | `/e/:slug` | `org` |
 | `/api/create-checkout` | `create-checkout` |
 | `/api/create-org-checkout` | `create-org-checkout` |
+| `/api/renew-checkout` | `renew-checkout` |
 | `/api/stripe-webhook` | `stripe-webhook` |
 | `/api/admin-data` | `admin-data` |
 | `/api/admin-actions` | `admin-actions` |

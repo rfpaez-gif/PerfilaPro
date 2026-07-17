@@ -629,6 +629,32 @@ describe('stripe-webhook adjuntos', () => {
       expect(orgChain.insert).toHaveBeenCalled();
     });
 
+    it('checkout.session.completed con kind=renewal NO entra al carril autónomo (delega a handleRenewalCheckout)', async () => {
+      // Card no encontrada → handleRenewalCheckout resuelve reason=card_not_found
+      // sin tocar el upsert del carril de alta. La lógica completa del handler
+      // (extender expires_at, factura, email) se prueba exhaustivamente en
+      // tests/stripe-webhook-renewal.test.js; aquí solo verificamos el routing.
+      const cardsChain = makeOrgChain(null);
+      mockFrom.mockImplementation((table) => {
+        if (table === 'cards') return cardsChain;
+        return defaultFromImpl(table);
+      });
+      mockConstructEvent.mockReturnValue({
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_renew_1',
+            customer_details: { email: 'ana@test.com' },
+            metadata: { kind: 'renewal', slug: 'ana-fontanera' },
+          },
+        },
+      });
+      const res = await handler(buildEvent());
+      expect(res.statusCode).toBe(200);
+      expect(JSON.parse(res.body)).toMatchObject({ received: true, ok: false, reason: 'card_not_found' });
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
     it('payment_intent.created y otros eventos siguen siendo no-op', async () => {
       mockConstructEvent.mockReturnValue({
         type: 'customer.created',
