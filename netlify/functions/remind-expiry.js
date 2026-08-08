@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { buildEmailLayout, COLORS } = require('./lib/email-layout');
@@ -48,6 +49,47 @@ const REMINDER_STRINGS = {
 
 function reminderField(days) {
   return `reminder_${days}_sent`;
+}
+
+// El CTA de renovación autentica con slug + edit_token (mismo mecanismo que
+// edit-card). El token de un alta gratuita nace con TTL de 7 días, así que
+// cuando llega el recordatorio (meses después) suele estar caducado y el
+// cliente aterrizaba en /editar con "el enlace ha expirado". Antes de enviar,
+// garantizamos un token vivo durante toda la ventana de renovación: 40 días
+// cubre los tres umbrales (30/15/7) + margen tras la caducidad de la card.
+const RENEW_TOKEN_TTL_DAYS = 40;
+
+async function ensureUsableEditToken(db, card) {
+  const now = Date.now();
+  const minValidUntil = new Date(now + RENEW_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = card.edit_token_expires_at ? new Date(card.edit_token_expires_at).getTime() : null;
+
+  // Token de bienvenida de pago: sin TTL → válido indefinidamente.
+  if (card.edit_token && expiresAt === null) return card.edit_token;
+
+  if (!card.edit_token || expiresAt < now) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const { error } = await db
+      .from('cards')
+      .update({ edit_token: token, edit_token_expires_at: minValidUntil })
+      .eq('slug', card.slug);
+    if (error) {
+      console.error(`No se pudo rotar edit_token para ${card.slug}:`, error.message);
+      return null; // el CTA cae al /editar genérico
+    }
+    return token;
+  }
+
+  // Vivo pero se agota antes de que acabe la ventana de renovación → extender
+  // sin rotar, para no invalidar el enlace de un recordatorio anterior.
+  if (expiresAt < now + RENEW_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000) {
+    const { error } = await db
+      .from('cards')
+      .update({ edit_token_expires_at: minValidUntil })
+      .eq('slug', card.slug);
+    if (error) console.warn(`No se pudo extender edit_token de ${card.slug} (no fatal):`, error.message);
+  }
+  return card.edit_token;
 }
 
 function buildReminderEmail({ nombre, slug, daysLeft, expiresAt, siteUrl, idioma = 'es', editToken }) {
@@ -125,7 +167,7 @@ async function processReminders(db, emailClient) {
 
     const { data: cards, error } = await db
       .from('cards')
-      .select('slug, nombre, email, expires_at, idioma, edit_token')
+      .select('slug, nombre, email, expires_at, idioma, edit_token, edit_token_expires_at')
       .eq('status', 'active')
       .eq(field, false)
       .neq('plan', 'b2b')
@@ -141,6 +183,8 @@ async function processReminders(db, emailClient) {
     for (const card of cards || []) {
       if (!card.email) continue;
 
+      const editToken = await ensureUsableEditToken(db, card);
+
       const { subject, html } = buildReminderEmail({
         nombre: card.nombre,
         slug: card.slug,
@@ -148,7 +192,7 @@ async function processReminders(db, emailClient) {
         expiresAt: card.expires_at,
         siteUrl,
         idioma: card.idioma,
-        editToken: card.edit_token,
+        editToken,
       });
 
       try {
@@ -184,3 +228,4 @@ exports.handler = makeHandler(supabase);
 exports.makeHandler = makeHandler;
 exports.buildReminderEmail = buildReminderEmail;
 exports.reminderField = reminderField;
+exports.ensureUsableEditToken = ensureUsableEditToken;

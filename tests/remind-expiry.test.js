@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { makeHandler, buildReminderEmail, reminderField } from '../netlify/functions/remind-expiry.js';
+import { makeHandler, buildReminderEmail, reminderField, ensureUsableEditToken } from '../netlify/functions/remind-expiry.js';
 
 // --- Mocks ---
 
@@ -160,6 +160,127 @@ describe('buildReminderEmail', () => {
     expect(subject).toMatch(/caduca en 7 días$/);
     expect(html).toContain('Renovar mi tarjeta');
     expect(html).toContain('lang="es"');
+  });
+});
+
+describe('ensureUsableEditToken', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  function tokenDb(updateResult = { error: null }) {
+    const updates = [];
+    const db = {
+      from: () => ({
+        update: (row) => ({
+          eq: (col, val) => {
+            updates.push({ row, col, val });
+            return Promise.resolve(updateResult);
+          },
+        }),
+      }),
+    };
+    return { db, updates };
+  }
+
+  it('token sin TTL (bienvenida de pago) se devuelve tal cual sin tocar BD', async () => {
+    const { db, updates } = tokenDb();
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: 'abc', edit_token_expires_at: null,
+    });
+    expect(token).toBe('abc');
+    expect(updates).toHaveLength(0);
+  });
+
+  it('token caducado → rota token nuevo con TTL que cubre la ventana de renovación', async () => {
+    const { db, updates } = tokenDb();
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: 'viejo',
+      edit_token_expires_at: new Date(Date.now() - DAY).toISOString(),
+    });
+    expect(token).toMatch(/^[a-f0-9]{64}$/);
+    expect(token).not.toBe('viejo');
+    expect(updates).toHaveLength(1);
+    expect(updates[0].row.edit_token).toBe(token);
+    const ttl = new Date(updates[0].row.edit_token_expires_at).getTime();
+    expect(ttl).toBeGreaterThan(Date.now() + 39 * DAY);
+    expect(updates[0].val).toBe('s');
+  });
+
+  it('sin token → genera uno nuevo', async () => {
+    const { db, updates } = tokenDb();
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: null, edit_token_expires_at: null,
+    });
+    expect(token).toMatch(/^[a-f0-9]{64}$/);
+    expect(updates).toHaveLength(1);
+  });
+
+  it('token vivo pero que caduca antes de la ventana → extiende TTL SIN rotar', async () => {
+    const { db, updates } = tokenDb();
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: 'vivo',
+      edit_token_expires_at: new Date(Date.now() + 3 * DAY).toISOString(),
+    });
+    expect(token).toBe('vivo');
+    expect(updates).toHaveLength(1);
+    expect(updates[0].row.edit_token).toBeUndefined();
+    const ttl = new Date(updates[0].row.edit_token_expires_at).getTime();
+    expect(ttl).toBeGreaterThan(Date.now() + 39 * DAY);
+  });
+
+  it('token vivo con TTL más allá de la ventana → no toca BD', async () => {
+    const { db, updates } = tokenDb();
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: 'vivo',
+      edit_token_expires_at: new Date(Date.now() + 60 * DAY).toISOString(),
+    });
+    expect(token).toBe('vivo');
+    expect(updates).toHaveLength(0);
+  });
+
+  it('si la rotación falla en BD devuelve null (el CTA cae a /editar genérico)', async () => {
+    const { db } = tokenDb({ error: { message: 'boom' } });
+    const token = await ensureUsableEditToken(db, {
+      slug: 's', edit_token: 'viejo',
+      edit_token_expires_at: new Date(Date.now() - DAY).toISOString(),
+    });
+    expect(token).toBeNull();
+  });
+});
+
+describe('remind-expiry · token caducado en el recordatorio', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEmailSend.mockResolvedValue({ id: 'email-ok' });
+    process.env.SITE_URL = 'https://perfilapro.es';
+  });
+
+  it('el email lleva el token rotado, no el caducado', async () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    setupDbMock([cardExpiringInDays(30, {
+      edit_token: 'tok-caducado',
+      edit_token_expires_at: new Date(Date.now() - 100 * DAY).toISOString(),
+    })]);
+    await handler();
+
+    expect(mockEmailSend).toHaveBeenCalled();
+    const { html } = mockEmailSend.mock.calls[0][0];
+    expect(html).not.toContain('tok-caducado');
+    const rotated = mockUpdate.mock.calls.find((c) => c[0].edit_token);
+    expect(rotated).toBeDefined();
+    expect(html).toContain(`token=${rotated[0].edit_token}#renewBanner`);
+  });
+
+  it('el email con token vigente y TTL largo lo reusa sin rotarlo', async () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    setupDbMock([cardExpiringInDays(30, {
+      edit_token: 'tok-vigente',
+      edit_token_expires_at: new Date(Date.now() + 60 * DAY).toISOString(),
+    })]);
+    await handler();
+
+    const { html } = mockEmailSend.mock.calls[0][0];
+    expect(html).toContain('token=tok-vigente#renewBanner');
+    expect(mockUpdate.mock.calls.find((c) => c[0].edit_token)).toBeUndefined();
   });
 });
 

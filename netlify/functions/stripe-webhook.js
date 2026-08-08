@@ -639,6 +639,11 @@ function makeHandler(stripeClient, db, emailClient = resend) {
         expires_at: expiresAt,
         email,
         edit_token: editToken,
+        // Sin TTL: el token de bienvenida de pago es de larga vida. Además,
+        // si la card existía como alta gratuita, aquí se pisa su TTL de 7
+        // días — sin esto, el token recién rotado nacería ya caducado a los
+        // 7 días del alta original.
+        edit_token_expires_at: null,
         agent_code: agent_code || null,
         ocupacion_code: ocupacionCodeClean,
         idioma,
