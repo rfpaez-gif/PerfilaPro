@@ -49,6 +49,7 @@
       color: #fff;
       background:
         linear-gradient(180deg, rgba(10,31,68,.58), rgba(10,31,68,.82)),
+        url("/assets/landing/clubes/hero-femeni.jpg") center / cover no-repeat,
         url("/assets/landing/clubes/hero-celebracion.jpg") center / cover no-repeat,
         linear-gradient(135deg, #0A1F44, #0A6B45);
     }
@@ -221,8 +222,11 @@
 </header>
 
 <!-- ─────────── Hero ─────────── -->
-<!-- Foto de fons: /assets/landing/clubes/hero-celebracion.jpg (definida a
-     .pp-hero--photo). Si no existeix, el degradat de marca la substitueix. -->
+<!-- Foto de fons: /assets/landing/clubes/hero-femeni.jpg — portada pròpia de
+     la catalana, amb nenes jugant (la castellana manté hero-celebracion.jpg).
+     Les capes de .pp-hero--photo cauen soles: si hero-femeni.jpg encara no
+     existeix es pinta hero-celebracion.jpg, i si tampoc hi és, el degradat
+     de marca. Cap estat trencat mentre la foto no estigui pujada. -->
 <section class="pp-hero pp-hero--photo">
   <div class="pp-hero__wrap">
     <div class="pp-hero__eyebrow">Clubs · escoles · futbol base masculí i femení</div>
