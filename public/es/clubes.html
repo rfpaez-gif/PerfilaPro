@@ -6,7 +6,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <title>Inscripciones y cuotas para clubes de fútbol base · PerfilaPro</title>
-  <meta name="description" content="Abre las inscripciones de tu club y comparte un enlace. Las familias se inscriben y pagan desde el móvil; tú solo haces los equipos. Gratis para el club.">
+  <meta name="description" content="Abre las inscripciones de tu club —masculino y femenino— y comparte un enlace. Las familias se inscriben y pagan desde el móvil. Gratis para el club.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://perfilapro.es/es/clubes">
   <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/clubes">
@@ -110,6 +110,21 @@
     .pp-clubsite__photo { aspect-ratio: 1 / 1; background: linear-gradient(160deg, #E5E7EB, #CBD2D9); display: flex; align-items: flex-end; justify-content: center; }
     .pp-clubsite__photo svg { width: 78%; height: 78%; opacity: .5; }
     .pp-clubsite__cardname { font-size: 9px; font-weight: 600; color: var(--color-tinta, #0A1F44); padding: 5px 6px 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Mockup selector de competición (pestaña Plantilla) ── */
+    /* Réplica del <select> agrupado por category_group que pinta panel.html
+       al crear un equipo. Mockup CSS, no captura: nítido en cualquier
+       pantalla y sin datos reales de ningún club. */
+    .pp-compsel { background: #fff; padding: 18px 16px; width: 100%; font-family: var(--font-sans); }
+    .pp-compsel__label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); margin: 0 0 7px; }
+    .pp-compsel__field { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1.5px solid var(--color-verde-dark, #00A865); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-compsel__caret { color: var(--color-verde-dark, #00A865); font-size: 10px; }
+    .pp-compsel__menu { border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; margin-top: 6px; overflow: hidden; box-shadow: 0 10px 24px rgba(10, 31, 68, .10); }
+    .pp-compsel__group { font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); background: #F4F6F8; padding: 6px 12px; }
+    .pp-compsel__group--on { color: var(--color-verde-dark, #00A865); background: var(--color-verde-light, #E6F9F0); }
+    .pp-compsel__opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; line-height: 1.35; color: var(--color-tinta, #0A1F44); padding: 7px 12px 7px 20px; }
+    .pp-compsel__opt--on { background: var(--color-verde-light, #E6F9F0); font-weight: 600; }
+    .pp-compsel__fmt { font-family: var(--font-mono); font-size: 9.5px; color: var(--color-gris-500, #6B7280); flex-shrink: 0; }
 
     /* ── Section headings ─────────────────────────────────── */
     .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
@@ -220,7 +235,7 @@
      romper la maqueta. -->
 <section class="pp-hero pp-hero--photo">
   <div class="pp-hero__wrap">
-    <div class="pp-hero__eyebrow">Clubes · escuelas · secciones de fútbol base</div>
+    <div class="pp-hero__eyebrow">Clubes · escuelas · fútbol base masculino y femenino</div>
     <h1 class="pp-hero__h1">Nueva temporada.<br><em>Goleada</em> de inscripciones, cero caos.</h1>
     <p class="pp-hero__sub">Abre las inscripciones de tu club y comparte un enlace. Las familias rellenan la ficha,
     firman el consentimiento y pagan la cuota <strong>desde el móvil</strong>. Tú solo tienes que hacer los equipos.</p>
@@ -251,7 +266,7 @@
     <div class="pp-step">
       <div class="pp-step__n pp-step__n--num">3</div>
       <h3 class="pp-step__title">Tú haces las alineaciones</h3>
-      <p class="pp-step__body">Encuadras a los jugadores en equipos y categorías <strong>en lote</strong>, con la edad ya calculada. La plantilla queda lista para arrancar la pretemporada.</p>
+      <p class="pp-step__body">Encuadras a jugadores y jugadoras en equipos y categorías <strong>en lote</strong>, con la edad ya calculada. La plantilla queda lista para arrancar la pretemporada.</p>
     </div>
   </div>
 </section>
@@ -271,7 +286,7 @@
     <div class="pp-step">
       <div class="pp-step__n" aria-hidden="true">🪪</div>
       <h3 class="pp-step__title">Carnet de jugador, con chip</h3>
-      <p class="pp-step__body">Carnet físico <strong>PVC + NFC</strong> con tu escudo, la foto del chaval, el dorsal y un QR a su ficha. Como los de los grandes. Te lo entregamos listo para imprenta.</p>
+      <p class="pp-step__body">Carnet físico <strong>PVC + NFC</strong> con tu escudo, la foto de cada jugador o jugadora, el dorsal y un QR a su ficha. Como los de los grandes. Te lo entregamos listo para imprenta.</p>
     </div>
     <div class="pp-step">
       <div class="pp-step__n" aria-hidden="true">🛡️</div>
@@ -282,6 +297,45 @@
       <div class="pp-step__n" aria-hidden="true">✅</div>
       <h3 class="pp-step__title">Con los menores, todo en regla</h3>
       <p class="pp-step__body">Consentimiento parental, datos cifrados y la ficha del menor <strong>nunca pública</strong> sin permiso. Cumplimiento de la <strong>LOPDGDD</strong> de serie, sin que tengas que entender de leyes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: fútbol femenino ─────────── -->
+<!-- Mockup CSS del desplegable de competiciones tal como lo pinta panel.html
+     (optgroups por category_group). Los nombres son los reales del catálogo
+     sembrado en la migración 041, grupo 'Femenino'. -->
+<section class="pp-showcase pp-showcase--reverse" id="femenino">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media">
+      <div class="pp-compsel" role="img" aria-label="Desplegable de competiciones del panel del club, con el grupo Femenino desplegado: Liga Femenina Benjamín/Prebenjamín F5, Liga Femenina Alevín F-8, Liga Femenina Infantil F-11, Liga Femenina Juvenil/Cadete y Primera Autonómica Femenina">
+        <p class="pp-compsel__label">Nuevo equipo · competición</p>
+        <div class="pp-compsel__field">
+          <span>Liga Femenina Alevín F-8</span>
+          <span class="pp-compsel__caret" aria-hidden="true">▼</span>
+        </div>
+        <div class="pp-compsel__menu">
+          <div class="pp-compsel__group">Alevines</div>
+          <div class="pp-compsel__opt">Primera Alevín Fútbol-8 <span class="pp-compsel__fmt">F-8</span></div>
+          <div class="pp-compsel__group pp-compsel__group--on">Femenino</div>
+          <div class="pp-compsel__opt">Liga Femenina Benjamín/Prebenjamín F5 <span class="pp-compsel__fmt">F-5</span></div>
+          <div class="pp-compsel__opt pp-compsel__opt--on">Liga Femenina Alevín F-8 <span class="pp-compsel__fmt">F-8</span></div>
+          <div class="pp-compsel__opt">Liga Femenina Infantil F-11 <span class="pp-compsel__fmt">F-11</span></div>
+          <div class="pp-compsel__opt">Liga Femenina Juvenil/Cadete <span class="pp-compsel__fmt">F-11</span></div>
+          <div class="pp-compsel__opt">Primera Autonómica Femenina <span class="pp-compsel__fmt">F-11</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">Fútbol femenino</div>
+      <h2 class="pp-showcase__title">La sección femenina, con su cuadro de competiciones ya cargado</h2>
+      <p class="pp-showcase__body">No es un añadido ni una casilla suelta. Al crear un equipo eliges <strong>su competición real</strong> —masculina o femenina— y de ahí sale sola la categoría, el formato y el nombre. Un club mixto lleva <strong>las dos secciones en el mismo panel</strong>, con los mismos cobros, los mismos carnets y la misma web.</p>
+      <ul class="pp-showcase__list">
+        <li>Ligas femeninas de prebenjamín a juvenil, más las categorías sénior</li>
+        <li>Equipos masculinos y femeninos conviviendo en una sola plantilla</li>
+        <li>Cada jugadora, con su ficha, su dorsal y su carnet igual que ellos</li>
+      </ul>
+      <p class="pp-showcase__body" style="margin-top:1.25rem;font-size:13px">Hoy tenemos cargado el cuadro completo de la <strong>Federación de Murcia</strong>. Si tu federación es otra, dínoslo en el formulario y la cargamos para tu club.</p>
     </div>
   </div>
 </section>
@@ -297,7 +351,7 @@
     <div class="pp-showcase__text">
       <div class="pp-showcase__eyebrow">Carnet físico PVC + NFC</div>
       <h2 class="pp-showcase__title">Un carnet de los de verdad, con el escudo de tu club</h2>
-      <p class="pp-showcase__body">Tarjeta rígida de PVC, como una bancaria, con <strong>chip NFC</strong>: el chaval acerca el móvil y se abre su ficha. La foto, el dorsal, la categoría y tu escudo. <strong>Como los de los grandes.</strong></p>
+      <p class="pp-showcase__body">Tarjeta rígida de PVC, como una bancaria, con <strong>chip NFC</strong>: acercas el móvil y se abre su ficha. La foto, el dorsal, la categoría y tu escudo. <strong>Como los de los grandes.</strong></p>
       <ul class="pp-showcase__list">
         <li>QR + NFC que abren la ficha del jugador</li>
         <li>Booklet PDF de toda la plantilla, listo para imprenta</li>
@@ -455,6 +509,11 @@
   </details>
 
   <details class="pp-faq__item">
+    <summary>¿Sirve para fútbol femenino?</summary>
+    <p class="pp-faq__body">Sí, y no como apaño. El catálogo de competiciones incluye <strong>el cuadro femenino completo</strong> —de las ligas de prebenjamín a juvenil hasta las categorías sénior—, así que encuadras a tus equipos femeninos igual que a los masculinos y la categoría se calcula sola. Un club con las dos secciones las gestiona <strong>desde el mismo panel</strong>, sin duplicar nada. De momento tenemos sembrado el cuadro de la Federación de Murcia; si compites en otra, la cargamos para tu club.</p>
+  </details>
+
+  <details class="pp-faq__item">
     <summary>¿Sirve para otros deportes además del fútbol?</summary>
     <p class="pp-faq__body">Sí. Está pensado para fútbol base, pero funciona igual para <strong>baloncesto, balonmano, escuelas deportivas</strong> y cualquier club con categorías por edad. Cuéntanos tu deporte en el formulario y te montamos la demo adaptada.</p>
   </details>
@@ -521,13 +580,24 @@
       </div>
 
       <div class="pp-form-row">
-        <label class="pp-form-label" for="f-team">¿Cuántos jugadores tenéis? <span class="pp-form-required">*</span></label>
+        <label class="pp-form-label" for="f-team">¿Cuántos jugadores y jugadoras tenéis? <span class="pp-form-required">*</span></label>
         <select class="pp-input pp-input--select" id="f-team" name="team_size" required>
           <option value="">— Elige —</option>
           <option value="5-20">Menos de 50 jugadores</option>
           <option value="20-100">Entre 50 y 150</option>
           <option value="100-500">Entre 150 y 500</option>
           <option value="500+">Más de 500</option>
+        </select>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-modalidad">¿Qué equipos tenéis? <span class="pp-form-required">*</span></label>
+        <select class="pp-input pp-input--select" id="f-modalidad" name="modalidad" required>
+          <option value="">— Elige —</option>
+          <option value="mixto">Fútbol masculino y femenino</option>
+          <option value="femenino">Solo fútbol femenino</option>
+          <option value="masculino">Solo fútbol masculino</option>
+          <option value="otro_deporte">Otro deporte</option>
         </select>
       </div>
 
@@ -616,7 +686,7 @@ form.addEventListener('submit', async (e) => {
   const data = Object.fromEntries(new FormData(form).entries());
   data.idioma = document.documentElement.lang === 'ca' ? 'ca' : 'es';
 
-  if (!data.name || !data.company || !data.email || !data.team_size) {
+  if (!data.name || !data.company || !data.email || !data.team_size || !data.modalidad) {
     setStatus('Faltan campos obligatorios.', 'err');
     return;
   }

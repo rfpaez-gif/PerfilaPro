@@ -6,7 +6,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <title>Inscripcions i quotes per a clubs de futbol base · PerfilaPro</title>
-  <meta name="description" content="Obre les inscripcions del teu club i comparteix un enllaç. Les famílies s'inscriuen i paguen des del mòbil; tu només fas els equips. Gratis per al club.">
+  <meta name="description" content="Obre les inscripcions del teu club —masculí i femení— i comparteix un enllaç. Les famílies s'inscriuen i paguen des del mòbil. Gratis per al club.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://perfilapro.es/ca/clubs">
   <link rel="alternate" hreflang="es" href="https://perfilapro.es/es/clubes">
@@ -101,6 +101,21 @@
     .pp-clubsite__photo { aspect-ratio: 1 / 1; background: linear-gradient(160deg, #E5E7EB, #CBD2D9); display: flex; align-items: flex-end; justify-content: center; }
     .pp-clubsite__photo svg { width: 78%; height: 78%; opacity: .5; }
     .pp-clubsite__cardname { font-size: 9px; font-weight: 600; color: var(--color-tinta, #0A1F44); padding: 5px 6px 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Mockup selector de competició (pestanya Plantilla) ── */
+    /* Rèplica del <select> agrupat per category_group que pinta panel.html
+       en crear un equip. Mockup CSS, no captura: nítid a qualsevol pantalla
+       i sense dades reals de cap club. */
+    .pp-compsel { background: #fff; padding: 18px 16px; width: 100%; font-family: var(--font-sans); }
+    .pp-compsel__label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); margin: 0 0 7px; }
+    .pp-compsel__field { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1.5px solid var(--color-verde-dark, #00A865); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--color-tinta, #0A1F44); }
+    .pp-compsel__caret { color: var(--color-verde-dark, #00A865); font-size: 10px; }
+    .pp-compsel__menu { border: 1px solid var(--color-gris-200, #E5E7EB); border-radius: 8px; margin-top: 6px; overflow: hidden; box-shadow: 0 10px 24px rgba(10, 31, 68, .10); }
+    .pp-compsel__group { font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--color-gris-500, #6B7280); background: #F4F6F8; padding: 6px 12px; }
+    .pp-compsel__group--on { color: var(--color-verde-dark, #00A865); background: var(--color-verde-light, #E6F9F0); }
+    .pp-compsel__opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; line-height: 1.35; color: var(--color-tinta, #0A1F44); padding: 7px 12px 7px 20px; }
+    .pp-compsel__opt--on { background: var(--color-verde-light, #E6F9F0); font-weight: 600; }
+    .pp-compsel__fmt { font-family: var(--font-mono); font-size: 9.5px; color: var(--color-gris-500, #6B7280); flex-shrink: 0; }
 
     /* ── Section headings ─────────────────────────────────── */
     .pp-section-title { text-align: center; font-family: var(--font-serif); font-size: clamp(1.625rem, 3.5vw, 2.25rem); line-height: 1.2; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 .5rem; color: var(--color-tinta); }
@@ -210,7 +225,7 @@
      .pp-hero--photo). Si no existeix, el degradat de marca la substitueix. -->
 <section class="pp-hero pp-hero--photo">
   <div class="pp-hero__wrap">
-    <div class="pp-hero__eyebrow">Clubs · escoles · seccions de futbol base</div>
+    <div class="pp-hero__eyebrow">Clubs · escoles · futbol base masculí i femení</div>
     <h1 class="pp-hero__h1">Nova temporada.<br><em>Golejada</em> d'inscripcions, zero caos.</h1>
     <p class="pp-hero__sub">Obre les inscripcions del teu club i comparteix un enllaç. Les famílies omplen la fitxa,
     signen el consentiment i paguen la quota <strong>des del mòbil</strong>. Tu només has de fer els equips.</p>
@@ -241,7 +256,7 @@
     <div class="pp-step">
       <div class="pp-step__n pp-step__n--num">3</div>
       <h3 class="pp-step__title">Tu fas les alineacions</h3>
-      <p class="pp-step__body">Encabeixes els jugadors en equips i categories <strong>en lot</strong>, amb l'edat ja calculada. La plantilla queda llesta per arrencar la pretemporada.</p>
+      <p class="pp-step__body">Encabeixes jugadors i jugadores en equips i categories <strong>en lot</strong>, amb l'edat ja calculada. La plantilla queda llesta per arrencar la pretemporada.</p>
     </div>
   </div>
 </section>
@@ -261,7 +276,7 @@
     <div class="pp-step">
       <div class="pp-step__n" aria-hidden="true">🪪</div>
       <h3 class="pp-step__title">Carnet de jugador, amb xip</h3>
-      <p class="pp-step__body">Carnet físic <strong>PVC + NFC</strong> amb el teu escut, la foto del nen, el dorsal i un QR a la seva fitxa. Com els dels grans. Te'l lliurem llest per a impremta.</p>
+      <p class="pp-step__body">Carnet físic <strong>PVC + NFC</strong> amb el teu escut, la foto de cada jugador o jugadora, el dorsal i un QR a la seva fitxa. Com els dels grans. Te'l lliurem llest per a impremta.</p>
     </div>
     <div class="pp-step">
       <div class="pp-step__n" aria-hidden="true">🛡️</div>
@@ -272,6 +287,45 @@
       <div class="pp-step__n" aria-hidden="true">✅</div>
       <h3 class="pp-step__title">Amb els menors, tot en regla</h3>
       <p class="pp-step__body">Consentiment parental, dades xifrades i la fitxa del menor <strong>mai pública</strong> sense permís. Compliment de la <strong>LOPDGDD</strong> de sèrie, sense que hagis d'entendre de lleis.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── Showcase: futbol femení ─────────── -->
+<!-- Mockup CSS del desplegable de competicions tal com el pinta panel.html
+     (optgroups per category_group). Els noms són els reals del catàleg
+     sembrat a la migració 041, grup 'Femenino' — noms propis, no es tradueixen. -->
+<section class="pp-showcase pp-showcase--reverse" id="femeni">
+  <div class="pp-showcase__inner">
+    <div class="pp-showcase__media">
+      <div class="pp-compsel" role="img" aria-label="Desplegable de competicions del tauler del club, amb el grup Femenino desplegat: Liga Femenina Benjamín/Prebenjamín F5, Liga Femenina Alevín F-8, Liga Femenina Infantil F-11, Liga Femenina Juvenil/Cadete i Primera Autonómica Femenina">
+        <p class="pp-compsel__label">Nou equip · competició</p>
+        <div class="pp-compsel__field">
+          <span>Liga Femenina Alevín F-8</span>
+          <span class="pp-compsel__caret" aria-hidden="true">▼</span>
+        </div>
+        <div class="pp-compsel__menu">
+          <div class="pp-compsel__group">Alevines</div>
+          <div class="pp-compsel__opt">Primera Alevín Fútbol-8 <span class="pp-compsel__fmt">F-8</span></div>
+          <div class="pp-compsel__group pp-compsel__group--on">Femenino</div>
+          <div class="pp-compsel__opt">Liga Femenina Benjamín/Prebenjamín F5 <span class="pp-compsel__fmt">F-5</span></div>
+          <div class="pp-compsel__opt pp-compsel__opt--on">Liga Femenina Alevín F-8 <span class="pp-compsel__fmt">F-8</span></div>
+          <div class="pp-compsel__opt">Liga Femenina Infantil F-11 <span class="pp-compsel__fmt">F-11</span></div>
+          <div class="pp-compsel__opt">Liga Femenina Juvenil/Cadete <span class="pp-compsel__fmt">F-11</span></div>
+          <div class="pp-compsel__opt">Primera Autonómica Femenina <span class="pp-compsel__fmt">F-11</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="pp-showcase__text">
+      <div class="pp-showcase__eyebrow">Futbol femení</div>
+      <h2 class="pp-showcase__title">La secció femenina, amb el seu quadre de competicions ja carregat</h2>
+      <p class="pp-showcase__body">No és un afegit ni una casella solta. En crear un equip tries <strong>la seva competició real</strong> —masculina o femenina— i d'allà surt sola la categoria, el format i el nom. Un club mixt porta <strong>les dues seccions al mateix tauler</strong>, amb els mateixos cobraments, els mateixos carnets i el mateix web.</p>
+      <ul class="pp-showcase__list">
+        <li>Lligues femenines de prebenjamí a juvenil, més les categories sènior</li>
+        <li>Equips masculins i femenins convivint en una sola plantilla</li>
+        <li>Cada jugadora, amb la seva fitxa, el seu dorsal i el seu carnet igual que ells</li>
+      </ul>
+      <p class="pp-showcase__body" style="margin-top:1.25rem;font-size:13px">Avui tenim carregat el quadre complet de la <strong>Federació de Múrcia</strong>. Si la teva federació és una altra, digues-nos-ho al formulari i la carreguem per al teu club.</p>
     </div>
   </div>
 </section>
@@ -287,7 +341,7 @@
     <div class="pp-showcase__text">
       <div class="pp-showcase__eyebrow">Carnet físic PVC + NFC</div>
       <h2 class="pp-showcase__title">Un carnet dels de debò, amb l'escut del teu club</h2>
-      <p class="pp-showcase__body">Targeta rígida de PVC, com una bancària, amb <strong>xip NFC</strong>: el nen acosta el mòbil i s'obre la seva fitxa. La foto, el dorsal, la categoria i el teu escut. <strong>Com els dels grans.</strong></p>
+      <p class="pp-showcase__body">Targeta rígida de PVC, com una bancària, amb <strong>xip NFC</strong>: acostes el mòbil i s'obre la seva fitxa. La foto, el dorsal, la categoria i el teu escut. <strong>Com els dels grans.</strong></p>
       <ul class="pp-showcase__list">
         <li>QR + NFC que obren la fitxa del jugador</li>
         <li>Booklet PDF de tota la plantilla, llest per a impremta</li>
@@ -445,6 +499,11 @@
   </details>
 
   <details class="pp-faq__item">
+    <summary>Serveix per a futbol femení?</summary>
+    <p class="pp-faq__body">Sí, i no com un apedaçament. El catàleg de competicions inclou <strong>el quadre femení complet</strong> —de les lligues de prebenjamí a juvenil fins a les categories sènior—, així que encaixes els teus equips femenins igual que els masculins i la categoria es calcula sola. Un club amb les dues seccions les gestiona <strong>des del mateix tauler</strong>, sense duplicar res. De moment tenim sembrat el quadre de la Federació de Múrcia; si competiu en una altra, la carreguem per al teu club.</p>
+  </details>
+
+  <details class="pp-faq__item">
     <summary>Serveix per a altres esports a més del futbol?</summary>
     <p class="pp-faq__body">Sí. Està pensat per a futbol base, però funciona igual per a <strong>bàsquet, handbol, escoles esportives</strong> i qualsevol club amb categories per edat. Explica'ns el teu esport al formulari i et muntem la demo adaptada.</p>
   </details>
@@ -511,13 +570,24 @@
       </div>
 
       <div class="pp-form-row">
-        <label class="pp-form-label" for="f-team">Quants jugadors teniu? <span class="pp-form-required">*</span></label>
+        <label class="pp-form-label" for="f-team">Quants jugadors i jugadores teniu? <span class="pp-form-required">*</span></label>
         <select class="pp-input pp-input--select" id="f-team" name="team_size" required>
           <option value="">— Tria —</option>
           <option value="5-20">Menys de 50 jugadors</option>
           <option value="20-100">Entre 50 i 150</option>
           <option value="100-500">Entre 150 i 500</option>
           <option value="500+">Més de 500</option>
+        </select>
+      </div>
+
+      <div class="pp-form-row">
+        <label class="pp-form-label" for="f-modalidad">Quins equips teniu? <span class="pp-form-required">*</span></label>
+        <select class="pp-input pp-input--select" id="f-modalidad" name="modalidad" required>
+          <option value="">— Tria —</option>
+          <option value="mixto">Futbol masculí i femení</option>
+          <option value="femenino">Només futbol femení</option>
+          <option value="masculino">Només futbol masculí</option>
+          <option value="otro_deporte">Un altre esport</option>
         </select>
       </div>
 
@@ -602,7 +672,7 @@ form.addEventListener('submit', async (e) => {
   const data = Object.fromEntries(new FormData(form).entries());
   data.idioma = document.documentElement.lang === 'ca' ? 'ca' : 'es';
 
-  if (!data.name || !data.company || !data.email || !data.team_size) {
+  if (!data.name || !data.company || !data.email || !data.team_size || !data.modalidad) {
     setStatus('Falten camps obligatoris.', 'err');
     return;
   }

@@ -7,12 +7,22 @@ const { buildEmailLayout, COLORS } = require('./lib/email-layout');
 const TEAM_SIZES   = new Set(['5-20', '20-100', '100-500', '500+']);
 const SECTORS      = new Set(['empresa', 'despacho', 'colegio', 'publico', 'ong', 'red_comercial', 'club_deportivo', 'otro']);
 const PLAN_INTERES = new Set(['equipo', 'organizacion', 'enterprise', 'no_se']);
+// Modalidad deportiva del club. Solo la envía la landing de clubes
+// (/es/clubes · /ca/clubs); los leads B2B genéricos llegan sin ella.
+const MODALIDADES  = new Set(['masculino', 'femenino', 'mixto', 'otro_deporte']);
 
 const PLAN_LABEL = {
   equipo:       'Equipo (4-5 €/mes)',
   organizacion: 'Organización (5-6 €/mes)',
   enterprise:   'Enterprise (desde 6 €/mes)',
   no_se:        'Sin preferencia',
+};
+
+const MODALIDAD_LABEL = {
+  masculino:    'Solo fútbol masculino',
+  femenino:     'Solo fútbol femenino',
+  mixto:        'Fútbol masculino y femenino',
+  otro_deporte: 'Otro deporte',
 };
 
 const SECTOR_LABEL = {
@@ -65,11 +75,14 @@ function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, agent_code, message, inviteToken, siteUrl }) {
+function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, modalidad, agent_code, message, inviteToken, siteUrl }) {
   const safeMessage = esc(message || '(sin mensaje adicional)').replace(/\n/g, '<br>');
   const onboardingUrl = `${siteUrl}/es/onboarding?token=${inviteToken}`;
   const planRow = plan_interes
     ? `<tr><td style="color:#6B7280">Plan de interés</td><td><strong>${esc(PLAN_LABEL[plan_interes] || plan_interes)}</strong></td></tr>`
+    : '';
+  const modalidadRow = modalidad
+    ? `<tr><td style="color:#6B7280">Modalidad</td><td><strong>${esc(MODALIDAD_LABEL[modalidad] || modalidad)}</strong></td></tr>`
     : '';
   const agentRow = agent_code
     ? `<tr><td style="color:#6B7280">Referido por</td><td><strong style="font-family:monospace">${esc(agent_code)}</strong> <span style="color:#6B7280;font-size:12px">· asigna este código a la org cuando la crees</span></td></tr>`
@@ -82,6 +95,7 @@ function buildInboxEmailHtml({ name, company, email, team_size, sector, plan_int
   <tr><td style="color:#6B7280">Email</td><td><a href="mailto:${esc(email)}">${esc(email)}</a></td></tr>
   <tr><td style="color:#6B7280">Equipo</td><td>${esc(team_size)}</td></tr>
   <tr><td style="color:#6B7280">Sector</td><td>${esc(SECTOR_LABEL[sector] || sector)}</td></tr>
+  ${modalidadRow}
   ${planRow}
   ${agentRow}
 </table>
@@ -312,6 +326,13 @@ function makeHandler(deps) {
     const rawPlan    = (body.plan_interes || '').toString().trim().toLowerCase();
     const plan_interes = PLAN_INTERES.has(rawPlan) ? rawPlan : null;
 
+    // modalidad la manda solo la landing de clubes, que la marca como
+    // obligatoria en el front. Aquí es lenient (null si falta o no está en
+    // el enum) por la misma razón que plan_interes: un lead con un select
+    // raro no se pierde, llega sin el dato y el founder lo pregunta.
+    const rawModalidad = (body.modalidad || '').toString().trim().toLowerCase();
+    const modalidad = MODALIDADES.has(rawModalidad) ? rawModalidad : null;
+
     // Atribución comercial. El landing acepta ?via= en la URL y lo inyecta
     // como hidden input. Aceptamos también el alias `agent_code` por si en
     // el futuro algún flow no usa `via`. Silencioso si llega malformado —
@@ -343,17 +364,32 @@ function makeHandler(deps) {
     // contaminamos la bandeja de leads ni mandamos magic-links que no
     // resuelven. invite_token lo genera la BD (DEFAULT encode(...)) y
     // lo devolvemos con select() para usarlo en el email al lead.
-    const { data: leadRow, error: insertErr } = await db
+    const leadFields = {
+      name, company, email,
+      team_size, sector, message: message || null,
+      idioma,
+      plan_interes,
+      agent_code,
+    };
+
+    let { data: leadRow, error: insertErr } = await db
       .from('b2b_leads')
-      .insert({
-        name, company, email,
-        team_size, sector, message: message || null,
-        idioma,
-        plan_interes,
-        agent_code,
-      })
+      .insert({ ...leadFields, modalidad })
       .select('id, invite_token')
       .single();
+
+    // La migración 046 se ejecuta a mano en el SQL Editor de Supabase. Si el
+    // deploy llega antes que el SQL, PostgREST rechaza el INSERT entero por
+    // columna desconocida y perderíamos TODOS los leads hasta correrla.
+    // Reintentamos sin el campo nuevo: se pierde el dato, no el lead.
+    if (insertErr && /modalidad/i.test(insertErr.message || '')) {
+      console.warn('lead-b2b: columna modalidad ausente (¿migración 046 pendiente?) — reintento sin ella');
+      ({ data: leadRow, error: insertErr } = await db
+        .from('b2b_leads')
+        .insert(leadFields)
+        .select('id, invite_token')
+        .single());
+    }
 
     if (insertErr || !leadRow) {
       console.error('lead-b2b: error persistiendo lead:', insertErr?.message);
@@ -370,7 +406,7 @@ function makeHandler(deps) {
         to: inbox,
         replyTo: email,
         subject: `[Lead B2B · ${SECTOR_LABEL[sector]}] ${company} · ${name}`,
-        html: buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, agent_code, message, inviteToken, siteUrl }),
+        html: buildInboxEmailHtml({ name, company, email, team_size, sector, plan_interes, modalidad, agent_code, message, inviteToken, siteUrl }),
       });
     } catch (err) {
       // Si el email interno falla, NO bloqueamos al lead — su registro está

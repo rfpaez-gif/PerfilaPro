@@ -2,9 +2,11 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { makeHandler, buildLeadEmail, buildLeadAckEmail } from '../netlify/functions/lead-b2b.js';
 
 // --- DB mock builder ---------------------------------------------------
-// El handler hace exactamente UNA llamada a db.from('b2b_leads'):
+// El handler hace UNA llamada a db.from('b2b_leads'):
 //   .from('b2b_leads').insert({...}).select('id, invite_token').single()
-// devolviendo { data: { id, invite_token }, error }.
+// devolviendo { data: { id, invite_token }, error }. La única excepción es
+// el reintento sin `modalidad` cuando la migración 046 no se ha ejecutado
+// todavía — ese caso monta su propio mock con dos respuestas.
 function makeMockDb({ insertResult } = {}) {
   const mockSingle = vi.fn().mockResolvedValue(
     insertResult || { data: { id: 'lead-uuid', invite_token: 'a'.repeat(48) }, error: null }
@@ -230,6 +232,85 @@ describe('lead-b2b handler', () => {
     expect(res.statusCode).toBe(200);
     const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
     expect(insertArg.plan_interes).toBeNull();
+  });
+
+  // ── modalidad (landing de clubes · fútbol femenino) ──────────────────
+  it('persiste modalidad femenino y la añade al email interno', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, sector: 'club_deportivo', modalidad: 'femenino' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.modalidad).toBe('femenino');
+    const internalEmail = mockSend.mock.calls[0][0];
+    expect(internalEmail.html).toContain('Modalidad');
+    expect(internalEmail.html).toContain('Solo fútbol femenino');
+  });
+
+  it('acepta modalidad mixto (club con las dos secciones)', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, sector: 'club_deportivo', modalidad: 'mixto' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.modalidad).toBe('mixto');
+    expect(mockSend.mock.calls[0][0].html).toContain('Fútbol masculino y femenino');
+  });
+
+  it('ignora modalidad fuera del enum y la persiste como null, sin 400', async () => {
+    const res = await handler()(buildEvent({
+      body: { ...validPayload, modalidad: 'petanca' },
+    }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.modalidad).toBeNull();
+    expect(mockSend.mock.calls[0][0].html).not.toContain('Modalidad');
+  });
+
+  it('payload sin modalidad → null (leads de /es/empresas, retrocompat)', async () => {
+    const res = await handler()(buildEvent({ body: validPayload }));
+    expect(res.statusCode).toBe(200);
+    const insertArg = db.from.mock.results[0].value.insert.mock.calls[0][0];
+    expect(insertArg.modalidad).toBeNull();
+  });
+
+  it('si la columna modalidad no existe (migración 046 pendiente), reintenta sin ella y no pierde el lead', async () => {
+    // Primer INSERT falla como lo haría PostgREST con la columna ausente;
+    // el segundo (sin modalidad) va bien.
+    const single = vi.fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: 'PGRST204', message: "Could not find the 'modalidad' column of 'b2b_leads' in the schema cache" },
+      })
+      .mockResolvedValueOnce({ data: { id: 'lead-uuid', invite_token: 'b'.repeat(48) }, error: null });
+    const chain = { insert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single };
+    const retryDb = { from: vi.fn(() => chain) };
+
+    const res = await makeHandler({ db: retryDb, emailClient: mockEmailClient })(
+      buildEvent({ body: { ...validPayload, sector: 'club_deportivo', modalidad: 'femenino' } })
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(chain.insert).toHaveBeenCalledTimes(2);
+    expect(chain.insert.mock.calls[0][0].modalidad).toBe('femenino');
+    expect(chain.insert.mock.calls[1][0]).not.toHaveProperty('modalidad');
+    // El lead sigue su curso: se mandan los dos emails con el token del retry.
+    expect(mockSend).toHaveBeenCalledTimes(2);
+    expect(mockSend.mock.calls[0][0].html).toContain('b'.repeat(48));
+  });
+
+  it('un fallo de insert no relacionado con modalidad NO se reintenta', async () => {
+    const single = vi.fn().mockResolvedValue({ data: null, error: { message: 'connection refused' } });
+    const chain = { insert: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), single };
+    const failDb = { from: vi.fn(() => chain) };
+
+    const res = await makeHandler({ db: failDb, emailClient: mockEmailClient })(
+      buildEvent({ body: validPayload })
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(chain.insert).toHaveBeenCalledTimes(1);
+    expect(mockSend).not.toHaveBeenCalled();
   });
 
   // ── agent_code / via (Bloque D) ──────────────────────────────────────
