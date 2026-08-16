@@ -98,10 +98,8 @@ ON CONFLICT (sport, region, gender, name) DO NOTHING;
 --       UPDATE organizations SET region='catalunya' WHERE slug='<slug>';
 --     o desde el Studio (admin-orgs → crear/editar org, campo Región).
 --
---   * El cuadro MASCULINO de la FCF no está sembrado todavía. Un club
---     catalán con sección masculina verá hoy sólo el grupo femenino en el
---     desplegable. Se añade en cuanto tengamos el Pla de Competició
---     masculino verificado, con el mismo patrón de INSERT.
+--   * El cuadro MASCULINO de la FCF lo siembra la migración 048, con el
+--     mismo patrón de INSERT. Ejecuta las dos si el club es mixto.
 --
 --   * La FCF reordena el cuadro por temporada (para 2026/27 la amateur
 --     pasa a Primera Divisió con dos grupos; para 2027/28 se anuncia una
