@@ -9,7 +9,8 @@ no archivos — nítidos en cualquier pantalla y sin riesgo LOPD.
 |---|---|---|---|
 | `hero-celebracion.jpg` | Fondo del hero en `/es/clubes` | JPG 1024px, 156 KB | Celebración / equipo. Lleva scrim navy encima (58–82%). **IA o stock con derechos — NO niños reales identificables sin cesión.** Si falta, el hero usa degradado de marca (fallback CSS). Optimizado mozjpeg q82 desde PNG de 1,7 MB. |
 | `hero-femeni.jpg` | Fondo del hero en `/ca/clubs` | JPG 1170×627, 155 KB | Equipo femenino de base celebrando con copa (IA, Gemini). Portada propia de la catalana. Verificada en escritorio y móvil: el titular se lee sobre el cielo claro y la piña central sobrevive al recorte de `cover` en pantalla estrecha. Si falta, `/ca/clubs` cae sola a `hero-celebracion.jpg` y, si tampoco estuviera, al degradado de marca — no hay estado roto. Receta de regeneración abajo. |
-| `carnet-pvc.jpg` | Banda "Carnet PVC + NFC" | JPG 1264×846, 85 KB | Foto del carnet físico sobre superficie (club ficticio EFB Universal, IA). Llena el marco a sangre. Si falta, queda el degradado `--card`. Optimizado mozjpeg q84 desde PNG de 1,2 MB. |
+| `carnet-pvc.jpg` | Banda "Carnet PVC + NFC" en `/es/clubes` | JPG 1264×846, 85 KB | Foto del carnet físico sobre superficie (club ficticio EFB Universal, IA). Llena el marco a sangre. Si falta, queda el degradado `--card`. Optimizado mozjpeg q84 desde PNG de 1,2 MB. |
+| `carnet-pvc-femeni.jpg` | Banda "Carnet PVC + NFC" en `/ca/clubs` | JPG ~1264px, ≤120 KB | **Pendiente de generar.** Mismo encuadre que el anterior pero con la foto de una **jugadora**. Mientras no exista, el `onerror` del `<img>` cae a `carnet-pvc.jpg` — no hay hueco ni imagen rota. Prompt en la sección de abajo. |
 
 Para reemplazar cualquiera: sube el archivo con el mismo nombre y, si es PNG
 pesado, pásalo por `sharp`/squoosh/tinypng antes (es una landing pública).
@@ -41,7 +42,23 @@ camisetas y pancartas (el tell clásico de la IA, y encima envejece — una
 pancarta con un año concreto caduca), y **jugadoras descalzas**, que un
 coordinador de club detecta al instante.
 
-Después, antes de subirla:
+## Cómo generar `carnet-pvc-femeni.jpg`
+
+Mismo lab. Prompt:
+
+> Fotografía cenital de una tarjeta rígida de PVC tamaño tarjeta bancaria
+> (85x55 mm) apoyada sobre una mesa de madera clara, iluminada con luz natural
+> suave y sombra propia realista. Es el carnet de una jugadora de un club de
+> fútbol base: franja superior de color azul en la parte de arriba, la foto de
+> una niña de unos 11 años con equipación deportiva, y un código QR pequeño en
+> una esquina inferior. Los textos de la tarjeta aparecen desenfocados o
+> demasiado pequeños para leerse, sin nombres, sin escudos ni marcas
+> reconocibles. Estilo de fotografía de producto real, no render 3D.
+
+Encuadre a sangre (la imagen llena el marco), así que evita dejar mucho aire
+alrededor de la tarjeta.
+
+## Antes de subir cualquiera de las dos:
 
 1. Comprueba que **no hay caras de menores reales identificables** ni escudos
    de clubes existentes — la imagen es IA precisamente por eso.

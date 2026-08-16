@@ -339,12 +339,15 @@
 </section>
 
 <!-- ─────────── Showcase: carnet PVC + NFC ─────────── -->
-<!-- Foto real del producte: /assets/landing/clubes/carnet-pvc.jpg (carnet
+<!-- Foto del producte: carnet-pvc-femeni.jpg (carnet d'una jugadora) amb
+     fallback per onerror a carnet-pvc.jpg, la mateixa de la castellana,
+     mentre la versió femenina no estigui pujada. Mateix criteri que el hero.
+     Original: /assets/landing/clubes/carnet-pvc.jpg (carnet
      sobre superfície, ja amb ombra). onerror amaga l'<img>. -->
 <section class="pp-showcase">
   <div class="pp-showcase__inner">
     <div class="pp-showcase__media pp-showcase__media--card">
-      <img class="pp-showcase__img pp-showcase__img--card" src="/assets/landing/clubes/carnet-pvc.jpg" alt="Carnet de jugador en PVC amb escut del club, foto, dorsal 10, categoria Aleví, xip NFC i codi QR a la seva fitxa" loading="lazy" onerror="this.style.display='none'">
+      <img class="pp-showcase__img pp-showcase__img--card" src="/assets/landing/clubes/carnet-pvc-femeni.jpg" alt="Carnet de jugadora en PVC amb escut del club, foto, dorsal, categoria, xip NFC i codi QR a la seva fitxa" loading="lazy" onerror="this.onerror=null; this.src='/assets/landing/clubes/carnet-pvc.jpg'">
     </div>
     <div class="pp-showcase__text">
       <div class="pp-showcase__eyebrow">Carnet físic PVC + NFC</div>
