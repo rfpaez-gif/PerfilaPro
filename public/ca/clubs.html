@@ -116,6 +116,7 @@
     .pp-compsel__group--on { color: var(--color-verde-dark, #00A865); background: var(--color-verde-light, #E6F9F0); }
     .pp-compsel__opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; line-height: 1.35; color: var(--color-tinta, #0A1F44); padding: 7px 12px 7px 20px; }
     .pp-compsel__opt--on { background: var(--color-verde-light, #E6F9F0); font-weight: 600; }
+    .pp-compsel__fmt { font-family: var(--font-mono); font-size: 9.5px; color: var(--color-gris-500, #6B7280); flex-shrink: 0; }
     .pp-compsel__note { font-size: 10.5px; color: var(--color-gris-500, #6B7280); text-align: center; margin: 8px 0 0; }
 
     /* ── Section headings ─────────────────────────────────── */
@@ -297,44 +298,40 @@
 
 <!-- ─────────── Showcase: futbol femení ─────────── -->
 <!-- Mockup CSS del desplegable de competicions tal com el pinta panel.html
-     (optgroups per category_group). Les entrades són EXEMPLE amb la
-     nomenclatura catalana (categories de sports_categories.display_name_ca):
-     el catàleg real de la FCF encara no està sembrat — avui sports_competitions
-     només porta el quadre de Múrcia (migració 041, region='murcia'). No hi
-     posem noms literals de lligues de la FCF sense tenir-los verificats, i
-     per això el mockup va etiquetat com a exemple. -->
+     (optgroups per category_group). Els noms i els formats són els reals del
+     quadre femení de la FCF sembrat a la migració 047 (region='catalunya').
+     Si la FCF reordena el quadre, aquest mockup s'actualitza amb el seed. -->
 <section class="pp-showcase pp-showcase--reverse" id="femeni">
   <div class="pp-showcase__inner">
     <div class="pp-showcase__media">
-      <div class="pp-compsel" role="img" aria-label="Exemple del desplegable de competicions del tauler del club, amb el grup Femení desplegat: Femení Aleví, Femení Infantil, Femení Cadet, Femení Juvenil i Preferent Femenina">
+      <div class="pp-compsel" role="img" aria-label="Desplegable de competicions del tauler del club amb el quadre de la Federació Catalana de Futbol: grup Femení Aleví amb Preferent Femení Aleví, Primera Divisió Femení Aleví i Segona Divisió Femení Aleví, i grup Femení Infantil amb Preferent Femení Infantil F-7">
         <p class="pp-compsel__label">Nou equip · competició</p>
         <div class="pp-compsel__field">
-          <span>Femení Aleví</span>
+          <span>Primera Divisió Femení Aleví</span>
           <span class="pp-compsel__caret" aria-hidden="true">▼</span>
         </div>
         <div class="pp-compsel__menu">
-          <div class="pp-compsel__group">Alevins</div>
-          <div class="pp-compsel__opt">Aleví · Primera divisió</div>
-          <div class="pp-compsel__group pp-compsel__group--on">Femení</div>
-          <div class="pp-compsel__opt pp-compsel__opt--on">Femení Aleví</div>
-          <div class="pp-compsel__opt">Femení Infantil</div>
-          <div class="pp-compsel__opt">Femení Cadet</div>
-          <div class="pp-compsel__opt">Femení Juvenil</div>
-          <div class="pp-compsel__opt">Preferent Femenina</div>
+          <div class="pp-compsel__group pp-compsel__group--on">Femení · Aleví</div>
+          <div class="pp-compsel__opt">Preferent Femení Aleví <span class="pp-compsel__fmt">F-7</span></div>
+          <div class="pp-compsel__opt pp-compsel__opt--on">Primera Divisió Femení Aleví <span class="pp-compsel__fmt">F-7</span></div>
+          <div class="pp-compsel__opt">Segona Divisió Femení Aleví <span class="pp-compsel__fmt">F-7</span></div>
+          <div class="pp-compsel__group">Femení · Infantil</div>
+          <div class="pp-compsel__opt">Preferent Femení Infantil F-7 <span class="pp-compsel__fmt">F-7</span></div>
+          <div class="pp-compsel__opt">Femení Infantil F-11 <span class="pp-compsel__fmt">F-11</span></div>
         </div>
-        <p class="pp-compsel__note">Exemple · carreguem el quadre real de la teva federació</p>
+        <p class="pp-compsel__note">Quadre de la Federació Catalana de Futbol</p>
       </div>
     </div>
     <div class="pp-showcase__text">
       <div class="pp-showcase__eyebrow">Futbol femení</div>
-      <h2 class="pp-showcase__title">La secció femenina, amb el quadre de competicions de la teva federació</h2>
+      <h2 class="pp-showcase__title">La secció femenina, amb el quadre de la FCF ja carregat</h2>
       <p class="pp-showcase__body">No és un afegit ni una casella solta. En crear un equip tries <strong>la seva competició real</strong> —masculina o femenina— i d'allà surt sola la categoria, el format i el nom. Un club mixt porta <strong>les dues seccions al mateix tauler</strong>, amb els mateixos cobraments, els mateixos carnets i el mateix web.</p>
       <ul class="pp-showcase__list">
-        <li>De prebenjamí a juvenil, i també les categories sènior</li>
+        <li>De benjamí a juvenil, i també les categories sènior</li>
         <li>Equips masculins i femenins convivint en una sola plantilla</li>
         <li>Cada jugadora, amb la seva fitxa, el seu dorsal i el seu carnet igual que ells</li>
       </ul>
-      <p class="pp-showcase__body" style="margin-top:1.25rem;font-size:13px">Treballem amb el quadre de la teva federació: per als clubs catalans, el de la <strong>Federació Catalana de Futbol</strong>. Ens dius en quines competicions esteu encabits i te'l deixem carregat abans d'obrir inscripcions.</p>
+      <p class="pp-showcase__body" style="margin-top:1.25rem;font-size:13px">Portem carregat el quadre femení de la <strong>Federació Catalana de Futbol</strong>: de Benjamí a Juvenil en F-7 i F-11, la Preferent i les divisions territorials, i les categories estatals fins a la Liga F. El masculí de la FCF l'afegim quan el club el necessiti.</p>
     </div>
   </div>
 </section>
@@ -509,7 +506,7 @@
 
   <details class="pp-faq__item">
     <summary>Serveix per a futbol femení?</summary>
-    <p class="pp-faq__body">Sí, i no com un apedaçament. El femení és <strong>un carril de primera</strong>: encabeixes els equips femenins igual que els masculins, la categoria es calcula sola des de l'any de naixement i tot el que ve després —fitxes, quotes, carnets, web del club— és idèntic. Un club amb les dues seccions les porta <strong>des del mateix tauler</strong>, sense duplicar res. Carreguem el quadre de competicions de la <strong>Federació Catalana de Futbol</strong> per al teu club: digues-nos en quines competicions esteu i el deixem llest abans que obris inscripcions.</p>
+    <p class="pp-faq__body">Sí, i no com un apedaçament. Tenim sembrat <strong>el quadre femení de la Federació Catalana de Futbol</strong>: Benjamí i Aleví F-7, Infantil en F-7 i F-11, Cadet en F-11 i F-7, Juvenil, la Preferent i les divisions territorials, l'Amateur F-7 i les categories estatals fins a la Liga F. Tries la competició real on esteu encabits i la categoria surt sola de l'any de naixement. Tot el que ve després —fitxes, quotes, carnets, web del club— és idèntic al masculí, i un club amb les dues seccions les porta <strong>des del mateix tauler</strong>.</p>
   </details>
 
   <details class="pp-faq__item">

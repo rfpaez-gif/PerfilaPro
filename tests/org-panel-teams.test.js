@@ -177,6 +177,60 @@ describe('org-panel · equipos del club (migración 040)', () => {
     expect(player.team_name).toBe('Cadete A');
   });
 
+  // ── región federativa del catálogo (migración 047) ──────────────────
+  it('get_roster acota el catálogo de competiciones a la región del club', async () => {
+    let seenRegion = 'NO-FILTRADO';
+    const db = makeDb(base({
+      sports_competitions: (filters) => {
+        seenRegion = filters.region;
+        return { data: [], error: null };
+      },
+    }));
+    const res = await makeHandler(db, null)(event('get_roster', {}, token));
+    expect(res.statusCode).toBe(200);
+    // Club sin `region` (todos los anteriores a la 047) → Murcia, que es
+    // el único cuadro que existía. Nadie ve su desplegable cambiar.
+    expect(seenRegion).toBe('murcia');
+  });
+
+  it('un club marcado como catalán recibe el cuadro de la FCF, no el murciano', async () => {
+    let seenRegion = null;
+    const db = makeDb(base({
+      organizations: () => ({ data: { ...SPORTS_ORG, region: 'catalunya' }, error: null }),
+      sports_competitions: (filters) => {
+        seenRegion = filters.region;
+        return { data: [{ id: COMP_CADETE, sport: 'futbol', gender: 'F', category_group: 'Femení · Cadet', category_id: CAT_ALEVIN, name: 'Primera Divisió Femení Cadet', format: 'F-11', sort_order: 1310 }], error: null };
+      },
+    }));
+    const res = await makeHandler(db, null)(event('get_roster', {}, token));
+    expect(res.statusCode).toBe(200);
+    expect(seenRegion).toBe('catalunya');
+    expect(JSON.parse(res.body).competitions[0].name).toBe('Primera Divisió Femení Cadet');
+  });
+
+  it('team_create rechaza una competición de otra federación aunque el id exista', async () => {
+    // El desplegable ya viene filtrado, así que esto solo pasa con un body
+    // forjado — pero el equipo quedaría encuadrado en una liga de otra
+    // federación, así que el endpoint lo corta igual.
+    const db = makeDb(base({
+      organizations: () => ({ data: { ...SPORTS_ORG, region: 'catalunya' }, error: null }),
+      sports_competitions: () => ({ data: { ...COMP, region: 'murcia' }, error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('team_create', { competition_id: COMP_CADETE }, token));
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body).error).toMatch(/federación del club/i);
+  });
+
+  it('team_create acepta la competición cuando la federación coincide', async () => {
+    const db = makeDb(base({
+      organizations: () => ({ data: { ...SPORTS_ORG, region: 'catalunya' }, error: null }),
+      sports_competitions: () => ({ data: { ...COMP, region: 'catalunya', name: 'Preferent Femení Aleví' }, error: null }),
+      club_teams: () => ({ data: { id: TEAM_A, name: 'Preferent Femení Aleví', category_id: CAT_ALEVIN, competition_id: COMP_CADETE, label: null, color: null, sort_order: 0 }, error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('team_create', { competition_id: COMP_CADETE }, token));
+    expect(res.statusCode).toBe(200);
+  });
+
   it('enrollment_assign rechaza un team_id que no es del club', async () => {
     const db = makeDb(base({
       club_teams: () => ({ data: [{ id: TEAM_A, name: 'Cadete A', category_id: CAT_ALEVIN, color: null, sort_order: 0 }], error: null }),

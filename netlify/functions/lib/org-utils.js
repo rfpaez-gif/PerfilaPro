@@ -28,6 +28,14 @@ function isValidSport(sport) {
   return typeof sport === 'string' && SPORT_RE.test(sport);
 }
 
+// Región federativa del club (migración 047). Sin CHECK en BD: el catálogo
+// vivo es sports_competitions.region. Mismo formato de token que sport
+// ('murcia', 'catalunya'…). NULL/'' = default histórico (murcia).
+function isValidRegion(region) {
+  if (region === null || region === undefined || region === '') return true;
+  return typeof region === 'string' && SPORT_RE.test(region);
+}
+
 function isValidHex(color) {
   return typeof color === 'string' && HEX_RE.test(color);
 }
@@ -104,6 +112,7 @@ module.exports = {
   ORG_KINDS,
   isValidOrgKind,
   isValidSport,
+  isValidRegion,
   isValidHex,
   isSafeLogoUrl,
   isValidOrgSlug,

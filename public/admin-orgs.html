@@ -289,6 +289,14 @@
                 <option value="otro">Otro</option>
               </select>
             </div>
+            <div id="regionField" style="display:none">
+              <label class="pp-form__label" for="regionInput">Federación</label>
+              <select class="pp-input" id="regionInput">
+                <option value="murcia">Murcia (FFRM)</option>
+                <option value="catalunya">Catalunya (FCF)</option>
+              </select>
+              <p class="pp-form__hint">Determina qué cuadro de competiciones ve el club al crear equipos.</p>
+            </div>
           </div>
           <p class="pp-form__hint" id="kindHint">Negocio = panel B2B (equipo + branding). Club deportivo activa el Studio Cantera (plantilla, inscripciones, carnets, cuotas) en el panel del cliente.</p>
 
@@ -645,6 +653,7 @@ function resetForm() {
   $('hideBrandingInput').checked = false;
   $('kindInput').value = 'business';
   $('sportInput').value = 'futbol';
+  $('regionInput').value = 'murcia';
   onKindChange();
   setLogoPreview(null);
   $('logoStatus').style.display = 'none';
@@ -653,7 +662,9 @@ function resetForm() {
 
 // Muestra el selector de deporte solo cuando la org es un club deportivo.
 function onKindChange() {
-  $('sportField').style.display = $('kindInput').value === 'sports_club' ? '' : 'none';
+  const isClubKind = $('kindInput').value === 'sports_club';
+  $('sportField').style.display  = isClubKind ? '' : 'none';
+  $('regionField').style.display = isClubKind ? '' : 'none';
 }
 
 function loadForm(org) {
@@ -680,6 +691,7 @@ function loadForm(org) {
   $('hideBrandingInput').checked = org.hide_branding === true;
   $('kindInput').value = org.kind === 'sports_club' ? 'sports_club' : 'business';
   $('sportInput').value = org.sport || 'futbol';
+  $('regionInput').value = org.region || 'murcia';
   onKindChange();
   setLogoPreview(org.logo_url);
   $('logoStatus').style.display = 'none';
@@ -797,7 +809,8 @@ async function saveOrg() {
   const color = $('colorHexInput').value.trim() || $('colorInput').value;
   const hideBranding = $('hideBrandingInput').checked === true;
   const kind = $('kindInput').value;
-  const sport = kind === 'sports_club' ? ($('sportInput').value || null) : null;
+  const sport  = kind === 'sports_club' ? ($('sportInput').value  || null) : null;
+  const region = kind === 'sports_club' ? ($('regionInput').value || null) : null;
 
   if (!name) return toast('Falta el nombre', 'err');
   if (!slug) return toast('Falta el slug', 'err');
@@ -814,6 +827,7 @@ async function saveOrg() {
     hide_branding: hideBranding,
     kind,
     sport,
+    region,
   };
 
   $('saveBtn').disabled = true;

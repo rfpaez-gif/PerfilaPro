@@ -402,16 +402,40 @@ describe('admin-orgs handler', () => {
       expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'sports_club', sport: 'futbol' });
     });
 
-    it('al volver a negocio limpia el sport defensivamente', async () => {
+    it('al volver a negocio limpia sport y region defensivamente', async () => {
       const updateMock = vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
         is: vi.fn().mockResolvedValue({ error: null }),
       }));
       mockFrom.mockReturnValue({ update: updateMock });
       await handler(buildEvent({
-        body: { action: 'update', slug: 'cd-flota', kind: 'business', sport: 'futbol' },
+        body: { action: 'update', slug: 'cd-flota', kind: 'business', sport: 'futbol', region: 'catalunya' },
       }));
-      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'business', sport: null });
+      // Una org de negocio no compite en ninguna federación: si dejáramos
+      // la región puesta, volver a marcarla como club la reactivaría con
+      // un cuadro de competiciones que nadie ha elegido.
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'business', sport: null, region: null });
+    });
+
+    it('persiste la región federativa de un club', async () => {
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cf-demo', kind: 'sports_club', sport: 'futbol', region: 'catalunya' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'sports_club', sport: 'futbol', region: 'catalunya' });
+    });
+
+    it('rechaza una region con formato inválido', async () => {
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'cf-demo', kind: 'sports_club', sport: 'futbol', region: 'Cata lunya!' },
+      }));
+      expect(res.statusCode).toBe(400);
+      expect(JSON.parse(res.body).error).toMatch(/region/i);
     });
 
     it('rechaza kind inválido en update con 400', async () => {

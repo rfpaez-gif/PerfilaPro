@@ -36,6 +36,18 @@ function isValidTeamId(id) {
   return typeof id === 'string' && UUID_RE.test(id.trim());
 }
 
+// Región federativa del catálogo de competiciones (sports_competitions.region).
+// El primer seed fue el cuadro de Murcia y durante un tiempo fue el único, así
+// que los clubes creados antes de la 047 no tienen `region`: para ellos el
+// default DEBE seguir siendo 'murcia' o les cambiaríamos el desplegable por
+// debajo. Un club catalán se marca con region='catalunya' desde admin-orgs.
+const DEFAULT_COMPETITION_REGION = 'murcia';
+
+function competitionRegion(org) {
+  const raw = org && org.region != null ? String(org.region).trim().toLowerCase() : '';
+  return raw || DEFAULT_COMPETITION_REGION;
+}
+
 // Sufijo opcional A/B para dos equipos en la misma competición. ≤8 chars,
 // sin tags. null/'' → null. { value, error }.
 function normalizeTeamLabel(input) {
@@ -50,6 +62,8 @@ module.exports = {
   TEAM_NAME_MAX,
   TEAM_LABEL_MAX,
   UUID_RE,
+  DEFAULT_COMPETITION_REGION,
+  competitionRegion,
   normalizeTeamName,
   normalizeTeamColor,
   normalizeTeamLabel,
