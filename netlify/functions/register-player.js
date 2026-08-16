@@ -124,12 +124,12 @@ function makeHandler(db, emailClient) {
     if (orgErr) return jsonResponse(500, { error: orgErr.message });
     if (!org || org.deleted_at) return unauthorizedResponse();
     if (org.kind !== 'sports_club') {
-      return jsonResponse(403, { error: 'El alta de jugadores solo está disponible para clubes deportivos' });
+      return jsonResponse(403, { error: 'El alta de fichas solo está disponible para clubes deportivos' });
     }
 
     // ── Validación de inputs ──
     const nombre = stripTags(body.nombre).substring(0, 100);
-    if (!nombre) return jsonResponse(400, { error: 'Nombre del jugador requerido' });
+    if (!nombre) return jsonResponse(400, { error: 'Falta el nombre' });
 
     const role = body.role || 'jugador';
     if (!MEMBER_ROLES.includes(role)) return jsonResponse(400, { error: 'Rol inválido' });
@@ -139,7 +139,7 @@ function makeHandler(db, emailClient) {
     // La fecha de nacimiento es obligatoria para jugadores (categoría); para
     // staff es opcional.
     if (isPlayer && !DATE_RE.test(birthDate)) {
-      return jsonResponse(400, { error: 'Fecha de nacimiento del jugador requerida (YYYY-MM-DD)' });
+      return jsonResponse(400, { error: 'Falta la fecha de nacimiento (YYYY-MM-DD)' });
     }
     if (birthDate && !DATE_RE.test(birthDate)) {
       return jsonResponse(400, { error: 'Fecha de nacimiento inválida (YYYY-MM-DD)' });

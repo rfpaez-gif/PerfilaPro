@@ -2964,7 +2964,7 @@
       // club no ha publicado datos, mensaje genérico.
       const inst = (c.club && c.club.pay_instructions) || {};
       const hasInstData = inst.iban || inst.bizum || inst.text;
-      const concept = `${c.nombre || 'Jugador'}${m && m.category ? ' · ' + m.category : ''}`;
+      const concept = `${c.nombre || 'Inscripción'}${m && m.category ? ' · ' + m.category : ''}`;
       const amountLabel = plan
         ? (plan.has_charges
             ? eurFromCents(Math.max(0, (plan.total_cents || 0) - (plan.paid_cents || 0))) + ' pendientes'

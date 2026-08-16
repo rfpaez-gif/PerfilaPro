@@ -84,7 +84,7 @@ function makeHandler(db, stripe = defaultStripe) {
         p_actor_email: actorEmail,
       });
       if (error) {
-        if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'El jugador no tiene membresía activa' });
+        if (error.message === 'no_active_membership') return jsonResponse(409, { error: 'Esta ficha no tiene membresía activa' });
         console.error('cancel-membership: RPC error:', error.message);
         return jsonResponse(500, { error: 'No se pudo cerrar la membresía' });
       }

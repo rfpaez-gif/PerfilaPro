@@ -106,16 +106,16 @@ function makeHandler(db, emailClient) {
     if (msErr) return jsonResponse(500, { error: msErr.message });
     if (!active) {
       // Sin club activo no es un traspaso: el club debe dar de alta nueva.
-      return jsonResponse(409, { error: 'El jugador no tiene club activo. Usa el alta de jugador.' });
+      return jsonResponse(409, { error: 'Esta ficha no tiene club activo. Dala de alta en tu club.' });
     }
     if (active.organization_id === toOrg.id) {
-      return jsonResponse(409, { error: 'El jugador ya pertenece a tu club' });
+      return jsonResponse(409, { error: 'Esta ficha ya pertenece a tu club' });
     }
 
     // Un solo traspaso pendiente por jugador.
     const { data: pending } = await db
       .from('club_transfers').select('id').eq('card_slug', cardSlug).eq('status', 'pending').maybeSingle();
-    if (pending) return jsonResponse(409, { error: 'Ya hay un traspaso pendiente para este jugador' });
+    if (pending) return jsonResponse(409, { error: 'Ya hay un traspaso pendiente para esta ficha' });
 
     // Temporada destino.
     const seasonStartYear = parseSeasonStartYear(body.season) ?? currentSeasonStartYear();

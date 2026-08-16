@@ -1643,7 +1643,7 @@ function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStrip
           .maybeSingle();
         if (cardErr) return jsonResponse(500, { error: cardErr.message });
         if (!card || card.card_kind !== 'player') return jsonResponse(404, { error: 'Jugador no encontrado' });
-        if (!card.organization_id) return jsonResponse(400, { error: 'El jugador no tiene club activo' });
+        if (!card.organization_id) return jsonResponse(400, { error: 'Esta ficha no tiene club activo' });
 
         const { data: org, error: orgErr } = await db
           .from('organizations')
