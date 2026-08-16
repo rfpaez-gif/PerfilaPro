@@ -52,7 +52,7 @@ const {
   planTotalCents,
 } = require('./lib/enrollment-campaign');
 const { buildAssignmentPatch, findDuplicateDorsals } = require('./lib/enrollment-assign');
-const { normalizeTeamColor, normalizeTeamLabel, isValidTeamId } = require('./lib/club-teams');
+const { normalizeTeamColor, normalizeTeamLabel, isValidTeamId, competitionRegion, DEFAULT_COMPETITION_REGION } = require('./lib/club-teams');
 const { carnetReadiness } = require('./lib/carnet-ready');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
@@ -1369,8 +1369,9 @@ async function getRoster(db, org) {
   // Catálogo completo de categorías del deporte (no sólo las con jugadores).
   const sportCategories = catalog.map((c) => ({ id: c.id, name: c.display_name_es, order: c.sort_order ?? 0 }));
 
-  // Catálogo de competiciones (Murcia) para el desplegable de alta de equipo.
-  const competitions = (await loadCompetitions(db, org.sport)).map((c) => ({
+  // Catálogo de competiciones de la federación del club para el desplegable
+  // de alta de equipo.
+  const competitions = (await loadCompetitions(db, org.sport, competitionRegion(org))).map((c) => ({
     id: c.id,
     gender: c.gender,
     category_group: c.category_group,
@@ -1418,14 +1419,17 @@ async function loadClubTeams(db, orgId) {
   } catch { return []; }
 }
 
-// Catálogo de competiciones del deporte (todas las regiones sembradas; hoy
-// solo Murcia). [] defensivo si la 041 no está aplicada.
-async function loadCompetitions(db, sport) {
+// Catálogo de competiciones del deporte, acotado a la región federativa del
+// club (migración 047: Murcia y Catalunya conviven en la tabla). Sin este
+// filtro un club murciano vería también el cuadro de la FCF y al revés.
+// [] defensivo si la 041 no está aplicada.
+async function loadCompetitions(db, sport, region) {
   try {
     const { data, error } = await db
       .from('sports_competitions')
       .select('id, sport, gender, category_group, category_id, name, format, sort_order')
       .eq('sport', sport || 'futbol')
+      .eq('region', region || DEFAULT_COMPETITION_REGION)
       .order('sort_order', { ascending: true });
     if (error) return [];
     return data || [];
@@ -1437,7 +1441,7 @@ async function loadCompetition(db, competitionId) {
   try {
     const { data } = await db
       .from('sports_competitions')
-      .select('id, sport, name, category_id')
+      .select('id, sport, region, name, category_id')
       .eq('id', competitionId)
       .maybeSingle();
     return data || null;
@@ -1489,6 +1493,11 @@ async function teamCreate(db, org, body) {
   if (!isValidTeamId(competitionId)) return jsonResponse(400, { error: 'Elige una competición' });
   const comp = await loadCompetition(db, competitionId);
   if (!comp || comp.sport !== org.sport) return jsonResponse(400, { error: 'Competición no válida' });
+  // Defensa en profundidad: el desplegable ya viene filtrado por región, pero
+  // un competition_id de otra federación no puede colarse por el body.
+  if ((comp.region || DEFAULT_COMPETITION_REGION) !== competitionRegion(org)) {
+    return jsonResponse(400, { error: 'Esa competición no es de la federación del club' });
+  }
 
   const labelRes = normalizeTeamLabel(body.label);
   if (labelRes.error) return jsonResponse(400, { error: labelRes.error });
@@ -1542,6 +1551,11 @@ async function teamUpdate(db, org, body) {
   }
   const comp = await loadCompetition(db, competitionId);
   if (!comp || comp.sport !== org.sport) return jsonResponse(400, { error: 'Competición no válida' });
+  // Defensa en profundidad: el desplegable ya viene filtrado por región, pero
+  // un competition_id de otra federación no puede colarse por el body.
+  if ((comp.region || DEFAULT_COMPETITION_REGION) !== competitionRegion(org)) {
+    return jsonResponse(400, { error: 'Esa competición no es de la federación del club' });
+  }
 
   let label = current.label || null;
   if ('label' in body) {

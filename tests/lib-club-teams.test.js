@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTeamName, normalizeTeamColor, normalizeTeamLabel, isValidTeamId, TEAM_NAME_MAX, TEAM_LABEL_MAX } from '../netlify/functions/lib/club-teams.js';
+import { normalizeTeamName, normalizeTeamColor, normalizeTeamLabel, isValidTeamId, TEAM_NAME_MAX, TEAM_LABEL_MAX, competitionRegion, DEFAULT_COMPETITION_REGION } from '../netlify/functions/lib/club-teams.js';
 
 describe('club-teams · normalizeTeamName', () => {
   it('vacío → error', () => {
@@ -49,5 +49,29 @@ describe('club-teams · isValidTeamId', () => {
     expect(isValidTeamId('cat-ale')).toBe(false);
     expect(isValidTeamId('')).toBe(false);
     expect(isValidTeamId(null)).toBe(false);
+  });
+});
+
+describe('competitionRegion · federación del catálogo (migración 047)', () => {
+  it('sin region (clubes anteriores a la 047) cae a murcia', () => {
+    expect(competitionRegion({})).toBe('murcia');
+    expect(competitionRegion({ region: null })).toBe('murcia');
+    expect(competitionRegion({ region: '' })).toBe('murcia');
+    expect(competitionRegion(null)).toBe('murcia');
+    expect(competitionRegion(undefined)).toBe('murcia');
+  });
+
+  it('devuelve la región del club cuando está marcada', () => {
+    expect(competitionRegion({ region: 'catalunya' })).toBe('catalunya');
+  });
+
+  it('normaliza mayúsculas y espacios', () => {
+    expect(competitionRegion({ region: '  Catalunya ' })).toBe('catalunya');
+  });
+
+  it('DEFAULT_COMPETITION_REGION sigue siendo murcia', () => {
+    // Cambiarlo reasignaría en silencio el desplegable de todos los clubes
+    // que no tienen region marcada.
+    expect(DEFAULT_COMPETITION_REGION).toBe('murcia');
   });
 });
