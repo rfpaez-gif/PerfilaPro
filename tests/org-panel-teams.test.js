@@ -177,6 +177,39 @@ describe('org-panel · equipos del club (migración 040)', () => {
     expect(player.team_name).toBe('Cadete A');
   });
 
+  it('get_roster devuelve el sexo de cada ficha para poder tratarla en femenino', async () => {
+    // El front lo usa para decir "jugadora" / "Entrenadora". Sin este campo
+    // volvería al masculino por defecto sin que ningún test se quejara.
+    const db = makeDb(base({
+      member_club_seasons: () => ({ data: [
+        { card_slug: 'p-00000001', role: 'jugador', dorsal: 7, position: null, category_id: CAT_ALEVIN, team_id: null, team_name: null, season: '2025-26', previous_club_name: null },
+        { card_slug: 'p-00000002', role: 'entrenador', dorsal: null, position: null, category_id: CAT_ALEVIN, team_id: null, team_name: null, season: '2025-26', previous_club_name: null },
+      ], error: null }),
+      cards: () => ({ data: [
+        { slug: 'p-00000001', nombre: 'Aitana', foto_url: null, public_card: false, birth_year: 2015, card_kind: 'player', gender: 'F' },
+        { slug: 'p-00000002', nombre: 'Marta', foto_url: null, public_card: false, birth_year: 1990, card_kind: 'club_staff', gender: 'F' },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('get_roster', {}, token));
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.categories[0].members[0].gender).toBe('F');
+    expect(body.staff[0].gender).toBe('F');
+  });
+
+  it('una ficha sin sexo registrado devuelve null, no un masculino implícito', async () => {
+    const db = makeDb(base({
+      member_club_seasons: () => ({ data: [
+        { card_slug: 'p-00000003', role: 'jugador', dorsal: null, position: null, category_id: CAT_ALEVIN, team_id: null, team_name: null, season: '2025-26', previous_club_name: null },
+      ], error: null }),
+      cards: () => ({ data: [
+        { slug: 'p-00000003', nombre: 'Alex', foto_url: null, public_card: false, birth_year: 2015, card_kind: 'player' },
+      ], error: null }),
+    }));
+    const res = await makeHandler(db, null)(event('get_roster', {}, token));
+    expect(JSON.parse(res.body).categories[0].members[0].gender).toBeNull();
+  });
+
   // ── región federativa del catálogo (migración 047) ──────────────────
   it('get_roster acota el catálogo de competiciones a la región del club', async () => {
     let seenRegion = 'NO-FILTRADO';
