@@ -1282,7 +1282,7 @@ async function getRoster(db, org) {
   if (slugs.length) {
     const { data: cards } = await db
       .from('cards')
-      .select('slug, nombre, foto_url, public_card, birth_year, card_kind')
+      .select('slug, nombre, foto_url, public_card, birth_year, card_kind, gender')
       .in('slug', slugs);
     for (const c of cards || []) cardBySlug.set(c.slug, c);
   }
@@ -1310,6 +1310,10 @@ async function getRoster(db, org) {
       foto_url: card.foto_url || null,
       public_card: card.public_card ?? null,
       birth_year: card.birth_year ?? null,
+      // El front lo usa para decir "jugadora" en vez de "jugador" cuando lo
+      // sabemos. NULL cuando la inscripción no lo recogió: entonces el front
+      // se queda en fórmula neutra, nunca asume masculino.
+      gender: card.gender || null,
       role: m.role,
       dorsal: m.dorsal ?? null,
       position: m.position || null,

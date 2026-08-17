@@ -93,7 +93,7 @@ function makeHandler(stripe, db) {
       .eq('slug', cardSlug).maybeSingle();
     if (cardErr) return jsonResponse(500, { error: cardErr.message });
     if (!card || card.deleted_at || !isPlayer(card)) return jsonResponse(404, { error: 'Jugador no encontrado' });
-    if (!card.organization_id) return jsonResponse(409, { error: 'El jugador no tiene club activo' });
+    if (!card.organization_id) return jsonResponse(409, { error: 'Tu hijo/a no está en ningún club activo' });
 
     // El email de la sesión debe ser tutor activo de la card.
     const { data: admin, error: aErr } = await db
