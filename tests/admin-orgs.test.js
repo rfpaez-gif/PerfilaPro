@@ -417,6 +417,22 @@ describe('admin-orgs handler', () => {
       expect(updateMock.mock.calls[0][0]).toEqual({ kind: 'business', sport: null, region: null });
     });
 
+    it('guarda el email en minúsculas para que el magic-link lo encuentre', async () => {
+      // panel-auth busca con el email del cliente pasado a minúsculas. Si aquí
+      // se guardara "Admin@Qatorze.cat" tal cual, el lookup fallaría y el
+      // cliente recibiría 200 sin email y sin error — imposible de depurar.
+      const updateMock = vi.fn(() => ({
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ error: null }),
+      }));
+      mockFrom.mockReturnValue({ update: updateMock });
+      const res = await handler(buildEvent({
+        body: { action: 'update', slug: 'qatorze-cf', email: '  Admin@Qatorze.CAT ' },
+      }));
+      expect(res.statusCode).toBe(200);
+      expect(updateMock.mock.calls[0][0].email).toBe('admin@qatorze.cat');
+    });
+
     it('persiste la región federativa de un club', async () => {
       const updateMock = vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
