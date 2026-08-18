@@ -117,4 +117,42 @@ describe('enrollment-page', () => {
     expect(res.body).toContain('value="club"');
     expect(res.body).not.toContain('value="online"');
   });
+  // ── Traducción al catalán ────────────────────────────────────────────
+  // Es la ÚNICA pantalla que ven las familias. La ruta /ca/ ya marcaba
+  // <html lang="ca"> pero el copy salía en castellano.
+  it('la ruta /ca/ sirve el formulario en catalán, no solo el lang del html', async () => {
+    const res = await makeHandler(makeDb({}))(ev(`/ca/inscripcion/${TOKEN}`));
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('lang="ca"');
+    expect(res.body).toContain('Inscripció de temporada');
+    expect(res.body).toContain('Nom i cognoms');
+    expect(res.body).toContain('Data de naixement');
+    expect(res.body).toContain('Correu electrònic');
+    expect(res.body).toContain('Consentiments');
+    expect(res.body).toContain('Inscriure');
+    // Y no debe quedar castellano suelto en las etiquetas.
+    expect(res.body).not.toContain('Nombre y apellidos');
+    expect(res.body).not.toContain('Fecha de nacimiento');
+  });
+
+  it('la ruta /es/ sigue en castellano', async () => {
+    const res = await makeHandler(makeDb({}))(ev(`/es/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('lang="es"');
+    expect(res.body).toContain('Nombre y apellidos');
+    expect(res.body).not.toContain('Nom i cognoms');
+  });
+
+  it('los importes del plan se traducen y la fecha va en catalán', async () => {
+    const campaign = { ...OPEN, concepts_jsonb: { plan: [{ concepto: 'Inscripció', amount_cents: 9000, due_date: '2026-09-15' }] } };
+    const res = await makeHandler(makeDb({ campaign }))(ev(`/ca/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('Pla de pagaments de la temporada');
+    expect(res.body).toContain('setembre');
+    expect(res.body).not.toContain('Plan de pagos');
+  });
+
+  it('la página de campaña cerrada también está traducida', async () => {
+    const res = await makeHandler(makeDb({ campaign: { ...OPEN, status: 'closed' } }))(ev(`/ca/inscripcion/${TOKEN}`));
+    expect(res.body).toContain('Inscripcions tancades');
+    expect(res.body).not.toContain('Inscripciones cerradas');
+  });
 });
