@@ -19,6 +19,7 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const { authFromEvent, unauthorizedResponse } = require('./lib/panel-auth');
+const { buildQrSvg } = require('./lib/qr-svg');
 const {
   isValidHex,
   isValidTagline,
@@ -125,8 +126,12 @@ function makeHandler(db, emailClient) {
     // ── get_org: snapshot completo del panel ──
     if (action === 'get_org') {
       // Best-effort: persistimos cuándo entró por última vez (no bloquea).
-      // Sirve para que el founder vea desde admin-orgs si el cliente usa el panel.
-      db.from('organizations')
+      // Sirve para que el founder vea desde admin-orgs si el cliente usa el
+      // panel — por eso NO se marca cuando el que entra es el propio founder
+      // impersonando (🔑 Panel de admin-orgs, claim actor='founder'). Si se
+      // marcara, el indicador diría "la clienta entró hoy" cada vez que el
+      // founder trastea, y dejaría de servir justo para lo que existe.
+      if (session.actor !== 'founder') db.from('organizations')
         .update({ panel_last_login_at: new Date().toISOString() })
         .eq('id', org.id)
         .then(({ error }) => {
@@ -611,6 +616,14 @@ function shapeCampaign(campaign, siteUrl, submitted = null) {
     status: campaign.status,
     public_token: campaign.public_token,
     url: enrollmentUrl(siteUrl, campaign.public_token),
+    // QR generado aquí con lib/qr-svg (la misma pieza de marca del resto del
+    // producto). Antes el panel lo pedía a api.qrserver.com pasándole la URL
+    // en la query: eso mandaba el token de la campaña —que es la llave del
+    // formulario de inscripción— a un tercero en cada carga del panel.
+    qr_svg: (() => {
+      try { return buildQrSvg(enrollmentUrl(siteUrl, campaign.public_token), { size: 200 }); }
+      catch { return null; }
+    })(),
     matricula_cents: campaign.matricula_cents ?? null,
     monthly_fee_cents: campaign.monthly_fee_cents ?? null,
     num_installments: campaign.num_installments ?? DEFAULT_INSTALLMENTS,
