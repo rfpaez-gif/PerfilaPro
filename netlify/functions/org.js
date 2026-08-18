@@ -99,13 +99,38 @@ function makeHandler(deps) {
     // (/c/:slug), no al perfil-publico SEO (/p/:slug). Queremos que el visitante
     // que abre /e/:slug y hace click en un miembro aterrice en su tarjeta con
     // WhatsApp y QR directo, no en la página del directorio.
-    const cardsHtml = cards.length
-      ? `<p class="pp-org-count">${cards.length} ${cards.length === 1 ? 'profesional' : 'profesionales'}</p>
-<div class="pp-dir-grid">${cards.map(c => renderCard(c, siteUrl, { linkPrefix: '/c/' })).join('\n')}</div>`
+    // Un club no tiene "profesionales", tiene plantilla. Y si sabemos el sexo
+    // de TODAS sus fichas visibles, concordamos; en cuanto hay mezcla o falta
+    // el dato, forma neutra — nunca masculino por defecto.
+    const isClub = org.kind === 'sports_club';
+    const count = cards.length;
+    let countLabel;
+    if (isClub) {
+      const known = new Set(cards.map(c => c.gender).filter(g => g === 'F' || g === 'M'));
+      const g = known.size === 1 ? [...known][0] : null;
+      if (g === 'F')      countLabel = `${count} ${count === 1 ? 'jugadora' : 'jugadoras'}`;
+      else if (g === 'M') countLabel = `${count} ${count === 1 ? 'jugador' : 'jugadores'}`;
+      else                countLabel = `${count} en la plantilla`;
+    } else {
+      countLabel = `${count} ${count === 1 ? 'profesional' : 'profesionales'}`;
+    }
+
+    // Vacío. En un club puede estar vacío teniendo plantilla: las fichas de
+    // menores sólo salen aquí cuando su familia autoriza la visibilidad. Se
+    // explica, para que el club no crea que su página está rota.
+    const emptyHtml = isClub
+      ? `<div class="pp-dir-empty"><h2>La plantilla todavía no es pública</h2><p>Las fichas de las jugadoras aparecen aquí cuando su familia autoriza que sean públicas.</p></div>`
       : `<div class="pp-dir-empty"><h2>Aún no hay profesionales</h2><p>Esta organización todavía no tiene perfiles publicados en PerfilaPro.</p></div>`;
 
+    const cardsHtml = count
+      ? `<p class="pp-org-count">${esc(countLabel)}</p>
+<div class="pp-dir-grid">${cards.map(c => renderCard(c, siteUrl, { linkPrefix: '/c/' })).join('\n')}</div>`
+      : emptyHtml;
+
     const title = `${org.name} — PerfilaPro`;
-    const desc  = org.tagline || `Equipo de ${org.name} en PerfilaPro. Cada profesional con su perfil, su QR y su WhatsApp.`;
+    const desc  = org.tagline || (isClub
+      ? `La plantilla de ${org.name} en PerfilaPro. Cada ficha con su foto, su dorsal y su QR.`
+      : `Equipo de ${org.name} en PerfilaPro. Cada profesional con su perfil, su QR y su WhatsApp.`);
 
     return {
       statusCode: 200,

@@ -225,3 +225,46 @@ describe('org handler (/e/:slug)', () => {
     });
   });
 });
+
+describe('/e/:slug · un club no tiene "profesionales"', () => {
+  const CLUB = { ...BASE_ORG, slug: 'catorzecf', name: 'Catorze C.F.', kind: 'sports_club' };
+  const player = (slug, gender) => ({ ...BASE_CARD, slug, nombre: 'Jugadora ' + slug, gender });
+
+  it('con toda la plantilla femenina dice "jugadoras"', async () => {
+    mockGetOrgBySlug.mockResolvedValue(CLUB);
+    mockListCardsByOrg.mockResolvedValue({ cards: [player('p-1','F'), player('p-2','F')] });
+    const res = await handler({ path: '/e/catorzecf' });
+    expect(res.body).toContain('2 jugadoras');
+    expect(res.body).not.toContain('profesionales');
+  });
+
+  it('con plantilla mixta usa la forma neutra, no el masculino', async () => {
+    mockGetOrgBySlug.mockResolvedValue(CLUB);
+    mockListCardsByOrg.mockResolvedValue({ cards: [player('p-1','F'), player('p-2','M')] });
+    const res = await handler({ path: '/e/catorzecf' });
+    expect(res.body).toContain('2 en la plantilla');
+    expect(res.body).not.toContain('2 jugadores');
+  });
+
+  it('sin el dato de sexo tampoco asume masculino', async () => {
+    mockGetOrgBySlug.mockResolvedValue(CLUB);
+    mockListCardsByOrg.mockResolvedValue({ cards: [player('p-1', null)] });
+    const res = await handler({ path: '/e/catorzecf' });
+    expect(res.body).toContain('1 en la plantilla');
+  });
+
+  it('vacío explica que faltan consentimientos, no que no haya nadie', async () => {
+    mockGetOrgBySlug.mockResolvedValue(CLUB);
+    mockListCardsByOrg.mockResolvedValue({ cards: [] });
+    const res = await handler({ path: '/e/catorzecf' });
+    expect(res.body).toContain('La plantilla todavía no es pública');
+    expect(res.body).toContain('autoriza');
+  });
+
+  it('una organización de negocio sigue diciendo "profesionales"', async () => {
+    mockGetOrgBySlug.mockResolvedValue({ ...BASE_ORG, kind: 'business' });
+    mockListCardsByOrg.mockResolvedValue({ cards: [BASE_CARD, { ...BASE_CARD, slug: 'otro' }] });
+    const res = await handler({ path: '/e/iris' });
+    expect(res.body).toContain('2 profesionales');
+  });
+});

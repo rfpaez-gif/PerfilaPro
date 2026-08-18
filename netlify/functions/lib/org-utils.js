@@ -69,7 +69,9 @@ function isSafeWebsite(url) {
 // Campos persistidos que consume el render público y la tarjeta de visita.
 // Cualquier campo que use card.js / org.js / printable-card-utils.js debe
 // listarse aquí o el SELECT lo devuelve undefined silenciosamente.
-const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, deleted_at';
+// `kind` entra aquí para que /e/:slug sepa si habla de una empresa o de un
+// club: a las jugadoras de un club no se las llama "profesionales".
+const ORG_PUBLIC_COLUMNS = 'id, slug, name, tagline, description, website, email, address, phone, logo_url, color_primary, hide_branding, kind, deleted_at';
 
 async function getOrgBySlug(db, slug) {
   if (!isValidOrgSlug(slug)) return null;
@@ -98,7 +100,7 @@ async function listCardsByOrg(db, orgId) {
   if (!orgId) return { cards: [], error: null };
   const { data, error } = await db
     .from('cards')
-    .select('slug, nombre, tagline, foto_url, plan, stripe_session_id, kit_email_sent_at, zona, city_slug, directory_featured, public_card')
+    .select('slug, nombre, tagline, foto_url, plan, stripe_session_id, kit_email_sent_at, zona, city_slug, directory_featured, public_card, gender')
     .eq('organization_id', orgId)
     .eq('status', 'active')
     .is('deleted_at', null)
