@@ -122,6 +122,12 @@ describe('download-card handler', () => {
     expect(pdfText).not.toContain('Tarjeta visita');
   });
 
+  // Timeout ampliado a propósito: las 10 llamadas de calentamiento son
+  // descargas REALES, y cada una renderiza un PDF con su QR. Aislado cabe de
+  // sobra en los 5 s por defecto de vitest, pero con la suite entera en
+  // paralelo se pasaba de largo y el test fallaba de forma intermitente. Se
+  // amplía el presupuesto en vez de mockear el PDF para no debilitar lo que
+  // afirma: que son diez descargas buenas las que agotan el cupo.
   it('devuelve 429 al superar el rate limit por IP', async () => {
     const handler = makeHandler(buildDb());
     const ip = '8.8.8.8';
@@ -131,5 +137,5 @@ describe('download-card handler', () => {
     }
     const blocked = await handler(buildEvent({ ip }));
     expect(blocked.statusCode).toBe(429);
-  });
+  }, 20000);
 });
