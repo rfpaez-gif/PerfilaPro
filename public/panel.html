@@ -2878,33 +2878,185 @@
     const pub = $('topbarPublic'); if (pub) pub.style.display = 'none';
   }
 
+  // Se resuelve en cada render, así que PT() ya está inicializado aunque el
+  // diccionario se declare más abajo.
   const PAY_HUMAN = (p) => {
-    if (!p) return 'Sin datos';
-    if (p.status === 'active') return 'Cuota al día (Stripe)';
-    if (p.status === 'paid') return 'Pagado este mes (' + (p.method || 'manual') + ')';
-    return 'Pendiente de pago';
+    if (!p) return PT().payNoData;
+    if (p.status === 'active') return PT().payActive;
+    if (p.status === 'paid') return PT().payPaid(p.method || PT().payManual);
+    return PT().payPending;
   };
 
   // Badge por estado de cada concepto del plan de pagos (espejo del club).
   const PARENT_PLAN_BADGE = { paid: '✅', scheduled: '⏳', processing: '⌛', failed: '⚠️', canceled: '✖️', manual: '✋' };
 
+  // ── Idioma del panel del tutor ─────────────────────────────
+  // El club escoge idioma al inscribir y queda en cards.idioma; parent-data
+  // lo devuelve por hijo/a. Aquí se toma el del primero: un tutor con varios
+  // hijos en el mismo club los tiene todos en el mismo idioma. El Studio del
+  // club NO usa esto — sigue siendo es-only.
+  let pLang = 'es';
+  const PARENT_STRINGS = {
+    es: {
+      panelTitle: 'Panel del tutor',
+      loadFail: 'No se pudo cargar: ',
+      noChildren: 'No hay fichas asociadas a tu email todavía. Si tu club te ha dado de alta hace poco, pídele que verifique el email registrado.',
+      noStats: 'Sin estadísticas registradas',
+      transferPending: 'Solicitud de fichaje pendiente',
+      transferWants: (club, kid) => `${club} quiere fichar a ${kid}`,
+      transferSeason: (s) => `para la temporada ${s}`,
+      transferMustApprove: 'Como tutor/a legal, debes aprobarlo.',
+      review: 'Revisar y aprobar →',
+      history: (n) => `Histórico de clubes (${n})`,
+      season: 'Temporada', club: 'Club', category: 'Categoría', dorsal: 'Dorsal',
+      exitReason: 'Motivo salida', team: 'Equipo', position: 'Posición',
+      changePhoto: '📷 Cambiar foto', addPhoto: '📷 Añadir foto',
+      carnetPhotoMissing: '🪪 Falta la foto del carnet — añádela para que salga impresa',
+      monthlyFee: 'Cuota mensual', payState: 'Estado del pago',
+      payNoData: 'Sin datos', payActive: 'Cuota al día (Stripe)',
+      payPaid: (m) => `Pagado este mes (${m})`, payPending: 'Pendiente de pago',
+      payManual: 'manual',
+      amountPending: 'pendientes', amountSeason: '(temporada)',
+      roleLegal: 'tutor/a legal', roleSecondary: 'tutor/a secundario',
+      planTitle: 'Plan de pagos de la temporada',
+      planCharged: (paid, total) => `Cobrado <strong>${paid}</strong> de ${total} · los plazos pendientes se cobran automáticamente en su fecha.`,
+      planTotal: (total) => `Total temporada: <strong>${total}</strong>. Lo que vence ahora se cobra al pagar; el resto en su fecha.`,
+      payPlanBtn: 'Pagar el plan de la temporada',
+      payFeeBtn: 'Pagar la cuota con tarjeta',
+      howToPay: '💸 Cómo pagar al club',
+      amount: 'Importe', transfer: 'Transferencia · IBAN', bizum: 'Bizum', concept: 'Concepto',
+      afterPay: 'Cuando pagues, el club registrará tu pago. Si tienes dudas, contacta con el club.',
+      noPayData: 'El club te indicará cómo abonar el pago (transferencia, Bizum o efectivo).',
+      noClub: 'Sin club activo',
+      publicCard: 'Ficha pública',
+      publicYes: (slug) => `Sí · visible en /c/${slug}`,
+      publicNo: 'No (oculta hasta tu consentimiento)',
+      stats: 'Estadísticas',
+      viewCard: 'Ver ficha ↗',
+      makePublic: 'Hacer pública la ficha',
+      photoTooBig: 'La foto supera el máximo de 2 MB.',
+      uploading: 'Subiendo…',
+      photoDone: 'Foto actualizada.',
+      approveTitle: 'Aprobar fichaje',
+      identityAsk: 'Para confirmar tu identidad, escribe la ',
+      birthDate: 'Fecha de nacimiento',
+      birthRequired: 'La fecha de nacimiento es obligatoria.',
+      approveBtn: 'Aprobar el fichaje →',
+      approving: 'Aprobando…',
+      approved: 'Fichaje aprobado. La ficha ya está en el nuevo club.',
+      consentIntro: 'Al dar tu consentimiento, la ficha ',
+      consentBtn: 'Dar consentimiento →',
+      yourKid: 'tu hijo/a',
+      aClub: 'Un club',
+      noPlan: 'No hay un plan de pagos disponible.',
+      noClubActive: 'La ficha no tiene club activo.',
+      payFail: 'No se pudo iniciar el pago',
+      inscription: 'Inscripción',
+      sending: 'Enviando…',
+      consentDone: 'Consentimiento registrado. La ficha ya es pública.',
+      consentVisible: ' será visible públicamente en ',
+      consentRevoke: 'Puedes revocarlo más tarde escribiendo al club.',
+      consentCheck: 'Soy el tutor/a legal y autorizo la publicación de la ficha y los datos deportivos de mi hijo/a.',
+      consentCheckRequired: 'Debes marcar la casilla de autorización.',
+      dueOn: 'vence',
+      wantsToSign: 'quiere fichar a',
+      approveExplain: 'Al aprobar, la ficha se traslada al nuevo club con su histórico intacto.',
+      clubRegistered: '(el dato que registró el club).',
+      redirecting: 'Redirigiendo…', logout: 'Salir',
+      dePrefix: () => 'de ',
+    },
+    ca: {
+      panelTitle: 'Tauler del tutor',
+      loadFail: 'No s\'ha pogut carregar: ',
+      noChildren: 'Encara no hi ha cap fitxa associada al teu correu. Si el club t\'ha donat d\'alta fa poc, demana-li que verifiqui el correu registrat.',
+      noStats: 'Sense estadístiques registrades',
+      transferPending: 'Sol·licitud de fitxatge pendent',
+      transferWants: (club, kid) => `${club} vol fitxar ${kid}`,
+      transferSeason: (s) => `per a la temporada ${s}`,
+      transferMustApprove: 'Com a tutor/a legal, l\'has d\'aprovar.',
+      review: 'Revisar i aprovar →',
+      history: (n) => `Històric de clubs (${n})`,
+      season: 'Temporada', club: 'Club', category: 'Categoria', dorsal: 'Dorsal',
+      exitReason: 'Motiu de sortida', team: 'Equip', position: 'Posició',
+      changePhoto: '📷 Canviar foto', addPhoto: '📷 Afegir foto',
+      carnetPhotoMissing: '🪪 Falta la foto del carnet — afegeix-la perquè surti impresa',
+      monthlyFee: 'Quota mensual', payState: 'Estat del pagament',
+      payNoData: 'Sense dades', payActive: 'Quota al dia (Stripe)',
+      payPaid: (m) => `Pagat aquest mes (${m})`, payPending: 'Pendent de pagament',
+      payManual: 'manual',
+      amountPending: 'pendents', amountSeason: '(temporada)',
+      roleLegal: 'tutor/a legal', roleSecondary: 'tutor/a secundari',
+      planTitle: 'Pla de pagaments de la temporada',
+      planCharged: (paid, total) => `Cobrat <strong>${paid}</strong> de ${total} · els terminis pendents es cobren automàticament en la seva data.`,
+      planTotal: (total) => `Total temporada: <strong>${total}</strong>. El que venç ara es cobra en pagar; la resta en la seva data.`,
+      payPlanBtn: 'Pagar el pla de la temporada',
+      payFeeBtn: 'Pagar la quota amb targeta',
+      howToPay: '💸 Com pagar al club',
+      amount: 'Import', transfer: 'Transferència · IBAN', bizum: 'Bizum', concept: 'Concepte',
+      afterPay: 'Quan paguis, el club registrarà el teu pagament. Si tens dubtes, contacta amb el club.',
+      noPayData: 'El club t\'indicarà com abonar el pagament (transferència, Bizum o efectiu).',
+      noClub: 'Sense club actiu',
+      publicCard: 'Fitxa pública',
+      publicYes: (slug) => `Sí · visible a /c/${slug}`,
+      publicNo: 'No (oculta fins al teu consentiment)',
+      stats: 'Estadístiques',
+      viewCard: 'Veure fitxa ↗',
+      makePublic: 'Fer pública la fitxa',
+      photoTooBig: 'La foto supera el màxim de 2 MB.',
+      uploading: 'Pujant…',
+      photoDone: 'Foto actualitzada.',
+      approveTitle: 'Aprovar fitxatge',
+      identityAsk: 'Per confirmar la teva identitat, escriu la ',
+      birthDate: 'Data de naixement',
+      birthRequired: 'La data de naixement és obligatòria.',
+      approveBtn: 'Aprovar el fitxatge →',
+      approving: 'Aprovant…',
+      approved: 'Fitxatge aprovat. La fitxa ja és al club nou.',
+      consentIntro: 'En donar el teu consentiment, la fitxa ',
+      consentBtn: 'Donar consentiment →',
+      yourKid: 'el teu fill/a',
+      aClub: 'Un club',
+      noPlan: 'No hi ha cap pla de pagaments disponible.',
+      noClubActive: 'La fitxa no té club actiu.',
+      payFail: 'No s\'ha pogut iniciar el pagament',
+      inscription: 'Inscripció',
+      sending: 'Enviant…',
+      consentDone: 'Consentiment registrat. La fitxa ja és pública.',
+      consentVisible: ' serà visible públicament a ',
+      consentRevoke: 'Ho pots revocar més endavant escrivint al club.',
+      consentCheck: 'Sóc el tutor/a legal i autoritzo la publicació de la fitxa i les dades esportives del meu fill/a.',
+      consentCheckRequired: 'Has de marcar la casella d\'autorització.',
+      dueOn: 'venç',
+      wantsToSign: 'vol fitxar',
+      approveExplain: 'En aprovar-ho, la fitxa es trasllada al club nou amb el seu històric intacte.',
+      clubRegistered: '(la dada que va registrar el club).',
+      redirecting: 'Redirigint…', logout: 'Sortir',
+      // El català elideix "de" davant vocal o h: de Aitana → d'Aitana.
+      dePrefix: (n) => /^[aeiouàèéíòóúh]/i.test(String(n || '')) ? "d'" : 'de ',
+    },
+  };
+  const PT = () => PARENT_STRINGS[pLang] || PARENT_STRINGS.es;
+
   async function loadParentDashboard() {
-    $('topbarOrgName').textContent = 'Panel del tutor';
     applyParentChrome();
     try {
       const data = await apiRaw('/api/parent-data', { action: 'get_children' });
       parentChildren = data.children || [];
+      // El idioma sale de la ficha (cards.idioma), que fija el club al inscribir.
+      pLang = (parentChildren[0] && parentChildren[0].idioma) === 'ca' ? 'ca' : 'es';
+      $('topbarOrgName').textContent = PT().panelTitle;
+      const lo = $('logoutBtn'); if (lo) lo.textContent = PT().logout;
       renderParentChildren(data);
     } catch (e) {
       if (e.message !== 'Sesión expirada') {
-        $('parentChildren').innerHTML = `<p class="pp-table__empty">No se pudo cargar: ${escapeHtml(e.message)}</p>`;
+        $('parentChildren').innerHTML = `<p class="pp-table__empty">${escapeHtml(PT().loadFail + e.message)}</p>`;
       }
     }
   }
 
   function renderParentChildren(data) {
     if (!parentChildren.length) {
-      $('parentChildren').innerHTML = `<section class="pp-section"><p class="pp-table__empty">No hay fichas asociadas a tu email todavía. Si tu club te ha dado de alta hace poco, pídele que verifique el email registrado.</p></section>`;
+      $('parentChildren').innerHTML = `<section class="pp-section"><p class="pp-table__empty">${escapeHtml(PT().noChildren)}</p></section>`;
       return;
     }
     $('parentChildren').innerHTML = parentChildren.map((c, i) => {
@@ -2912,29 +3064,29 @@
       const stats = m && m.stats ? Object.entries(m.stats) : [];
       const statsHtml = stats.length
         ? stats.map(([k, v]) => `<span class="pp-chip">${escapeHtml(k)}: ${escapeHtml(String(v))}</span>`).join(' ')
-        : '<span style="color:#6B7280">Sin estadísticas registradas</span>';
+        : `<span style="color:#6B7280">${escapeHtml(PT().noStats)}</span>`;
       const pendingHtml = c.pending_transfer ? `
         <div class="pp-child__alert">
-          <strong>📋 Solicitud de fichaje pendiente</strong><br>
-          ${escapeHtml(c.pending_transfer.to_club_name || 'Un club')} quiere fichar a ${escapeHtml(c.nombre || 'tu hijo/a')}
-          ${c.pending_transfer.season ? 'para la temporada ' + escapeHtml(c.pending_transfer.season) : ''}.
-          Como tutor/a legal, debes aprobarlo.
+          <strong>📋 ${escapeHtml(PT().transferPending)}</strong><br>
+          ${escapeHtml(PT().transferWants(c.pending_transfer.to_club_name || PT().aClub, c.nombre || PT().yourKid))}
+          ${c.pending_transfer.season ? escapeHtml(PT().transferSeason(c.pending_transfer.season)) : ''}.
+          ${escapeHtml(PT().transferMustApprove)}
           <div class="pp-child__actions">
-            <button type="button" class="pp-btn pp-btn--primary" data-approve="${i}">Revisar y aprobar →</button>
+            <button type="button" class="pp-btn pp-btn--primary" data-approve="${i}">${escapeHtml(PT().review)}</button>
           </div>
         </div>` : '';
       const isLegal = c.my_role === 'tutor_legal';
       const hist = (c.history || []).length ? `
-        <details class="pp-child__hist"><summary>Histórico de clubes (${c.history.length})</summary>
-          <div style="overflow-x:auto;margin-top:.5rem"><table class="pp-table"><thead><tr><th>Temporada</th><th>Club</th><th>Categoría</th><th>Dorsal</th><th>Motivo salida</th></tr></thead><tbody>${
+        <details class="pp-child__hist"><summary>${escapeHtml(PT().history(c.history.length))}</summary>
+          <div style="overflow-x:auto;margin-top:.5rem"><table class="pp-table"><thead><tr><th>${escapeHtml(PT().season)}</th><th>${escapeHtml(PT().club)}</th><th>${escapeHtml(PT().category)}</th><th>${escapeHtml(PT().dorsal)}</th><th>${escapeHtml(PT().exitReason)}</th></tr></thead><tbody>${
             c.history.map(h => `<tr><td>${escapeHtml(h.season || '—')}</td><td>${escapeHtml(h.club_name || '—')}</td><td>${escapeHtml(h.category || '—')}</td><td>${h.dorsal != null ? h.dorsal : '—'}</td><td>${escapeHtml(h.exit_reason || '—')}</td></tr>`).join('')
           }</tbody></table></div>
         </details>` : '';
 
       const avatar = `<div class="pp-child__avatarwrap">
             ${c.foto_url ? `<img class="pp-child__avatar" src="${escapeHtml(c.foto_url)}" alt="">` : `<span class="pp-child__avatar"></span>`}
-            <button type="button" class="pp-child__photobtn" data-photo="${i}">${c.foto_url ? '📷 Cambiar foto' : '📷 Añadir foto'}</button>
-            ${c.carnet_photo_missing ? `<small style="display:block;margin-top:.35rem;color:#B0392A;font-size:11px;line-height:1.3;max-width:9rem">🪪 Falta la foto del carnet — añádela para que salga impreso</small>` : ''}
+            <button type="button" class="pp-child__photobtn" data-photo="${i}">${escapeHtml(c.foto_url ? PT().changePhoto : PT().addPhoto)}</button>
+            ${c.carnet_photo_missing ? `<small style="display:block;margin-top:.35rem;color:#B0392A;font-size:11px;line-height:1.3;max-width:9rem">${escapeHtml(PT().carnetPhotoMissing)}</small>` : ''}
           </div>`;
       const fee = c.club && c.club.monthly_fee_cents != null ? eurFromCents(c.club.monthly_fee_cents) + '/mes' : null;
       // Pago online solo si el club tiene Stripe Connect; si no, el padre paga
@@ -2947,45 +3099,45 @@
       // desglose por concepto con su estado.
       const plan = c.plan && (c.plan.concepts || []).length ? c.plan : null;
       const monthlyFieldsHtml = plan ? '' : `
-          <div class="pp-child__field"><strong>Cuota mensual</strong>${fee || '—'}</div>
-          <div class="pp-child__field"><strong>Estado del pago</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>`;
+          <div class="pp-child__field"><strong>${escapeHtml(PT().monthlyFee)}</strong>${fee || '—'}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().payState)}</strong>${escapeHtml(PAY_HUMAN(c.payment))}</div>`;
       const planHtml = plan ? `
         <div class="pp-child__plan" style="margin-top:.75rem;padding:.85rem;background:#F8FAF9;border:1px solid #E5E7EB;border-radius:10px">
-          <strong style="display:block;margin-bottom:.4rem;font-size:14px">Plan de pagos de la temporada</strong>
+          <strong style="display:block;margin-bottom:.4rem;font-size:14px">${escapeHtml(PT().planTitle)}</strong>
           <div>${plan.concepts.map(pc =>
-            `<span title="${escapeHtml(pc.status)}${pc.due_date ? ' · vence ' + escapeHtml(pc.due_date) : ''}" style="display:inline-block;margin:2px 6px 2px 0;padding:3px 9px;border-radius:10px;background:#fff;border:1px solid #E5E7EB;font-size:12px">${PARENT_PLAN_BADGE[pc.status] || '•'} ${escapeHtml(pc.concepto)} <strong>${eurFromCents(pc.amount_cents)}</strong></span>`
+            `<span title="${escapeHtml(pc.status)}${pc.due_date ? ' · ' + escapeHtml(PT().dueOn) + ' ' + escapeHtml(pc.due_date) : ''}" style="display:inline-block;margin:2px 6px 2px 0;padding:3px 9px;border-radius:10px;background:#fff;border:1px solid #E5E7EB;font-size:12px">${PARENT_PLAN_BADGE[pc.status] || '•'} ${escapeHtml(pc.concepto)} <strong>${eurFromCents(pc.amount_cents)}</strong></span>`
           ).join('')}</div>
           <p style="margin:.5rem 0 0;font-size:13px;color:#374151">${plan.has_charges
-            ? 'Cobrado <strong>' + eurFromCents(plan.paid_cents) + '</strong> de ' + eurFromCents(plan.total_cents) + ' · los plazos pendientes se cobran automáticamente en su fecha.'
-            : 'Total temporada: <strong>' + eurFromCents(plan.total_cents) + '</strong>. Lo que vence ahora se cobra al pagar; el resto en su fecha.'}</p>
+            ? PT().planCharged(eurFromCents(plan.paid_cents), eurFromCents(plan.total_cents))
+            : PT().planTotal(eurFromCents(plan.total_cents))}</p>
         </div>` : '';
       const payBtnHtml = plan
-        ? ((plan.payable && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-payplan="${i}">Pagar el plan de la temporada</button>` : '')
-        : ((canPayStripe && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">Pagar la cuota con tarjeta</button>` : '');
+        ? ((plan.payable && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-payplan="${i}">${escapeHtml(PT().payPlanBtn)}</button>` : '')
+        : ((canPayStripe && payOnline) ? `<button type="button" class="pp-btn pp-btn--primary" data-pay="${i}">${escapeHtml(PT().payFeeBtn)}</button>` : '');
 
       // Cuando el club NO cobra online, mostramos cómo pagar por transferencia/
       // Bizum con un concepto auto-generado para que el club concilie. Si el
       // club no ha publicado datos, mensaje genérico.
       const inst = (c.club && c.club.pay_instructions) || {};
       const hasInstData = inst.iban || inst.bizum || inst.text;
-      const concept = `${c.nombre || 'Inscripción'}${m && m.category ? ' · ' + m.category : ''}`;
+      const concept = `${c.nombre || PT().inscription}${m && m.category ? ' · ' + m.category : ''}`;
       const amountLabel = plan
         ? (plan.has_charges
-            ? eurFromCents(Math.max(0, (plan.total_cents || 0) - (plan.paid_cents || 0))) + ' pendientes'
-            : eurFromCents(plan.total_cents) + ' (temporada)')
+            ? eurFromCents(Math.max(0, (plan.total_cents || 0) - (plan.paid_cents || 0))) + ' ' + PT().amountPending
+            : eurFromCents(plan.total_cents) + ' ' + PT().amountSeason)
         : fee;
       const showInstructions = !payOnline && c.club && (plan || fee);
       const payInstructionsHtml = showInstructions ? `
         <div class="pp-child__pay" style="margin-top:.75rem;padding:.85rem;background:#FFF8EC;border:1px solid #F0E2C0;border-radius:10px">
-          <strong style="display:block;margin-bottom:.45rem;font-size:14px">💸 Cómo pagar al club</strong>
+          <strong style="display:block;margin-bottom:.45rem;font-size:14px">${escapeHtml(PT().howToPay)}</strong>
           ${hasInstData ? `
-            ${amountLabel ? `<div style="font-size:13px;margin-bottom:.3rem">Importe: <strong>${escapeHtml(amountLabel)}</strong></div>` : ''}
-            ${inst.iban ? `<div style="font-size:13px">Transferencia · IBAN: <strong>${escapeHtml(inst.iban)}</strong></div>` : ''}
-            ${inst.bizum ? `<div style="font-size:13px">Bizum: <strong>${escapeHtml(inst.bizum)}</strong></div>` : ''}
-            <div style="font-size:13px;margin-top:.3rem">Concepto: <strong>${escapeHtml(concept)}</strong></div>
+            ${amountLabel ? `<div style="font-size:13px;margin-bottom:.3rem">${escapeHtml(PT().amount)}: <strong>${escapeHtml(amountLabel)}</strong></div>` : ''}
+            ${inst.iban ? `<div style="font-size:13px">${escapeHtml(PT().transfer)}: <strong>${escapeHtml(inst.iban)}</strong></div>` : ''}
+            ${inst.bizum ? `<div style="font-size:13px">${escapeHtml(PT().bizum)}: <strong>${escapeHtml(inst.bizum)}</strong></div>` : ''}
+            <div style="font-size:13px;margin-top:.3rem">${escapeHtml(PT().concept)}: <strong>${escapeHtml(concept)}</strong></div>
             ${inst.text ? `<p style="font-size:12px;color:#6B7280;margin:.5rem 0 0;white-space:pre-line">${escapeHtml(inst.text)}</p>` : ''}
-            <p style="font-size:12px;color:#6B7280;margin:.5rem 0 0">Cuando pagues, el club registrará tu pago. Si tienes dudas, contacta con el club.</p>
-          ` : `<p style="font-size:13px;color:#6B7280;margin:0">El club te indicará cómo abonar el pago (transferencia, Bizum o efectivo).</p>`}
+            <p style="font-size:12px;color:#6B7280;margin:.5rem 0 0">${escapeHtml(PT().afterPay)}</p>
+          ` : `<p style="font-size:13px;color:#6B7280;margin:0">${escapeHtml(PT().noPayData)}</p>`}
         </div>` : '';
 
       return `<section class="pp-child">
@@ -2993,22 +3145,22 @@
           ${avatar}
           <div>
             <h2 class="pp-child__name">${escapeHtml(c.nombre || '—')}</h2>
-            <p class="pp-child__club">${c.club ? '⚽ ' + escapeHtml(c.club.name) : 'Sin club activo'}${m && m.category ? ' · ' + escapeHtml(m.category) : ''}${isLegal ? ' · tutor/a legal' : ' · tutor/a secundario'}</p>
+            <p class="pp-child__club">${c.club ? '⚽ ' + escapeHtml(c.club.name) : escapeHtml(PT().noClub)}${m && m.category ? ' · ' + escapeHtml(m.category) : ''}${isLegal ? ' · ' + escapeHtml(PT().roleLegal) : ' · ' + escapeHtml(PT().roleSecondary)}</p>
           </div>
         </div>
         ${pendingHtml}
         <div class="pp-child__grid">
-          <div class="pp-child__field"><strong>Dorsal</strong>${m && m.dorsal != null ? m.dorsal : '—'}</div>
-          <div class="pp-child__field"><strong>Equipo</strong>${escapeHtml((m && m.team_name) || '—')}</div>
-          <div class="pp-child__field"><strong>Posición</strong>${escapeHtml((m && m.position) || '—')}</div>
-          <div class="pp-child__field"><strong>Temporada</strong>${escapeHtml((m && m.season) || '—')}</div>${monthlyFieldsHtml}
-          <div class="pp-child__field"><strong>Ficha pública</strong>${c.public_card ? 'Sí · visible en /c/' + escapeHtml(c.slug) : 'No (oculta hasta tu consentimiento)'}</div>
-          <div class="pp-child__field"><strong>Estadísticas</strong>${statsHtml}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().dorsal)}</strong>${m && m.dorsal != null ? m.dorsal : '—'}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().team)}</strong>${escapeHtml((m && m.team_name) || '—')}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().position)}</strong>${escapeHtml((m && m.position) || '—')}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().season)}</strong>${escapeHtml((m && m.season) || '—')}</div>${monthlyFieldsHtml}
+          <div class="pp-child__field"><strong>${escapeHtml(PT().publicCard)}</strong>${c.public_card ? escapeHtml(PT().publicYes(c.slug)) : escapeHtml(PT().publicNo)}</div>
+          <div class="pp-child__field"><strong>${escapeHtml(PT().stats)}</strong>${statsHtml}</div>
         </div>
         ${planHtml}
         ${payInstructionsHtml}
         <div class="pp-child__actions">
-          ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">Ver ficha ↗</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">Hacer pública la ficha</button>` : '')}
+          ${c.public_card ? `<a class="pp-btn pp-btn--ghost" href="/c/${escapeHtml(c.slug)}" target="_blank" rel="noopener">${escapeHtml(PT().viewCard)}</a>` : (isLegal ? `<button type="button" class="pp-btn pp-btn--ghost" data-consent="${i}">${escapeHtml(PT().makePublic)}</button>` : '')}
           ${payBtnHtml}
         </div>
         ${hist}
@@ -3035,17 +3187,17 @@
     input.addEventListener('change', () => {
       const f = input.files && input.files[0];
       if (!f) return;
-      if (f.size > 2 * 1024 * 1024) { pToast('err', 'La foto supera el máximo de 2 MB.'); return; }
+      if (f.size > 2 * 1024 * 1024) { pToast('err', PT().photoTooBig); return; }
       const reader = new FileReader();
       reader.onload = async () => {
         const res = reader.result || '';
         const comma = res.indexOf(',');
         const base64 = comma >= 0 ? res.slice(comma + 1) : res;
         const original = btn ? btn.textContent : null;
-        if (btn) { btn.disabled = true; btn.textContent = 'Subiendo…'; }
+        if (btn) { btn.disabled = true; btn.textContent = PT().uploading; }
         try {
           await apiRaw('/api/upload-player-photo', { card_slug: child.slug, base64, contentType: f.type });
-          pToast('ok', 'Foto actualizada.');
+          pToast('ok', PT().photoDone);
           await loadParentDashboard();
         } catch (e) {
           pToast('err', e.message);
@@ -3070,12 +3222,12 @@
   // Stripe). Sin campaign_id cobra solo la cuota mensual del club, pero por el
   // mismo camino que la inscripción pública: gana SEPA y un único endpoint.
   async function startParentCheckout(child, btn) {
-    if (!child.club) { pToast('err', 'La ficha no tiene club activo.'); return; }
+    if (!child.club) { pToast('err', PT().noClubActive); return; }
     const original = btn ? btn.textContent : null;
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> ' + PT().redirecting; }
     try {
       const json = await apiRaw('/api/create-enrollment-checkout', { card_slug: child.slug });
-      if (!json.url) throw new Error('No se pudo iniciar el pago');
+      if (!json.url) throw new Error(PT().payFail);
       window.location.href = json.url;
     } catch (e) {
       pToast('err', e.message);
@@ -3089,12 +3241,12 @@
   // (child.plan.payable); una vez materializados los cargos no hay botón.
   async function startPlanCheckout(child, btn) {
     const plan = child.plan;
-    if (!plan || !plan.campaign_id) { pToast('err', 'No hay un plan de pagos disponible.'); return; }
+    if (!plan || !plan.campaign_id) { pToast('err', PT().noPlan); return; }
     const original = btn ? btn.textContent : null;
-    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Redirigiendo…'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> ' + PT().redirecting; }
     try {
       const json = await apiRaw('/api/create-enrollment-checkout', { card_slug: child.slug, campaign_id: plan.campaign_id });
-      if (!json.url) throw new Error('No se pudo iniciar el pago');
+      if (!json.url) throw new Error(PT().payFail);
       window.location.href = json.url;
     } catch (e) {
       pToast('err', e.message);
@@ -3106,62 +3258,62 @@
   function openApproveTransfer(child) {
     const t = child.pending_transfer;
     if (!t) return;
-    openPModal('Aprobar fichaje', `
-      <p class="pp-section__sub"><strong>${escapeHtml(t.to_club_name || 'Un club')}</strong> quiere fichar a <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong>${t.season ? ' para la temporada ' + escapeHtml(t.season) : ''}. Al aprobar, la ficha se traslada al nuevo club con su histórico intacto.</p>
-      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')} (el dato que registró el club).</p>
+    openPModal(PT().approveTitle, `
+      <p class="pp-section__sub"><strong>${escapeHtml(t.to_club_name || PT().aClub)}</strong> ${escapeHtml(PT().wantsToSign)} <strong>${escapeHtml(child.nombre || PT().yourKid)}</strong>${t.season ? ' ' + escapeHtml(PT().transferSeason(t.season)) : ''}. ${escapeHtml(PT().approveExplain)}</p>
+      <p class="pp-section__sub">${escapeHtml(PT().identityAsk)}<strong>${escapeHtml(PT().birthDate.toLowerCase())}</strong> ${escapeHtml(PT().dePrefix(child.nombre || PT().yourKid))}${escapeHtml(child.nombre || PT().yourKid)} ${escapeHtml(PT().clubRegistered)}</p>
       <div class="pp-form">
-        <div class="pp-form__row"><label class="pp-form__label" for="apBirth">Fecha de nacimiento</label>
+        <div class="pp-form__row"><label class="pp-form__label" for="apBirth">${escapeHtml(PT().birthDate)}</label>
           <input class="pp-input" id="apBirth" type="date"></div>
-        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="apSubmit">Aprobar el fichaje →</button></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="apSubmit">${escapeHtml(PT().approveBtn)}</button></div>
         <p class="pp-form__hint" id="apError" style="color:#B0392A"></p>
       </div>
     `);
     $('apSubmit').addEventListener('click', async () => {
       const err = $('apError'); err.textContent = '';
       const birth = $('apBirth').value.trim();
-      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
-      const btn = $('apSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Aprobando…';
+      if (!birth) { err.textContent = PT().birthRequired; return; }
+      const btn = $('apSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> ' + PT().approving;
       try {
         await apiRaw('/api/accept-transfer', { transfer_id: t.transfer_id, birth_date: birth });
-        pToast('ok', 'Fichaje aprobado. La ficha ya está en el nuevo club.');
+        pToast('ok', PT().approved);
         closePModal();
         await loadParentDashboard();
       } catch (e) {
         err.textContent = e.message;
-        btn.disabled = false; btn.textContent = 'Aprobar el fichaje →';
+        btn.disabled = false; btn.textContent = PT().approveBtn;
       }
     });
   }
 
   // Consentimiento de visibilidad pública → parent-consent (2º factor).
   function openConsent(child) {
-    openPModal('Hacer pública la ficha', `
-      <p class="pp-section__sub">Al dar tu consentimiento, la ficha de <strong>${escapeHtml(child.nombre || 'tu hijo/a')}</strong> será visible públicamente en <code style="font-family:var(--font-mono);font-size:12px">/c/${escapeHtml(child.slug)}</code>. Puedes revocarlo más tarde escribiendo al club.</p>
-      <p class="pp-section__sub">Para confirmar tu identidad, escribe la <strong>fecha de nacimiento</strong> de ${escapeHtml(child.nombre || 'tu hijo/a')}.</p>
+    openPModal(PT().makePublic, `
+      <p class="pp-section__sub">${escapeHtml(PT().consentIntro)}${escapeHtml(PT().dePrefix(child.nombre || PT().yourKid))}<strong>${escapeHtml(child.nombre || PT().yourKid)}</strong>${escapeHtml(PT().consentVisible)}<code style="font-family:var(--font-mono);font-size:12px">/c/${escapeHtml(child.slug)}</code>. ${escapeHtml(PT().consentRevoke)}</p>
+      <p class="pp-section__sub">${escapeHtml(PT().identityAsk)}<strong>${escapeHtml(PT().birthDate.toLowerCase())}</strong> ${escapeHtml(PT().dePrefix(child.nombre || PT().yourKid))}${escapeHtml(child.nombre || PT().yourKid)}.</p>
       <div class="pp-form">
-        <div class="pp-form__row"><label class="pp-form__label" for="csBirth">Fecha de nacimiento</label>
+        <div class="pp-form__row"><label class="pp-form__label" for="csBirth">${escapeHtml(PT().birthDate)}</label>
           <input class="pp-input" id="csBirth" type="date"></div>
         <div class="pp-form__row"><label style="font-size:13px;display:flex;gap:.5rem;align-items:flex-start">
           <input type="checkbox" id="csAccept" style="margin-top:.2rem">
-          <span>Soy el tutor/a legal y autorizo la publicación de la ficha y los datos deportivos de mi hijo/a.</span></label></div>
-        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="csSubmit">Dar consentimiento →</button></div>
+          <span>${escapeHtml(PT().consentCheck)}</span></label></div>
+        <div class="pp-form__actions"><button type="button" class="pp-btn pp-btn--primary" id="csSubmit">${escapeHtml(PT().consentBtn)}</button></div>
         <p class="pp-form__hint" id="csError" style="color:#B0392A"></p>
       </div>
     `);
     $('csSubmit').addEventListener('click', async () => {
       const err = $('csError'); err.textContent = '';
       const birth = $('csBirth').value.trim();
-      if (!birth) { err.textContent = 'La fecha de nacimiento es obligatoria.'; return; }
-      if (!$('csAccept').checked) { err.textContent = 'Debes marcar la casilla de autorización.'; return; }
-      const btn = $('csSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
+      if (!birth) { err.textContent = PT().birthRequired; return; }
+      if (!$('csAccept').checked) { err.textContent = PT().consentCheckRequired; return; }
+      const btn = $('csSubmit'); btn.disabled = true; btn.innerHTML = '<span class="pp-spinner"></span> ' + PT().sending;
       try {
         await apiRaw('/api/parent-consent', { card_slug: child.slug, consent_type: 'public_visibility', accepted: true, birth_date: birth });
-        pToast('ok', 'Consentimiento registrado. La ficha ya es pública.');
+        pToast('ok', PT().consentDone);
         closePModal();
         await loadParentDashboard();
       } catch (e) {
         err.textContent = e.message;
-        btn.disabled = false; btn.textContent = 'Dar consentimiento →';
+        btn.disabled = false; btn.textContent = PT().consentBtn;
       }
     });
   }
