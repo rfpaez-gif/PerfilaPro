@@ -1795,7 +1795,11 @@
     $('enrOpenSeason').textContent = c.season || '';
     $('enrCount').textContent = (c.submitted_count != null ? c.submitted_count : 0) + ' inscripciones';
     $('enrUrl').value = c.url || '';
-    $('enrQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(c.url || '');
+    // QR servido por nuestro backend (lib/qr-svg), no por un tercero: la URL
+    // lleva el token de la campaña y no tiene por qué salir de aquí.
+    $('enrQr').src = c.qr_svg
+      ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(c.qr_svg)
+      : '';
     const parts = [];
     if (c.concepts && c.concepts.length) parts.push(c.concepts.length + ' conceptos · total ' + eurFromCents(c.plan_total_cents || 0));
     if (c.matricula_cents != null) parts.push('Matrícula: ' + eurFromCents(c.matricula_cents));
