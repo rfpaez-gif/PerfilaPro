@@ -130,7 +130,16 @@ exports.handler = async (event) => {
     .is('deleted_at', null)
     .single();
 
-  if (error || !data) {
+  // Consentimiento de visibilidad (migración 033). `public_card` nace en
+  // true, así que TODOS los autónomos siguen igual; sólo cae aquí la ficha
+  // de un menor cuyo tutor todavía no ha autorizado hacerla pública. La
+  // migración ya lo especificaba ("sin él, /c/:slug devuelve 404") pero el
+  // gate nunca se llegó a cablear. Comparamos contra false y no contra
+  // !== true a propósito: si la columna no existiera en algún entorno, el
+  // valor sería undefined y la card se sigue sirviendo como hasta ahora.
+  const notPublic = !!data && data.public_card === false;
+
+  if (error || !data || notPublic) {
     // 404 sin idioma conocido — usamos el del primer Accept-Language o ES.
     const accept = (event.headers?.['accept-language'] || '').toLowerCase();
     const fallbackLang = /^ca(-|$)/.test(accept.split(',')[0]?.trim()) ? 'ca' : 'es';

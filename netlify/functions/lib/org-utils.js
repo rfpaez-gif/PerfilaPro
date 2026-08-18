@@ -98,13 +98,20 @@ async function listCardsByOrg(db, orgId) {
   if (!orgId) return { cards: [], error: null };
   const { data, error } = await db
     .from('cards')
-    .select('slug, nombre, tagline, foto_url, plan, stripe_session_id, kit_email_sent_at, zona, city_slug, directory_featured')
+    .select('slug, nombre, tagline, foto_url, plan, stripe_session_id, kit_email_sent_at, zona, city_slug, directory_featured, public_card')
     .eq('organization_id', orgId)
     .eq('status', 'active')
     .is('deleted_at', null)
     .order('directory_featured', { ascending: false })
     .order('nombre', { ascending: true });
-  return { cards: data || [], error };
+  // La rejilla pública de /e/:slug no puede listar la ficha de un menor sin
+  // consentimiento de visibilidad: publicaría su nombre y, de paso, el enlace
+  // a su tarjeta. `public_card` nace en true, así que ningún autónomo ni
+  // miembro B2B se ve afectado. Sólo la usa org.js (página pública); el
+  // Studio del club tiene su propia consulta y sigue viendo la plantilla
+  // entera.
+  const visible = (data || []).filter((c) => c.public_card !== false);
+  return { cards: visible, error };
 }
 
 module.exports = {
