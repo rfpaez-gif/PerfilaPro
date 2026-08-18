@@ -492,7 +492,11 @@ function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStrip
           logo_url: logo_url || null,
           color_primary: color_primary || null,
           nif: nif ? String(nif).trim() : null,
-          email: email ? String(email).trim() : null,
+          // Minúsculas obligatorias: panel-auth busca la org con el email que
+          // el cliente teclea pasado a minúsculas. Si aquí se guarda con
+          // mayúsculas, el magic-link no encuentra la org y, por el diseño
+          // anti-enumeración, el cliente recibe 200 sin email y sin error.
+          email: email ? String(email).trim().toLowerCase() : null,
           address: address ? stripTagsInline(address).substring(0, 200) : null,
           phone:   phone   ? stripTagsInline(phone).substring(0, 40)    : null,
           hide_branding: hide_branding === true,
@@ -560,7 +564,9 @@ function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStrip
       if (tagline !== undefined)       updates.tagline       = tagline ? String(tagline).trim() : null;
       if (description !== undefined)   updates.description   = description ? stripTagsInline(description).substring(0, 500) : null;
       if (website !== undefined)       updates.website       = website ? String(website).trim() : null;
-      if (email !== undefined)         updates.email         = email ? String(email).trim() : null;
+      // Minúsculas: ver nota en `create`. Un email con mayúsculas deja al
+      // cliente sin poder entrar a su panel, en silencio.
+      if (email !== undefined)         updates.email         = email ? String(email).trim().toLowerCase() : null;
       if (logo_url !== undefined)      updates.logo_url      = logo_url || null;
       if (color_primary !== undefined) updates.color_primary = color_primary || null;
       // address / phone son tolerantes: el admin los puede vaciar mandando ''

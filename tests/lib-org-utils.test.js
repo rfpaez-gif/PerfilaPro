@@ -243,3 +243,27 @@ describe('listCardsByOrg', () => {
     expect(res.error).toBeNull();
   });
 });
+
+describe('listCardsByOrg · consentimiento de visibilidad', () => {
+  // La rejilla de /e/:slug publica nombre y enlace de cada ficha. Una ficha
+  // de menor sin consentimiento del tutor no puede aparecer ahí.
+  it('excluye las fichas con public_card=false', async () => {
+    const db = makeDb({ cards: { listResult: { data: [
+      { slug: 'p-aaaaaaaa', nombre: 'Jugadora sin consentimiento', public_card: false },
+      { slug: 'p-bbbbbbbb', nombre: 'Jugadora autorizada', public_card: true },
+    ], error: null } } });
+    const { cards } = await listCardsByOrg(db, 'org-1');
+    expect(cards.map(c => c.slug)).toEqual(['p-bbbbbbbb']);
+  });
+
+  it('mantiene las fichas sin el campo (autónomos y B2B de siempre)', async () => {
+    // public_card nace en true; si además faltara la columna en algún
+    // entorno, el valor sería undefined y la ficha debe seguir visible.
+    const db = makeDb({ cards: { listResult: { data: [
+      { slug: 'ana-electricista', nombre: 'Ana' },
+      { slug: 'luis-fontanero', nombre: 'Luis', public_card: true },
+    ], error: null } } });
+    const { cards } = await listCardsByOrg(db, 'org-1');
+    expect(cards).toHaveLength(2);
+  });
+});
