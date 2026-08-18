@@ -10,7 +10,7 @@ no archivos — nítidos en cualquier pantalla y sin riesgo LOPD.
 | `hero-celebracion.jpg` | Fondo del hero en `/es/clubes` | JPG 1024px, 156 KB | Celebración / equipo. Lleva scrim navy encima (58–82%). **IA o stock con derechos — NO niños reales identificables sin cesión.** Si falta, el hero usa degradado de marca (fallback CSS). Optimizado mozjpeg q82 desde PNG de 1,7 MB. |
 | `hero-femeni.jpg` | Fondo del hero en `/ca/clubs` | JPG 1170×627, 155 KB | Equipo femenino de base celebrando con copa (IA, Gemini). Portada propia de la catalana. Verificada en escritorio y móvil: el titular se lee sobre el cielo claro y la piña central sobrevive al recorte de `cover` en pantalla estrecha. Si falta, `/ca/clubs` cae sola a `hero-celebracion.jpg` y, si tampoco estuviera, al degradado de marca — no hay estado roto. Receta de regeneración abajo. |
 | `carnet-pvc.jpg` | Banda "Carnet PVC + NFC" en `/es/clubes` | JPG 1264×846, 85 KB | Foto del carnet físico sobre superficie (club ficticio EFB Universal, IA). Llena el marco a sangre. Si falta, queda el degradado `--card`. Optimizado mozjpeg q84 desde PNG de 1,2 MB. |
-| `carnet-pvc-femeni.jpg` | Banda "Carnet PVC + NFC" en `/ca/clubs` | JPG ~1264px, ≤120 KB | **Pendiente de generar.** Mismo encuadre que el anterior pero con la foto de una **jugadora**. Mientras no exista, el `onerror` del `<img>` cae a `carnet-pvc.jpg` — no hay hueco ni imagen rota. Prompt en la sección de abajo. |
+| `carnet-pvc-femeni.jpg` | Banda "Carnet PVC + NFC" en `/ca/clubs` | JPG 1170×867, 166 KB | Carnet de una **jugadora** (IA, Gemini), etiquetas en catalán. La URL impresa usa un slug opaco (`p-4f9a2c81`), como los reales: **nunca un nombre**, que es justo lo que evita el diseño anti-doxxing de `player-create`. Si falta, el `onerror` del `<img>` cae a `carnet-pvc.jpg` — no hay hueco ni imagen rota. |
 
 Para reemplazar cualquiera: sube el archivo con el mismo nombre y, si es PNG
 pesado, pásalo por `sharp`/squoosh/tinypng antes (es una landing pública).
@@ -42,21 +42,38 @@ camisetas y pancartas (el tell clásico de la IA, y encima envejece — una
 pancarta con un año concreto caduca), y **jugadoras descalzas**, que un
 coordinador de club detecta al instante.
 
-## Cómo generar `carnet-pvc-femeni.jpg`
+## Cómo regenerar `carnet-pvc-femeni.jpg`
 
-Mismo lab. Prompt:
+Mismo lab. Prompt que produjo la actual:
 
-> Fotografía cenital de una tarjeta rígida de PVC tamaño tarjeta bancaria
-> (85x55 mm) apoyada sobre una mesa de madera clara, iluminada con luz natural
-> suave y sombra propia realista. Es el carnet de una jugadora de un club de
-> fútbol base: franja superior de color azul en la parte de arriba, la foto de
-> una niña de unos 11 años con equipación deportiva, y un código QR pequeño en
-> una esquina inferior. Los textos de la tarjeta aparecen desenfocados o
-> demasiado pequeños para leerse, sin nombres, sin escudos ni marcas
-> reconocibles. Estilo de fotografía de producto real, no render 3D.
+> Fotografía cenital de una tarjeta rígida de PVC de tamaño tarjeta bancaria
+> (85x55 mm), ligeramente girada, apoyada sobre una mesa de madera clara, con
+> luz natural suave y sombra propia realista. Es el carnet de una jugadora de un
+> club de fútbol base. La tarjeta llena casi todo el encuadre.
+> Diseño: franja superior azul marino a lo ancho del borde de arriba con el
+> nombre del club en mayúsculas blancas, QATORZE C.F.; a la izquierda la foto de
+> una niña de unos 12 años con equipación deportiva azul sobre fondo gris claro;
+> arriba a la derecha un dorsal grande en azul, el número 10; en el centro
+> cuatro filas con la etiqueta en negrita y en catalán: NOM:, COGNOMS:,
+> TEMPORADA:, CATEGORIA: — CATEGORIA va SIN TILDE. Los valores de NOM y COGNOMS
+> salen desenfocados e ilegibles; TEMPORADA se lee 2026/2027 y CATEGORIA se lee
+> Infantil. Abajo a la derecha un código QR pequeño y, a su lado, un icono NFC.
+> Abajo a la izquierda, en letra muy pequeña pero legible, esta dirección exacta
+> carácter por carácter: perfilapro.es/c/p-4f9a2c81
+> La temporada aparece UNA SOLA VEZ. Sin líneas de texto adicionales, sin pie,
+> sin escudos de clubes reales, sin logotipos de marcas y sin marcas de agua.
+> Estilo de fotografía de producto real, no render 3D.
 
 Encuadre a sangre (la imagen llena el marco), así que evita dejar mucho aire
 alrededor de la tarjeta.
+
+**Revisa la URL carácter por carácter antes de subirla.** Los modelos de imagen
+fallan a menudo con cadenas largas, y la primera generación puso el nombre de la
+niña en el slug (`/c/p-marina-carbonell`). Eso contradice el diseño del producto
+—`lib/player-create.js` genera slugs opacos `p-` + 8 hex al azar, precisamente
+como anti-doxxing de menores— y aparecería en la página donde vendemos
+cumplimiento LOPDGDD. Si el modelo no acierta, mejor pedirle que no ponga
+ninguna URL que dejar una falsa.
 
 ## Antes de subir cualquiera de las dos:
 
