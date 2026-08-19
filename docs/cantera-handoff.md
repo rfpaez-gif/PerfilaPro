@@ -2,11 +2,11 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-08-19 — **primer club real onboardeado** (Catorze C.F., fútbol femenino, Catalunya) y **auditoría de operativa** previa al piloto: ver banner **🏁 PRIMER CLUB REAL** justo debajo. El sprint de código sigue cerrado; lo de esta sesión fue cablear el vertical a un cliente de verdad y tapar lo que la auditoría destapó (entre ello, un fallo grave: la ficha de un menor sin consentimiento se servía en público). *(Antes, 2026-06-09 noche: canal B2C con pago reactivado en modo Test — banner **🟢 B2C PAGO REACTIVADO**. Tarde: deploy de Netlify arreglado (#185), la suite pasó a GitHub Actions y `074c750` llevó a producción real todo lo de #181–#184 — banner **🔧 DEPLOY ARREGLADO**.)*
+Última actualización: 2026-08-19 — **primer club real onboardeado** (Catorze FC, fútbol femenino, Catalunya) y **auditoría de operativa** previa al piloto: ver banner **🏁 PRIMER CLUB REAL** justo debajo. El sprint de código sigue cerrado; lo de esta sesión fue cablear el vertical a un cliente de verdad y tapar lo que la auditoría destapó (entre ello, un fallo grave: la ficha de un menor sin consentimiento se servía en público). *(Antes, 2026-06-09 noche: canal B2C con pago reactivado en modo Test — banner **🟢 B2C PAGO REACTIVADO**. Tarde: deploy de Netlify arreglado (#185), la suite pasó a GitHub Actions y `074c750` llevó a producción real todo lo de #181–#184 — banner **🔧 DEPLOY ARREGLADO**.)*
 
 ---
 
-## 🏁 PRIMER CLUB REAL · Catorze C.F. (2026-08-19)
+## 🏁 PRIMER CLUB REAL · Catorze FC (2026-08-19)
 
 Fin de la fase "el vertical existe": hay un club de verdad montado en producción y una administradora esperando su acceso. Esta sesión no añadió capas nuevas — **cableó el producto a un cliente concreto y auditó si la operativa aguanta**.
 
@@ -32,9 +32,10 @@ Particularidad catalana ya sembrada: la FCF compite en base **por año de nacimi
 Estado al cerrar: `main` en `a659a22`, suite **1731/1731** (109 archivos), nada sin commitear.
 
 ### Pendiente — lado del founder, no código
-1. Renombrar el club de "Catorzecf" a **"Catorze C.F."** en admin-orgs (nombre de display; el slug se queda en `catorzecf` para no romper URLs ya repartidas).
-2. Falta la imagen `/assets/landing/clubes/carnet-pvc-femeni.jpg` — la landing catalana cae al carnet masculino por el `onerror` de fallback.
-3. Enviar el **"✉ Acceso"** a la administradora **con idioma `ca`** (el magic-link y el email de bienvenida se localizan por ahí).
+1. Renombrar el club a **"Catorze FC"** en admin-orgs (campo *Nombre* del form de org). **Ojo al nombre**: la administradora comunicó el 2026-08-19 que el club pasa a llamarse **Catorze FC**, no "Catorze C.F." como se anotó al montarlo — si lees una versión vieja de este doc, manda esta línea. El **slug se queda en `catorzecf`** para no romper URLs ya repartidas, y no hay riesgo de tocarlo por error: el campo está `readOnly` al editar y el backend solo lo usa como clave del `WHERE`, nunca lo escribe.
+   - El nombre no está hardcodeado en ningún sitio: vive solo en `organizations.name` y se lee en cada render, así que el cambio se propaga solo a `/e/catorzecf`, la atribución de `/c/:slug`, la página de inscripción, los emails y los carnets que se generen a partir de ese momento. Lo único que conserva el nombre viejo es lo ya materializado: **carnets ya impresos** y emails ya enviados.
+2. ~~Falta la imagen `/assets/landing/clubes/carnet-pvc-femeni.jpg`~~ **HECHO** (commit `23266fe`): la imagen está en el repo y `/ca/clubs` ya no cae al carnet masculino por el `onerror`.
+3. Enviar el **"✉ Acceso"** a la administradora **con idioma `ca`** (el magic-link y el email de bienvenida se localizan por ahí). No requiere código: el botón de admin-orgs pregunta el idioma por `prompt` y `panel-auth` localiza asunto y cuerpo.
 
 ### Límites del entorno (para no perder tiempo el próximo hilo)
 - El proxy de salida **bloquea `fcf.cat`, `perfilapro.es` y Wikipedia**: no se puede sondear producción ni la web federativa desde la sesión. Todo se verifica con la suite y renderizando en local con Playwright (`/opt/pw-browsers/chromium`).
@@ -433,7 +434,7 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 - KYC de Stripe Connect (ahora **Express**, ver sección ★) con **onboarding progresivo** permite empezar a cobrar en minutos y completar la verificación según sube volumen; aun así la verificación plena puede tardar 1-3 días. Onboarding **asistido por el founder en la demo** (no deberes para el club) + anclado al momento del carnet. El wizard gatea fichajes hasta `charges_enabled=true`; comunicarlo en la venta.
 - **Importes de la capa 1 (suelo por jugador/temporada)**: definir con el founder. ¿€/jugador/temporada fijo, o €/club/mes por tramos de tamaño? Es el ingreso que asegura "pasar por caja"; conviene cerrarlo antes de codificar la capa 1.
 - **Mínimo de `application_fee`** (ya listado abajo): especialmente relevante ahora que la comisión es "guinda" y no cimiento — cuotas bajas (5-15€) deben seguir siendo rentables o no compensa procesarlas.
-- ~~Beachhead concreto~~ **CERRADO (2026-08-19)**: es **Catorze C.F.** (fútbol femenino, Catalunya). Org ya montada en prod, administradora esperando el acceso, piloto **sin cobro online**. Ver banner **🏁 PRIMER CLUB REAL**. Queda por conocer el tamaño real de la plantilla y si querrá pasar a Stripe Connect tras el piloto.
+- ~~Beachhead concreto~~ **CERRADO (2026-08-19)**: es **Catorze FC** (fútbol femenino, Catalunya). Org ya montada en prod, administradora esperando el acceso, piloto **sin cobro online**. Ver banner **🏁 PRIMER CLUB REAL**. Queda por conocer el tamaño real de la plantilla y si querrá pasar a Stripe Connect tras el piloto.
 - Hijos de divorciados con custodia compartida (Q4): pregúntale al founder qué porcentaje real estima en el club beachhead. Si es >15%, MVP debería soportarlo; si es <5%, Sprint 2 está bien.
 
 ---
@@ -442,7 +443,7 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 **Mensaje para arrancar el hilo nuevo** (copiar tal cual):
 
-> Contexto: PerfilaPro, vertical Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego este documento — empieza por el banner **🏁 PRIMER CLUB REAL** (arriba del todo) y la **sección ★** (modelo de monetización). El sprint de código está **cerrado y desplegado**; la fase actual es el **piloto con Catorze C.F.** (fútbol femenino, Catalunya, `region='catalunya'`, **sin cobro online**: IBAN/Bizum publicados en Cobros y el club apunta los ingresos a mano). Todo mergeado en `main`, suite 1731/1731. Antes de tocar nada, mira las **tres acciones pendientes del founder** del banner (renombrar el club, subir `carnet-pvc-femeni.jpg`, enviar el Acceso con idioma `ca`) por si ya están hechas.
+> Contexto: PerfilaPro, vertical Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego este documento — empieza por el banner **🏁 PRIMER CLUB REAL** (arriba del todo) y la **sección ★** (modelo de monetización). El sprint de código está **cerrado y desplegado**; la fase actual es el **piloto con Catorze FC** (fútbol femenino, Catalunya, `region='catalunya'`, **sin cobro online**: IBAN/Bizum publicados en Cobros y el club apunta los ingresos a mano). Todo mergeado en `main`, suite 1731/1731. Antes de tocar nada, mira las **acciones pendientes del founder** del banner (renombrar el club a "Catorze FC" y enviar el Acceso con idioma `ca`; lo de la imagen del carnet femenino ya está hecho) por si ya están hechas.
 
 **Lo que probablemente pida el piloto** (por orden de probabilidad, ninguno empezado):
 
