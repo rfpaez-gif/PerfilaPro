@@ -2,7 +2,44 @@
 
 Este documento es el **bookmark** del trabajo en curso sobre el vertical Cantera (deporte base). Cuando un hilo nuevo abre, leerlo después de la sección "Cantera · vertical deporte base" de `CLAUDE.md` da el contexto exacto donde se dejó.
 
-Última actualización: 2026-06-09 (noche) — **canal B2C: pago reactivado en modo Test** (ver banner **🟢 B2C PAGO REACTIVADO**). Antes (tarde): **deploy de Netlify arreglado** (#185): la suite dejó de correr como build command de Netlify y pasó a GitHub Actions; el primer deploy verde desde el ~7 jun (`074c750`) llevó **a producción real** todo lo mergeado de #181–#184 (Bizum + Connect Express + UI carnet), que estaba en `main` pero **nunca se había desplegado**. Ver banner **🔧 DEPLOY ARREGLADO** abajo. *(Antes: chunk (4) Bizum + Connect Express mergeado en #184, suite 1650/1650. **Sprint Cantera cerrado**, salvo habilitar Bizum en el Dashboard de Stripe en modo Live. UI del carnet items 1–3 mergeada en #183.)*
+Última actualización: 2026-08-19 — **primer club real onboardeado** (Catorze C.F., fútbol femenino, Catalunya) y **auditoría de operativa** previa al piloto: ver banner **🏁 PRIMER CLUB REAL** justo debajo. El sprint de código sigue cerrado; lo de esta sesión fue cablear el vertical a un cliente de verdad y tapar lo que la auditoría destapó (entre ello, un fallo grave: la ficha de un menor sin consentimiento se servía en público). *(Antes, 2026-06-09 noche: canal B2C con pago reactivado en modo Test — banner **🟢 B2C PAGO REACTIVADO**. Tarde: deploy de Netlify arreglado (#185), la suite pasó a GitHub Actions y `074c750` llevó a producción real todo lo de #181–#184 — banner **🔧 DEPLOY ARREGLADO**.)*
+
+---
+
+## 🏁 PRIMER CLUB REAL · Catorze C.F. (2026-08-19)
+
+Fin de la fase "el vertical existe": hay un club de verdad montado en producción y una administradora esperando su acceso. Esta sesión no añadió capas nuevas — **cableó el producto a un cliente concreto y auditó si la operativa aguanta**.
+
+### El cliente
+- Org **`catorzecf`** creada en admin-orgs. Fila: `kind='sports_club'`, `sport='futbol'`, **`region='catalunya'`**, `email` = el de la administradora (ese email **es** su forma de entrar al Studio, vía magic-link).
+- Sin `region='catalunya'` el club vería el cuadro de competiciones de **Murcia** al crear equipos. Es el campo que más fácil se olvida al dar de alta un club nuevo: está en el form de org de admin-orgs, visible sólo con `kind='sports_club'`.
+- **Piloto sin cobro online**: el club no tiene Stripe Connect. Publica IBAN/Bizum en la pestaña **Cobros** del Studio (`update_payment_info`) y el panel del padre pinta solo el bloque "Com pagar al club" con importe y concepto autogenerado. El club apunta los ingresos en `external_payments`.
+- Manual de uso del panel para la administradora (artifact ya entregado): <https://claude.ai/code/artifact/a6efef94-c350-44b4-924c-8b0250c61256>
+
+### Migraciones ejecutadas en prod esta sesión
+`046` (`b2b_leads.modalidad`) · `047` (`organizations.region` + cuadro **FCF femenino**) · `048` (**FCF masculino**). Las tres corridas a mano por el founder en el SQL Editor.
+
+Particularidad catalana ya sembrada: la FCF compite en base **por año de nacimiento**, así que Benjamí, Aleví, Infantil i Cadet llevan **dos competiciones paralelas cada una** (S9/S10, S11/S12, S13/S14, S15/S16) apuntando a la misma categoría de edad. Formatos: F-5 debutant, F-7 hasta aleví, F-11 desde infantil (en Murcia ese tramo es F-8). No se sembraron copas ni fases finales (un equipo no se encuadra en ellas, se clasifica) ni los grupos territoriales (cambian por sorteo cada temporada).
+
+### Lo que la auditoría destapó — todo corregido y en `main`
+1. **🔴 Grave · la ficha de un menor sin consentimiento se servía en público.** La migración 033 especificaba `public_card=false` como gate de `/c/:slug` para `card_kind='player'`; el código **nunca lo implementó**. `card.js` devolvía la ficha igual. Corregido en `card.js` (404 si `public_card === false`) y en `lib/org-utils.listCardsByOrg` (la rejilla de `/e/:slug` filtra los no-públicos). Ningún autónomo ni miembro B2B afectado: `public_card` nace en `true`.
+2. **`/e/:slug` llamaba "profesionales" a las jugadoras.** `org.js` ramifica por `organizations.kind` y concuerda el vocabulario; empty state que explica que la plantilla no es pública hasta el consentimiento, en vez de parecer un club vacío.
+3. **Bloqueo silencioso por mayúsculas en el email.** El magic-link busca por `organizations.email` exacto; si el founder tecleaba el correo con una mayúscula, la administradora no podía entrar nunca y el endpoint devolvía 200 (anti-enumeration). `admin-orgs` normaliza a minúsculas al escribir.
+4. **El QR de inscripción se generaba fuera.** El token de la campaña viajaba a un servicio de terceros en cada render del Studio. Ahora se genera en casa y se sirve como data-URI SVG.
+5. **El founder ensuciaba `panel_last_login_at`.** Es el único indicador de si la clienta usa el panel; al impersonar (`actor='founder'`) se pisaba y el club parecía activo siempre. Ya no se marca en impersonación.
+6. **Panel del tutor en español para un club catalán.** Traducido vía `cards.idioma` (`PARENT_STRINGS = { es, ca }`): ficha, plan de pagos, bloque de pago sin Stripe, subida de foto, modal de aprobación de fichaje, modal de consentimiento y errores de checkout. **El Studio del club sigue es-only a propósito** — lo usa la coordinadora, no las familias. Detalle: `dePrefix()` elide "de" ante vocal ("la fitxa d'Aitana").
+
+Estado al cerrar: `main` en `a659a22`, suite **1731/1731** (109 archivos), nada sin commitear.
+
+### Pendiente — lado del founder, no código
+1. Renombrar el club de "Catorzecf" a **"Catorze C.F."** en admin-orgs (nombre de display; el slug se queda en `catorzecf` para no romper URLs ya repartidas).
+2. Falta la imagen `/assets/landing/clubes/carnet-pvc-femeni.jpg` — la landing catalana cae al carnet masculino por el `onerror` de fallback.
+3. Enviar el **"✉ Acceso"** a la administradora **con idioma `ca`** (el magic-link y el email de bienvenida se localizan por ahí).
+
+### Límites del entorno (para no perder tiempo el próximo hilo)
+- El proxy de salida **bloquea `fcf.cat`, `perfilapro.es` y Wikipedia**: no se puede sondear producción ni la web federativa desde la sesión. Todo se verifica con la suite y renderizando en local con Playwright (`/opt/pw-browsers/chromium`).
+- **Sin `GEMINI_API_KEY`**: no se pueden generar imágenes; las sube el founder al repo.
+- Las migraciones se ejecutan a mano, así que **un deploy puede adelantar al esquema**. Por eso `lead-b2b` reintenta el INSERT sin `modalidad` y `admin-orgs list` reintenta el SELECT sin `region`: si el SQL llega tarde se pierde el dato, nunca el lead ni el listado. Mismo criterio para cualquier columna nueva.
 
 ---
 
@@ -123,6 +160,8 @@ El **carnet ES el suelo de ingreso**, no la comisión (su margen ~9,4€/chaval 
 - Suite **1612/1612** (backend). **Migración 043 EJECUTADA en prod (2026-06-09)** — carnet encendido.
 
 ### Pendiente (próximos chunks)
+
+> **Todos los items de esta lista están HECHOS, mergeados y desplegados** (#181–#185). Las ramas que se citan abajo son histórico: no las busques ni las rebases, su contenido vive en `main`.
 1. ✅ **UI "carnet listo"** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): chip por jugador + contador `🪪 N/M carnets listos` en el roster de `panel.html` (`get_roster.totals.carnet_ready`) · filtro `only_ready` en `print-order-export` (CSV + PDF booklet, opt-in) · aviso "🪪 Falta la foto del carnet" en el panel del padre (`parent-data.carnet_photo_missing`, junto al botón de subir foto).
 2. ✅ **UI del patrocinador en el Studio** (HECHO, rama `claude/cantera-handoff-docs-pf9ozx`): sección "Patrocinador del carnet" en la pestaña Carnets de `panel.html` con previsualización + subida que llama a `upload-carnet-sponsor-panel` (reemplaza la imagen anterior). `sanitizeSportsOrg` expone `carnet_sponsor_url` para previsualizar. Sin botón de "quitar" (el backend solo sube/reemplaza, no borra a null).
 3. ✅ **Re-subida de foto desde el panel del padre** (HECHO en PR #180): `upload-player-photo` scoped al JWT del tutor + botón "📷 Cambiar/Añadir foto" en `renderParentChildren`.
@@ -394,7 +433,7 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 - KYC de Stripe Connect (ahora **Express**, ver sección ★) con **onboarding progresivo** permite empezar a cobrar en minutos y completar la verificación según sube volumen; aun así la verificación plena puede tardar 1-3 días. Onboarding **asistido por el founder en la demo** (no deberes para el club) + anclado al momento del carnet. El wizard gatea fichajes hasta `charges_enabled=true`; comunicarlo en la venta.
 - **Importes de la capa 1 (suelo por jugador/temporada)**: definir con el founder. ¿€/jugador/temporada fijo, o €/club/mes por tramos de tamaño? Es el ingreso que asegura "pasar por caja"; conviene cerrarlo antes de codificar la capa 1.
 - **Mínimo de `application_fee`** (ya listado abajo): especialmente relevante ahora que la comisión es "guinda" y no cimiento — cuotas bajas (5-15€) deben seguir siendo rentables o no compensa procesarlas.
-- Beachhead concreto: ¿cuál es el club, qué tamaño (200-400 chavales mencionado en brief), cuándo se hace la primera demo? Esto afecta urgencia y orden de capas.
+- ~~Beachhead concreto~~ **CERRADO (2026-08-19)**: es **Catorze C.F.** (fútbol femenino, Catalunya). Org ya montada en prod, administradora esperando el acceso, piloto **sin cobro online**. Ver banner **🏁 PRIMER CLUB REAL**. Queda por conocer el tamaño real de la plantilla y si querrá pasar a Stripe Connect tras el piloto.
 - Hijos de divorciados con custodia compartida (Q4): pregúntale al founder qué porcentaje real estima en el club beachhead. Si es >15%, MVP debería soportarlo; si es <5%, Sprint 2 está bien.
 
 ---
@@ -403,9 +442,25 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 
 **Mensaje para arrancar el hilo nuevo** (copiar tal cual):
 
-> Continúo el sprint Cantera para **cerrarlo**. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego `docs/cantera-handoff.md` — empieza por el banner **✅ ACCIONES EN PROD COMPLETADAS** (arriba del todo) y la **sección ★** (modelo de monetización del carnet). Todo está mergeado a `main` y el carnet está **encendido en prod** (migración 043 + env vars ya ejecutadas). La **UI del carnet está cableada** (items 1–3 del pendiente: chip "carnet listo" + filtro `only_ready` en `print-order-export` + aviso "falta foto" en el panel del padre + subida del patrocinador en el Studio) en la rama `claude/cantera-handoff-docs-pf9ozx` (4 commits sobre `main`, suite 1646/1646). **Lo único que queda es el chunk (4): Bizum + Connect Express** — trabaja desde `main` (o rebasa la rama anterior si no se ha mergeado). Decisiones de Stripe a respetar: **Bizum solo en one-shot puro** (sin `setup_future_usage`; Bizum no guarda mandato → NO en el plan con mandato ni en la cuota mensual recurrente, que siguen en card/SEPA); **Connect Standard→Express** con onboarding incremental (`currently_due`). Revisa conmigo las decisiones de pasarela antes de codificar.
+> Contexto: PerfilaPro, vertical Cantera. Lee la sección "Cantera · vertical deporte base" de `CLAUDE.md` y luego este documento — empieza por el banner **🏁 PRIMER CLUB REAL** (arriba del todo) y la **sección ★** (modelo de monetización). El sprint de código está **cerrado y desplegado**; la fase actual es el **piloto con Catorze C.F.** (fútbol femenino, Catalunya, `region='catalunya'`, **sin cobro online**: IBAN/Bizum publicados en Cobros y el club apunta los ingresos a mano). Todo mergeado en `main`, suite 1731/1731. Antes de tocar nada, mira las **tres acciones pendientes del founder** del banner (renombrar el club, subir `carnet-pvc-femeni.jpg`, enviar el Acceso con idioma `ca`) por si ya están hechas.
 
-> **Nota**: la rama `claude/cantera-handoff-docs-pf9ozx` con los items 1–3 + patrocinador está pusheada pero **sin PR** (el founder decide si mergear). Si arrancas Bizum desde `main` antes de mergearla, los chips/filtros del carnet no estarán en `main` todavía — coordinar el merge primero.
+**Lo que probablemente pida el piloto** (por orden de probabilidad, ninguno empezado):
+
+1. **Feedback de la administradora sobre el Studio.** Es la primera persona ajena al proyecto que lo usa. Cualquier fricción que reporte manda sobre la lista de abajo.
+2. **Enlace de inscripción embebido en la web del club.** El founder ya lo anticipó: la administradora tiene web propia y no es su administrador. Hoy se reparte la URL `/{es,ca}/inscripcion/:token` + el QR del Studio; un iframe o un snippet embebible no existe.
+3. **Capa 1 · "suelo" por jugador/temporada** — sigue sin codificar **a propósito**, esperando que el founder fije el importe. Ver §5 y §6. Es la pieza de producto más relevante que falta.
+4. **Roll-over de temporada** (§0-bis): a mano en fase 1. Con un club real encima, la primera renovación de temporada deja de ser hipotética.
+5. **Stripe Live + alta fiscal** (§⏳ PENDIENTE, ítems 1-2): hoy todo en **Test**. El piloto sin cobro online **no lo bloquea**, pero sí bloquea que Catorze pase a cobrar por la plataforma.
+
+**Reglas del carril que no se re-debaten** (están razonadas arriba, no las reabras):
+
+- **D1/D2/D3** (§2): una sola tabla `cards` con `card_kind` · `cards.organization_id` como club activo con la verdad histórica en `member_club_seasons` · `organizations.kind`/`sport` para que despachos y clubes convivan.
+- **Bizum sólo en one-shot puro.** No guarda mandato, así que nunca en el plan con plazos futuros ni en la cuota mensual recurrente (esos siguen en card/SEPA con `setup_future_usage`).
+- **Connect Express** con onboarding incremental (`currently_due`), nunca Standard. La responsabilidad fiscal es del club.
+- **Nada de cuenta central que recaude y reparta** — eso convierte a PerfilaPro en Entidad de Pago sin licencia (PSD2). Ver "la regla de hierro" en §★.
+- **Las tres operaciones sobre la plantilla no se mezclan**: cambiar de equipo ≠ baja del club ≠ traspaso. Sólo la baja hace teardown de cobro.
+- **La ficha de un menor es privada hasta el consentimiento del tutor.** Si tocas `card.js`, `org.js` o `listCardsByOrg`, el gate `public_card` va contigo. Ya se rompió una vez.
+- **El Studio del club es es-only; el panel del tutor es bilingüe** por `cards.idioma`. Es deliberado: lo primero lo usa la coordinadora, lo segundo las familias.
 
 **Carnet del jugador — backend ya en `main` (sesión 2026-06-07)**:
 - Render: `printable-card-utils.js` → `renderPlayerCardFront` (cara A: identidad + temporada) / `renderPlayerCardBack` (cara B: patrocinador `club.carnet_sponsor_url` + validez; fallback escudo). 2 páginas/jugador. Param `sponsorBuffer`.
@@ -421,12 +476,16 @@ No son decisiones de Claude — son conversaciones con el founder y con el prime
 - Carnet (base): `buildPlayerCardPVC`/`buildPlayerCardsBookletPDF`, `print-order-export`, `nfc-register` (5).
 - Incidencias founder: `lib/cantera-incidents` + acciones `cantera_*` en `admin-orgs` (+ UI en admin-orgs.html).
 - Helpers (1): `cantera-flag`, `card-kind`, `pii-crypto`, `sports-categories`, `external-payments`, `consent`, `player-photo`, `carnet-ready`.
+- Equipos y cuadro federativo (posterior a este mapa): `club_teams` + `member_club_seasons.team_id` (migraciones 040/041) · catálogo `sports_competitions` (041 Murcia, **047 FCF femenino**, **048 FCF masculino**) · `organizations.region` (**047**) con default `'murcia'` resuelto por `lib/club-teams.competitionRegion` · acciones `teams_*` en `org-panel`. Un equipo **no es texto libre**: es el club encuadrado en una competición, y la competición ya define la categoría de edad.
+- Inscripción y plan de pagos: `enrollment-page` (bilingüe es/ca) · `enrollment-submit` · `create-enrollment-checkout` · `enrollment_charges` (039) + cron `charge-due-enrollment-concepts` · matriz de Cobros consciente del modelo (042).
 
-**Lo que el próximo hilo tiene que CREAR**: UI en `panel.html` (chip "carnet listo" en el roster · control de subida del patrocinador en el Studio · filtro de impresión por `carnet_ready`) + re-subida de foto desde el panel del padre + chunk Bizum/Connect Express. Casi todo es cablear front a endpoints/datos que ya existen.
+> **Histórico**: esta lista pedía en su día la UI del carnet, la re-subida de foto del padre y el chunk Bizum/Connect Express. **Todo eso está hecho y desplegado** (#181–#185). Lo que queda hoy está arriba, en "Lo que probablemente pida el piloto".
 
-**Decisiones del founder en esta sesión** (no re-debatir):
+**Decisiones del founder (sesión 2026-06-07)** (no re-debatir):
 - Atomicidad del handoff = **RPC SQL SECURITY DEFINER** (hecho en 035), no compensación app-side.
 - Quien ficha = **admin del club** vía Studio (JWT org-panel). Confirmado.
 - Súper-admin de incidencias: **override de traspaso en 3b** (hecho: `transfer_resolve`) + **consola completa como capa propia tras 3c**, con las utilidades que Claude vea más lógicas (las 4 familias: traspasos+membresías, tutores, consentimiento+visibilidad, PII+borrado LOPD).
 
-La capa 3c es el consentimiento parental LOPDGDD (art. 7 LO 3/2018): doble verificación (magic-link al tutor_legal + 2º factor SMS o NIF parcial) antes de `public_card=true`, antes del primer handoff (gate sobre accept-transfer) y antes de `image_rights`. Inserta `card_consents` con `evidence_jsonb` (snapshot + hash), `ip_address`, `user_agent`. Reusa parent-auth (capa 2) + helpers capa 1.
+La capa 3c (**hecha**) es el consentimiento parental LOPDGDD (art. 7 LO 3/2018): doble verificación antes de `public_card=true`, antes del primer handoff (gate sobre `accept-transfer`) y antes de `image_rights`. Inserta `card_consents` con `evidence_jsonb` (snapshot + hash), `ip_address`, `user_agent`. Reusa parent-auth (capa 2) + helpers capa 1.
+
+> **Corrección sobre el diseño original**: el 2º factor implementado **no es SMS ni NIF parcial**, es la **fecha de nacimiento del menor** (`lib/consent.verifySecondFactor`, verificada contra `birth_date_encrypted` con fallback a `birth_year`). Es el dato que el club registró al fichar: un factor de conocimiento sin infra extra, y **sustituible por OTP SMS tocando sólo esa función** cuando se cablee un proveedor. Si alguien lee "SMS" en secciones antiguas del documento, manda esto.
