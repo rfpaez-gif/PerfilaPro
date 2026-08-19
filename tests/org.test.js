@@ -227,7 +227,7 @@ describe('org handler (/e/:slug)', () => {
 });
 
 describe('/e/:slug · un club no tiene "profesionales"', () => {
-  const CLUB = { ...BASE_ORG, slug: 'catorzecf', name: 'Catorze C.F.', kind: 'sports_club' };
+  const CLUB = { ...BASE_ORG, slug: 'catorzecf', name: 'Catorze FC', kind: 'sports_club' };
   const player = (slug, gender) => ({ ...BASE_CARD, slug, nombre: 'Jugadora ' + slug, gender });
 
   it('con toda la plantilla femenina dice "jugadoras"', async () => {
