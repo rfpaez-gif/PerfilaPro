@@ -65,6 +65,8 @@ const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/seas
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 // CANTERA · cuerpo técnico del club con acceso acotado (migración 049).
 const { canStaffRun, staffScope, filterRosterForScope } = require('./lib/club-staff');
+// CANTERA · alta autoservicio del club: estructura + expediente (mig. 050).
+const clubStructure = require('./lib/club-structure');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -614,6 +616,39 @@ function makeHandler(db, emailClient) {
       if (action === 'get_transfers')  return await getTransfers(db, sportsOrg);
     }
 
+    // ── CANTERA · alta autoservicio del club (migración 050) ──
+    //
+    // El club declara SU estructura (roles y personas) y activa los módulos
+    // del expediente que use. Antes esto lo hacía el founder a mano; sin
+    // esto, cada club nuevo requiere una llamada y el producto no escala
+    // más allá del primero.
+    //
+    // Todas son de la DUEÑA del club: no están en la lista blanca del
+    // cuerpo técnico, así que un técnico las recibe con 403 antes de llegar
+    // aquí. Un técnico no se da de alta a sí mismo ni redefine la
+    // metodología del club.
+    if (STRUCTURE_ACTIONS.has(action)) {
+      if (!isCanteraActive()) return canteraDisabledResponse();
+      const loaded = await loadSportsOrg(db, org.id);
+      if (loaded.error) return loaded.error;
+      const sportsOrg = loaded.org;
+
+      let res;
+      switch (action) {
+        case 'structure_get':      res = await clubStructure.getStructure(db, sportsOrg); break;
+        case 'role_upsert':        res = await clubStructure.upsertRole(db, sportsOrg, body); break;
+        case 'role_delete':        res = await clubStructure.deleteRole(db, sportsOrg, body); break;
+        case 'staff_list':         res = await clubStructure.listStaff(db, sportsOrg); break;
+        case 'staff_invite':       res = await clubStructure.inviteStaff(db, sportsOrg, body); break;
+        case 'staff_revoke':       res = await clubStructure.revokeStaff(db, sportsOrg, body); break;
+        case 'expediente_get':     res = await clubStructure.getExpediente(db, sportsOrg); break;
+        case 'expediente_preview': res = await clubStructure.previewExpediente(db, sportsOrg, body); break;
+        case 'expediente_save':    res = await clubStructure.saveExpediente(db, sportsOrg, body); break;
+        default:                   res = { status: 400, body: { error: 'Acción no soportada' } };
+      }
+      return jsonResponse(res.status, res.body);
+    }
+
     // ── CANTERA · equipos gestionados del club (migración 040) ──
     // El coordinador define los equipos reales (team_*); la plantilla los
     // usa para asignar y filtrar. Mismo gate (flag + sports_club).
@@ -680,6 +715,13 @@ function makeHandler(db, emailClient) {
 
 const SPORTS_READ_ACTIONS = new Set(['get_roster', 'get_club_stats', 'get_transfers']);
 const TEAM_ACTIONS = new Set(['teams_list', 'team_create', 'team_update', 'team_delete']);
+// Alta autoservicio del club (migración 050). Sólo la dueña: ninguna está
+// en la lista blanca del cuerpo técnico.
+const STRUCTURE_ACTIONS = new Set([
+  'structure_get', 'role_upsert', 'role_delete',
+  'staff_list', 'staff_invite', 'staff_revoke',
+  'expediente_get', 'expediente_preview', 'expediente_save',
+]);
 const ENROLLMENT_ACTIONS = new Set(['enrollment_get', 'enrollment_open', 'enrollment_close', 'enrollment_assign', 'enrollment_update_plan', 'billing_matrix', 'plan_charges', 'enrollment_invite']);
 const PAYING_SUB_STATUSES = ['active', 'trialing'];
 const DEFAULT_INSTALLMENTS = 9;

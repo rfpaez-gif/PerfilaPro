@@ -586,6 +586,38 @@ Fase 1 de la fusión CATORZE → CANTERA (documento de mapeo en el repo `Catorze
 - **Frontend** — `panel.html` oculta al cuerpo técnico las pestañas que le darían 403 (Inscripciones, Carnets, Cobros, Branding) y pinta un aviso con su alcance. Es cosmético: quien manda es la lista blanca del servidor.
 - **Alta autoservicio por el club** (que el club declare su estructura y active módulos) es la fase siguiente; hoy los accesos los da el founder.
 
+**Expediente y alta autoservicio del club (migración 050)**:
+
+Fase 2 de la fusión CATORZE → CANTERA. La 049 dio acceso al cuerpo técnico; ésta le da al club la capacidad de declarar **su** estructura y activar los módulos que use, sin pasar por el founder. Es lo que decide si el club nº 2 se monta solo o requiere una llamada.
+
+**Qué es un módulo** (importa, porque no es obvio): NO es contenido. Es un **compromiso de registro periódico con un rol responsable y un ritmo que depende de la categoría**. El motor lee (módulo × categoría) → periodicidad → y produce los hitos fechados de la temporada. Los 10 módulos no tienen campos ni formulario: eso llega con la capa de contenido.
+
+**Reparto de propiedad** (decisión del cliente, 20/08):
+- `expediente_modulos` → **global, sin `organization_id`**. Es producto: si cada club inventa módulos se pierde la comparabilidad, y en cuanto un módulo tenga contenido, definirlo será construir y no configurar.
+- `expediente_matriz` → **por club**. Es metodología: «Aula 14 no aplica a amateur» no es un ajuste técnico, es cómo trabaja ese club.
+
+**Tablas (050)**:
+- `org_roles` — los roles que el club declara: `role_code` del catálogo cerrado de `lib/club-staff.js` + `label` libre («Mister físico»). Estructura comparable por dentro, lenguaje del club por fuera — mismo patrón que `club_teams` (competición federativa + `label`). Soft-delete con índice único parcial sobre los vivos.
+- `expediente_modulos` — catálogo global, `id` slug estable (no uuid: se referencia desde código y hace legibles las queries de soporte). Sembrado con los 10. `default_role_code` es sólo la sugerencia del alta; el rol real lo fija la matriz, porque no todos los clubes tienen los ocho roles cubiertos.
+- `expediente_matriz` — una fila por (club, módulo, categoría) con `aplica`, `periodicidad`, `role_code`, `variante_notas` y `activated_at`. Se guarda la fila **también con `aplica=false`** para conservar la decisión y la periodicidad por si el club reactiva el módulo.
+
+**`lib/expediente.js`** (puro, sin BD) — port del dominio de CATORZE: `PERIODICIDADES` (alta · inicial-final · trimestral · mensual · por-evento · continua), `hitosDe` (etiquetas y fechas límite por periodicidad), `proyectarObligaciones`, `buildMatrizRow`, `seasonRange` (cutoff julio, coherente con `lib/sports-categories`). Márgenes a la vista porque son la clase de número que un club real querrá discutir: alta +14 días, inicial +30, final −14, ámbar 14. `por-evento` y `continua` no generan hitos programados.
+
+**Regla «activar genera hacia delante»** — `hitosDe` acepta un suelo `desde`, y `activated_at` lo materializa. Si el club enciende un módulo en marzo, los hitos ya vencidos de esa temporada **no se inventan**: activar a mitad de curso pintaría de golpe una obligación vencida por jugadora, que es la forma más rápida de que un club deje de mirar el tablero. `activated_at` se sella la primera vez que el módulo pasa a activo y **no se vuelve a tocar** — moverlo cada vez que el club edita una nota borraría el histórico de lo ya exigido.
+
+**`lib/club-structure.js`** — la lógica de las acciones, fuera de `org-panel.js` (que ya pasa de 1.800 líneas) y **compartida con `admin-orgs.js`**: `staff_list`/`staff_invite`/`staff_revoke` tienen una sola implementación para el club (self-serve) y el founder (soporte, auditado en `admin_audit_log`). Cada función devuelve `{status, body}` en plano y el llamador formatea.
+
+**Acciones de `org-panel`** (todas de la DUEÑA; ninguna está en la lista blanca del cuerpo técnico, así que un técnico las recibe con 403): `structure_get`, `role_upsert`, `role_delete`, `staff_list`, `staff_invite`, `staff_revoke`, `expediente_get`, `expediente_preview`, `expediente_save`.
+
+- **Los módulos se asignan a ROLES, no a personas.** Una persona puede tener varios roles (al arrancar, la coordinadora es también nutricionista) y un rol puede tener distinta persona según el equipo (la entrenadora de benjamín no es la de juvenil). Fundirlos perdería el reparto por equipo. El caso «todos los módulos a la misma responsable» sigue cubierto: se declara un rol, se le asigna a ella y se le cuelgan los diez.
+- **`expediente_preview` enseña el precio antes de confirmar** — cuántas obligaciones genera la configuración y a quién le caen, con nombre y apellido en vez de código de rol. En los datos de prueba de CATORZE, 62 jugadoras con 7 módulos daban 960 obligaciones; si esas 960 apuntan a una persona, su panel es un muro rojo que no informa de nada. No se prohíbe: se avisa. Lo que no tiene responsable se cuenta aparte (`sin_responsable`) para que el hueco se vea.
+- **`role_delete` es soft-delete y no toca nada más** — quitar un rol no borra en cascada quién lo tenía ni los módulos que dependían de él; la respuesta devuelve `modulos_sin_responsable` para que el front lo diga en el momento.
+- **`expediente_save` exige equipos antes** (409): el expediente se configura por categoría y las categorías del club salen de sus `club_teams`. No tiene sentido pedirle que configure Prebenjamín si no tiene prebenjamines.
+
+**Frontend** — pestaña **⚙ Estructura** del Studio (`panel.html`), con los tres pasos: (1) roles declarados + personas con acceso, (2) matriz módulo×categoría con periodicidad y responsable por celda, (3) proyección + guardar. Carga perezosa al abrir la pestaña. Oculta al cuerpo técnico (`STAFF_HIDDEN_TABS`).
+
+**Pendiente de esta fase** (no implementado, decidido a conciencia): la **generación y persistencia** de las obligaciones (`expediente_obligaciones`) y el tablero de seguimiento. Hoy la matriz se configura y se proyecta; materializar las filas es el paso siguiente. También quedan abiertas dos reglas: qué pasa al **desactivar** un módulo con registros ya hechos, y al **reasignar** un rol a mitad de temporada.
+
 **Env vars Cantera** (todas opcionales — el carril se apaga limpio borrándolas):
 
 ```

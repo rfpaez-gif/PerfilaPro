@@ -214,6 +214,30 @@
       .pp-tabs { flex-wrap: wrap; gap: 0; padding: 0 .5rem; }
       .pp-tab { flex: 1 0 auto; padding: .7rem .7rem; font-size: 13px; text-align: center; }
     }
+  
+    /* ── Estructura del club (migración 050) ───────────── */
+    .pp-setup-list { display: flex; flex-direction: column; gap: .4rem; margin: 0 0 .9rem; }
+    .pp-setup-item { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+      padding: .55rem .7rem; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 14px; }
+    .pp-setup-code { font-family: ui-monospace, monospace; font-size: 12px; color: #64748B; }
+    .pp-setup-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+    .pp-setup-row .pp-input { flex: 1 1 150px; min-width: 0; }
+    .pp-setup-cat { margin: 0 0 1.1rem; }
+    .pp-setup-cat h3 { font-size: 15px; margin: 0 0 .5rem; }
+    .pp-setup-mod { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+      padding: .45rem 0; border-bottom: 1px solid #F1F5F9; }
+    .pp-setup-mod label { flex: 1 1 190px; font-size: 14px; display: flex; align-items: center; gap: .45rem; }
+    .pp-input--sm { font-size: 13px; padding: .3rem .45rem; flex: 0 1 auto; }
+    .pp-setup-preview { font-size: 14px; margin: 0 0 .8rem; }
+    .pp-setup-preview ul { margin: .5rem 0 0; padding-left: 1.2rem; }
+    .pp-warn { color: #9A3412; }
+    .pp-linkbtn { background: none; border: 0; color: #B91C1C; font-size: 13px; cursor: pointer;
+      padding: 0; margin-left: auto; text-decoration: underline; }
+    .pp-muted { color: #64748B; font-size: 14px; }
+    @media (max-width: 600px) {
+      .pp-setup-row .pp-input { flex: 1 1 100%; }
+      .pp-setup-mod select { flex: 1 1 45%; }
+    }
   </style>
 </head>
 <body>
@@ -387,6 +411,7 @@
     <button class="pp-tab"                  data-stab="cards">Carnets</button>
     <button class="pp-tab"                  data-stab="payments">Cobros</button>
     <button class="pp-tab"                  data-stab="sbranding">Branding</button>
+    <button class="pp-tab"                  data-stab="setup">⚙ Estructura</button>
   </div>
 
   <main class="pp-content">
@@ -539,6 +564,54 @@
     <div class="pp-toast pp-toast--err" id="sToastErr"></div>
 
     <!-- ── Tab: Plantilla ─────────────────────────────────── -->
+    <!-- ── Tab: Estructura (alta autoservicio · migración 050) ──
+         Tres pasos: el club declara SU estructura, activa los módulos que
+         use y ve cuántas obligaciones genera antes de confirmar. El orden
+         importa: primero la estructura, después los módulos — así un club
+         sin preparador físico no acaba con todo cayendo en coordinación. -->
+    <div class="pp-stabpanel" data-stabpanel="setup" style="display:none">
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">1 · Tu estructura</h2>
+        <p class="pp-section__sub">Los roles que existen en tu club. El nombre lo eliges tú: si a la preparación física la llamáis «mister físico», ponlo así.</p>
+        <div id="setupRoles" class="pp-setup-list"></div>
+        <div class="pp-setup-row">
+          <select id="setupRoleCode" class="pp-input"></select>
+          <input id="setupRoleLabel" class="pp-input" placeholder="Cómo lo llamáis (opcional)" maxlength="60">
+          <button class="pp-btn pp-btn--sm" id="setupRoleAdd" type="button">Añadir rol</button>
+        </div>
+      </section>
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">Quién entra al panel</h2>
+        <p class="pp-section__sub">Cada persona ve sólo lo suyo. No le mandamos ningún enlace: pide su acceso en esta misma página con su email.</p>
+        <div id="setupPeople" class="pp-setup-list"></div>
+        <div class="pp-setup-row">
+          <input id="setupStaffName" class="pp-input" placeholder="Nombre" maxlength="120">
+          <input id="setupStaffEmail" class="pp-input" type="email" placeholder="email@club.cat">
+          <select id="setupStaffRole" class="pp-input"></select>
+          <select id="setupStaffTeam" class="pp-input"></select>
+          <button class="pp-btn pp-btn--sm" id="setupStaffAdd" type="button">Dar acceso</button>
+        </div>
+      </section>
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">2 · Tu expediente</h2>
+        <p class="pp-section__sub">Qué módulos usa tu club, con qué ritmo y de quién es cada uno. Puedes dejar módulos sin responsable: sus obligaciones aparecerán como pendientes de asignar.</p>
+        <div id="setupMatriz" class="pp-setup-matriz"></div>
+      </section>
+
+      <section class="pp-section">
+        <h2 class="pp-section__title">3 · Antes de confirmar</h2>
+        <p class="pp-section__sub">Esto es lo que se va a generar con la configuración de arriba. Los hitos ya vencidos de la temporada no se crean: se genera de hoy en adelante.</p>
+        <div id="setupPreview" class="pp-setup-preview"></div>
+        <div class="pp-setup-row">
+          <button class="pp-btn pp-btn--ghost pp-btn--sm" id="setupPreviewBtn" type="button">Ver qué genera</button>
+          <button class="pp-btn pp-btn--sm" id="setupSaveBtn" type="button">Guardar configuración</button>
+        </div>
+      </section>
+    </div>
+
     <div class="pp-stabpanel" data-stabpanel="roster">
       <section class="pp-section">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem">
@@ -1229,7 +1302,7 @@
   // Fase 1 es sólo lectura, así que quedan Plantilla y Estadísticas;
   // Inscripciones, Carnets, Cobros y Branding se ocultan. Cuando llegue el
   // registro de obligaciones, aquí se añadirá su pestaña.
-  const STAFF_HIDDEN_TABS = ['enroll', 'cards', 'payments', 'sbranding'];
+  const STAFF_HIDDEN_TABS = ['enroll', 'cards', 'payments', 'sbranding', 'setup'];
 
   function applyStaffChrome(session) {
     if (!session) return;
@@ -1257,6 +1330,200 @@
 
     const host = $('sportsContent');
     if (host && !host.querySelector('.pp-staff-note')) host.prepend(bar);
+  }
+
+
+  // ── Estructura del club (alta autoservicio · migración 050) ──
+  //
+  // Tres pasos en una pestaña: roles y personas, matriz del expediente, y
+  // proyección antes de confirmar. Es también la pantalla de mantenimiento
+  // — un club no configura esto una vez y ya: cambia el cuerpo técnico cada
+  // temporada.
+  let setupState = { roles: [], people: [], teams: [], catalog: [], modulos: [], categories: [], matriz: [] };
+  let setupBound = false;
+
+  function setupLabelOf(code) {
+    const declared = setupState.roles.find((r) => r.role_code === code);
+    if (declared && declared.label) return declared.label;
+    const cat = setupState.catalog.find((c) => c.code === code);
+    return cat ? cat.es : code;
+  }
+
+  async function loadSetup() {
+    const st = await api('structure_get');
+    setupState.roles = st.roles || [];
+    setupState.people = st.people || [];
+    setupState.teams = st.teams || [];
+    setupState.catalog = st.role_catalog || [];
+
+    const ex = await api('expediente_get');
+    setupState.modulos = ex.modulos || [];
+    setupState.categories = ex.categories || [];
+    setupState.matriz = ex.matriz || [];
+
+    renderSetupRoles();
+    renderSetupPeople();
+    renderSetupMatriz();
+    $('setupPreview').innerHTML = '';
+  }
+
+  function renderSetupRoles() {
+    const host = $('setupRoles');
+    host.innerHTML = setupState.roles.length
+      ? setupState.roles.map((r) => `<div class="pp-setup-item">
+          <strong>${escapeHtml(r.label || setupLabelOf(r.role_code))}</strong>
+          <span class="pp-setup-code">${escapeHtml(r.role_code)}</span>
+          <button class="pp-linkbtn" data-delrole="${escapeHtml(r.role_code)}" type="button">Quitar</button>
+        </div>`).join('')
+      : '<p class="pp-muted">Aún no has declarado ningún rol.</p>';
+
+    // Desplegables: catálogo cerrado para el rol nuevo; sólo los declarados
+    // para asignar personas y módulos (no tendría sentido asignar un módulo
+    // a un rol que el club dice no tener).
+    const libres = setupState.catalog.filter(
+      (c) => !setupState.roles.some((r) => r.role_code === c.code));
+    $('setupRoleCode').innerHTML = libres.map(
+      (c) => `<option value="${escapeHtml(c.code)}">${escapeHtml(c.es)}</option>`).join('')
+      || '<option value="">— todos declarados —</option>';
+
+    const declaredOpts = setupState.roles.map(
+      (r) => `<option value="${escapeHtml(r.role_code)}">${escapeHtml(setupLabelOf(r.role_code))}</option>`).join('');
+    $('setupStaffRole').innerHTML = declaredOpts || '<option value="">— declara antes un rol —</option>';
+    $('setupStaffTeam').innerHTML = '<option value="">Todo el club</option>'
+      + setupState.teams.map((t) => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
+  }
+
+  function renderSetupPeople() {
+    const host = $('setupPeople');
+    const activos = setupState.people.filter((p) => p.active);
+    host.innerHTML = activos.length
+      ? activos.map((p) => `<div class="pp-setup-item">
+          <strong>${escapeHtml(p.name || p.email)}</strong>
+          <span class="pp-setup-code">${escapeHtml(p.roles.map((r) => setupLabelOf(r.role_code)).join(' · ') || 'sin rol')}</span>
+          <span class="pp-muted">${p.last_login_at ? 'ha entrado' : 'aún no ha entrado'}</span>
+          <button class="pp-linkbtn" data-delstaff="${escapeHtml(p.id)}" type="button">Revocar</button>
+        </div>`).join('')
+      : '<p class="pp-muted">Sólo entras tú al panel.</p>';
+  }
+
+  function renderSetupMatriz() {
+    const host = $('setupMatriz');
+    if (!setupState.categories.length) {
+      host.innerHTML = '<p class="pp-muted">Crea primero los equipos del club en la pestaña Plantilla: el expediente se configura por categoría.</p>';
+      return;
+    }
+    const filaDe = (m, c) => setupState.matriz.find(
+      (x) => x.modulo_id === m.id && x.category_id === c.id) || {};
+    const periodOpts = (sel) => ['alta', 'inicial-final', 'trimestral', 'mensual', 'por-evento', 'continua']
+      .map((p) => `<option value="${p}"${p === sel ? ' selected' : ''}>${p}</option>`).join('');
+    const rolOpts = (sel) => '<option value="">— sin asignar —</option>'
+      + setupState.roles.map((r) => `<option value="${escapeHtml(r.role_code)}"${r.role_code === sel ? ' selected' : ''}>${escapeHtml(setupLabelOf(r.role_code))}</option>`).join('');
+
+    host.innerHTML = setupState.categories.map((c) => `
+      <div class="pp-setup-cat">
+        <h3>${escapeHtml(c.display_name_es)}</h3>
+        ${setupState.modulos.map((m) => {
+          const f = filaDe(m, c);
+          const per = f.periodicidad || 'inicial-final';
+          return `<div class="pp-setup-mod" data-mod="${escapeHtml(m.id)}" data-cat="${escapeHtml(c.id)}">
+            <label><input type="checkbox" data-aplica${f.aplica ? ' checked' : ''}> ${escapeHtml(m.nombre_es)}</label>
+            <select data-per class="pp-input pp-input--sm">${periodOpts(per)}</select>
+            <select data-rol class="pp-input pp-input--sm">${rolOpts(f.role_code || m.default_role_code)}</select>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+  }
+
+  // Lee la matriz de la interfaz. Se envían TODAS las filas, también las
+  // desactivadas: guardar aplica=false conserva la decisión y la
+  // periodicidad elegida por si el club reactiva el módulo más adelante.
+  function readSetupSeleccion() {
+    return [...document.querySelectorAll('.pp-setup-mod')].map((row) => ({
+      modulo_id: row.dataset.mod,
+      category_id: row.dataset.cat,
+      aplica: row.querySelector('[data-aplica]').checked,
+      periodicidad: row.querySelector('[data-per]').value,
+      role_code: row.querySelector('[data-rol]').value || null,
+    }));
+  }
+
+  function renderSetupPreview(p) {
+    const porResp = Object.entries(p.por_responsable || {});
+    const filas = porResp.map(([quien, n]) => `<li><strong>${n}</strong> para ${escapeHtml(quien)}</li>`).join('');
+    const huerfanas = p.sin_responsable
+      ? `<li class="pp-warn"><strong>${p.sin_responsable}</strong> sin responsable asignado</li>` : '';
+    $('setupPreview').innerHTML = p.total
+      ? `<p>Se generarán <strong>${p.total} obligaciones</strong> para ${p.jugadoras} jugadoras.</p>
+         <ul>${filas}${huerfanas}</ul>
+         ${porResp.length === 1 && !p.sin_responsable
+           ? '<p class="pp-warn">Todas recaen en una sola persona. Es válido, pero conviene repartirlas o su panel será una lista imposible de atender.</p>' : ''}`
+      : '<p class="pp-muted">Con esta configuración no se genera ninguna obligación.</p>';
+  }
+
+  function bindSetup() {
+    $('setupRoleAdd').addEventListener('click', async () => {
+      const code = $('setupRoleCode').value;
+      if (!code) return;
+      try {
+        await api('role_upsert', { role_code: code, label: $('setupRoleLabel').value.trim() || null });
+        $('setupRoleLabel').value = '';
+        await loadSetup();
+        showToast('ok', 'Rol añadido');
+      } catch (e) { showToast('err', e.message); }
+    });
+
+    $('setupRoles').addEventListener('click', async (ev) => {
+      const code = ev.target.dataset && ev.target.dataset.delrole;
+      if (!code) return;
+      try {
+        const r = await api('role_delete', { role_code: code });
+        await loadSetup();
+        showToast('ok', r.modulos_sin_responsable && r.modulos_sin_responsable.length
+          ? `Rol quitado. ${r.modulos_sin_responsable.length} módulo(s) se quedan sin responsable.`
+          : 'Rol quitado');
+      } catch (e) { showToast('err', e.message); }
+    });
+
+    $('setupStaffAdd').addEventListener('click', async () => {
+      const email = $('setupStaffEmail').value.trim();
+      const role = $('setupStaffRole').value;
+      if (!email || !role) { showToast('err', 'Hacen falta email y rol'); return; }
+      try {
+        await api('staff_invite', {
+          email, name: $('setupStaffName').value.trim() || null,
+          roles: [{ role_code: role, team_id: $('setupStaffTeam').value || null }],
+        });
+        $('setupStaffEmail').value = ''; $('setupStaffName').value = '';
+        await loadSetup();
+        showToast('ok', 'Acceso concedido. Ya puede pedir su enlace con ese email.');
+      } catch (e) { showToast('err', e.message); }
+    });
+
+    $('setupPeople').addEventListener('click', async (ev) => {
+      const id = ev.target.dataset && ev.target.dataset.delstaff;
+      if (!id) return;
+      if (!confirm('¿Revocar el acceso de esta persona al panel?')) return;
+      try {
+        await api('staff_revoke', { staff_id: id });
+        await loadSetup();
+        showToast('ok', 'Acceso revocado');
+      } catch (e) { showToast('err', e.message); }
+    });
+
+    $('setupPreviewBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('expediente_preview', { seleccion: readSetupSeleccion() });
+        renderSetupPreview(r.proyeccion);
+      } catch (e) { showToast('err', e.message); }
+    });
+
+    $('setupSaveBtn').addEventListener('click', async () => {
+      try {
+        const r = await api('expediente_save', { seleccion: readSetupSeleccion() });
+        await loadSetup();
+        showToast('ok', `Guardado. ${r.activas} configuraciones activas.`);
+      } catch (e) { showToast('err', e.message); }
+    });
   }
 
   // ── Wizard (Bloque E) ────────────────────────────────────
@@ -1704,6 +1971,11 @@
       // Cobros: la matriz de temporada + el estado por concepto del plan
       // se cargan perezosamente al abrir.
       if (target === 'payments') { loadBillingMatrix(); loadPlanCharges(); }
+      // Estructura: carga perezosa y cableado una sola vez.
+      if (target === 'setup') {
+        if (!setupBound) { bindSetup(); setupBound = true; }
+        loadSetup().catch(e => showToast('err', 'No se pudo cargar tu estructura: ' + e.message));
+      }
     });
   });
 
