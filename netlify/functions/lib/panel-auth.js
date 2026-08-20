@@ -8,6 +8,12 @@
 // no añadir env vars; cuando convivan secretos por entorno, basta con
 // exportar ORG_PANEL_JWT_SECRET y este módulo lo prefiere.
 //
+// Desde la migración 049 la misma sesión sirve para dos identidades: la
+// DUEÑA del club (`organizations.email`, permisos totales) y un miembro del
+// CUERPO TÉCNICO (`org_admins`, alcance acotado por rol y equipo). Las
+// distingue el claim `staffId`; sin él, el token es de la dueña y el
+// comportamiento es exactamente el de siempre.
+//
 // El flujo es passwordless: panel-auth.js firma el JWT y lo manda al
 // email del cliente como magic-link. El frontend lo guarda en
 // localStorage y lo presenta en el header Authorization: Bearer <jwt>
@@ -40,13 +46,19 @@ function panelJwtSecret() {
 //     TTL corto (1h) porque es una sesión operativa, no persistente. El claim
 //     queda en el JWT (no en query string) para que panel.html lo verifique
 //     y pinte una franja "operando como founder".
-function signPanelSession({ orgId, orgSlug, actor }) {
+//   - staffId definido → sesión de un miembro del cuerpo técnico
+//     (org_admins, migración 049) en lugar de la dueña del club. El token
+//     lleva SÓLO el id: los roles y equipos se resuelven en cada request
+//     contra la BD, nunca desde el claim. Así, revocar a una persona surte
+//     efecto al instante en vez de esperar a que caduque su JWT de 7 días.
+function signPanelSession({ orgId, orgSlug, actor, staffId }) {
   if (!orgId || !orgSlug) {
     throw new Error('signPanelSession: orgId y orgSlug requeridos');
   }
   const payload = { purpose: PURPOSE, orgId, orgSlug };
   const isFounder = actor === 'founder';
   if (isFounder) payload.actor = 'founder';
+  if (staffId) payload.staffId = staffId;
   return jwt.sign(payload, panelJwtSecret(), {
     expiresIn: isFounder ? FOUNDER_TOKEN_TTL : TOKEN_TTL,
   });
@@ -66,6 +78,7 @@ function verifyPanelSession(token) {
   if (!decoded.orgId || !decoded.orgSlug) return null;
   const out = { orgId: decoded.orgId, orgSlug: decoded.orgSlug };
   if (decoded.actor === 'founder') out.actor = 'founder';
+  if (decoded.staffId) out.staffId = decoded.staffId;
   return out;
 }
 

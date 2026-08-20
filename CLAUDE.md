@@ -306,7 +306,7 @@ Rate-limit 120 req / 10 min por IP — holgado para operativa normal (cargar pan
 - ✅ Upload de logo → cliente vía `upload-org-logo-panel.js` (Bloque E).
 - ❌ Ver/rotar `stats_token` → el link público a `/e/:slug/stats` lo sigue generando founder.
 - ❌ Cambiar `slug`, `name`, `email` propios → founder-only (riesgo de auto-bloqueo).
-- ❌ Múltiples admins / roles por org → modelo actual asume 1 admin por org (organizations.email). Se añade tabla `org_admins` cuando un cliente lo pida.
+- ✅ Múltiples admins / roles por org → **entregado** (migración 049, ver «Cuerpo técnico del club»). `organizations.email` sigue siendo la dueña con permisos totales; `org_admins` añade accesos acotados.
 
 ### Wizard onboarding post-checkout (`/panel.html` · Bloque E)
 
@@ -572,6 +572,20 @@ Flujo: el club que ficha llama `request-transfer.js` (auth org-panel; valida pla
 
 **Teardown de cobro en la baja** (`lib/cantera-billing-teardown.js → teardownPlayerBilling`): SOLO se invoca en la baja del club (cancel-membership camino jugador + founder `cantera_close_membership`), nunca en cambio de equipo ni traspaso. Scoped a `(card_slug, organization_id)`: (a) `enrollment_charges` `scheduled` → `canceled` (plazos futuros del plan sin cobrar; no toca paid/processing/failed); (b) `parent_subscriptions` activas → `stripe.subscriptions.cancel(sub, {stripeAccount})` en la cuenta Connect del club + marca `canceled`. Best-effort y honesto: si Stripe falla o no se puede cancelar (sin cliente/cuenta) NO marca `canceled` (mentiría: Stripe seguiría cobrando) e incrementa `sub_errors`; la baja se completa igual. La respuesta devuelve `{ billing: { charges_canceled, subs_canceled, sub_errors } }` y el front lo muestra en el toast. `cancel-membership` y `admin-orgs` reciben el cliente Stripe inyectable (`makeHandler(db, stripe)` / `makeHandler(db, emailClient, stripe)`).
 
+**Cuerpo técnico del club · `org_admins` (migración 049)**:
+
+Fase 1 de la fusión CATORZE → CANTERA (documento de mapeo en el repo `CatorzeFc`). Hasta aquí un club = un email = un admin: quien tuviera `organizations.email` entraba al Studio con permisos totales. Suficiente para un despacho B2B, no para un club de cantera donde preparación física, fisio, psicología y docencia necesitan entrar cada uno a ver lo suyo.
+
+- **Dos tablas, no una** — `org_admins` es la PERSONA (email + club + `revoked_at` + `last_login_at`); `org_admin_roles` es la relación **(persona, rol, equipo)**. Separadas a propósito: una persona puede tener varios roles (al arrancar, la coordinadora es también nutricionista) y un rol puede tener distinta persona según el equipo (la entrenadora de benjamín no es la de juvenil). Fundirlas perdería el reparto por equipo. `team_id NULL` = todos los equipos del club.
+- **Catálogo de roles cerrado** en `lib/club-staff.js` (`direccion_deportiva`, `coordinacion`, `entrenador`, `preparador`, `fisio`, `medico`, `psicologia`, `nutricion`, `aula_academica`, `analisis`, `delegado`, `directiva`), replicado en el CHECK de la 049. **Si añades un rol, toca los dos sitios** — hay un test que lo vigila. La etiqueta libre por club («Mister físico») llega en la fase siguiente, mismo patrón que `club_teams` (competición del catálogo + `label`).
+- **Login** — `panel-auth.js` es dueña-primero: si el email está en `organizations.email` manda ese enlace y no mira `org_admins`. Si no, busca accesos vivos en `org_admins` y manda **un enlace por club** (una fisio puede trabajar para dos). Consecuencia aceptada: quien sea dueña de un club Y técnica en otro recibe sólo el enlace de dueña. Todo el bloque va en try/catch para que un entorno sin la 049 aplicada no afecte al flujo de la dueña.
+- **Sesión** — `signPanelSession` acepta `staffId` y lo lleva como claim. **Sólo el id**: los roles y equipos se resuelven contra la BD en cada request, nunca desde el token, para que revocar a alguien surta efecto al instante en vez de esperar 7 días a que caduque su JWT.
+- **Autorización** (`org-panel.js`, antes de despachar) — se comprueba que la fila existe, no está revocada **y pertenece a la org del token** (sin esto, un `staffId` ajeno colado en un JWT válido daría acceso cruzado entre clubes); después, **lista blanca** de acciones. Fase 1 es sólo lectura: `get_org`, `get_roster`, `get_club_stats`, `teams_list`. Lista blanca y no negra a propósito — una acción nueva del panel no la hereda el cuerpo técnico por accidente.
+- **Alcance** — `get_roster` se recorta a sus equipos con `filterRosterForScope` (se filtra la RESPUESTA, no la query, para no tocar `getRoster`, que es el camino que ya usa la dueña), recalculando totales y sin exponer el listado del resto de técnicos. `get_org` devuelve `members: []` y añade `staff_session` con nombre, roles y alcance. Sin equipos asignados el alcance es vacío: entra pero no ve jugadoras — más seguro que enseñar de más, y el panel lo dice explícitamente.
+- **Gestión (founder)** — acciones `staff_list` / `staff_invite` / `staff_revoke` en `admin-orgs` (auth password + TOTP, auditadas en `admin_audit_log`, gateadas por `isCanteraActive()`). `staff_invite` valida todos los roles antes de insertar nada y comprueba que los equipos son DE ESE club. **No manda email**: la persona pide su enlace en `/panel.html` con su email, así el acceso sólo funciona si controla el buzón. `staff_revoke` nunca borra la fila, marca `revoked_at` — el rastro de quién tuvo acceso y hasta cuándo es justo lo que hay que poder demostrar.
+- **Frontend** — `panel.html` oculta al cuerpo técnico las pestañas que le darían 403 (Inscripciones, Carnets, Cobros, Branding) y pinta un aviso con su alcance. Es cosmético: quien manda es la lista blanca del servidor.
+- **Alta autoservicio por el club** (que el club declare su estructura y active módulos) es la fase siguiente; hoy los accesos los da el founder.
+
 **Env vars Cantera** (todas opcionales — el carril se apaga limpio borrándolas):
 
 ```
@@ -599,7 +613,7 @@ PARENT_PANEL_JWT_SECRET          # fallback a ORG_PANEL_JWT_SECRET si no está.
 **Fuera de scope MVP** (deuda consciente):
 
 - W3C Verifiable Credentials firmadas — el `card_consents.evidence_jsonb` es preparación; firma + DID llega en fase 2.
-- `org_admins` con permisos diferenciados dentro del club (presidente vs coordinador vs entrenador) — modelo actual asume 1 admin por club.
+- ~~`org_admins` con permisos diferenciados dentro del club~~ → **entregado** (migración 049, ver «Cuerpo técnico del club»). Fase 1 es sólo lectura acotada por equipos; la escritura (registro de obligaciones) llega con la capa de expediente.
 - Integración federativa autonómica — fase 2 cuando haya primera federación firmada.
 - Sincronización con Verifactu/Quipu del cobro padre→club — la factura SEPA al padre la emite el club fuera de PerfilaPro hasta Sprint 3.
 - App nativa móvil — todo email + web al menos 12 meses.

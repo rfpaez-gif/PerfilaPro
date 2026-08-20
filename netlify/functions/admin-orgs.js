@@ -29,6 +29,13 @@ const { signPanelSession } = require('./lib/panel-auth');
 const { offboardCard, restoreCard, COURTESY_DAYS } = require('./lib/card-offboard');
 const cantera = require('./lib/cantera-incidents');
 const { isCanteraActive, canteraDisabledResponse } = require('./lib/cantera-flag');
+// CANTERA · cuerpo técnico del club con acceso al Studio (migración 049).
+const {
+  STAFF_ROLES,
+  isValidStaffRole,
+  normalizeStaffEmail,
+  isValidTeamId,
+} = require('./lib/club-staff');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
 const { enrollmentUrl } = require('./lib/enrollment-campaign');
 const { teardownPlayerBilling } = require('./lib/cantera-billing-teardown');
@@ -1475,6 +1482,163 @@ function makeHandler(db, emailClient = defaultEmailClient, stripe = defaultStrip
     //
     // Devuelve { ok: [...], failed: [...] } para que el admin vea el
     // resumen y pueda reintentar solo los fallos.
+    // ── CANTERA · cuerpo técnico del club (migración 049) ──────
+    //
+    // Alta, listado y revocación de las personas que entran al Studio del
+    // club además de la dueña. Fase 1: lo gestiona el founder desde aquí;
+    // el alta autoservicio por parte del propio club llega en su fase.
+    //
+    // El acceso se otorga por (persona, rol, equipo): `team_id: null` en
+    // una fila significa "todos los equipos del club". La persona no
+    // recibe email desde aquí — pide su enlace en /panel.html con su
+    // email y panel-auth se lo manda. Así el acceso sólo funciona si
+    // controla el buzón, sin que el founder reparta enlaces a mano.
+    if (action === 'staff_list' || action === 'staff_invite' || action === 'staff_revoke') {
+      if (!isCanteraActive()) return canteraDisabledResponse();
+
+      const staffIp = (event.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+      const { org_slug } = body;
+      if (!isValidOrgSlug(org_slug)) {
+        return jsonResponse(400, { error: 'org_slug inválido' });
+      }
+
+      const { data: org, error: orgErr } = await db
+        .from('organizations')
+        .select('id, slug, name, kind')
+        .eq('slug', org_slug)
+        .is('deleted_at', null)
+        .maybeSingle();
+      if (orgErr) return jsonResponse(500, { error: orgErr.message });
+      if (!org) return jsonResponse(404, { error: 'Organización no encontrada' });
+
+      if (action === 'staff_list') {
+        const { data: rows, error } = await db
+          .from('org_admins')
+          .select('id, email, name, invited_at, last_login_at, revoked_at')
+          .eq('organization_id', org.id)
+          .order('invited_at', { ascending: true });
+        if (error) return jsonResponse(500, { error: error.message });
+
+        const list = Array.isArray(rows) ? rows : [];
+        const ids = list.map((r) => r.id);
+        let rolesByAdmin = new Map();
+        if (ids.length) {
+          const { data: roleRows } = await db
+            .from('org_admin_roles')
+            .select('org_admin_id, role_code, team_id')
+            .in('org_admin_id', ids);
+          for (const r of roleRows || []) {
+            if (!rolesByAdmin.has(r.org_admin_id)) rolesByAdmin.set(r.org_admin_id, []);
+            rolesByAdmin.get(r.org_admin_id).push({ role_code: r.role_code, team_id: r.team_id });
+          }
+        }
+
+        return jsonResponse(200, {
+          ok: true,
+          org: { slug: org.slug, name: org.name },
+          staff: list.map((r) => ({
+            ...r,
+            active: !r.revoked_at,
+            roles: rolesByAdmin.get(r.id) || [],
+          })),
+          role_catalog: STAFF_ROLES,
+        });
+      }
+
+      if (action === 'staff_invite') {
+        const email = normalizeStaffEmail(body.email);
+        if (!email) return jsonResponse(400, { error: 'Email inválido' });
+
+        const name = stripTagsInline(body.name).slice(0, 120) || null;
+
+        // roles: [{ role_code, team_id? }]. Se validan TODOS antes de
+        // insertar nada — un rol inventado no debe dejar a medias un alta.
+        const rawRoles = Array.isArray(body.roles) ? body.roles : [];
+        if (!rawRoles.length) {
+          return jsonResponse(400, { error: 'Indica al menos un rol' });
+        }
+        const roles = [];
+        for (const r of rawRoles) {
+          const code = r && r.role_code;
+          if (!isValidStaffRole(code)) {
+            return jsonResponse(400, { error: `Rol no reconocido: ${code}` });
+          }
+          const teamId = r.team_id == null || r.team_id === '' ? null : r.team_id;
+          if (teamId !== null && !isValidTeamId(teamId)) {
+            return jsonResponse(400, { error: 'team_id inválido' });
+          }
+          roles.push({ role_code: code, team_id: teamId });
+        }
+
+        // Los equipos indicados tienen que ser DE ESTE club. Sin esta
+        // comprobación, un team_id de otro club daría acceso cruzado.
+        const teamIds = [...new Set(roles.map((r) => r.team_id).filter(Boolean))];
+        if (teamIds.length) {
+          const { data: teams } = await db
+            .from('club_teams')
+            .select('id')
+            .eq('organization_id', org.id)
+            .in('id', teamIds);
+          const found = new Set((teams || []).map((t) => t.id));
+          const alien = teamIds.filter((id) => !found.has(id));
+          if (alien.length) {
+            return jsonResponse(400, { error: 'Algún equipo no pertenece a este club' });
+          }
+        }
+
+        const { data: inserted, error: insErr } = await db
+          .from('org_admins')
+          .insert({ organization_id: org.id, email, name })
+          .select('id')
+          .maybeSingle();
+        if (insErr) {
+          // El índice único parcial impide un segundo acceso vivo para el
+          // mismo email en el mismo club.
+          const dup = /duplicate key|unique/i.test(insErr.message || '');
+          return jsonResponse(dup ? 409 : 500, {
+            error: dup ? 'Ese email ya tiene acceso a este club' : insErr.message,
+          });
+        }
+
+        const adminId = inserted && inserted.id;
+        const { error: rolesErr } = await db
+          .from('org_admin_roles')
+          .insert(roles.map((r) => ({ org_admin_id: adminId, ...r })));
+        if (rolesErr) {
+          // Compensamos: sin roles la persona entraría sin ver nada, que es
+          // peor que no existir. La FK es ON DELETE CASCADE.
+          await db.from('org_admins').delete().eq('id', adminId);
+          return jsonResponse(500, { error: rolesErr.message });
+        }
+
+        auditIncident(db, staffIp, 'staff_invite', org.slug, email);
+        return jsonResponse(200, { ok: true, id: adminId, email, roles });
+      }
+
+      // staff_revoke — nunca borra la fila: marca `revoked_at`. Así queda
+      // el rastro de quién tuvo acceso y hasta cuándo, que es justo lo que
+      // hay que poder demostrar si algún día se pregunta quién vio qué.
+      if (action === 'staff_revoke') {
+        const { staff_id } = body;
+        if (!isValidTeamId(staff_id)) {
+          return jsonResponse(400, { error: 'staff_id inválido' });
+        }
+        const { data: updated, error } = await db
+          .from('org_admins')
+          .update({ revoked_at: new Date().toISOString() })
+          .eq('id', staff_id)
+          .eq('organization_id', org.id)
+          .is('revoked_at', null)
+          .select('id, email')
+          .maybeSingle();
+        if (error) return jsonResponse(500, { error: error.message });
+        if (!updated) return jsonResponse(404, { error: 'Acceso no encontrado o ya revocado' });
+
+        auditIncident(db, staffIp, 'staff_revoke', org.slug, updated.email);
+        return jsonResponse(200, { ok: true, id: updated.id });
+      }
+    }
+
     if (action === 'invite_team') {
       const { org_slug, team, template } = body;
 

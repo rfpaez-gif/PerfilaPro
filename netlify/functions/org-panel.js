@@ -8,6 +8,12 @@
 // NO existe `org_slug` en el body: el cliente sólo puede operar sobre
 // su propia organización.
 //
+// Desde la migración 049 el JWT puede traer además `staffId`: entonces
+// quien entra NO es la dueña sino un miembro del cuerpo técnico, con dos
+// límites que se aplican ANTES de despachar la acción — una lista blanca
+// de acciones (hoy sólo lectura) y un alcance por equipos que recorta lo
+// que ve. Sin `staffId` el comportamiento es exactamente el de siempre.
+//
 // MVP mínimo (Bloque 2 #1): branding + invite + stats.
 //   - get_org        — datos de la org + lista de miembros + stats agregadas.
 //   - update_branding — tagline, description, website, address, phone, color_primary.
@@ -57,6 +63,8 @@ const { normalizeTeamColor, normalizeTeamLabel, isValidTeamId, competitionRegion
 const { carnetReadiness } = require('./lib/carnet-ready');
 const { reconcilePlayerBilling, seasonInstallmentPeriods } = require('./lib/season-billing');
 const { validateInviteList, buildEnrollInviteEmail } = require('./lib/enrollment-invite');
+// CANTERA · cuerpo técnico del club con acceso acotado (migración 049).
+const { canStaffRun, staffScope, filterRosterForScope } = require('./lib/club-staff');
 
 const defaultDb = createClient(
   process.env.SUPABASE_URL,
@@ -75,6 +83,21 @@ function jsonResponse(statusCode, payload) {
     },
     body: JSON.stringify(payload),
   };
+}
+
+// Recorta una respuesta ya construida de getRoster al alcance del cuerpo
+// técnico. Se hace sobre la respuesta y no sobre la query para no tocar
+// getRoster, que es el camino que ya usa la dueña del club: el recorte es
+// aditivo y no puede romperle el panel a quien ya lo tiene funcionando.
+function applyStaffScopeToRoster(res, scope) {
+  if (!res || res.statusCode !== 200) return res;
+  let payload;
+  try {
+    payload = JSON.parse(res.body);
+  } catch {
+    return res;
+  }
+  return jsonResponse(200, filterRosterForScope(payload, scope));
 }
 
 function stripTagsInline(str) {
@@ -121,6 +144,49 @@ function makeHandler(db, emailClient) {
     if (!org || org.deleted_at) {
       // Org soft-deleted o ya no existe — la sesión queda inservible.
       return unauthorizedResponse();
+    }
+
+    // ── Cuerpo técnico (migración 049): lista blanca + alcance ──
+    //
+    // Los roles se resuelven AQUÍ, contra la BD, en cada request — nunca
+    // desde el JWT. Así, revocar a una persona o quitarle un equipo surte
+    // efecto al instante en lugar de esperar a que caduque su token de 7
+    // días. Si la fila ya no existe o está revocada, la sesión muere.
+    let staff = null;
+    if (session.staffId) {
+      const { data: staffRow, error: staffErr } = await db
+        .from('org_admins')
+        .select('id, organization_id, email, name, revoked_at')
+        .eq('id', session.staffId)
+        .maybeSingle();
+      if (staffErr) return jsonResponse(500, { error: staffErr.message });
+      // Comprobamos además que la persona pertenece a la org del token:
+      // sin esto, un staffId de otro club colado en un JWT válido pasaría.
+      if (!staffRow || staffRow.revoked_at || staffRow.organization_id !== org.id) {
+        return unauthorizedResponse();
+      }
+
+      if (!canStaffRun(action)) {
+        return jsonResponse(403, {
+          error: 'Tu acceso no permite esta acción',
+        });
+      }
+
+      const { data: roleRows } = await db
+        .from('org_admin_roles')
+        .select('role_code, team_id')
+        .eq('org_admin_id', staffRow.id);
+
+      staff = { row: staffRow, scope: staffScope(roleRows) };
+
+      // Best-effort, no bloquea: le sirve al club para ver quién usa esto.
+      db.from('org_admins')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', staffRow.id)
+        .then(({ error }) => {
+          if (error) console.warn('org-panel: last_login_at no marcado:', error.message);
+        })
+        .catch((err) => console.warn('org-panel: last_login_at no marcado:', err.message));
     }
 
     // ── get_org: snapshot completo del panel ──
@@ -203,11 +269,20 @@ function makeHandler(db, emailClient) {
           kind,
           sport,
         },
-        members,
-        stats: {
+        // El cuerpo técnico no recibe el listado por esta vía: su plantilla
+        // llega por get_roster, que sí está recortada a sus equipos. Devolver
+        // `members` aquí filtraría de más — es la lista completa del club.
+        members: staff ? [] : members,
+        stats: staff ? { totals: null, by_day: [] } : {
           totals: stats.totals,
           by_day: stats.by_day,
         },
+        ...(staff ? { staff_session: {
+          name: staff.row.name || null,
+          roles: staff.scope.roles,
+          all_teams: staff.scope.allTeams,
+          team_ids: staff.scope.teamIds,
+        } } : {}),
       });
     }
 
@@ -531,7 +606,10 @@ function makeHandler(db, emailClient) {
       const loaded = await loadSportsOrg(db, org.id);
       if (loaded.error) return loaded.error;
       const sportsOrg = loaded.org;
-      if (action === 'get_roster')     return await getRoster(db, sportsOrg);
+      if (action === 'get_roster') {
+        const res = await getRoster(db, sportsOrg);
+        return staff ? applyStaffScopeToRoster(res, staff.scope) : res;
+      }
       if (action === 'get_club_stats') return await getClubStats(db, sportsOrg);
       if (action === 'get_transfers')  return await getTransfers(db, sportsOrg);
     }

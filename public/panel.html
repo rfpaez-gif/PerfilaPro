@@ -1185,6 +1185,11 @@
       if (data.org.kind === 'sports_club') {
         showDash();
         applyChrome('sports');
+        // Cuerpo técnico (migración 049): el backend sólo le deja leer, así
+        // que le quitamos de la vista las pestañas que le devolverían 403.
+        // Es cosmético — quien manda es la lista blanca del servidor — pero
+        // enseñar botones que fallan no es un panel, es una trampa.
+        applyStaffChrome(data.staff_session || null);
         await loadSportsStudio();
         return;
       }
@@ -1216,6 +1221,42 @@
     $('sportsTabs').style.display   = sports ? '' : 'none';
     document.querySelector('.pp-content').style.display = sports ? 'none' : '';
     $('sportsContent').style.display = sports ? '' : 'none';
+  }
+
+  // Recorta el Studio a lo que el cuerpo técnico puede hacer. `session`
+  // null = es la dueña del club y no se toca nada.
+  //
+  // Fase 1 es sólo lectura, así que quedan Plantilla y Estadísticas;
+  // Inscripciones, Carnets, Cobros y Branding se ocultan. Cuando llegue el
+  // registro de obligaciones, aquí se añadirá su pestaña.
+  const STAFF_HIDDEN_TABS = ['enroll', 'cards', 'payments', 'sbranding'];
+
+  function applyStaffChrome(session) {
+    if (!session) return;
+
+    for (const tab of STAFF_HIDDEN_TABS) {
+      const btn = document.querySelector(`[data-stab="${tab}"]`);
+      if (btn) btn.style.display = 'none';
+      const panel = document.querySelector(`[data-stabpanel="${tab}"]`);
+      if (panel) panel.style.display = 'none';
+    }
+
+    // Aviso explícito de con qué identidad se está entrando y qué alcance
+    // tiene. Sin esto, un técnico con equipos sin asignar vería la plantilla
+    // vacía y pensaría que el club no tiene jugadoras.
+    const bar = document.createElement('div');
+    bar.className = 'pp-staff-note';
+    bar.style.cssText = 'padding:10px 14px;margin:0 0 14px;border-radius:10px;'
+      + 'background:#F1F5F9;color:#334155;font-size:13px;line-height:1.5';
+    const quien = session.name ? `<strong>${session.name}</strong>` : 'Tu acceso';
+    bar.innerHTML = session.all_teams
+      ? `${quien} · acceso de cuerpo técnico a todo el club.`
+      : (session.team_ids && session.team_ids.length
+        ? `${quien} · ves los equipos que el club te ha asignado.`
+        : `${quien} · aún no tienes equipos asignados. Pídele al club que te los asigne para ver tu plantilla.`);
+
+    const host = $('sportsContent');
+    if (host && !host.querySelector('.pp-staff-note')) host.prepend(bar);
   }
 
   // ── Wizard (Bloque E) ────────────────────────────────────
