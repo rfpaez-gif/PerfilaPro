@@ -246,12 +246,12 @@
 <div class="pp-login" id="loginScreen">
   <div class="pp-login__box">
     <p class="pp-login__logo">Perfila<em>Pro</em></p>
-    <h1 class="pp-login__title">Tu panel B2B</h1>
-    <p class="pp-login__sub">Introduce el email de tu organización y te mandamos un enlace para entrar. Sin contraseñas.</p>
+    <h1 class="pp-login__title">Tu panel PerfilaPro</h1>
+    <p class="pp-login__sub">Introduce el email de tu organización, club o el de tutor de un jugador y te mandamos un enlace para entrar. Sin contraseñas.</p>
 
     <form id="loginForm">
       <div class="pp-form__row">
-        <label class="pp-form__label" for="loginEmail">Email de la organización</label>
+        <label class="pp-form__label" for="loginEmail">Tu email</label>
         <input class="pp-input" type="email" id="loginEmail" placeholder="admin@miempresa.com" required autocomplete="email" autocapitalize="off" autocorrect="off">
       </div>
       <button type="submit" class="pp-btn pp-btn--primary pp-btn--block" id="loginSubmit" style="margin-top:.75rem">Mandarme el enlace →</button>
@@ -1037,11 +1037,20 @@
     btn.innerHTML = '<span class="pp-spinner"></span> Enviando…';
 
     try {
-      const res = await fetch('/api/panel-auth', {
+      // Un único formulario para los dos carriles del panel: responsables de
+      // organización/club (panel-auth) y tutores de jugadores (parent-auth).
+      // Ambos devuelven siempre 200 (anti-enumeration), así que pedir a los
+      // dos no revela a cuál pertenece el email. parent-auth es best-effort:
+      // con el carril Cantera apagado responde 410 y se ignora.
+      const opts = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      });
+      };
+      const [res] = await Promise.all([
+        fetch('/api/panel-auth', opts),
+        fetch('/api/parent-auth', opts).catch(() => null),
+      ]);
       if (res.status === 429) {
         err.textContent = 'Demasiados intentos. Espera unos minutos.';
         err.style.display = 'block';
